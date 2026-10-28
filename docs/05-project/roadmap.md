@@ -27,12 +27,22 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 16 | Simulation/balance headless | Campagnes multi-seeds et profils | Métriques et versions consignées, écarts discutés |
 | 17 | Stabilisation MVP | Bugs, sécurité, performance, sauvegarde et recette | Boucle complète jouable et DoD satisfaite |
 
-## Suivi de réalisation
+## Suivi et workflow actuels
 
-Le statut vérifiable et la prochaine action sont dans [progress.md](../../progress.md).
-Étape 0 fusionnée sur master (PR #1). Branches de travail depuis develop, PR vers develop ; master
-réservée aux releases. Les fondations 1–2 sont dans PR #2 ; le lot 3 ajoute le socle temporel
-avec cadrage partiel de Q03/Q13. Les interactions multi-agrégats restent futures. Une fondation persistante ne signifie pas qu'une partie est déjà jouable.
+Statut exact dans [progress.md](../../progress.md). master est l'intégration stable ; nouvelles
+branches work/... depuis master et PR vers master, CI/revue puis merge sur autorisation. Tags et
+releases identifiées plus tard. develop n'est plus une étape permanente ou obligatoire.
+PR #2 est fusionnée sur master ; la correction de PR #3 se fait sur work/step-3-time-engine, sans
+branche empilée ni branche Étape 4. Étape 4 seulement après correction, revue et fusion de PR #3.
+
+## Compatibilité des modes futurs
+
+Le MVP se construit en solo avec IA. Parties privées entre amis et univers multijoueurs persistants
+sont futurs, sans code de modes/participation maintenant. Universe reste une frontière d'instance
+isolée ; pas de durée maximale obligatoire pour la famille persistante. Q19–Q29 cadreront règles,
+places, participation, fin, accès et vitesses avant d'ajouter un jalon d'implémentation multijoueur.
+Le séquencement post-MVP reste indicatif et n'impose pas de développer ces systèmes à l'étape 3.
+Voir [modes](../01-game-design/game-modes.md) et [ADR 0006](../adr/0006-universe-game-instance.md).
 
 ## Dépendances et risques
 

@@ -37,7 +37,8 @@ contourne ces décisions.
 
 ## Temps de colonie
 
-Le module simulation apporte une horloge injectable, des calculs purs et un processeur PostgreSQL.
+simulation/scheduler.py apporte un processeur générique EventStream par univers ; service.py est
+son adaptateur économique de colonie. L’horloge injectable et les calculs purs sont conservés.
 Le service migrate de Compose exécute Alembic avant API/worker. Une migration par processus API reste
 interdite. Voir [contrat temporel](event-engine.md) avant toute commande qui touche un stock.
 Les mutations HTTP et l'auth restent hors de ce lot ; le changement de taux est un handler interne,

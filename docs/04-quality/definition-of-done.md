@@ -18,7 +18,7 @@
 Configuration validée, sondes compatibles, sessions et transactions explicites. Modèles/migration
 cohérents, contraintes cross-universe et unicité vérifiées sur PostgreSQL réel, migration réversible
 sur base jetable et absence de dérive ORM. Aucun endpoint métier non autorisé. context.md/progress.md
-à jour ; branches de travail et CI ciblent develop, releases réservées à master.
+à jour ; branches de travail depuis master, PR/CI vers master ; tags/releases identifiées plus tard.
 
 ## Étape 3
 
@@ -27,7 +27,7 @@ logiques. Ordre/verrou par colonie, reprises avant/après commit et isolation de
 PostgreSQL. Pas d'avancement au-delà d'une échéance bloquée ou du budget de rattrapage. Retry borné,
 diagnostic sans payload sensible et relance explicite. Migrations et runtime Compose vérifiés.
 Décisions Q03/Q13 cadrées sans fermer les paramètres métier ou le multi-agrégat. Aucun nouvel endpoint
-public non protégé. Dépendance de PR #2 signalée tant qu'elle n'est pas fusionnée.
+public non protégé. PR #2 fusionnée sur master avant la correction de PR #3.
 
 ## Étape 0 (historique)
 

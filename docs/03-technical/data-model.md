@@ -5,7 +5,7 @@
 
 | Concept | Responsabilité et relations proposées |
 | --- | --- |
-| Universe | Seed, version de génération, règles/version des données |
+| Universe | Frontière d’instance de jeu ; seed actuelle, ruleset/version futurs |
 | Empire | Appartient à un univers ; pilotage humain ou IA |
 | System / Route | Nœud et liaison du graphe, propres à un univers |
 | Planet | Monde physique d'un système, traits et capacité |
@@ -40,7 +40,7 @@ ne détruit silencieusement un empire. Le modèle représente seulement l'exploi
 sans historique, abandon ou conquête ; Q07 reste ouverte. Une migration ultérieure pourra conserver
 cet historique sans transformer l'unicité présente en règle de colonisation définitive.
 
-## Schéma temporel livré (0002_colony_time)
+## Schéma historique 0002 (remplacé par 0003)
 
 colony_timelines : colony_id PK/FK, settled_at, next_sequence ; verrou et ancrage commun.
 resource_balances : clé colony_id/resource, stock, rate_per_hour et remainder BIGINT, capacity nullable,
@@ -49,6 +49,28 @@ scheduled_events : UUID, colony, due_at, séquence, clé idempotente, type/paylo
 tentatives, prochaine tentative, completed_at et code d'erreur générique. Unicité des clés/séquences
 par colonie et index de file. Les timestamps sont timestamptz. Aucune suppression en cascade.
 Ces trois tables ne spécifient pas encore bâtiments, recherche, missions ou événements inter-empires.
+
+## Migration 0003 : scope générique et intégrité d'univers
+
+EventStream : UUID, universe_id FK Universe, cursor_at et next_sequence. Il n'est ni une colonie
+ni un pointeur polymorphe sans FK. ScheduledEvent référence (stream_id, universe_id) par FK composite ;
+clés idempotentes et séquences uniques par stream, index d'ordre par stream.
+ColonyTimeline : colony_id PK, universe_id, stream_id unique, settled_at. FK composites vers
+Colony(id,universe_id) et EventStream(id,universe_id). La contrainte unique correspondante sur Colony
+est ajoutée ; ResourceBalance reste attaché à l'adaptateur économique. Aucun lien user_id sur Empire.
+
+0003 migre les événements 0002 sans changer UUID, clé, état, tentatives, payload ni stock/reste.
+Downgrade seulement si tous les streams ont un adaptateur colonie et cursor_at=settled_at ; sinon
+refus avant DDL, aucune suppression d'historique générique pour forcer le retour en arrière.
+Le downgrade nécessite une base en ligne pour cette vérification. 0001 et 0002 restent inchangées.
+
+## Participation/configuration futures, non implémentées
+
+Universe n'est implicitement ni solo ni possédé par un User unique. Account/User ↔ UniverseMembership
+↔ éventuellement Empire ↔ rôle/permissions est une future association, pas une table actuelle.
+Plusieurs humains, éventuel partage d'empire et spectateur/admin restent possibles sans être décidés.
+Règles gameplay par Universe ou ruleset/version, jamais un singleton serveur. Aucun champ de mode,
+place ou vitesse ajouté maintenant. Voir [ADR 0006](../adr/0006-universe-game-instance.md).
 
 ## Invariants des étapes futures
 

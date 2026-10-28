@@ -33,13 +33,13 @@ Une absence de durée écoulée ne modifie ni stock ni reste. Un temps antérieu
 
 À un événement t1, le moteur règle [t0,t1] avec l'ancien taux, applique le nouveau puis poursuit
 [t1,t2]. En retard de plusieurs heures, il emploie l'heure logique des événements, pas celle du poll.
-Les trois ressources partagent l'ancrage de la timeline. Tout ancrage incohérent bloque l'événement.
+Les trois ressources partagent settled_at économique ; cursor_at du stream est distinct. Tout ancrage incohérent bloque l'événement.
 Les coûts, multiplicateurs, valeurs initiales et durées resteront versionnés dans game_data à l'étape
 Colony ; l'initialisation actuelle n'est qu'un service interne exigeant des valeurs explicites.
 
 ## Concurrence et commandes futures
 
-Toutes les écritures passent sous le verrou colony_timelines. Les futurs services de dépense
+Toutes les écritures passent sous le verrou EventStream référencé par ColonyTimeline. Les futurs services de dépense
 rattraperont d'abord les événements jusqu'à l'instant de commande et exigeront complete=True avant
 vérification des fonds, dépense et enregistrement dans une seule transaction. Aucun endpoint de
 ressources, bouton de récolte ou calcul critique navigateur n'est ajouté maintenant.

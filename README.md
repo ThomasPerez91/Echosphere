@@ -5,10 +5,11 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : fondations et moteur temporel de colonie (étape 3), sans gameplay jouable.**
+**État actuel : fondations et scheduler générique et économie de colonie (étape 3), sans gameplay jouable.**
 
 Lire [context.md](context.md) pour reprendre le cadre et [progress.md](progress.md) pour l'état exact.
-`develop` est la base des nouvelles branches et la cible des PR de développement. `master` reçoit les releases.
+`master` est l’intégration stable. Nouvelles branches courtes `work/...` depuis master, PR vers master,
+CI/revue et merge sur autorisation ; tags et releases identifiées plus tard.
 
 ## Démarrage ce soir sous WSL2
 
@@ -30,7 +31,7 @@ docker compose exec backend alembic check
 ```
 
 Ces commandes testent directement la branche de PR #3, avant son intégration.
-Après intégration, utiliser develop pour le travail courant et créer les nouvelles branches depuis develop.
+Après intégration, utiliser master comme base stable des nouvelles branches.
 Le premier build télécharge les images et dépendances. Postgres, backend et frontend doivent être healthy ; worker running et migrate terminé avec code 0.
 L'ordre est postgres → migrate → API/worker → frontend. Pour attendre automatiquement :
 `docker compose up --build -d --wait --wait-timeout 180`.
@@ -67,7 +68,7 @@ pour un serveur public. Ne pas exposer Vite sur internet.
 | backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes et cinq modèles persistants, sans endpoint métier |
 | postgres | PostgreSQL 17 | Source de vérité et volume persistant local |
 | migrate | Même image backend | Alembic upgrade head, puis sortie 0 |
-| worker | Même code backend | File temporelle persistante par colonie, sans port publié |
+| worker | Même code backend | Streams temporels multi-univers, sans port publié |
 
 Le worker est un autre processus du même monolithe : événements SQL idempotents, production exacte
 et reprise après redémarrage. Aucun rendement/coût ou stock de départ n'est fourni ; pas de partie jouable.
@@ -106,6 +107,13 @@ docker compose exec worker python -m app.simulation.worker --once --limit 50
 
 La file est vide tant qu'aucun service métier n'a créé de colonie/ordre : aucun événement ou ressource
 n'est injecté pour une démo. Contrats, retries et reprise explicite : [moteur temporel](docs/03-technical/event-engine.md).
+
+## Instances de jeu futures
+
+Universe représente une instance isolée, pas un utilisateur : MVP solo avec IA, puis parties privées
+et univers multijoueurs persistants. Seuls les invariants sont documentés ; comptes, memberships,
+invitations, modes, équipes et règles multijoueurs ne sont pas implémentés.
+Voir [modes de jeu](docs/01-game-design/game-modes.md).
 
 ## Lire et contribuer
 

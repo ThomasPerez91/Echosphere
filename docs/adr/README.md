@@ -12,5 +12,7 @@ son code existe déjà. Conserver l'historique et relier une ADR remplacée à l
 
 - [0005 — Chronologie persistante](0005-colony-time-engine.md), acceptée à l’étape 3.
 
+- [0006 — Universe, frontière d’instance](0006-universe-game-instance.md), acceptée ; modes futurs seulement.
+
 Nouvelles ADR numérotées séquentiellement ; date de rédaction 2026-10-28 pour ces trois entrées.
 Les détails de gameplay non arbitrés restent dans le [registre](../05-project/open-questions.md).

@@ -2,8 +2,9 @@
 
 ## Mission et état du dépôt
 
-Jeu de stratégie spatiale persistant, web responsive, solo cible et coopération post-MVP.
-Étape 0 fusionnée sur master (PR #1). Lot courant : étape 3, moteur temporel pour une colonie, après la fondation des étapes 1–2. Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
+Jeu de stratégie spatiale persistant web responsive. MVP solo avec IA ; parties privées et univers
+multijoueurs persistants sont futurs, sans fonctionnalités multijoueurs implémentées.
+Étape 0 fusionnée sur master (PR #1). Lot courant : étape 3, scheduler générique et adaptateur économique de colonie, après la fondation des étapes 1–2. Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
 Mettre progress.md à jour avant chaque livraison avec périmètre, tests, limites et prochaine action.
 Ne pas implémenter de nouvelle étape sans périmètre explicite. Le socle temporel est implémenté ; auth complète,
 IA, combat, Redis, WebSocket, paiement et administration ne sont pas encore livrés.
@@ -40,11 +41,26 @@ PostgreSQL source de vérité. SQLAlchemy 2 et Alembic sont utilisés pour la pe
 - Production différée et événements persistants : utiliser app/simulation, pas de scheduler parallèle.
 - Prendre le verrou timeline, respecter due_at/séquence et complete=True avant une future dépense.
 - Ressources en micro-unités entières, taux horaires et reste persisté ; jamais de float critique.
-- Handler sans commit, effet externe ou verrou d’une autre colonie ; rollback atomique sur échec.
+- Handler sans commit, effet externe ou verrou d’un autre stream ; rollback atomique sur échec.
 - Humain et IA utilisent les mêmes commandes et une connaissance limitée.
 - Mobile obligatoire ; pas de simple dashboard réduit, pas d'action importante seulement au hover.
 - Ne pas ajouter une feature non spécifiée sans documenter sa portée et son statut ; rester dans
   l'étape autorisée. Une documentation prospective n'autorise pas son implémentation immédiate.
+
+## Compatibilité des instances et isolation
+
+Universe est la frontière d'une instance de jeu : données rattachées directement/indirectement,
+FK composites conservées et requêtes/commandes à contexte Universe explicite. Ne jamais supposer
+un Universe = un User, ni un processus = un Universe. Workers multi-univers, indépendants des connexions.
+Le scheduler verrouille EventStream (universe_id) ; ColonyTimeline garde seulement son ancrage
+économique et son lien explicite stream/univers. Ne pas remettre colony_id dans ScheduledEvent.
+Pas de owner_kind/owner_id sans FK pour modéliser les futurs propriétaires de stream.
+
+Participation future : User/Account ↔ UniverseMembership ↔ éventuellement Empire ↔ rôle/permissions.
+Ne pas créer cette table ou Empire.owner_user_id maintenant. Toute future API authentifiée vérifiera
+User → Membership → Universe → permissions → Empire/Entity. Pas de règles gameplay en singleton
+serveur ; les rulesets/vitesses seront versionnés par instance. Notifications/WebSockets jamais autorité.
+Lire [modes](docs/01-game-design/game-modes.md) et [ADR 0006](docs/adr/0006-universe-game-instance.md).
 
 ## Conventions
 
@@ -85,21 +101,23 @@ Appliquer la Definition of Done avant de déclarer une étape terminée.
 
 ## Git et livraison
 
-`develop` est la branche d'intégration de référence. Toute nouvelle branche part du dernier develop ;
-les PR de développement ciblent develop. Si une dépendance validée en CI attend sa revue, une branche
-créée depuis develop peut intégrer ses commits sans fusionner sa PR ; noter la dépendance explicitement
-sur la nouvelle PR. Ne pas contourner l'examen en fusionnant develop ou master sans instruction. `master` contient les versions destinées aux releases.
-Une promotion develop → master, un tag ou une publication requiert une instruction de release.
-L'autorisation de fusionner PR #1 était ponctuelle ; ne pas en déduire une autorisation permanente.
+`master` est la branche d'intégration stable. Toute évolution suit
+`work/<feature>` → PR vers master → CI et revue → merge sur autorisation explicite.
+Pas de develop permanente ou de branche empilée pour contourner une dépendance non intégrée.
+Tags et releases seront créés plus tard sur instruction, sans réserver master aux seules releases.
 
 ```bash
-git switch develop
-git pull --ff-only origin develop
+git switch master
+git pull --ff-only origin master
 git switch -c work/nom-du-lot
 ```
 
-Commits cohérents, pas de force push, de réécriture partagée, de secrets ou de fichiers générés.
-Lire l'état distant avant toute mutation et préserver le travail existant. Décrire les tests réels
-sur la PR, vérifier la CI avant d'annoncer le lot validé ; laisser la PR à examiner sauf instruction
-de fusion. Mettre à jour contexte/progression sans y copier secrets, logs complets ou hypothèses
-présentées comme décisions. Ne jamais annoncer un push ou une PR qui n'existe pas.
+La correction actuelle continue work/step-3-time-engine / PR #3, sans nouvelle branche.
+Thomas a explicitement autorisé la fusion de PR #2 puis de PR #3 corrigée, après CI verte ; cette
+autorisation est limitée à ces PR. La suppression de develop est conditionnelle à l'absence d'écart
+à conserver. Ne pas supprimer d'autres branches, forcer un push ou réécrire l'historique partagé.
+Toute fusion future, tag ou déploiement requiert son autorisation propre.
+
+Avant de déclarer une livraison terminée : vérifier la tête distante et sa CI, mettre à jour
+context.md/progress.md et rapporter SHA, tests et limites réelles. L'étape 4 ne commence qu'après
+correction, revue et intégration de PR #3 ; aucune branche Étape 4 dans cette mission.

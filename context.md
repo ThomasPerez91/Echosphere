@@ -1,51 +1,52 @@
 # Contexte de reprise — Echosphere
 
-Dernière mise à jour : 2026-10-28. Ce fichier décrit le cadre stable ; [progress.md](progress.md)
-décrit le lot courant, les validations et les prochaines actions. Lire aussi [AGENTS.md](AGENTS.md).
+Mis à jour le 2026-10-28. Lire [AGENTS.md](AGENTS.md) puis [progress.md](progress.md) et vérifier
+l'état GitHub réel avant toute action. Ce fichier décrit le cadre stable, pas une autorisation générale.
 
-## Produit
+## Produit et instance
 
-Stratégie spatiale persistante dans le navigateur. Une préparation quotidienne d'environ dix minutes ;
-une session longue améliore les décisions, pas le rendement par clic. Civilisations IA autonomes,
-sans LLM au départ, mêmes services/règles et connaissance limitée que les humains.
-Trois ressources principales : Alliages, Flux, Données. Planètes à secteurs, pas de grille ; galaxie
-future en graphe 2D seedé ; backend autoritaire. Aucun pay-to-win.
+Stratégie spatiale persistante web, préparation quotidienne d'environ dix minutes, sessions longues
+pour mieux décider et non produire par clic. Trois ressources Alliages/Flux/Données. IA sans LLM
+au départ, mêmes règles/services et connaissance limitée. Pas de pay-to-win ni de récolte manuelle.
 
-## Dépôt et branches
+Universe est la frontière d'une instance isolée : solo (MVP humain+IA), partie privée future, univers
+multijoueur persistant futur. Ce dernier fonctionne sans durée maximale obligatoire et indépendamment
+des connexions. Ne pas supposer Universe=User ou processus=Universe. Aucune fonctionnalité multijoueur
+implémentée : pas de comptes, membership, invitations, lobby, matchmaking, équipe ou alliance.
+Concept futur : User/Account ↔ UniverseMembership ↔ éventuellement Empire ↔ rôles/permissions.
+Pas de owner_user_id ajouté à Empire ; controller_type human/ai n'authentifie personne.
+Règles/vitesses futures par Universe/ruleset/version, jamais singleton gameplay serveur.
 
-Dépôt : https://github.com/ThomasPerez91/Echosphere.
-Le 28 octobre, Thomas a demandé de fusionner PR #1 sur master puis de créer develop comme référence.
-Cette fusion est réalisée au commit 1ffeab068b3cbe205acfcd59ceee65e22262c5f5.
-Toutes les nouvelles branches de travail partent de develop et les PR de développement le ciblent.
-master reçoit les releases sur instruction. Ne pas confondre branche de référence du workflow et
-réglage de branche par défaut dans l'interface GitHub ; ce dernier n'a pas été modifié ici.
-Aucune autorisation générale de fusion/tag/déploiement ne découle de la fusion ponctuelle de PR #1.
+## Workflow actuel (remplace develop)
 
-## Architecture
+master = intégration stable. Synchroniser master, créer work/feature, CI, PR vers master, revue puis
+merge uniquement sur instruction. Pas de develop permanente ni de branche empilée pour contourner
+une dépendance non intégrée. Tags/releases identifiées plus tard. Aucun changement du workflow ne
+constitue une autorisation permanente de merge, publication ou suppression de branches.
 
-Monolithe modulaire : React/TypeScript/Vite ; Python/FastAPI ; PostgreSQL 17 ; SQLAlchemy 2/Alembic.
-UTC partout en calcul/stockage. API dans backend/app/api, config dans core, DB/sessions/modèles dans
-persistence, migrations versionnées dans backend/migrations. Aucun calcul critique dans le navigateur.
-Le socle temporel de colonie est persistant et transactionnel, sans tick global par seconde.
-Micro-unités entières, reste exact, ordre due_at/séquence et verrou de timeline commun aux services.
-Le frontend est encore un placeholder responsive ; les modèles ne constituent pas un jeu jouable.
+## État et autorisation de cette mission
 
-## Ordre de travail et décisions
+PR #2 était ouverte vers master au début et a été fusionnée sur instruction explicite de Thomas :
+a065ad80eeb6db73438e61b1d6cde8bc3293e06d. PR #3 reste sur work/step-3-time-engine, cible master.
+Thomas a autorisé sa correction puis sa fusion après vérification de la CI finale, ainsi que la
+suppression conditionnelle de develop sans écart à conserver. Consulter GitHub pour confirmer les
+résultats effectifs ; ne pas prendre ce texte pour une autorisation couvrant d'autres PR.
 
-Roadmap 0–17 : [roadmap](docs/05-project/roadmap.md). Le lot courant 3 livre le socle temporel. PR #2 reste une dépendance en revue tant qu’elle n’est pas fusionnée.
-Ne pas coder tout le MVP en interprétant une simple demande de poursuite comme validation de tous
-les choix ouverts. Distinguer validé, orientation, provisoire, question ouverte et futur.
-Registre Q01–Q18 : [questions ouvertes](docs/05-project/open-questions.md).
-Q03/Q13 sont partiellement cadrées par ADR 0005 ; économie et interactions multi-agrégats restent ouvertes.
-Q02 précède le combat ; Q16 toute mutation HTTP. Aucun endpoint métier non protégé n’est ajouté.
-Aucune authentification complète, commande de jeu, IA ou génération de galaxie n'existe encore.
+## Architecture et garanties
 
-## Protocole de reprise
+Monolithe modulaire React/TypeScript/Vite, Python/FastAPI, PostgreSQL, SQLAlchemy/Alembic. UTC,
+backend autoritaire, migrations explicites avant API/worker. Aucun endpoint métier non protégé.
+Scheduler générique : EventStream(universe_id,cursor_at,next_sequence) → ScheduledEvent.
+ColonyTimeline lie explicitement colonie/stream/univers et garde settled_at/ResourceBalance.
+FK composites, ordre due_at/séquence, idempotence, SKIP LOCKED, transactions/SAVEPOINT, retries et
+reprise après crash. Les futurs adaptateurs typés de scope ne nécessitent pas de réécrire les événements.
+Aucun owner_kind/owner_id sans FK. Les workers traitent plusieurs univers sans présence de navigateur.
 
-1. Lire progress.md et les consignes AGENTS, puis vérifier branches, PR et CI distantes.
-2. Partir du dernier develop pour un nouveau lot ; continuer la branche courante si la PR attend une correction.
-3. Lire les docs du domaine, cadrer les questions nécessaires et implémenter le plus petit lot complet.
-4. Vérifier lint/tests/build, migrations PostgreSQL et smoke Docker selon les changements.
-5. Mettre à jour progress.md avec résultats réels, limites et prochaine action, puis ouvrir une PR vers develop.
+## Reprise
 
-Ne stocker aucun secret ou token dans ces fichiers. Un résultat CI annoncé doit être vérifié sur GitHub.
+Voir progress.md pour CI/SHA, [ADR 0005](docs/adr/0005-colony-time-engine.md) pour la correction du temps,
+[ADR 0006](docs/adr/0006-universe-game-instance.md) et [modes](docs/01-game-design/game-modes.md).
+Q01–Q29 restent au registre selon leur statut, sans inventer réponses multijoueurs/équilibrage.
+Une future API vérifie User → Membership → Universe → permissions → Entity, plus fog of war.
+Aucune Étape 4 ni branche correspondante avant correction, revue et fusion de PR #3 ; cette mission
+s'arrête après PR #3 corrigée/intégrée et le contrôle conditionnel de develop.

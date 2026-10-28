@@ -34,6 +34,10 @@ Le job Compose vérifie aussi les migrations dans l'image runtime et la reprise 
 
 ## Temps et concurrence
 
+Les tests de stream générique sans colonie, de scope inter-univers, de FK composites et de
+backfill 0002 → 0003 → 0002 → 0003 complètent les scénarios précédents. Les downgrades non
+représentables sont refusés sans perte de données.
+
 Les intégrations temporelles utilisent des transactions réellement committées et des sessions
 indépendantes. Elles effacent seulement les fixtures qu'elles créent dans la base *_test. Deux workers
 sont coordonnés par des signaux threading, pas des sleeps de gameplay : pas de double exécution sur

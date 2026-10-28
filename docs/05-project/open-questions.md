@@ -25,6 +25,25 @@ les moments limites pour décider avant de dépendre du choix.
 | Q17 | Budgets de performance et charge de référence | 3 puis 17 | [Performance](../04-quality/performance.md) |
 | Q18 | Contenu exact des relations minimales, hostilité et négociation | 13 | [Roadmap](roadmap.md) |
 
+## Modes futurs : nouvelles questions distinctes (toutes ouvertes)
+
+| ID | Arbitrage attendu | Référence |
+| --- | --- | --- |
+| Q19 | Règles exactes des parties privées, invitations et IA optionnelles | [Modes](../01-game-design/game-modes.md) |
+| Q20 | Nombre maximal de joueurs par famille d'univers | [Modes](../01-game-design/game-modes.md) |
+| Q21 | Un joueur/un empire ou empire partagé, rôles et permissions | [ADR 0006](../adr/0006-universe-game-instance.md) |
+| Q22 | Victoire, durée et fin par famille ; aucune durée maximale obligatoire en persistant | [Modes](../01-game-design/game-modes.md) |
+| Q23 | Règles join/leave et conséquences pour l'empire et la partie | [Modes](../01-game-design/game-modes.md) |
+| Q24 | Conditions de late join d'un univers persistant déjà actif | [Modes](../01-game-design/game-modes.md) |
+| Q25 | Protection et progression d'un nouvel arrivant | [Modes](../01-game-design/game-modes.md) |
+| Q26 | Rythmes/vitesses et version des rulesets selon famille d'univers | [Modes](../01-game-design/game-modes.md) |
+| Q27 | Pause possible ou non des parties privées et autorité de décision | [Modes](../01-game-design/game-modes.md) |
+| Q28 | Équipes/alliances de départ possibles et règles associées | [Modes](../01-game-design/game-modes.md) |
+| Q29 | Dimensionnement, capacité et objectifs de charge des univers persistants | [Performance](../04-quality/performance.md) |
+
+Aucune réponse implicite par le code de l'étape 3. Q14 reste la question générale de progression/fin,
+Q22 distingue les familles ; Q02 et Q25 devront être conciliées sans décider de protection maintenant.
+
 ## Cadrage actuel des questions
 
 Q16 est cadrée aux étapes 1–2 : pas de mutation HTTP publique tant que identité/session, contrôle
@@ -40,7 +59,7 @@ Q02 est un prérequis du futur combat : aucun endpoint d'attaque ne sera livré 
 Q03 : micro-unités entières (1 unité = 1 000 000), taux horaires et reste exact persisté. BIGINT non
 négatif avec dépassement explicite. Capacité optionnelle saturante sans valeur par défaut de gameplay.
 Coûts, rendements, entrepôts et entretien restent ouverts.
-Q13 : pour une colonie, ordre due_at/séquence sous verrou, rattrapage à date logique, SAVEPOINT pour
+Q13 : pour chaque EventStream, ordre due_at/séquence sous verrou, rattrapage à date logique, SAVEPOINT pour
 reprise atomique, retries bornés et blocage de tête. L'ordre multi-agrégats, flotte/combat et migrations
 de payload/archivage restent ouverts. Détails dans [ADR 0005](../adr/0005-colony-time-engine.md).
 

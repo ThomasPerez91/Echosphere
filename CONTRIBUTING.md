@@ -6,11 +6,16 @@ Lire aussi [context.md](context.md) et [progress.md](progress.md), qui indiquent
 
 ## Workflow
 
-Créer toute nouvelle branche de travail depuis le dernier develop ; changements ciblés, commits cohérents avec préfixes
-`docs:`, `chore:`, `feat:`, `fix:`, `test:` ou `ci:`. Pas de secret, .env, node_modules, .venv ou dist.
-Ne pas réécrire une branche partagée ni forcer un push. Ouvrir une PR vers develop ; pas de merge
-ou déploiement automatique sans instruction. Les releases passent par une PR develop → master,
-puis un tag/publication explicitement autorisés. La CI vérifie les branches et PR develop/master.
+Synchroniser master, créer une branche courte work/..., développer, vérifier la CI puis ouvrir une
+PR vers master. Revue et merge uniquement sur autorisation. master est l'intégration stable ; aucun
+passage obligatoire par develop. Tags/releases identifiées seront ajoutés plus tard sur instruction.
+Ne pas empiler une branche pour contourner une dépendance ouverte ; faire intégrer la fondation
+ou signaler le blocage. Pour cette correction, continuer la branche existante de PR #3.
+
+Commits cohérents avec préfixes docs/chore/feat/fix/test/ci. Aucun secret, .env, node_modules,
+.venv ou dist ; pas de force push ni réécriture partagée. Ne supprimer une branche que sur instruction
+et après vérification de ses écarts. Les règles produit et les questions ouvertes ne se ferment pas
+implicitement parce qu'un schéma ou un test les rend possibles.
 
 ## Modifier une règle
 

@@ -25,7 +25,7 @@ docker compose exec backend alembic check
 
 Compose exécute désormais le service migrate (alembic upgrade head) avant API/worker.
 L'API ne migre pas le schéma au démarrage de chaque worker. Relancer upgrade head reste idempotent. `/ready`
-prouve la connexion PostgreSQL, pas la version du schéma. Les migrations 0001/0002 créent huit tables,
+prouve la connexion PostgreSQL, pas la version du schéma. Les migrations 0001/0002/0003 aboutissent à neuf tables,
 sans données. `upgrade head` peut être relancé sans répéter ses effets. `alembic check` vérifie la
 dérive entre ORM et schéma ; ce n'est pas un contrôle d'intégrité des données.
 Ne pas exécuter de downgrade sur des données à garder : un downgrade base supprime ces tables.
@@ -43,6 +43,15 @@ pour une réinitialisation volontaire. Modifier le password dans .env ne modifie
 `/health` reste 200 si PostgreSQL s'arrête ; `/ready` devient 503, puis retrouve 200 après reprise.
 Un statut unhealthy n'entraîne pas automatiquement un redémarrage par Compose. Le worker a une politique restart unless-stopped ;
 les autres services utilisent leur politique par défaut. Utiliser `docker compose up -d` pour les relancer.
+
+## Migration 0003 : arrêt coordonné et downgrade
+
+Avant une mise à jour sur une base déjà utilisée, arrêter API/worker anciens, appliquer les migrations,
+puis redémarrer les processus avec la même version. Ne pas mélanger workers 0002 et schéma 0003.
+En local : docker compose down (sans -v), puis up --build avec le service migrate et le nouveau code.
+0003 conserve l'historique et les balances. Son downgrade est en ligne seulement et refuse tout
+stream générique sans colonie ou cursor_at différent de settled_at ; ne pas supprimer ces données
+pour le forcer. Sauvegarder et tester une restauration avant toute migration sur données à conserver.
 
 ## Worker et incidents temporels
 
