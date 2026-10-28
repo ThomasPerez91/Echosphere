@@ -10,7 +10,8 @@ Synchroniser master, créer une branche courte work/..., développer, vérifier 
 PR vers master. Revue et merge uniquement sur autorisation. master est l'intégration stable ; aucun
 passage obligatoire par develop. Tags/releases identifiées seront ajoutés plus tard sur instruction.
 Ne pas empiler une branche pour contourner une dépendance ouverte ; faire intégrer la fondation
-ou signaler le blocage. La fondation et le scheduler sont intégrés ; chaque nouveau lot repart de master.
+ou signaler le blocage. Un nouveau lot repart de master ; une continuation explicitement autorisée
+reste sur la branche/PR existante (passation actuelle : #5, sans nouvelle branche/PR).
 
 Commits cohérents avec préfixes docs/chore/feat/fix/test/ci. Aucun secret, .env, node_modules,
 .venv ou dist ; pas de force push ni réécriture partagée. Ne supprimer une branche que sur instruction
@@ -38,3 +39,11 @@ et tester les nouveaux locks. Pour npm : installation ciblée, revue du package-
 
 Une PR décrit problème et comportement final, périmètre, tests exécutés et limites connues.
 La [Definition of Done](docs/04-quality/definition-of-done.md) fait foi pour la recette.
+
+## Travail entre environnements
+
+Suivre [AGENTS](AGENTS.md) et [Work ↔ Codex](docs/06-handoff/work-codex-handoff.md) : état distant
+avant action, lecture du checkpoint, synchronisation ff-only sans perte, mêmes vérifications, commit/
+push puis SHA/CI relus. Une décision est synthétisée avec statut/provenance dans sa référence canonique,
+pas exportée comme conversation privée. Les [limites des sources](docs/06-handoff/source-map.md)
+et questions non résolues restent visibles. La cible Portal/Game n’est pas une implémentation.
