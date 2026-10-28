@@ -28,13 +28,28 @@ Modes de jeu et ADR 0006 ajoutés, Universe=frontière d'instance. Q19–Q29 ouv
 aucune règle décidée ni feature créée. Workflow corrigé partout : master stable, work/... → PR master,
 CI/revue et autorisation. develop n'est plus nécessaire ; suppression seulement après contrôle d'écarts.
 
-## Validation et autorisation de clôture
+## Validation du correctif et autorisation de clôture
 
-Les tests locaux sans PostgreSQL couvrent toujours calcul exact, UTC et sondes ; les intégrations
-sont explicitement ignorées localement. La CI doit vérifier tous les anciens scénarios plus streams
-sans colonie, traitement multi-univers, scope incorrect, FK cross-universe et migrations peuplées.
-Vérifier la tête finale et ses jobs backend/frontend/Compose avant la fusion de PR #3 autorisée par
-Thomas. Les résultats finaux/URL seront consignés dans le checkpoint de ce lot et le rapport final.
+CI source corrigée vérifiée verte sur `0068209e016733c6f0a1cfe84c826c5dd40a5ce1` :
+[exécution 40694329712](https://github.com/ThomasPerez91/Echosphere/actions/runs/40694329712).
+52 tests backend réussis (21 unitaires + 31 intégrations PostgreSQL), 3 tests frontend, lint/build,
+53 documents et liens vérifiés. Compose/migrations/worker et panne/reprise PostgreSQL passent.
+
+Les anciens tests de précision, idempotence, retries/blocked, rollback, interruption et concurrence
+sont conservés. Nouveaux cas : streams sans colonie dans plusieurs univers, scope incorrect et FK
+inter-univers, séparation cursor/settled_at, roundtrip peuplé 0002→0003→0002→0003 et refus de
+downgrade sans destruction. 0001/0002 non réécrites, aucun user_id ajouté à Empire.
+
+Ce checkpoint documentaire suit le commit source testé ; vérifier la CI de sa tête avant fusion.
+Thomas a explicitement demandé de fusionner PR #3 corrigée sur master après vérification finale.
+Le résultat effectif (fusion/SHA) est à confirmer sur GitHub, cette entrée ne simule pas une fusion.
+Aucune feature multijoueur ni branche Étape 4 créée. La recette visuelle/WSL2 spécifique et la charge
+massive ne sont pas revendiquées par les tests actuels.
+
+Dévelop historique : comparaison vérifiée après fusion de PR #2, zéro commit propre et six commits
+de retard, tous dans master. Aucun travail à préserver identifié. Suppression autorisée sous cette
+condition ; vérifier son état distant final (l'intégration ne propose pas delete-ref et le navigateur
+nécessite une connexion GitHub pour cette opération). Le workflow ne dépend plus de cette branche.
 
 ## Reprendre après ce lot
 

@@ -20,7 +20,7 @@ pour lancer la pile locale.
 ```bash
 mkdir -p ~/projects
 cd ~/projects
-git clone --branch work/step-3-time-engine https://github.com/ThomasPerez91/Echosphere.git
+git clone --branch master https://github.com/ThomasPerez91/Echosphere.git
 cd Echosphere
 cp .env.example .env
 docker compose config --quiet
@@ -30,8 +30,8 @@ docker compose exec backend alembic upgrade head
 docker compose exec backend alembic check
 ```
 
-Ces commandes testent directement la branche de PR #3, avant son intégration.
-Après intégration, utiliser master comme base stable des nouvelles branches.
+Ces commandes utilisent master, la base d’intégration stable. Pour tester une PR non fusionnée,
+choisir sa branche avant le build ; toutes les nouvelles branches partent de master.
 Le premier build télécharge les images et dépendances. Postgres, backend et frontend doivent être healthy ; worker running et migrate terminé avec code 0.
 L'ordre est postgres → migrate → API/worker → frontend. Pour attendre automatiquement :
 `docker compose up --build -d --wait --wait-timeout 180`.
