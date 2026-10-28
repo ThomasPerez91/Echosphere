@@ -30,19 +30,28 @@ Même DoD dans Work et Codex. Pas de résultat CI configuré présenté comme ex
 annoncé testé sans recette réelle attestée. Procédure concrète :
 [Work ↔ Codex](docs/06-handoff/work-codex-handoff.md), [DoD](docs/04-quality/definition-of-done.md).
 
-## Mission documentaire actuelle et Git
+## Mission documentaire historique et reprise Git
 
 master = intégration stable ; work/... → PR master → CI/revue → merge sur autorisation explicite.
 Le workflow historique develop/release est superseded, aucune develop permanente. Pour un nouveau
 lot après intégration de sa fondation : master synchronisée puis branche courte, sans empilement.
 
-Cette passation continue **work/step-5a-colony-domain / PR #5**, ouverte et non fusionnée au départ
-sur 5be00da. Ne pas créer de branche ni PR #6, merger, forcer un push ou supprimer de branche.
-Périmètre **documents uniquement**, plus scripts/check_docs.py si nécessaire aux nouveaux documents.
-Ne pas modifier services, gameplay, migrations/SQL, game_data (même son README), dépendances,
-Compose/Docker ou tests fonctionnels. Toute anomalie de code observée va dans
-[audit](docs/06-handoff/pr-5-audit.md)/[risques](docs/06-handoff/known-gaps.md), sans correctif ici.
-Une fois cette mission terminée, une nouvelle instruction et progress déterminent le prochain lot.
+Checkpoint du 28/10/2026 : la passation documentaire a été portée par
+**work/step-5a-colony-domain / PR #5**, ouverte et non fusionnée au départ sur 5be00da.
+L’état GitHub réel prévaut toujours sur les consignes contextuelles d’un ancien checkpoint.
+
+- Si PR #5 est encore ouverte et que la mission porte dessus, reprendre sa branche existante ;
+  ne pas créer de nouvelle branche ni PR #6 pour ce lot, ni merger sans autorisation explicite.
+- Si PR #5 est fusionnée, cette consigne est historique : ne pas reprendre sa branche pour un
+  nouveau lot. Tout nouveau lot autorisé repart de master synchronisée sur une nouvelle branche
+  courte work/..., selon son périmètre. Ne pas recréer la branche de PR #5.
+
+Le périmètre de la passation était **documents uniquement**, plus scripts/check_docs.py si nécessaire
+aux nouveaux documents. Services, gameplay, migrations/SQL, game_data (même son README), dépendances,
+Compose/Docker et tests fonctionnels étaient exclus. Toute anomalie de code observée dans cette
+mission va dans [audit](docs/06-handoff/pr-5-audit.md)/[risques](docs/06-handoff/known-gaps.md), sans
+correctif dans ce lot. Une nouvelle instruction et progress déterminent le prochain lot ; aucun
+force-push ou suppression de branche implicite.
 
 ## Produit et données
 

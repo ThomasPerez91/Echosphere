@@ -59,9 +59,20 @@ Les tests fonctionnels ne sont pas relancés localement pour la mission docs ; l
 inchangés. Ces résultats CI ne sont pas une recette WSL2/tactile/charge/anti-DDoS. Le présent commit
 de checkpoint suit cette tête validée : vérifier aussi sa propre CI avant toute fusion autorisée.
 
-Prochaine action : relire la tête publiée et sa CI/revue, laisser #5 non fusionnée. Après intégration
-et instruction d’un nouveau lot, cadrer 5B (Q16/Q40–Q56), sans commencer directement une API Colony
-ou le multijoueur. Le futur agent ne doit pas déduire une autorisation de merge de ce checkpoint.
+### Prochaine action selon l’état GitHub réel
+
+L’état GitHub réel prévaut sur les états historiques de ce document.
+
+- **Si PR #5 est encore ouverte** : vérifier sa tête publiée et sa CI, effectuer la revue ;
+  merge uniquement sur autorisation explicite. Reprendre sa branche pour une mission sur #5,
+  sans créer de nouvelle branche ou PR pour ce lot.
+- **Si PR #5 est déjà fusionnée** : synchroniser master, considérer 5A/passation comme intégrées,
+  puis effectuer la recette locale WSL2/Docker/Codex selon la procédure de passation. Cette recette
+  n’a pas encore été effectuée. Ne pas recréer une branche #5. Le prochain développement fonctionnel
+  est 5B (Q16/Q40–Q56), uniquement après instruction, sur une nouvelle branche work/... issue de
+  master synchronisée ; ne pas commencer directement une API Colony ou le multijoueur.
+
+Le futur agent ne doit pas déduire une autorisation de merge ou de développement de ce checkpoint.
 
 ## Historique du checkpoint fonctionnel 5A (antérieur à la passation)
 
@@ -71,9 +82,9 @@ nouveaux tests exécutés dans la passation. La séquence 5B historique est affi
 ## Reprise et autorisation vérifiées
 
 PR #4 fusionnée sur instruction de l’utilisateur : master `54f928e2348781db43b335d4dcf569aadc0db6e9`.
-[CI master 40716684879](https://github.com/l’utilisateurPerez91/Echosphere/actions/runs/40716684879)
+[CI master 40716684879](https://github.com/ThomasPerez91/Echosphere/actions/runs/40716684879)
 verte avant création de `work/step-5a-colony-domain`. Brief joint appliqué : Étape 5A uniquement.
-[PR #5](https://github.com/l’utilisateurPerez91/Echosphere/pull/5) vers master ; aucune autorisation de fusion.
+[PR #5](https://github.com/ThomasPerez91/Echosphere/pull/5) vers master ; aucune autorisation de fusion.
 Aucune develop recréée, branche empilée, release ou déploiement.
 
 ## Domaine et règles livrés
@@ -135,7 +146,7 @@ Première CI source 789aa96 : frontend et Compose verts, backend 98 réussis/1 �
 L’intervalle de saturation logistique était de dix jours, insuffisant pour les Données ; corrigé
 à vingt jours. Ajout de tests d’édition réelle du catalogue sans repricing et d’événement étranger.
 CI source finale entièrement verte sur `58e8f7cf32c1b2fbfd9568ec2317cc4338ae7642` :
-[run 40720967410](https://github.com/l’utilisateurPerez91/Echosphere/actions/runs/40720967410).
+[run 40720967410](https://github.com/ThomasPerez91/Echosphere/actions/runs/40720967410).
 101 tests backend réussis (42 unitaires + 59 PostgreSQL), 11 frontend, 5 Chromium, lint/build,
 56 documents/liens, migrations/absence de dérive, chargement v0.1 dans l’image et smoke Compose avec
 panne/reprise PostgreSQL. Tous les scénarios antérieurs sont conservés. Ce checkpoint documentaire

@@ -16,9 +16,11 @@ Universe = frontière d’instance, ni User ni processus ; late join et protecti
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
 éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
 
-## Implémentation actuelle sur PR #5, pas partie jouable
+## Implémentation — checkpoint du 28/10/2026, pas partie jouable
 
-Fondations et shell 0–4 intégrés dans master 54f928e au départ ; domaine Colony 5A sur PR #5 ouverte,
+Checkpoint du 28/10/2026 : 5A et la passation sont portées par PR #5, alors ouverte.
+Vérifier GitHub : après fusion de #5, considérer 5A/passation comme intégrées à master ; l’état
+GitHub réel prévaut sur ce checkpoint. Fondations et shell 0–4 intégrés dans master 54f928e au départ ;
 source fonctionnelle 58e8f7c, checkpoint 5be00da vert (101 backend, 11 frontend, 5 Chromium, Compose).
 Aucun compte, Portal/auth, membership, lobby, API gameplay ou multijoueur implémenté.
 Game : FastAPI/SQLAlchemy/Alembic/PostgreSQL + worker, React/TypeScript/Vite ; UTC, autorité serveur.
@@ -53,8 +55,11 @@ Ceci affine le backend unique historique ; aucun Portal, protocole ou Compose no
 master stable, work/... → PR master → CI/revue → merge explicitement autorisé. Pas de develop
 permanente, force push, branche empilée ou release implicite. Work/Codex publient leur checkpoint
 pour l’autre environnement ; [procédure commune](docs/06-handoff/work-codex-handoff.md).
-Cette mission = passation **documents seulement sur la branche existante #5**, sans nouvelle PR,
-merge, code métier, migration, game_data, dépendance, Docker ou test modifié. progress porte l’état final.
+La passation était limitée aux documents sur la branche existante #5, sans nouvelle PR, merge,
+code métier, migration, game_data, dépendance, Docker ou test modifié. Si #5 est encore ouverte et
+que la mission porte dessus, reprendre cette branche. Après sa fusion, synchroniser master et
+partir sur une nouvelle branche work/... pour tout nouveau lot autorisé, sans recréer la branche #5.
+progress porte le checkpoint et les actions de reprise avant/après fusion.
 Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation
 compte/lobby selon cadrage, 5D API Colony sécurisée/UI réelle. Ne pas commencer Portal complet ou
 multijoueur automatiquement. [Roadmap](docs/05-project/roadmap.md), [Q01–Q56](docs/05-project/open-questions.md).
