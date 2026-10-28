@@ -3,6 +3,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 COPY pyproject.toml requirements.lock requirements-dev.lock ./
 COPY app ./app
+COPY alembic.ini ./
+COPY migrations ./migrations
 RUN pip install -r requirements.lock && pip install --no-deps .     && useradd --create-home appuser
 USER appuser
 EXPOSE 8000

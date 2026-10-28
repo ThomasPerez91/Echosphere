@@ -4,7 +4,7 @@
 
 
 Frontend React/TypeScript/Vite ; backend Python/FastAPI ; PostgreSQL source de vérité.
-SQLAlchemy et Alembic seront introduits lors des modèles/migrations, pas artificiellement au bootstrap.
+SQLAlchemy 2 et Alembic ont été introduits pour les cinq premiers modèles et leurs migrations (étapes 1–2).
 Redis est facultatif plus tard ; aucun besoin actuel. Pas de microservices.
 
 ## Frontières futures
@@ -17,7 +17,9 @@ Les adaptateurs HTTP et IA utilisent les mêmes services et validations.
 
 ## État livré
 
-`backend/app/main.py` : sondes uniquement via psycopg, sans table ni migration.
+`backend/app/main.py` compose une application injectable ; `api/probes.py` porte les sondes,
+`core/config.py` valide l'environnement, `persistence/` contient moteur SQLAlchemy, sessions et modèles.
+`backend/migrations/` versionne le schéma. Aucun endpoint métier n'est exposé sans authentification.
 `frontend/src/` : placeholder et requête de disponibilité. `game_data/` : intention documentée,
 aucun paramètre de jeu. Docker lance trois services locaux. Le proxy Vite relaie `/api/*` vers le
 backend ; le navigateur ne résout jamais le hostname Docker `backend`.

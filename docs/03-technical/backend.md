@@ -1,30 +1,45 @@
 # Backend
 
-**Statut : bootstrap implémenté.**
+**Statut : fondation des étapes 1–2 implémentée ; gameplay futur.**
 
+Python 3.12, FastAPI, SQLAlchemy 2, psycopg, Alembic et pydantic-settings. `create_app(settings)`
+compose les adaptateurs. `app/api/probes.py` garde les contrats /health et /ready. `app/core/config.py`
+valide les variables POSTGRES_* et les délais ; un port invalide arrête la configuration au démarrage.
+Le mot de passe est un SecretStr et la construction d'URL SQLAlchemy conserve les caractères réservés.
+Aucun .env n'est chargé implicitement par Settings : Compose injecte les valeurs ; en natif, les exporter.
 
-Python 3.12, FastAPI et psycopg. L'application ne possède ni tables métier ni migrations.
-`app/main.py` contient les sondes ; les tests remplacent la fonction d'accès DB pour vérifier les
-contrats sans dépendance externe. Un contrôle réel PostgreSQL est prévu dans le smoke Compose CI.
+## Connexions et transactions
 
-## Choix minimal
+`persistence/database.py` crée le pool, limité à cinq connexions sans débordement, avec pré-ping,
+délai d'attente du pool et connect/statement timeouts. Ces limites sont des choix techniques de départ,
+pas une capacité de charge promise. Les connexions PostgreSQL ont timezone=UTC. Le lifespan libère
+le pool à l'arrêt. Les handlers synchrones utilisent le pool de threads FastAPI.
 
-Une connexion courte par `/ready`, fermée à la sortie du contexte, suffit au bootstrap. Le handler
-synchrone est exécuté par FastAPI dans son pool de threads. Ne pas conserver une connexion cassée
-entre probes. Évaluer pool, SQLAlchemy et Alembic à l'étape 1/2 avant le trafic métier.
+`create_session_factory(engine)` donne des sessions dont les services futurs posséderont la transaction :
+`with factory.begin() as session`. Commit seulement si toutes les validations et écritures réussissent,
+rollback sur exception. Une future commande humaine ou IA traversera le même service applicatif.
+Pas de repository générique ou de bus de commande vide introduit à l'avance.
 
-## Structure future
+## Persistance
 
-Les routes délèguent aux services d'application. Ceux-ci valident les commandes et coordonnent
-transaction, règles pures et persistance. Humains et IA passent par le même chemin. Ne pas construire
-une hiérarchie générique de repositories pour les deux sondes actuelles.
+Cinq modèles : Universe, Empire, StellarSystem, Planet et Colony. Première migration explicite,
+indépendante des classes ORM courantes. Pas de `create_all` au démarrage ni de migration concurrente
+par worker API. Les migrations sont une action séparée et vérifiable (voir déploiement).
+Le schéma ne crée aucune donnée, galaxie, ressource, bâtiment ni utilisateur.
 
-Les variables POSTGRES_* sont lues côté serveur ; psycopg reçoit des arguments nommés afin que les
-caractères réservés d'un mot de passe ne cassent pas une URI. Configuration UTC et aucune fuite de
-credentials dans une réponse HTTP. Ruff et pytest font partie des checks obligatoires.
+## Contrats et sécurité (Q16 cadrée, toujours ouverte)
 
+Les deux sondes conservent leurs réponses. Aucun endpoint de création/liste d'empires n'est exposé
+en attendant une identité authentifiée et un contrôle d'accès objet. Le type human/ai décrit un
+contrôleur d'empire, il n'authentifie personne. Identité/session, enveloppe d'erreur métier et contrat
+d'idempotence seront arbitrés avant la première mutation HTTP. Aucune JWT factice ni clé de dev ne
+contourne ces décisions.
 
-## Références
+## Validation
 
-- [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
-- [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+Unitaires : sondes, configuration, masquage des secrets. Intégration PostgreSQL dédiée : migrations
+upgrade/downgrade/upgrade et absence de dérive, liens cohérents entre univers, occupation unique,
+capacités valides, timestamps UTC et rollback complet. CI exécute les intégrations ; aucun SQLite
+ne remplace les garanties PostgreSQL. Les bases de tests doivent se terminer par `_test`.
+
+[Architecture](architecture.md) · [Modèle](data-model.md) · [API](api.md) · [Déploiement](deployment.md)

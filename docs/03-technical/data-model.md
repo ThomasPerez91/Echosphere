@@ -1,6 +1,6 @@
 # Modèle de données conceptuel
 
-**Statut : futur ; aucune table métier créée.**
+**Statut : cinq premiers concepts persistants ; autres domaines futurs.**
 
 
 | Concept | Responsabilité et relations proposées |
@@ -16,10 +16,31 @@
 | Knowledge / Report | Projection par empire et information datée |
 | ScheduledEvent | Échéance persistante et référence métier |
 
-Ce tableau organise les discussions ; noms SQL, colonnes et cardinalités détaillées restent à
-concevoir aux étapes concernées. L'identité/authentification humaine n'est pas implémentée.
+Le tableau distingue le modèle cible de la partie implémentée ci-dessous ; les autres concepts restent
+à concevoir aux étapes concernées. L'identité/authentification humaine n'est pas implémentée.
 
-## Invariants à porter dans les futures migrations
+## Schéma livré (migration 0001_world_foundation)
+
+| Table | Champs spécifiques et garanties |
+| --- | --- |
+| universes | name, seed ; aucune génération exécutée |
+| empires | universe_id, name, controller_type human/ai |
+| stellar_systems | universe_id, name ; pas encore de positions/routes |
+| planets | universe_id, system_id, name, sector_capacity > 0, orbital_capacity >= 0 |
+| colonies | universe_id, empire_id, planet_id unique |
+
+Chaque table a un UUID généré par PostgreSQL et un created_at timestamptz. Noms non vides, limite
+technique 120 caractères ; seed chaîne de 200 caractères. Une seed n'est pas unique : plusieurs
+univers peuvent partager une graine. Le générateur et sa version seront introduits à l'étape 7.
+Aucune valeur par défaut de secteurs/orbite ne fige les orientations de gameplay 9–18/12.
+
+Des FK composites imposent que planète/système et colonie/empire/planète appartiennent au même
+univers. Les index suivent les relations de contenance. Suppression restrictive : aucune cascade
+ne détruit silencieusement un empire. Le modèle représente seulement l'exploitation courante,
+sans historique, abandon ou conquête ; Q07 reste ouverte. Une migration ultérieure pourra conserver
+cet historique sans transformer l'unicité présente en règle de colonisation définitive.
+
+## Invariants des étapes futures
 
 Références cohérentes au même univers, absence de stock négatif, occupation de secteur valide,
 une exploitation active d'un monde selon les règles à définir, unicité d'effet d'un événement.

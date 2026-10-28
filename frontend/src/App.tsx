@@ -31,7 +31,7 @@ export default function App() {
       <section className="panel" aria-labelledby="title">
         <p className="eyebrow">STRATÉGIE SPATIALE PERSISTANTE</p>
         <h1 id="title">Echosphere<span aria-hidden="true">.</span></h1>
-        <p className="badge">Development build · Étape 0</p>
+        <p className="badge">Development build · Fondation technique</p>
         <p className="intro">Un univers à découvrir. Un empire à construire.</p>
         <p>La fondation technique est en place. Le gameplay arrivera aux prochaines étapes.</p>
         <div className="connection">

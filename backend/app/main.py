@@ -1,36 +1,30 @@
-"""Infrastructure probes only; no gameplay is implemented."""
+"""Application composition root: HTTP and persistence are separate adapters."""
 
-import os
+from contextlib import asynccontextmanager
 
-import psycopg
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 
-app = FastAPI(title="Echosphere", version="0.0.1")
-
-
-def check_database() -> None:
-    # Keyword arguments preserve passwords containing URI-reserved characters.
-    with psycopg.connect(
-        host=os.getenv("POSTGRES_HOST", "localhost"),
-        port=int(os.getenv("POSTGRES_PORT", "5432")),
-        dbname=os.getenv("POSTGRES_DB", "echosphere"),
-        user=os.getenv("POSTGRES_USER", "echosphere"),
-        password=os.getenv("POSTGRES_PASSWORD", ""),
-        connect_timeout=3,
-        options="-c timezone=UTC -c statement_timeout=3000",
-    ) as connection:
-        connection.execute("SELECT 1")
+from app.api.probes import router
+from app.core.config import Settings
+from app.persistence.database import create_database_engine, create_session_factory
 
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def create_app(settings: Settings | None = None) -> FastAPI:
+    configuration = settings if settings is not None else Settings()
+    engine = create_database_engine(configuration)
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI):
+        try:
+            yield
+        finally:
+            engine.dispose()
+
+    application = FastAPI(title="Echosphere", version="0.0.1", lifespan=lifespan)
+    application.state.database_engine = engine
+    application.state.session_factory = create_session_factory(engine)
+    application.include_router(router)
+    return application
 
 
-@app.get("/ready")
-def ready() -> dict[str, str]:
-    try:
-        check_database()
-    except (psycopg.Error, ValueError) as exc:
-        raise HTTPException(status_code=503, detail="Database unavailable") from exc
-    return {"status": "ready"}
+app = create_app()

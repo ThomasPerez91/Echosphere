@@ -15,6 +15,21 @@ sur le loopback ; l'accès Windows se fait via localhost avec l'intégration Doc
 Pas de Redis. Pas de montage source/live reload entre hôte et conteneur dans cette première version :
 reconstruire après modification.
 
+## Migrations après chaque mise à jour du backend
+
+```bash
+docker compose up --build -d --wait --wait-timeout 180
+docker compose exec backend alembic upgrade head
+docker compose exec backend alembic check
+```
+
+La première commande lance les services ; l'API ne modifie pas le schéma au démarrage. `/ready`
+prouve la connexion PostgreSQL, pas la version du schéma. La migration 0001 crée les cinq tables,
+sans données. `upgrade head` peut être relancé sans répéter ses effets. `alembic check` vérifie la
+dérive entre ORM et schéma ; ce n'est pas un contrôle d'intégrité des données.
+Ne pas exécuter de downgrade sur des données à garder : un downgrade base supprime ces tables.
+La CI teste le downgrade uniquement dans une base dédiée jetable.
+
 ## Exploitation locale
 
 `docker compose ps` : trois services healthy attendus.
