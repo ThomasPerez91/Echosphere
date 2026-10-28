@@ -1,65 +1,61 @@
 # Progression — Echosphere
 
-Dernière mise à jour : 2026-10-28. Cadre stable : [context.md](context.md).
+Mise à jour : 2026-10-28. Cadre : [context.md](context.md).
 
-## État livré sur master / base develop
+## État initial vérifié et intégration de la fondation
 
-- Étape 0 fusionnée : [PR #1](https://github.com/ThomasPerez91/Echosphere/pull/1).
-- Commit de fusion : 1ffeab068b3cbe205acfcd59ceee65e22262c5f5.
-- develop créée depuis cette fusion ; master est désormais réservée aux releases.
-- CI étape 0 vérifiée verte : backend, frontend et Docker/PostgreSQL réel avec panne/reprise.
+Au début de cette mission : PR #2 et PR #3 ouvertes vers master, aucune fusion ; develop/master
+étaient encore les branches historiques. PR #2 tête 333533146822a88170bf5d8eefd987d318931e4c ;
+PR #3 tête 348c2e5e5276ddf71d850ec1b9c0017154f7e10f, ancienne file attachée aux colonies.
 
-## Lot courant : fondation 1–2
+PR #2 fusionnée sur master sur instruction explicite, après CI verte :
+a065ad80eeb6db73438e61b1d6cde8bc3293e06d. Fondation validée : SQLAlchemy/Alembic et les cinq modèles,
+contraintes inter-univers, aucun user_id lié à Empire. PR #1/étape 0 était déjà intégrée.
 
-Branche : `work/step-1-2-foundation`, créée depuis develop. PR : [#2](https://github.com/ThomasPerez91/Echosphere/pull/2), cible develop.
-Les fonctionnalités ci-dessous restent sur cette branche jusqu'à examen/fusion de sa PR.
+## Correction actuelle — PR #3
 
-- Configuration centralisée validée (pydantic-settings), secrets masqués et délais bornés.
-- Fabrique FastAPI ; modules API/core/persistence ; pool SQLAlchemy et transactions explicites.
-- Modèles Universe, Empire, StellarSystem, Planet, Colony ; UUID et timestamps UTC.
-- FK composites : pas de planète/colonie liée à un autre univers ; occupation courante unique.
-- Alembic 0001, migration explicite, réversible seulement sur base jetable pour les tests.
-- CI sur develop/master et branches work ; tests PostgreSQL dédiés et migration dans l'image Docker.
-- Règles Git actualisées, context.md et progress.md inclus dans le check documentaire.
+Branche existante work/step-3-time-engine, PR vers master ; aucune nouvelle branche ni Étape 4.
+Scheduler générique EventStream par univers, événements attachés au stream, adaptateur économique
+ColonyTimeline distinct. FK composites pour rattachement colonie/stream/univers et événement/stream.
+Cursor logique du stream séparé de settled_at économique ; handlers de taux et calcul exact conservés.
+Aucun domaine Research/Fleet/AI/Combat anticipé. Les tests existants restent présents et adaptés.
 
-Ce lot ne livre ni écran de jeu ni endpoint de création de partie : aucune authentification n'est
-encore décidée. La fondation prépare les services suivants sans exposer de mutations non protégées.
+Migration ajoutée 0003_generic_event_streams ; 0001/0002 inchangées. Backfill des données 0002,
+préservation de l'historique et roundtrip peuplé. Refus du downgrade avant DDL pour streams non
+représentables ou curseurs non alignés, sans suppression d'événement pour contourner le refus.
 
-## Vérification et clôture du lot
+Modes de jeu et ADR 0006 ajoutés, Universe=frontière d'instance. Q19–Q29 ouvertes pour multijoueur,
+aucune règle décidée ni feature créée. Workflow corrigé partout : master stable, work/... → PR master,
+CI/revue et autorisation. develop n'est plus nécessaire ; suppression seulement après contrôle d'écarts.
 
-Commandes locales : Ruff backend/scripts, pytest, génération SQL offline Alembic, check docs,
-ESLint/Vitest/build frontend. Les tests DB sont ignorés localement sans PostgreSQL ; la CI exécute
-les douze tests d'intégration sur une base *_test et le smoke Docker réel.
-Résultats locaux vérifiés : 8 tests unitaires backend, 3 tests frontend, Ruff/ESLint/build,
-SQL offline et 50 documents/liens. Les 12 tests PostgreSQL sont ignorés localement sans serveur.
+## Validation du correctif et autorisation de clôture
 
-CI vérifiée verte sur le commit source `958df32e5fb21b2f2e74c74f7188a43d14c45aad` :
-[exécution 40684461204](https://github.com/ThomasPerez91/Echosphere/actions/runs/40684461204).
-20 tests backend passent, dont 12 intégrations PostgreSQL réelles ; 3 tests frontend passent.
-Upgrade/downgrade/upgrade, dérive ORM, build Docker, migrations dans le runtime et panne/reprise DB
-sont validés. La première exécution avait révélé une mauvaise attente de type d'erreur dans un test,
-corrigée en distinguant limite de longueur et contrainte de contrôleur.
-Ce checkpoint documentaire s'ajoute au commit source testé ; consulter la CI de la tête de PR avant fusion.
-Le lot est prêt à examiner dans PR #2, **pas encore intégré à develop**. Aucun merge de PR #2,
-tag, release ou déploiement n'a été autorisé ou exécuté.
-La recette visuelle et le test spécifique Docker Desktop/WSL2 restent à effectuer par l'utilisateur.
+CI source corrigée vérifiée verte sur `0068209e016733c6f0a1cfe84c826c5dd40a5ce1` :
+[exécution 40694329712](https://github.com/ThomasPerez91/Echosphere/actions/runs/40694329712).
+52 tests backend réussis (21 unitaires + 31 intégrations PostgreSQL), 3 tests frontend, lint/build,
+53 documents et liens vérifiés. Compose/migrations/worker et panne/reprise PostgreSQL passent.
 
-## Reprendre ici
+Les anciens tests de précision, idempotence, retries/blocked, rollback, interruption et concurrence
+sont conservés. Nouveaux cas : streams sans colonie dans plusieurs univers, scope incorrect et FK
+inter-univers, séparation cursor/settled_at, roundtrip peuplé 0002→0003→0002→0003 et refus de
+downgrade sans destruction. 0001/0002 non réécrites, aucun user_id ajouté à Empire.
 
-1. Vérifier la PR work/step-1-2-foundation → develop et sa CI ; corriger tout échec avant fusion.
-2. Une fois le lot intégré à develop, préparer l'étape 3 (temps), sur une nouvelle branche depuis develop.
-3. Cadrer Q03 : précision/arrondis, stock et taux ; Q13 : ordre simultané, locks et reprise.
-4. Implémenter horloge injectable, calcul différé et événements persistants, avec tests de crash,
-   rejeu et concurrence ; aucun cron/timer mémoire comme autorité et aucune simulation par seconde.
+Ce checkpoint documentaire suit le commit source testé ; vérifier la CI de sa tête avant fusion.
+Thomas a explicitement demandé de fusionner PR #3 corrigée sur master après vérification finale.
+Le résultat effectif (fusion/SHA) est à confirmer sur GitHub, cette entrée ne simule pas une fusion.
+Aucune feature multijoueur ni branche Étape 4 créée. La recette visuelle/WSL2 spécifique et la charge
+massive ne sont pas revendiquées par les tests actuels.
 
-## Questions qui restent ouvertes
+Dévelop historique : comparaison vérifiée après fusion de PR #2, zéro commit propre et six commits
+de retard, tous dans master. Aucun travail à préserver identifié. Suppression autorisée sous cette
+condition ; vérifier son état distant final (l'intégration ne propose pas delete-ref et le navigateur
+nécessite une connexion GitHub pour cette opération). Le workflow ne dépend plus de cette branche.
 
-Q16 : mode d'identité/session, erreurs de commandes et idempotence ; blocage de toute mutation HTTP.
-Q04 : catalogue et capacités exactes (aucun défaut 12 ni maximum 18 imposé par ce schéma).
-Q07 : coûts, concurrence métier, abandon et historique de colonisation.
-Q02 : protections hors connexion avant combat. Toutes les autres Q restent dans le registre central.
+## Reprendre après ce lot
 
-## Historique bref
+1. Vérifier l'état GitHub de PR #3, sa tête, sa CI et son éventuelle fusion, sans déduire un état de ce texte seul.
+2. Après correction/revue/fusion, prochaine étape autorisée : Étape 4, design system responsive/shell.
+3. Recette UI cible : 320/390/768/1440 px, mobile prioritaire, contrôles tactiles ~44 px, aucun hover obligatoire.
+4. Pas de nouvelle branche Étape 4 dans la présente mission ; ne pas démarrer Colony/Research/Fleet/AI/Combat.
 
-- 2026-10-28 : étape 0 publiée et vérifiée, puis fusionnée sur instruction ; develop créée.
-- 2026-10-28 : lot 1–2 publié dans PR #2 vers develop ; CI PostgreSQL/Docker verte, en attente d’examen.
+[PR #2](https://github.com/ThomasPerez91/Echosphere/pull/2) · [PR #3](https://github.com/ThomasPerez91/Echosphere/pull/3)

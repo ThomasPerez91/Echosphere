@@ -30,6 +30,7 @@ REQUIRED = {
             "fog-of-war",
             "balance-philosophy",
             "progression",
+            "game-modes",
         )
     ],
     *[
@@ -73,6 +74,8 @@ REQUIRED = {
             "0002-event-driven-time-model",
             "0003-responsive-web-ui",
             "0004-world-persistence",
+            "0005-colony-time-engine",
+            "0006-universe-game-instance",
         )
     ],
 }

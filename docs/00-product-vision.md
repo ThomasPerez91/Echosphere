@@ -5,7 +5,8 @@
 
 Echosphere est un jeu de stratégie spatiale persistant dans un navigateur. Le joueur développe
 un empire et spécialise ses colonies, explore une galaxie partiellement inconnue et rencontre
-des civilisations autonomes. Le solo est une cible ; la coopération arrivera après le MVP initial.
+des civilisations autonomes. Le MVP initial se construit en solo face aux IA. Parties privées et univers partagés persistants
+sont des familles futures : Universe est la frontière d'une instance, pas d'un utilisateur.
 
 ## Promesse et critères de réussite
 
@@ -37,6 +38,14 @@ L'étape 0 livre uniquement documentation, sondes HTTP, page placeholder, Docker
 
 Les mockups sont des références artistiques : nourriture, biens de consommation ou matière sombre
 qui y figureraient ne deviennent pas des ressources validées.
+
+## Familles d'instances futures
+
+Solo, partie multijoueur privée et univers multijoueur persistant doivent rester compatibles avec les
+fondations. L'univers persistant fonctionne en continu sans durée maximale obligatoire, indépendamment
+des connexions ; le late join est une possibilité à préserver, ses règles restent ouvertes.
+Invitations, nombre de places, partage d'empire, vitesses, pause et conditions de fin ne sont pas
+implémentés ni arbitrés. Voir [modes](01-game-design/game-modes.md) et [ADR 0006](adr/0006-universe-game-instance.md).
 
 ## Principes d'arbitrage
 

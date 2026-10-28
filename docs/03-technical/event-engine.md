@@ -1,40 +1,93 @@
-# Architecture temporelle et événements
+# Scheduler générique et règlement économique
 
-**Statut : modèle validé ; moteur futur.**
+**Statut : étape 3 corrigée sur PR #3 ; scheduler extensible, économie de colonie comme premier adaptateur.**
 
+## Deux responsabilités explicites
 
-Pas de simulation de chaque planète par seconde. Les actions longues sont des tâches avec dates
-UTC. PostgreSQL conserve les échéances et leur état ; un redémarrage n'efface pas les travaux.
+EventStream(universe_id, cursor_at, next_sequence) → ScheduledEvent(stream_id, universe_id).
+Le module scheduler.py ne référence ni Colony ni ResourceBalance. Un stream est un scope d'ordre,
+de verrouillage et d'idempotence appartenant à une instance Universe ; ce n'est pas un pointeur
+owner_kind/owner_id sans intégrité référentielle.
 
-Types conceptuels : BUILDING_COMPLETE, RESEARCH_COMPLETE, FLEET_ARRIVAL, FLEET_RETURN,
-EXPLORATION_COMPLETE, AI_TURN. Ce n'est pas encore un enum publié ni une table.
+ColonyTimeline(colony_id, universe_id, stream_id unique, settled_at) → ResourceBalance.
+Ses FK composites garantissent que colonie et stream sont dans le même univers. service.py est
+l'adaptateur économique : le handler RESOURCE_RATE_CHANGE règle les ressources jusqu'à due_at avant
+le changement de taux ; catch_up termine le règlement économique jusqu'à la cible si complete=True.
+Un événement non économique peut avancer cursor_at sans modifier settled_at : aucun calcul de
+production n'est imposé au scheduler générique. Un future adaptateur pourra faire de même pour un
+empire, une flotte ou un univers, sans implémenter ces domaines actuellement.
 
-## Proposition de traitement à valider à l'étape 3
+## Planifier et contrôler le scope
 
-1. Lire un lot borné d'échéances dues, dans l'ordre logique prévu.
-2. Réserver les entrées transactionnellement ; verrouiller les agrégats concernés.
-3. Régler la production jusqu'à l'instant de l'événement, puis appliquer ses effets et suites.
-4. Marquer le résultat dans la même transaction et conserver une clé d'idempotence.
-5. En cas de crash avant commit, relire l'événement ; après commit, ne pas doubler l'effet.
+Les fonctions génériques create_stream/lock_stream/schedule/catch_up_stream utilisent universe_id
+explicitement. Un stream absent ou d'un autre univers donne la même erreur de scope ; les FK
+composites interdisent aussi les événements incohérents même si un service omet une validation.
+Les helpers internes de colonie infèrent leur scope depuis le lien DB ; ils ne sont pas des endpoints
+authentifiés et ne remplacent pas Membership/permissions d'une future API.
 
-Une approche `FOR UPDATE SKIP LOCKED` est envisageable, avec attention aux événements partageant
-un agrégat. L'ordre des verrous, l'ordre des échéances simultanées et le traitement des événements
-nouvellement créés mais déjà dus sont ouverts en Q13. Une réservation avec commit séparé nécessiterait
-un bail récupérable ; ne pas ajouter un état bloqué sans expiration.
+Une clé idempotente est unique par stream : même clé/type/date/payload renvoie l'événement existant,
+y compris terminé ; un contenu différent produit IdempotencyConflict. Les payloads sont copiés JSON
+et les timestamps UTC. Planifier avant cursor_at est refusé. Les futurs services joueurs devront
+rattraper le scope à l'instant de commande avant de planifier leur action, sans antidater depuis le client.
 
-## Rattrapage et concurrence
+## Ordre et concurrence
 
-Un événement en retard produit son effet à sa date logique, pas à l'heure du polling : autrement
-la production changerait selon les redémarrages. Avant une commande sur une colonie, régler les
-effets dus pertinents pour éviter de dépenser un état obsolète. Définir limites et backlog de
-rattrapage sans perdre les événements. Le scheduler ne doit jamais dépendre d'un onglet ouvert.
+Ordre déterministe par stream : due_at puis séquence allouée sous verrou. Les événements enfants
+créés au même instant logique reçoivent une séquence supérieure. Aucun ordre global entre streams
+n'est promis ; opérations impliquant plusieurs agrégats restent Q13.
 
-Idempotence signifie effet métier unique malgré les reprises, pas promesse d'exécution réseau
-« exactement une fois ». Dead letters, reprises bornées et diagnostic doivent être spécifiés
-avant un worker réel. Aucun scheduler, bus ou tâche en mémoire n'est livré à l'étape 0.
+La requête LATERAL sélectionne chaque tête, puis FOR UPDATE OF event_streams SKIP LOCKED réserve
+un stream sans bloquer les autres. La tête est relue après verrouillage sous READ COMMITTED.
+Une tête blocked ou en backoff ne laisse jamais passer ses successeurs. Un worker peut traiter
+plusieurs univers ; aucune variable globale ne sélectionne un univers unique pour tout le processus.
 
+## Atomicité et reprise
 
-## Références
+Transaction par événement : compteur de tentative, SAVEPOINT, avancement cursor à due_at, handler,
+completed et enfants. Si le handler échoue, rollback du curseur, des stocks et enfants ; la transaction
+conserve seulement attempts/next_attempt_at/code générique, sans payload ou détail d'exception en log.
+Après trois échecs par défaut, état blocked ; retry différé de 30 secondes et reprise explicite après
+correction. Une interruption avant commit annule tout ; après commit l'effet ne se répète pas.
+Pas de réservation persistée séparée, pas de bail orphelin ni queue mémoire comme autorité.
 
-- [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
-- [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+Le calcul des stocks utilise la date logique, pas l'heure tardive du poll. completed_at est la date
+de traitement effective. Les handlers ne commitent pas, n'appellent aucun service externe et ne
+prennent pas un second stream ; ajouter un domaine futur nécessitera de documenter ses verrous.
+Leur code est serveur de confiance, pas un sandbox de plugins tiers.
+
+## Rattrapage borné et économie
+
+Scheduler.catch_up_stream(session, stream_id, universe_id, until, limit=100) traite les événements dus
+puis avance le curseur. Limite ou tête en erreur/backoff : complete=False, sans dépassement d'échéance.
+L'horloge injectable interdit un avancement futur ; un retour dans le passé est refusé.
+TimeEngine.catch_up(session, colony_id, until) utilise ce contrat et règle les ressources uniquement
+si le stream est complet. Un service de dépense futur exigera cette complétude sous le même verrou
+avant coûts et écritures dans sa transaction ; aucun tel endpoint public n'est exposé maintenant.
+
+Le seul handler métier technique livré est RESOURCE_RATE_CHANGE (alloys/flux/data, taux entier
+non négatif). Les exemples BUILDING_COMPLETE, RESEARCH_COMPLETE, AI_TURN, FLEET_ARRIVAL/RETURN,
+EXPLORATION_COMPLETE sont des extensions documentées, pas des handlers factices ou features implémentés.
+Un type inconnu suit la politique retry/blocked, jamais une réussite silencieuse.
+
+## Migration et exploitation
+
+0003 préserve l'historique 0002 et extrait ses streams ; 0001/0002 inchangées. Downgrade refusé si
+un stream n'a pas d'adaptateur colonie ou si son curseur économique ne permet pas le retour sans
+perte (cursor_at != settled_at). Vérification en ligne avant tout DDL ; roundtrip peuplé en CI.
+
+Compose exécute migrate puis API/worker du même monolithe. Le worker traite par lots de 50 et attend
+une seconde entre lots ; ce n'est pas un tick qui simule toutes les planètes. CLI bornée :
+
+```bash
+docker compose exec worker python -m app.simulation.worker --once --limit 50
+docker compose exec worker python -m app.simulation.worker --blocked --limit 50
+# Après correction, uniquement pour l'UUID réellement listé :
+docker compose exec worker python -m app.simulation.worker --retry UUID_DU_EVENT
+```
+
+La CLI opérateur peut inspecter plusieurs univers ; elle n'est pas une API joueur. Retry conserve
+identité/date/payload et remet le compteur de tentatives à zéro. Polling/retries sont techniques,
+pas des paramètres de vitesse gameplay. Archivage/versionnement des payloads et métriques de charge
+restent futurs. Aucun WebSocket/Redis, aucune présence de navigateur comme condition de progression.
+
+[Calcul](resource-calculation.md) · [ADR 0005](../adr/0005-colony-time-engine.md) · [Instance](../adr/0006-universe-game-instance.md)

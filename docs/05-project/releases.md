@@ -1,32 +1,22 @@
-# Versions et releases
+# Versions, intégration et releases
 
-**Statut : convention technique proposée pour démarrer.**
+**Statut : workflow master validé ; versions de releases futures indicatives.**
 
-Le code du bootstrap porte `0.0.1` à titre de version de développement. Aucun tag ni release publique
-n'est créé par l'étape 0. Le premier MVP jouable pourra être désigné `v0.1.0` après stabilisation ;
-ce nom est une proposition, pas un engagement de date. Le séquencement v0.2 à v1.0 est dans la roadmap.
+master est l'intégration stable. Toute évolution : synchroniser master, branche courte work/feature,
+CI, PR vers master, revue, puis merge uniquement sur autorisation. Pas de develop permanente et pas
+de branche empilée pour contourner une fondation non intégrée. Tags/releases identifiées plus tard.
+Le code porte encore 0.0.1 de développement ; aucun nouveau tag ou release n'est créé par ce lot.
 
-## Préparer une release
+## Préparer une release identifiée
 
-Identifier commit, versions frontend/backend, migrations et version des données. Documenter ajouts,
-changements incompatibles, bugs corrigés et limites connues. Exécuter les checks et un démarrage
-neuf ; tester la restauration avant toute migration de données persistantes importante.
+Sur un commit intégré et validé : identifier version applicative, migrations et version des données,
+notes de changement et incompatibilités, contrôles de restauration/rollback. Exécuter les checks et
+le démarrage neuf. Tag et publication demandent une instruction explicite ; master n'est pas réservé
+à la veille d'une release. Le premier MVP pourra être nommé v0.1.0, sans engagement de calendrier.
 
-Une modification d'équilibrage peut changer une simulation sans changer les API : conserver la
-version des game_data et les hypothèses dans les rapports. La compatibilité des univers déjà créés
-avec de nouvelles règles reste Q13/Q14.
+Compatibilité des univers, versions de rulesets et migration des données/payloads restent Q13/Q14.
+Les futures familles multijoueurs n'imposent pas de durée maximale aux univers persistants.
+Ne pas annoncer une CI verte sans vérifier la tête réelle. Ne pas supprimer une branche contenant
+des écarts à conserver ; une branche historique n'est pas une étape obligatoire du workflow.
 
-## Branches (décision utilisateur du 28 octobre 2026)
-
-`develop` est la référence de développement : branches de travail depuis develop et PR vers develop.
-`master` est réservé aux releases. La PR #1 a été fusionnée sur master à la demande de Thomas,
-puis develop a été créée depuis ce même commit. Cette initialisation n'est pas un schéma à répéter.
-
-Pour une release : vérifier la CI de develop, préparer notes et versions/migrations, ouvrir une PR
-develop → master et fusionner uniquement sur instruction. Tag et publication ne sont pas automatiques.
-Après un éventuel correctif de release, réintégrer le changement dans develop par une PR.
-
-Les PR sont examinées avant merge. Aucun déploiement public ou merge automatique sans instruction.
-Une CI écrite mais jamais exécutée ne doit pas être présentée comme verte.
-
-Voir [roadmap](roadmap.md) et [Definition of Done](../04-quality/definition-of-done.md).
+[Roadmap](roadmap.md) · [Definition of Done](../04-quality/definition-of-done.md)

@@ -1,4 +1,13 @@
 name: echosphere
+x-backend: &backend
+  image: echosphere-backend:dev
+  build: ./backend
+  environment:
+    POSTGRES_HOST: postgres
+    POSTGRES_DB: ${POSTGRES_DB:?Copy .env.example to .env}
+    POSTGRES_USER: ${POSTGRES_USER:?Copy .env.example to .env}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env}
+    TZ: UTC
 services:
   postgres:
     image: postgres:17-alpine
@@ -16,17 +25,19 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
   backend:
-    build: ./backend
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: ${POSTGRES_DB:?Copy .env.example to .env}
-      POSTGRES_USER: ${POSTGRES_USER:?Copy .env.example to .env}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env}
-      TZ: UTC
+    <<: *backend
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     healthcheck:
@@ -35,6 +46,15 @@ services:
       timeout: 6s
       retries: 5
       start_period: 10s
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.simulation.worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
   frontend:
     build: ./frontend
     environment:

@@ -93,6 +93,7 @@ class Planet(Record, Base):
 class Colony(Record, Base):
     __tablename__ = "colonies"
     __table_args__ = (
+        UniqueConstraint("id", "universe_id", name="uq_colonies_id_universe"),
         ForeignKeyConstraint(
             ["empire_id", "universe_id"],
             ["empires.id", "empires.universe_id"],

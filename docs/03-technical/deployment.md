@@ -9,8 +9,8 @@ Docker Desktop doit être démarré avec son intégration activée pour la distr
 Utiliser Docker Compose v2 récent et cloner dans le filesystem Linux, par exemple `~/projects`.
 Les ports 5173 et 8000 doivent être libres. Exécuter les commandes du README à la racine du dépôt.
 
-Compose construit frontend et backend, initialise PostgreSQL 17 dans un volume nommé et attend
-les healthchecks. PostgreSQL ne publie aucun port hôte. Backend et frontend publient seulement
+Compose construit frontend et backend, initialise PostgreSQL 17 dans un volume nommé, attend
+sa santé, exécute migrate puis démarre API/worker et enfin frontend. PostgreSQL ne publie aucun port hôte. Backend et frontend publient seulement
 sur le loopback ; l'accès Windows se fait via localhost avec l'intégration Docker Desktop.
 Pas de Redis. Pas de montage source/live reload entre hôte et conteneur dans cette première version :
 reconstruire après modification.
@@ -23,8 +23,9 @@ docker compose exec backend alembic upgrade head
 docker compose exec backend alembic check
 ```
 
-La première commande lance les services ; l'API ne modifie pas le schéma au démarrage. `/ready`
-prouve la connexion PostgreSQL, pas la version du schéma. La migration 0001 crée les cinq tables,
+Compose exécute désormais le service migrate (alembic upgrade head) avant API/worker.
+L'API ne migre pas le schéma au démarrage de chaque worker. Relancer upgrade head reste idempotent. `/ready`
+prouve la connexion PostgreSQL, pas la version du schéma. Les migrations 0001/0002/0003 aboutissent à neuf tables,
 sans données. `upgrade head` peut être relancé sans répéter ses effets. `alembic check` vérifie la
 dérive entre ORM et schéma ; ce n'est pas un contrôle d'intégrité des données.
 Ne pas exécuter de downgrade sur des données à garder : un downgrade base supprime ces tables.
@@ -32,7 +33,7 @@ La CI teste le downgrade uniquement dans une base dédiée jetable.
 
 ## Exploitation locale
 
-`docker compose ps` : trois services healthy attendus.
+`docker compose ps -a` : postgres/backend/frontend healthy, worker running et migrate exited (0) attendus.
 `docker compose logs --tail=100 backend` : diagnostic API.
 `docker compose exec postgres psql -U echosphere -d echosphere -c 'SELECT 1;'` : DB locale
 (adapter noms si .env modifié).
@@ -40,8 +41,26 @@ La CI teste le downgrade uniquement dans une base dédiée jetable.
 pour une réinitialisation volontaire. Modifier le password dans .env ne modifie pas un rôle déjà créé.
 
 `/health` reste 200 si PostgreSQL s'arrête ; `/ready` devient 503, puis retrouve 200 après reprise.
-Un statut unhealthy n'entraîne pas automatiquement un redémarrage par Compose. Les services
-n'ont pas de politique de redémarrage automatique à cette étape ; utiliser `docker compose up -d`.
+Un statut unhealthy n'entraîne pas automatiquement un redémarrage par Compose. Le worker a une politique restart unless-stopped ;
+les autres services utilisent leur politique par défaut. Utiliser `docker compose up -d` pour les relancer.
+
+## Migration 0003 : arrêt coordonné et downgrade
+
+Avant une mise à jour sur une base déjà utilisée, arrêter API/worker anciens, appliquer les migrations,
+puis redémarrer les processus avec la même version. Ne pas mélanger workers 0002 et schéma 0003.
+En local : docker compose down (sans -v), puis up --build avec le service migrate et le nouveau code.
+0003 conserve l'historique et les balances. Son downgrade est en ligne seulement et refuse tout
+stream générique sans colonie ou cursor_at différent de settled_at ; ne pas supprimer ces données
+pour le forcer. Sauvegarder et tester une restauration avant toute migration sur données à conserver.
+
+## Worker et incidents temporels
+
+Le worker n'expose aucun port. Logs : `docker compose logs --tail=100 worker migrate`.
+Il traite une file SQL par lots et récupère les connexions après panne DB ; il ne recalcule pas toutes
+les colonies chaque seconde. `docker compose restart worker` ne perd pas les échéances persistées.
+Lister les événements bloqués puis relancer explicitement un UUID après correction : commandes dans
+[moteur temporel](event-engine.md). Ne pas effacer un événement pour masquer une panne.
+La commande --once démarre un consommateur additionnel borné ; elle peut coexister avec le daemon.
 
 ## Production future
 

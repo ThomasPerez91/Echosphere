@@ -28,6 +28,21 @@ les courses de dépenses et le rejeu de commandes. Les vulnérabilités découve
 correction ; ne pas ajouter de permissions GitHub ou de services cloud pour ce bootstrap local.
 
 
+## Frontière d'instance et future participation
+
+Universe isole les données de partie ; ne pas supposer un univers par utilisateur ou par processus.
+Toute future API authentifiée contrôle User → Membership → Universe → permissions → Empire/Entity,
+puis filtre aussi les informations selon le fog of war. Aucune donnée d'un autre univers ne doit
+être lisible/modifiable via un identifiant d'entité fourni par le client. Un UUID opaque n'est pas
+une autorisation. Les primitives génériques de stream exigent universe_id et vérifient son scope ;
+les adaptateurs internes de colonie ne sont pas des routes HTTP et n'authentifient pas un joueur.
+
+Account/User ↔ UniverseMembership ↔ éventuellement Empire ↔ rôle/permissions reste conceptuel ;
+aucun compte, membership ou owner_user_id n'est ajouté maintenant. controller_type human/ai n'est
+pas un droit d'accès. Règles gameplay futures par instance/ruleset ; aucune présence de navigateur
+nécessaire à la progression. Notifications/WebSockets futurs restent des projections, jamais autorité.
+[Modes](../01-game-design/game-modes.md) · [ADR 0006](../adr/0006-universe-game-instance.md).
+
 ## Références
 
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)

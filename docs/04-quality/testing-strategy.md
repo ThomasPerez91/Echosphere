@@ -12,7 +12,7 @@
 
 ## Checks livrés
 
-Backend : Ruff et huit tests unitaires pour les sondes et la configuration. Le succès de connexion est simulé dans le test unitaire ; cela ne
+Backend : Ruff et 21 tests unitaires pour sondes, configuration et production exacte. Le succès de connexion est simulé dans le test unitaire ; cela ne
 remplace pas le SELECT 1 réel du smoke Compose.
 Frontend : ESLint, TypeScript strict, build Vite, trois tests Vitest (succès, panne/réessai, 503).
 Documentation : script vérifiant les liens Markdown locaux et les fichiers obligatoires.
@@ -31,6 +31,24 @@ Pour les lancer en local, créer d'abord une base PostgreSQL dédiée, exporter 
 POSTGRES_DB (suffixe `_test`), POSTGRES_USER et POSTGRES_PASSWORD, puis depuis backend :
 `RUN_DB_TESTS=1 .venv/bin/pytest -q`. Ne jamais pointer ce test vers une base de jeu à conserver.
 Le job Compose vérifie aussi les migrations dans l'image runtime et la reprise des connexions du pool.
+
+## Temps et concurrence
+
+Les tests de stream générique sans colonie, de scope inter-univers, de FK composites et de
+backfill 0002 → 0003 → 0002 → 0003 complètent les scénarios précédents. Les downgrades non
+représentables sont refusés sans perte de données.
+
+Les intégrations temporelles utilisent des transactions réellement committées et des sessions
+indépendantes. Elles effacent seulement les fixtures qu'elles créent dans la base *_test. Deux workers
+sont coordonnés par des signaux threading, pas des sleeps de gameplay : pas de double exécution sur
+la même colonie, progression d'une seconde colonie sous verrou de la première. Une BaseException
+simule une perte du processeur avant commit ; on recrée le moteur avant/après commit pour vérifier
+rejeu et absence de doublon. Cela ne remplace pas encore une campagne de fault injection OS.
+
+L'horloge figée vérifie les taux segmentés à l'heure logique, événements enfants simultanés,
+backoff, blocage/reprise, idempotence et rattrapage incomplet. Les tests purs comparent mille petites
+lectures à une longue durée, vérifient microsecondes, capacité, overflow et refus de temps naïf/inversé.
+Le job Compose applique 0002, vérifie l'absence de dérive et exécute aussi le CLI du worker.
 
 ## Commandes sans Docker
 

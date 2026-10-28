@@ -1,9 +1,9 @@
 name: CI
 on:
   push:
-    branches: [master, develop, 'work/**']
+    branches: [master, 'work/**']
   pull_request:
-    branches: [master, develop]
+    branches: [master]
 permissions:
   contents: read
 jobs:
@@ -68,6 +68,7 @@ jobs:
       - run: docker compose exec -T backend alembic upgrade head
       - run: docker compose exec -T backend alembic check
       - run: docker compose exec -T backend alembic upgrade head
+      - run: docker compose exec -T worker python -m app.simulation.worker --once --limit 5
       - run: python3 scripts/smoke_compose.py
       - if: always()
         run: docker compose ps && docker compose logs --no-color --tail=150

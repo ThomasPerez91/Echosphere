@@ -24,10 +24,28 @@ Les adaptateurs HTTP et IA utilisent les mêmes services et validations.
 aucun paramètre de jeu. Docker lance trois services locaux. Le proxy Vite relaie `/api/*` vers le
 backend ; le navigateur ne résout jamais le hostname Docker `backend`.
 
+## Temps livré à l'étape 3
+
+`backend/app/simulation/` ajoute des streams génériques d’univers, un adaptateur économique de colonie et des événements persistants.
+API et worker partagent les services et la même base ; le worker est un processus du monolithe,
+pas un microservice. 0002 ajoute les tables économiques/événements, 0003 extrait les EventStream génériques, sans créer de partie.
+Le service migrate de Compose applique les migrations une fois avant API et worker.
+
+## Instance et isolation
+
+Universe est la frontière de la partie (solo MVP, privée/persistante futures), pas un User ni un
+processus. Entités rattachées directement/indirectement et contexte d'univers dans chaque future
+API/permission. Workers multi-univers ; pas de singleton de configuration gameplay. Règles/vitesses
+futures par Universe ou ruleset/version. Les comptes/memberships restent conceptuels (ADR 0006).
+
+Scheduler générique → EventStream(universe_id) → ScheduledEvent(stream_id, universe_id).
+ColonyTimeline lie explicitement sa colonie et son stream du même univers ; settled_at/ressources
+restent économiques. Futurs adaptateurs typés Empire/Fleet/Universe pourront référencer un stream
+sans réécrire l'historique d'événements. Aucun owner_kind/owner_id sans FK ni mode anticipé.
+
 ## Évolution contrôlée
 
-Un worker temporel futur pourra être un processus distinct du même codebase ; cela ne crée pas un
-microservice. Extraire un composant seulement sur besoin mesuré et ADR. Les interactions métier,
+Le worker temporel est un processus distinct du même codebase ; cela ne crée pas un microservice. Extraire un composant seulement sur besoin mesuré et ADR. Les interactions métier,
 UTC, transactions et visibilité sont décrites dans les documents spécialisés.
 
 
