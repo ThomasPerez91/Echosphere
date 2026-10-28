@@ -48,3 +48,13 @@ Q03 est partiellement cadrée pour représentation/arrondis ; plafonds, coûts e
 restent ouverts. L'historique et le stockage des événements sont définis dans le moteur temporel.
 
 [Moteur temporel](event-engine.md) · [Économie](../01-game-design/resources-economy.md) · [Questions](../05-project/open-questions.md)
+
+## Économie Colony v0.1
+
+Les niveaux et le scaling utilisent des fractions entières. Coûts et durées de base : plafond à
+chaque pas en micro-unités/microsecondes ; production/capacité : plancher. Durée effective plafond
+à l’activation, bonus industriel courant et vitesse de construction snapshotée. Production perdue
+au stockage plein, reste remis à zéro. Tous les changements de taux/capacité sont précédés d’un
+règlement à la date logique. Aucun float ni plafond de niveau 5. Les chiffres sont dans game_data.
+Remboursement 100/80 %, plancher micro-unité ; si le stockage ne permet pas le montant exact, refus
+atomique sans perte cachée (Q39). Voir [économie v0.1](../01-game-design/colony-economy-v0.1.md).

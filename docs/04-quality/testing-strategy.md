@@ -81,3 +81,14 @@ avec readiness interceptée. Vérifie 320/390/768/1440, absence de débordement,
 minimum 44 px, lien d’évitement, navigation clavier, focus, historique, liens directs et retry réseau.
 Les captures sont locales dans frontend/test-results (ignoré Git). La CI installe Chromium et ses
 libs système ; cela ne remplace pas la recette tactile/lecteur d’écran réelle ou les tests Compose.
+
+## Domaine Colony (5A)
+
+Les vrais JSON v0.1 alimentent les tests unitaires (niveaux, scaling, fractions, arrondis, validation).
+Intégrations PostgreSQL : initialisation, secteurs et réservations, limites, doublons, queue, upgrade,
+coûts atomiques, deux commandes concurrentes, annulations/retries, crash/reprise, Industrial suivant,
+Logistics/capacité saturée, isolation et refus du downgrade peuplé. Tests précédents conservés ;
+roundtrip upgrade/downgrade/upgrade et alembic check incluent les nouvelles tables.
+Playwright conserve 320/390/768/1440 et teste les sous-sections Colony, clavier et absence de commandes
+défensives réelles. Aucun snapshot artificiel ajouté. Compose teste en plus le chargement v0.1 dans
+l’image du worker. Les fixtures économiques restent dans les tests, jamais au démarrage normal.

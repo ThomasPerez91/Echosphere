@@ -68,3 +68,36 @@ de payload/archivage restent ouverts. Détails dans [ADR 0005](../adr/0005-colon
 Python 3.12, Node 22 dans Docker, PostgreSQL 17, psycopg direct pour les sondes, proxy Vite même
 origin, ports loopback et absence de montage source. Ce sont des choix d'implémentation réversibles,
 pas des arbitrages de gameplay. SQLAlchemy/Alembic sont désormais en place pour les cinq premiers modèles, sans endpoint métier.
+
+## Défense planétaire — nouvelles questions (toutes ouvertes)
+
+| ID | Arbitrage attendu | Référence |
+| --- | --- | --- |
+| Q30 | Capacité défensive totale et croissance du réseau | [Défense](../01-game-design/planetary-defense.md) |
+| Q31 | Nombre, types, familles et compatibilités de modules | [Défense](../01-game-design/planetary-defense.md) |
+| Q32 | Interaction défense/flotte, portée et interception | [Défense](../01-game-design/planetary-defense.md) |
+| Q33 | Réparation : coûts, durées, priorité et récupération hors combat | [Défense](../01-game-design/planetary-defense.md) |
+| Q34 | Consommation de Flux normale/alerte/combat et épuisement | [Défense](../01-game-design/planetary-defense.md) |
+| Q35 | Destruction permanente/temporaire et intégrité résiduelle | [Défense](../01-game-design/planetary-defense.md) |
+| Q36 | Ciblage des modules, ordre des dommages et campagne d’usure | [Défense](../01-game-design/planetary-defense.md) |
+| Q37 | Révélation par renseignement/espionnage, estimation et vieillissement | [Défense](../01-game-design/planetary-defense.md) |
+| Q38 | Place/coût d’opportunité et rôle des défenses orbitales | [Défense](../01-game-design/planetary-defense.md) |
+| Q39 | Annulation quand le remboursement dépasse la place de stockage disponible | [Économie v0.1](../01-game-design/colony-economy-v0.1.md) |
+
+Aucune question défensive fermée ; pas de catalogue définitif, valeurs ni tables actives déduites
+de ces orientations. Pour Q39, l’implémentation refuse atomiquement une annulation qui ne peut pas
+rendre le montant exact, sans overflow/perte cachée ; choix conservateur à valider pour le produit.
+
+## Arbitrages fournis pour 5A — 2026-10-28, balance v0.1 provisoire
+
+Q01 partielle : trois ordres actif inclus, un seul actif, réservation immédiate, remboursement
+queued 100 % / active 80 %, cascade des upgrades dépendants et activation à la date logique.
+Q03 partielle : stocks, taux, coûts et capacités de référence dans game_data ; production perdue au
+plafond, récurrences rationnelles et arrondis côté serveur. Entretien général reste ouvert.
+Q04 partielle : cinq types économiques, 12 secteurs/2 orbitaux de référence, producteurs répétables,
+industrie/logistique uniques, niveaux continus (ancienne limite I–V remplacée). Traits, démolition,
+réaffectation et orbitaux jouables restent ouverts. Q12 : JSON strict validé et snapshot par univers ;
+simulations d’équilibrage et politique d’édition/migration futures restent ouvertes.
+Q26 partielle : multiplicateurs économie/construction par univers, ×1 de référence, vitesses
+recherche/flotte réservées sans système associé. Changement de vitesse d’un univers actif à cadrer.
+Q16 reste ouverte, bloque 5B ; aucune API gameplay ou identité globale factice ajoutée.

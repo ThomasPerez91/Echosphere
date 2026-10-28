@@ -26,14 +26,11 @@ constitue une autorisation permanente de merge, publication ou suppression de br
 
 ## État et autorisation de cette mission
 
-PR #2 et PR #3 corrigée sont fusionnées sur master. Fusion PR #3 vérifiée :
-4ee81dd447726b5d72eaf1d26626215d14d1c931 ; tête source 4f29a81e57d39c1df6ba041bcc9c4e5b0ee0f6b1.
-Thomas a supprimé develop ; absence distante confirmée. Son instruction « reprend » lance le lot
-Étape 4 : design system et shell responsive, depuis master, branche work/step-4-responsive-shell.
-Ce lot prépare les sections Empire/Colonie/Recherche/Galaxie/Flottes/Rapports/Relations, avec états
-vides explicites, sans stocks fictifs ou ordres de jeu. Pas de backend métier ajouté.
-La PR #4 de ce lot vise master et reste non fusionnée. Source e5d661c validée en CI ;
-voir progress.md pour le checkpoint et ses limites. Aucune autorisation permanente de merge.
+PR #4 fusionnée sur master : 54f928e2348781db43b335d4dcf569aadc0db6e9.
+CI master verte vérifiée, run 40716684879, avant création de work/step-5a-colony-domain.
+Thomas demande de poursuivre le brief joint : Étape 5A, domaine Colony et économie v0.1.
+PR #5 vise master et reste non fusionnée. Aucun merge/tag/release/déploiement autorisé pour ce lot.
+Domaine interne uniquement ; Q16 bloque API publique et UI interactive de 5B. Pas de faux user.
 
 ## Architecture et garanties
 
@@ -51,5 +48,13 @@ Voir progress.md pour CI/SHA, [ADR 0005](docs/adr/0005-colony-time-engine.md) po
 [ADR 0006](docs/adr/0006-universe-game-instance.md) et [modes](docs/01-game-design/game-modes.md).
 Q01–Q29 restent au registre selon leur statut, sans inventer réponses multijoueurs/équilibrage.
 Une future API vérifie User → Membership → Universe → permissions → Entity, plus fog of war.
-Les prérequis de l’étape 4 sont satisfaits. Prochain lot après revue de ce shell : boucle Colony
-(étape 5), à cadrer avec coûts, rendements et files encore ouverts avant toute implémentation.
+5A ajoute universe_economies/colony_economies/colony_infrastructures/construction_orders et 0004.
+JSON strict v0.1, règles épinglées par univers, multiplicateurs rationnels et snapshots d’ordres.
+Niveaux continus (pas de plafond 5), secteurs identifiés, réservation et file 3/1, annulation 100/80 %.
+Bonus industriel au démarrage du suivant, production/stockage exacts à date logique. Refus atomique
+si remboursement exact ne tient pas (Q39) ; upgrades dépendants annulés en cascade.
+Défense : préparation documentaire/UI seulement, réseau persistant à modules limité, Q30–Q38 ouvertes.
+Colony : Vue d’ensemble/Infrastructures/Orbite/Défense sans données fictives ni huitième entrée globale.
+Prochain lot : 5B quand identité/autorisation Q16 est cadrée, après revue/intégration de 5A.
+Voir [économie](docs/01-game-design/colony-economy-v0.1.md), [défense](docs/01-game-design/planetary-defense.md)
+et [ADR 0007](docs/adr/0007-colony-economy.md).

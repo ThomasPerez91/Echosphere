@@ -16,3 +16,5 @@ son code existe déjà. Conserver l'historique et relier une ADR remplacée à l
 
 Nouvelles ADR numérotées séquentiellement ; date de rédaction 2026-10-28 pour ces trois entrées.
 Les détails de gameplay non arbitrés restent dans le [registre](../05-project/open-questions.md).
+
+- [0007 — Domaine Colony et ruleset par univers](0007-colony-economy.md), acceptée en 5A.

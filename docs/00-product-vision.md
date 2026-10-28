@@ -62,3 +62,11 @@ est un objectif de balance à mesurer, pas une formule déjà prouvée.
 - [Galaxie](01-game-design/galaxy.md) · [Flottes](01-game-design/fleets.md) · [IA](01-game-design/artificial-intelligence.md)
 - [UX](02-ux-ui/information-architecture.md) · [Architecture](03-technical/architecture.md)
 - [Questions ouvertes](05-project/open-questions.md) · [Roadmap](05-project/roadmap.md)
+
+## Évolution Étape 5A
+
+Le domaine Colony ajoute l’économie et la construction internes, sans API gameplay ni partie
+interactive. Les niveaux économiques sont continus (1–5 = early game seulement). Voir
+[Économie v0.1](01-game-design/colony-economy-v0.1.md). La défense sera une infrastructure
+stratégique persistante à modules, étudiée dans [défense planétaire](01-game-design/planetary-defense.md),
+sans implémentation de combat/défense active à ce stade.

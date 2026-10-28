@@ -88,3 +88,15 @@ simplement parce que le diagramme conceptuel les mentionne.
 
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
 - [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Persistance économique Étape 5A
+
+Migration 0004_colony_economy additive : universe_economies (ruleset validé épinglé et vitesses),
+colony_economies (ancrage et séquence), colony_infrastructures (type, niveau, sector_index),
+construction_orders (snapshot, coût réservé, séquence, états et dates, remboursement enregistré).
+FK composites colonie/univers, unicité secteur et clé de commande, niveau >=1, un actif par index
+partiel. Capacité de planète, unicité configurable des types et queue_limit sont vérifiées sous
+verrou de stream par le service, sans duplication de game_data en CHECK SQL. Aucun service de
+redimensionnement de planète. ResourceBalance et ColonyTimeline restent l’autorité économique.
+Aucune table DefenseNetwork/DefenseModule créée ; les futurs adaptateurs typés peuvent s’ajouter.
+Voir [ADR 0007](../adr/0007-colony-economy.md) et [règles v0.1](../01-game-design/colony-economy-v0.1.md).

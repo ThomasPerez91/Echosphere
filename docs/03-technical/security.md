@@ -47,3 +47,11 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
 - [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Domaine interne Étape 5A
+
+Aucune API gameplay, même read-only : l’absence de contrat de participation autorisé pourrait
+créer une fuite. Les commandes internes reçoivent univers/empire/colonie explicites, vérifient la
+propriété avant consultation puis sous le lock et dédupliquent les clés. Ces paramètres de confiance
+ne sont pas un substitut à une session HTTP. 5B vérifiera identité/membership/permissions avant
+appel des mêmes services humains/IA/headless. Pas de faux user global ou bypass de Q16.

@@ -1,6 +1,8 @@
 # Documentation Echosphere
 
-L'étape 0 définit le produit et prépare un lancement local. Elle ne livre aucune boucle jouable.
+État courant : étape 5A, domaine économique interne, scheduler et shell. Aucune partie jouable ni
+API gameplay publique. [Économie v0.1](01-game-design/colony-economy-v0.1.md) et
+[défense future](01-game-design/planetary-defense.md) distinguent règles implémentées et orientations.
 
 ## Lire dans cet ordre
 
@@ -23,5 +25,5 @@ Les fichiers de chaque domaine sont indexés depuis la vision, l'architecture et
 | Futur | Hors étape 0, parfois hors MVP | Ne pas implémenter par anticipation |
 
 Le brief est traduit ici sans transformer les chiffres indicatifs en règles figées. Le code actuel
-est décrit dans le README et les contrats API ; les autres mécanismes métier sont **à construire**.
+est décrit dans le README et les contrats API ; les systèmes hors domaine économique interne restent **à construire**.
 Une proposition technique ajoutée à la documentation n'est pas automatiquement une décision de gameplay.

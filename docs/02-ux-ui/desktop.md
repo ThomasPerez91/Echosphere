@@ -20,3 +20,9 @@ implémente sidebar, topbar de contexte, bilan et états vides, sans contenu mé
 ## Références
 
 - [Index](../README.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Colony — Étape 5A
+
+Quatre sous-sections internes dans la zone centrale : Vue d’ensemble, Infrastructures, Orbite,
+Défense. Liens natifs de sous-navigation, sans huitième entrée globale. Aucune valeur ou défense
+construisible inventée. Le dashboard Empire pourra plus tard afficher une synthèse défensive.

@@ -32,3 +32,14 @@ réglementaires définis. La cadence de colonisation dépend de Q07.
 - [Vision](../00-product-vision.md) · [Questions ouvertes](../05-project/open-questions.md)
 - [Boucle](core-loop.md) · [Équilibrage](balance-philosophy.md)
 - [Temps serveur](../03-technical/event-engine.md)
+
+## Étape 5A et défense future
+
+La colonie de référence v0.1 fixe 12 secteurs, 2 slots orbitaux réservés et Command Core hors
+secteurs. Les quatre infrastructures initiales et tous les chiffres proviennent de game_data.
+Chaque infrastructure a un sector_index unique ; son upgrade ne consomme pas de nouveau secteur.
+Voir [Économie v0.1](colony-economy-v0.1.md) pour stocks, production, stockage, file et annulations.
+
+La [défense planétaire](planetary-defense.md) appartient à la colonie : infrastructure stratégique
+persistante à modules limités, avec coût d’opportunité surface/orbite. Aucun système défensif actif,
+réparation ou occupation orbitale dans le lot actuel. Pas de tables de défense anticipées.

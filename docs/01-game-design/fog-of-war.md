@@ -29,3 +29,9 @@ rapports, journaux accessibles et cartes devront chacun être contrôlés contre
 - [Vision](../00-product-vision.md) · [Questions ouvertes](../05-project/open-questions.md)
 - [Boucle](core-loop.md) · [Équilibrage](balance-philosophy.md)
 - [Temps serveur](../03-technical/event-engine.md)
+
+## Défenses et renseignement futurs
+
+La [défense planétaire](planetary-defense.md) sera révélée progressivement : force estimée, puis
+installations probables/détectées, puis modules, intégrité et énergie estimée selon connaissance.
+Pas d’omniscience, de capteur ou d’espionnage implémenté à l’étape 5A ; seuils/fiabilité restent ouverts.

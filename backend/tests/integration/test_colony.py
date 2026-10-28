@@ -340,7 +340,7 @@ def test_storage_completion_and_saturation_preserve_lazy_exactness(economy):
     factory, clock, engine, make = economy
     scope = make()
     order = add(factory, engine, scope, kind="logistics_center")
-    clock.value = START + timedelta(days=10)
+    clock.value = START + timedelta(days=20)
     assert TimeEngine(factory, clock).process_next().status == "completed"
     with factory.begin() as session:
         assert engine.catch_up(session, scope.colony, clock.value).complete
@@ -548,3 +548,57 @@ def test_concurrent_cancellation_refunds_once(economy):
     with ThreadPoolExecutor(max_workers=2) as pool:
         assert list(pool.map(cancel_once, [1, 2])) == ["cancelled", "cancelled"]
     assert balances(factory, scope)["alloys"] == 1950 * MICRO_UNITS
+
+
+def test_editing_catalogue_files_does_not_reprice_existing_orders_or_universe(
+    economy, tmp_path, monkeypatch
+):
+    import json
+    import shutil
+    from pathlib import Path
+
+    factory, _, engine, make = economy
+    scope = make()
+    first = add(factory, engine, scope)
+    original = Path(__file__).resolve().parents[3] / "game_data"
+    shutil.copytree(original, tmp_path / "game_data")
+    file = tmp_path / "game_data" / "rulesets" / "v0.1" / "infrastructures.json"
+    data = json.loads(file.read_text())
+    data["infrastructures"]["extraction_complex"]["explicit_levels"][0]["cost"]["alloys"] = 999
+    file.write_text(json.dumps(data))
+    monkeypatch.setenv("ECHOSPHERE_GAME_DATA", str(tmp_path / "game_data"))
+    assert load_ruleset().quote("extraction_complex", 1).cost["alloys"] == 999 * MICRO_UNITS
+    queued = add(factory, engine, scope, "new-command", sector=6)
+    assert queued.snapshot["quote"]["cost"]["alloys"] == 250 * MICRO_UNITS
+    with factory() as session:
+        assert session.get(ConstructionOrder, first.id).snapshot["quote"]["cost"]["alloys"] == (
+            250 * MICRO_UNITS
+        )
+
+
+def test_event_cannot_complete_an_order_from_another_stream(economy):
+    from app.simulation.service import schedule
+
+    factory, clock, engine, make = economy
+    a, b = make(), make()
+    order = add(factory, engine, a)
+    with factory.begin() as session:
+        schedule(
+            session,
+            b.colony,
+            key=f"construction:{order.id}",
+            kind="CONSTRUCTION_COMPLETE",
+            due_at=START,
+            payload={"order_id": str(order.id)},
+        )
+    assert TimeEngine(factory, clock, max_attempts=1).process_next().status == "blocked"
+    with factory() as session:
+        assert session.get(ConstructionOrder, order.id).status == "active"
+        assert (
+            len(
+                session.scalars(
+                    select(ColonyInfrastructure).where(ColonyInfrastructure.colony_id == a.colony)
+                ).all()
+            )
+            == 4
+        )

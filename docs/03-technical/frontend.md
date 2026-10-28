@@ -49,3 +49,10 @@ Le serveur Vite de Compose reste réservé au développement ; pas de déploieme
 
 - [Architecture](architecture.md) · [Design system](../02-ux-ui/design-system.md)
 - [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Colony Étape 5A
+
+ColonyView réserve quatre sous-sections avec navigation native #colony/<vue>, sélection globale
+Colonie conservée, état explicite sans univers/colonie. Aucune requête d’API métier, donnée de démo
+ou mutation. Les scénarios Playwright existants couvrent aussi Défense, liens directs et clavier.
+La défense reste un système futur. Le domaine interne ne rend pas le frontend interactif en 5A.

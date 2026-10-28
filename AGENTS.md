@@ -4,7 +4,7 @@
 
 Jeu de stratégie spatiale persistant web responsive. MVP solo avec IA ; parties privées et univers
 multijoueurs persistants sont futurs, sans fonctionnalités multijoueurs implémentées.
-Étapes 0–3 fusionnées sur master (PR #1–3). Lot courant : étape 4, design system et navigation responsive, sur instruction « reprend ». Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
+Étapes 0–4 fusionnées sur master (PR #1–4). Lot courant : étape 5A, domaine Colony/économie/construction, sur instruction de Thomas et brief joint. Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
 Mettre progress.md à jour avant chaque livraison avec périmètre, tests, limites et prochaine action.
 Ne pas implémenter de nouvelle étape sans périmètre explicite. Le socle temporel est implémenté ; auth complète,
 IA, combat, Redis, WebSocket, paiement et administration ne sont pas encore livrés.
@@ -29,7 +29,7 @@ Monolithe modulaire, aucun microservice. Frontend React/TypeScript/Vite ; backen
 PostgreSQL source de vérité. SQLAlchemy 2 et Alembic sont utilisés pour la persistance versionnée.
 `backend/app/api/` contient HTTP, `core/` la configuration, `persistence/` les modèles et sessions ;
 `backend/app/simulation/` porte le temps et le worker ; `backend/migrations/` porte les migrations, `backend/tests/` les tests ; `frontend/src/` les vues et tests ;
-`game_data/` réservera les valeurs d'équilibrage ; `docs/` les références ; `scripts/` les checks ;
+`backend/app/colony/` porte les règles validées et commandes internes ; `game_data/` contient les valeurs v0.1 ; `docs/` les références ; `scripts/` les checks ;
 `.github/workflows/ci.yml` les jobs qualité. Pas de couche métier générique à créer pour deux probes.
 
 ## Invariants obligatoires
@@ -113,10 +113,35 @@ git pull --ff-only origin master
 git switch -c work/nom-du-lot
 ```
 
-PR #2 et PR #3 corrigée sont fusionnées ; develop a été supprimée par Thomas.
-Le lot actuel continue work/step-4-responsive-shell, PR vers master laissée non fusionnée. Ne pas supprimer d'autres branches, forcer un push ou réécrire l'historique partagé.
+PR #2/#3/#4 fusionnées ; develop supprimée par Thomas.
+Lot actuel : work/step-5a-colony-domain depuis master 54f928e, CI master verte avant création ;
+PR #5 vers master, non fusionnée. Ne pas supprimer d'autres branches, forcer un push ou réécrire l'historique partagé.
 Toute fusion future, tag ou déploiement requiert son autorisation propre.
 
 Avant de déclarer une livraison terminée : vérifier la tête distante et sa CI, mettre à jour
-context.md/progress.md et rapporter SHA, tests et limites réelles. Étape 4 limitée au shell UI,
-aux composants utilisés et aux états réseau. Aucun gameplay, endpoint métier ou étape 5 sans nouveau lot.
+context.md/progress.md et rapporter SHA, tests et limites réelles. Étape 5A limitée au domaine interne
+et à la structure UI Colony. Étape 5B attend Q16 et un nouveau lot. Aucun endpoint gameplay,
+Combat/Defense actif, flotte, recherche, colonisation ou multijoueur à ajouter ici.
+
+## Économie et défense — règles 5A
+
+Progression économique continue : niveaux 1–5 = early game seulement, jamais un MAX_LEVEL=5.
+Niveaux supérieurs tant que ruleset/prérequis et représentation le permettent ; coût/durée/production
+et croissance proviennent de game_data/rulesets/v0.1, pas de constantes dans les services.
+Fichiers JSON stricts, aucune valeur dangereuse silencieuse. Snapshot validé par univers et ordre.
+Vitesses économie/construction rationnelles par instance, ×1 normal ; recherche/flotte futures.
+Pas de singleton de vitesse. Toute migration de ruleset d’un univers actif exige un nouveau contrat.
+
+Nouvelles commandes : univers/empire/colonie explicites, verrou EventStream et catch-up complet,
+SAVEPOINT par commande, transaction du caller. Prélever et réserver une fois à l’entrée de file ;
+trois ordres actif inclus, une construction active ; bonus industriel courant à l’activation.
+Annulation 100/80 %, idempotente ; cascade des upgrades dépendants. Refuser atomiquement si le
+remboursement exact ne tient pas au stockage (Q39), sans crédit caché ou perte implicite.
+Migrations antérieures intactes, 0004 additive ; downgrade peuplé refusé avant toute DDL.
+
+Défense future : réseau stratégique limité et persistant à modules, coût d’opportunité surface/orbite,
+dommages/réparation/Flux/renseignement à cadrer. Aucune table de défense ou système de combat ici.
+La défense appartient à Colony : Vue d’ensemble / Infrastructures / Orbite / Défense. Pas de huitième
+entrée globale ; aucune fixture runtime, valeur ou commande défensive présentée comme réelle.
+Lire [Économie v0.1](docs/01-game-design/colony-economy-v0.1.md), [défense](docs/01-game-design/planetary-defense.md)
+et [ADR 0007](docs/adr/0007-colony-economy.md). Garder Q30–Q39 ouvertes.

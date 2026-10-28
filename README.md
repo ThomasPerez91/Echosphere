@@ -5,7 +5,7 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : fondations, scheduler et shell responsive (étape 4), sans gameplay jouable.**
+**État actuel : domaine Colony/économie v0.1 et shell responsive (étape 5A), sans API gameplay ni partie jouable.**
 
 Lire [context.md](context.md) pour reprendre le cadre et [progress.md](progress.md) pour l'état exact.
 `master` est l’intégration stable. Nouvelles branches courtes `work/...` depuis master, PR vers master,
@@ -65,13 +65,13 @@ pour un serveur public. Ne pas exposer Vite sur internet.
 | Service | Technologie | Rôle actuel |
 | --- | --- | --- |
 | frontend | React, TypeScript strict, Vite, Node 22 | Navigation responsive, sections en préparation et readiness via proxy |
-| backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes et cinq modèles persistants, sans endpoint métier |
+| backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes, modèles et domaine économique interne, sans endpoint métier |
 | postgres | PostgreSQL 17 | Source de vérité et volume persistant local |
 | migrate | Même image backend | Alembic upgrade head, puis sortie 0 |
 | worker | Même code backend | Streams temporels multi-univers, sans port publié |
 
 Le worker est un autre processus du même monolithe : événements SQL idempotents, production exacte
-et reprise après redémarrage. Aucun rendement/coût ou stock de départ n'est fourni ; pas de partie jouable.
+et reprise après redémarrage. Les valeurs v0.1 sont dans game_data, mais aucune colonie/partie n’est injectée au démarrage.
 Compose applique les migrations via le service migrate avant API/worker. /ready vérifie la connexion,
 pas l'état de progression du worker. Pas de Redis, auth ou WebSockets.
 
@@ -125,3 +125,13 @@ Voir [modes de jeu](docs/01-game-design/game-modes.md).
 En cas de panne : vérifier `docker version`, `docker compose version` et l'intégration WSL2, puis
 les logs/healthchecks. Les changements d'identifiants PostgreSQL ne s'appliquent pas automatiquement
 à un volume déjà initialisé. La procédure et les limites sont dans [exécution locale](docs/03-technical/deployment.md).
+
+## Domaine Colony — Étape 5A
+
+Services internes dans backend/app/colony : configure_universe, initialize_colony, enqueue et cancel.
+[game_data](game_data/README.md) fournit les valeurs v0.1, [économie](docs/01-game-design/colony-economy-v0.1.md)
+les contrats et [ADR 0007](docs/adr/0007-colony-economy.md) la persistance/scheduler. Transaction du
+caller et scope univers/empire explicites ; aucune commande ne remplace une authentification HTTP.
+Le contexte de build backend est la racine pour embarquer game_data ; utiliser Docker Compose.
+Aucun seed/demo runtime : l’UI Colony réserve ses quatre sections et indique l’absence de partie.
+[Défense planétaire](docs/01-game-design/planetary-defense.md) documentée, sans effet actif.

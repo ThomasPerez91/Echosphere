@@ -91,3 +91,12 @@ pas des paramètres de vitesse gameplay. Archivage/versionnement des payloads et
 restent futurs. Aucun WebSocket/Redis, aucune présence de navigateur comme condition de progression.
 
 [Calcul](resource-calculation.md) · [ADR 0005](../adr/0005-colony-time-engine.md) · [Instance](../adr/0006-universe-game-instance.md)
+
+## Construction Étape 5A
+
+TimeEngine enregistre CONSTRUCTION_COMPLETE. Le handler vérifie order_id/univers/stream/clé,
+règle les ressources à due_at, applique le niveau une seule fois et active le prochain ordre à la
+même date logique. Effets et événement suivant sont dans la transaction du scheduler ; pas de commit
+ou autre lock de stream. Annulation sous le même lock après catch-up ; échéance annulée acquittée
+avec error_code cancelled, sans modifier sa date ni terminer le chantier métier. Le worker reprend
+les événements persistants sans joueur connecté. Voir [ADR 0007](../adr/0007-colony-economy.md).

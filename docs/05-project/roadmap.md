@@ -13,7 +13,8 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 2 | Universe / Empire / System / Planet / Colony | Modèles et migrations minimales | Relations et contraintes testées, pas de génération prématurée |
 | 3 | Moteur temporel | Production différée, événements persistants et reprise | Horloge injectée, idempotence, concurrence et rattrapage vérifiés |
 | 4 | Design system responsive | Navigation et composants des vrais écrans | Parcours mobile/clavier et états réseau validés |
-| 5 | Boucle Colony | Stocks, secteurs, infrastructures et petites files | Dépenses transactionnelles, coûts versionnés et production correcte |
+| 5A | Colony domain / economy / construction | Domaine interne, game_data v0.1, niveaux continus, stockage et file | Réservation, annulation, scheduler, concurrence et migrations validés sans API publique |
+| 5B | Colony API + UI interactive | Accès authentifié aux mêmes services | Contrat identité/autorisation Q16 prêt, permissions et UI réelle validées |
 | 6 | Research | Recherche globale et programmation suivante | Prérequis et application unique à échéance |
 | 7 | Galaxy + Exploration | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
 | 8 | System View | Lecture des mondes et présences connues | Détails datés selon connaissances, mobile utilisable |
@@ -32,8 +33,10 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 Statut exact dans [progress.md](../../progress.md). master est l'intégration stable ; nouvelles
 branches work/... depuis master et PR vers master, CI/revue puis merge sur autorisation. Tags et
 releases identifiées plus tard. develop n'est plus une étape permanente ou obligatoire.
-Étapes 0–3 intégrées sur master ; develop supprimée. Étape 4 en cours sur
-work/step-4-responsive-shell : shell responsive, composants utilisés et états réseau ; pas de gameplay.
+Étapes 0–4 intégrées sur master ; develop supprimée. Étape 5A sur
+work/step-5a-colony-domain, PR #5 vers master sans fusion. Étape 5B attend identité/autorisation Q16.
+La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
+préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).
 
 ## Compatibilité des modes futurs
 
