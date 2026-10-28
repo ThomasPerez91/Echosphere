@@ -27,6 +27,13 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 16 | Simulation/balance headless | Campagnes multi-seeds et profils | Métriques et versions consignées, écarts discutés |
 | 17 | Stabilisation MVP | Bugs, sécurité, performance, sauvegarde et recette | Boucle complète jouable et DoD satisfaite |
 
+## Suivi de réalisation
+
+Le statut vérifiable et la prochaine action sont dans [progress.md](../../progress.md).
+Étape 0 fusionnée sur master (PR #1). Branches de travail depuis develop, PR vers develop ; master
+réservée aux releases. Le lot suivant implémente les fondations 1–2 ; la boucle temporelle 3 viendra
+après ses arbitrages. Une fondation persistante ne signifie pas qu'une partie est déjà jouable.
+
 ## Dépendances et risques
 
 Le temps précède construction/recherche ; la connaissance précède exploration et IA ; flottes et

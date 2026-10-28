@@ -1,6 +1,6 @@
 # Stratégie de tests
 
-**Statut : bootstrap implémenté ; couverture métier future.**
+**Statut : fondation et premières contraintes persistantes testées ; gameplay futur.**
 
 ## Pyramide utile
 
@@ -12,13 +12,25 @@
 
 ## Checks livrés
 
-Backend : Ruff et trois tests pytest pour liveness indépendante de la DB, readiness positive,
-readiness 503 sans fuite d'erreur. Le succès de connexion est simulé dans le test unitaire ; cela ne
+Backend : Ruff et huit tests unitaires pour les sondes et la configuration. Le succès de connexion est simulé dans le test unitaire ; cela ne
 remplace pas le SELECT 1 réel du smoke Compose.
 Frontend : ESLint, TypeScript strict, build Vite, trois tests Vitest (succès, panne/réessai, 503).
 Documentation : script vérifiant les liens Markdown locaux et les fichiers obligatoires.
 CI : jobs backend, frontend/documentation et smoke Docker avec PostgreSQL réel. Le smoke vérifie
 la reprise après arrêt/redémarrage de PostgreSQL et préserve /health pendant l'indisponibilité.
+
+## Intégrations PostgreSQL (étapes 1–2)
+
+Le job backend utilise PostgreSQL 17 et une base `echosphere_test` jetable. Les tests vérifient
+migrations aller/retour/aller, `alembic check`, liens inter-univers interdits, capacité négative,
+double occupation, contrôleur invalide, dates UTC et rollback complet de transaction.
+Sans `RUN_DB_TESTS=1`, ces tests sont explicitement ignorés, jamais présentés comme passés.
+L'exécution est refusée si POSTGRES_DB ne finit pas par `_test` car un downgrade détruit les tables.
+
+Pour les lancer en local, créer d'abord une base PostgreSQL dédiée, exporter POSTGRES_HOST/PORT,
+POSTGRES_DB (suffixe `_test`), POSTGRES_USER et POSTGRES_PASSWORD, puis depuis backend :
+`RUN_DB_TESTS=1 .venv/bin/pytest -q`. Ne jamais pointer ce test vers une base de jeu à conserver.
+Le job Compose vérifie aussi les migrations dans l'image runtime et la reprise des connexions du pool.
 
 ## Commandes sans Docker
 
