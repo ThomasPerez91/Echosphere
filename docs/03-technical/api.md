@@ -10,12 +10,12 @@
 | GET /docs | Documentation OpenAPI FastAPI | — | Développement local |
 
 `/ready` utilise un délai de connexion de 3 secondes et un statement timeout de 3 secondes.
-Les détails de connexion ne sont pas renvoyés. Aucune authentification ni donnée personnelle.
+Les détails de connexion ne sont pas renvoyés. Aucune authentification ni donnée personnelle. Aucun endpoint métier public ne contourne ce manque.
 Le frontend appelle `/api/ready`, relayé par Vite sur `/ready`.
 
 ## Futurs contrats
 
-Les routes métier ne sont pas créées à l'étape 0. Elles valideront identité, droits sur l'empire,
+Les routes métier ne sont pas encore créées. Elles valideront identité, droits sur l'empire,
 appartenance à l'univers et état des commandes. Ne jamais accepter les stocks, coûts, taux ou dates
 de fin calculés par le client comme autorité. Définir pagination, erreurs structurées et clé
 idempotente des commandes avant les premières mutations. Format d'erreur global : Q16.

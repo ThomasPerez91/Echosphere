@@ -5,7 +5,10 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : étape 0 — documentation et bootstrap de développement. Aucun gameplay implémenté.**
+**État actuel : fondations techniques et premiers modèles persistants (étapes 1–2), sans gameplay jouable.**
+
+Lire [context.md](context.md) pour reprendre le cadre et [progress.md](progress.md) pour l'état exact.
+`develop` est la base des nouvelles branches et la cible des PR de développement. `master` reçoit les releases.
 
 ## Démarrage ce soir sous WSL2
 
@@ -16,15 +19,18 @@ pour lancer les trois services.
 ```bash
 mkdir -p ~/projects
 cd ~/projects
-git clone --branch work/step-0-bootstrap https://github.com/ThomasPerez91/Echosphere.git
+git clone --branch develop https://github.com/ThomasPerez91/Echosphere.git
 cd Echosphere
 cp .env.example .env
 docker compose config --quiet
 docker compose up --build -d
 docker compose ps
+docker compose exec backend alembic upgrade head
+docker compose exec backend alembic check
 ```
 
-Si la branche n'est pas encore publiée, suivre le rapport de livraison avant la commande clone.
+Pour tester un lot en PR avant son intégration, sélectionner sa branche ; pour le lot courant :
+`git fetch origin work/step-1-2-foundation` puis `git switch --track origin/work/step-1-2-foundation`.
 Le premier build télécharge les images et dépendances. Attendre les trois statuts healthy ; les
 healthchecks conditionnent l'ordre postgres → backend → frontend. Pour attendre automatiquement :
 `docker compose up --build -d --wait --wait-timeout 180`.
@@ -55,14 +61,14 @@ pour un serveur public. Ne pas exposer Vite sur internet.
 
 ## Services et commandes de qualité
 
-| Service | Technologie | Rôle étape 0 |
+| Service | Technologie | Rôle actuel |
 | --- | --- | --- |
 | frontend | React, TypeScript strict, Vite, Node 22 | Placeholder responsive et test de readiness via proxy |
-| backend | Python 3.12, FastAPI, psycopg | Liveness et SELECT 1 PostgreSQL ; aucune table métier |
+| backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes et cinq modèles persistants, sans endpoint métier |
 | postgres | PostgreSQL 17 | Source de vérité future, volume persistant local |
 
-Pas de Redis, auth, moteur d'événements, modèles métier ou WebSockets.
-SQLAlchemy et Alembic seront introduits avec la fondation/persistance métier.
+Pas de Redis, auth, moteur d'événements ou WebSockets. Les modèles et migrations ne créent aucune donnée de jeu.
+Les migrations se lancent explicitement ; /ready vérifie la connexion, pas la version du schéma.
 
 ```bash
 # Qualité dans les images de développement :

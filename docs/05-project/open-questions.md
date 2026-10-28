@@ -25,8 +25,18 @@ les moments limites pour décider avant de dépendre du choix.
 | Q17 | Budgets de performance et charge de référence | 3 puis 17 | [Performance](../04-quality/performance.md) |
 | Q18 | Contenu exact des relations minimales, hostilité et négociation | 13 | [Roadmap](roadmap.md) |
 
+## Cadrage actuel des questions
+
+Q16 est cadrée aux étapes 1–2 : pas de mutation HTTP publique tant que identité/session, contrôle
+objet et idempotence ne sont pas décidés ; les sondes gardent leur contrat. Elle reste ouverte,
+aucune méthode d'authentification n'a été choisie arbitrairement.
+Q04 n'est pas fermée par le schéma : les capacités sont fournies explicitement, sans plafond
+9–18 ou défaut 12 imposé. Q07 reste ouverte : la table colonies représente l'occupation actuelle,
+le cycle de vie et l'historique nécessiteront une migration au lot colonisation.
+Q02 est un prérequis du futur combat : aucun endpoint d'attaque ne sera livré avant arbitrage.
+
 ## Décisions techniques prises pour le bootstrap
 
 Python 3.12, Node 22 dans Docker, PostgreSQL 17, psycopg direct pour les sondes, proxy Vite même
 origin, ports loopback et absence de montage source. Ce sont des choix d'implémentation réversibles,
-pas des arbitrages de gameplay. SQLAlchemy/Alembic restent prévus ; aucune migration requise sans table.
+pas des arbitrages de gameplay. SQLAlchemy/Alembic sont désormais en place pour les cinq premiers modèles, sans endpoint métier.

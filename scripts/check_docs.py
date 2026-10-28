@@ -6,26 +6,81 @@ from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = {
-    "README.md", "AGENTS.md", "CONTRIBUTING.md", "docs/00-product-vision.md",
-    *[f"docs/01-game-design/{name}.md" for name in (
-        "core-loop", "player-session", "resources-economy", "planets-colonies", "buildings",
-        "research", "galaxy", "exploration", "fleets", "combat", "colonization",
-        "artificial-intelligence", "fog-of-war", "balance-philosophy", "progression")],
-    *[f"docs/02-ux-ui/{name}.md" for name in (
-        "information-architecture", "desktop", "mobile", "design-system", "accessibility")],
-    *[f"docs/03-technical/{name}.md" for name in (
-        "architecture", "data-model", "event-engine", "resource-calculation", "api", "frontend",
-        "backend", "ai-engine", "security", "deployment")],
-    *[f"docs/04-quality/{name}.md" for name in (
-        "testing-strategy", "performance", "definition-of-done")],
-    *[f"docs/05-project/{name}.md" for name in (
-        "roadmap", "backlog", "releases", "open-questions")],
-    *[f"docs/adr/{name}.md" for name in (
-        "README", "0001-modular-monolith", "0002-event-driven-time-model", "0003-responsive-web-ui")],
+    "README.md",
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    "context.md",
+    "progress.md",
+    "docs/00-product-vision.md",
+    *[
+        f"docs/01-game-design/{name}.md"
+        for name in (
+            "core-loop",
+            "player-session",
+            "resources-economy",
+            "planets-colonies",
+            "buildings",
+            "research",
+            "galaxy",
+            "exploration",
+            "fleets",
+            "combat",
+            "colonization",
+            "artificial-intelligence",
+            "fog-of-war",
+            "balance-philosophy",
+            "progression",
+        )
+    ],
+    *[
+        f"docs/02-ux-ui/{name}.md"
+        for name in (
+            "information-architecture",
+            "desktop",
+            "mobile",
+            "design-system",
+            "accessibility",
+        )
+    ],
+    *[
+        f"docs/03-technical/{name}.md"
+        for name in (
+            "architecture",
+            "data-model",
+            "event-engine",
+            "resource-calculation",
+            "api",
+            "frontend",
+            "backend",
+            "ai-engine",
+            "security",
+            "deployment",
+        )
+    ],
+    *[
+        f"docs/04-quality/{name}.md"
+        for name in ("testing-strategy", "performance", "definition-of-done")
+    ],
+    *[
+        f"docs/05-project/{name}.md"
+        for name in ("roadmap", "backlog", "releases", "open-questions")
+    ],
+    *[
+        f"docs/adr/{name}.md"
+        for name in (
+            "README",
+            "0001-modular-monolith",
+            "0002-event-driven-time-model",
+            "0003-responsive-web-ui",
+            "0004-world-persistence",
+        )
+    ],
 }
-errors = [f"Missing: {name}" for name in sorted(REQUIRED) if not (ROOT / name).is_file()]
-files = [ROOT / name for name in REQUIRED if (ROOT / name).exists()]
-files += [ROOT / "docs/README.md", ROOT / "game_data/README.md"]
+errors = [
+    f"Missing: {name}" for name in sorted(REQUIRED) if not (ROOT / name).is_file()
+]
+files = list(ROOT.glob("*.md")) + list((ROOT / "docs").rglob("*.md"))
+files += [ROOT / "game_data/README.md"]
 for file in files:
     for target in re.findall(r"\[[^\]]+\]\(([^)]+)\)", file.read_text()):
         if target.startswith(("https://", "http://", "mailto:", "#")):

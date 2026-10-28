@@ -13,7 +13,14 @@
 - Aucun secret, logs sensibles, code généré inutile ou dépendance non justifiée.
 - PR compréhensible : comportement final, validation réelle et limites ; pas de merge automatique.
 
-## Étape 0
+## Étapes 1–2
+
+Configuration validée, sondes compatibles, sessions et transactions explicites. Modèles/migration
+cohérents, contraintes cross-universe et unicité vérifiées sur PostgreSQL réel, migration réversible
+sur base jetable et absence de dérive ORM. Aucun endpoint métier non autorisé. context.md/progress.md
+à jour ; branches de travail et CI ciblent develop, releases réservées à master.
+
+## Étape 0 (historique)
 
 Tous les fichiers demandés existent, liens valides et questions ouvertes centralisées.
 README et AGENTS suffisent à reprendre le projet. Frontend placeholder responsive, backend minimal,

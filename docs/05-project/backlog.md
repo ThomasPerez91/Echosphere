@@ -21,5 +21,5 @@
 | B14 | P1 / 16–17 | Simulations et stabilisation | Campagnes rejouables, risques de balance suivis |
 
 Pas d'estimations de jours sans retour d'implémentation. L'ordre détaillé suit les dépendances de la
-[roadmap](roadmap.md), la priorité n'est pas une autorisation d'ajouter une feature dans l'étape 0.
+[roadmap](roadmap.md), la priorité n'autorise pas à élargir le lot de développement courant sans le documenter.
 Toute nouvelle fonctionnalité doit préciser objectif, portée, statuts et tests avant développement.

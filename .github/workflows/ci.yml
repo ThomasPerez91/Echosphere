@@ -1,14 +1,31 @@
 name: CI
 on:
   push:
-    branches: [master, 'work/**']
+    branches: [master, develop, 'work/**']
   pull_request:
-    branches: [master]
+    branches: [master, develop]
 permissions:
   contents: read
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: echosphere_test
+          POSTGRES_USER: echosphere
+          POSTGRES_PASSWORD: ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U echosphere -d echosphere_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      POSTGRES_DB: echosphere_test
+      POSTGRES_USER: echosphere
+      POSTGRES_PASSWORD: ci_only
+      RUN_DB_TESTS: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -48,6 +65,9 @@ jobs:
       - run: cp .env.example .env
       - run: docker compose config --quiet
       - run: docker compose up --build -d --wait --wait-timeout 180
+      - run: docker compose exec -T backend alembic upgrade head
+      - run: docker compose exec -T backend alembic check
+      - run: docker compose exec -T backend alembic upgrade head
       - run: python3 scripts/smoke_compose.py
       - if: always()
         run: docker compose ps && docker compose logs --no-color --tail=150
