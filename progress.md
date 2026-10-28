@@ -31,11 +31,17 @@ Commandes locales : Ruff backend/scripts, pytest, génération SQL offline Alemb
 ESLint/Vitest/build frontend. Les tests DB sont ignorés localement sans PostgreSQL ; la CI exécute
 les douze tests d'intégration sur une base *_test et le smoke Docker réel.
 Résultats locaux vérifiés : 8 tests unitaires backend, 3 tests frontend, Ruff/ESLint/build,
-SQL offline et 50 documents/liens. Premier passage CI : frontend et Compose/migrations réussis ;
-un test PostgreSQL attendait la mauvaise classe d'erreur pour une chaîne trop longue. Correction :
-distinguer le CHECK d'un contrôleur inconnu et le rejet de longueur. La CI est relancée sur ce correctif.
-Le résultat final de la CI doit être consulté sur la PR du lot ; ne pas considérer une étape intégrée
-à develop simplement parce que les fichiers sont présents dans cette branche de travail.
+SQL offline et 50 documents/liens. Les 12 tests PostgreSQL sont ignorés localement sans serveur.
+
+CI vérifiée verte sur le commit source `958df32e5fb21b2f2e74c74f7188a43d14c45aad` :
+[exécution 40684461204](https://github.com/ThomasPerez91/Echosphere/actions/runs/40684461204).
+20 tests backend passent, dont 12 intégrations PostgreSQL réelles ; 3 tests frontend passent.
+Upgrade/downgrade/upgrade, dérive ORM, build Docker, migrations dans le runtime et panne/reprise DB
+sont validés. La première exécution avait révélé une mauvaise attente de type d'erreur dans un test,
+corrigée en distinguant limite de longueur et contrainte de contrôleur.
+Ce checkpoint documentaire s'ajoute au commit source testé ; consulter la CI de la tête de PR avant fusion.
+Le lot est prêt à examiner dans PR #2, **pas encore intégré à develop**. Aucun merge de PR #2,
+tag, release ou déploiement n'a été autorisé ou exécuté.
 La recette visuelle et le test spécifique Docker Desktop/WSL2 restent à effectuer par l'utilisateur.
 
 ## Reprendre ici
@@ -56,4 +62,4 @@ Q02 : protections hors connexion avant combat. Toutes les autres Q restent dans 
 ## Historique bref
 
 - 2026-10-28 : étape 0 publiée et vérifiée, puis fusionnée sur instruction ; develop créée.
-- 2026-10-28 : lot 1–2 préparé sur sa branche, suivi et conventions de reprise ajoutés.
+- 2026-10-28 : lot 1–2 publié dans PR #2 vers develop ; CI PostgreSQL/Docker verte, en attente d’examen.
