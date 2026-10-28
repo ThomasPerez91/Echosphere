@@ -59,3 +59,10 @@ existants conservés, migrations/absence de dérive et smoke Docker avec donnée
 
 - [Économie](../01-game-design/colony-economy-v0.1.md) · [Scheduler](0005-colony-time-engine.md)
 - [Instance](0006-universe-game-instance.md) · [Questions](../05-project/open-questions.md)
+
+## Portée et évolution documentaire
+
+Note de séquencement — **ancienne mention API/UI en 5B superseded** : [ADR 0008](0008-control-plane-game-data-plane.md)
+et la roadmap placent désormais 5B contrats identité/Portal-Game, 5C fondation compte/lobby selon
+cadrage puis 5D API/UI Colony sécurisées. Les règles/snapshots et le code de 5A restent inchangés.
+La cascade d’annulation est implémentée ; sa confirmation produit/UX reste sous Q01. Q39 reste ouverte.

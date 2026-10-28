@@ -1,6 +1,6 @@
 # Conception du moteur IA
 
-**Statut : futur ; orientation déterministe.**
+**Statut : Orientation validée, future — moteur déterministe/testable sans LLM stratégique.**
 
 
 Le moteur initial n'utilise pas de LLM. Un décideur Utility/Goals reçoit une observation autorisée,
@@ -31,3 +31,10 @@ introduits pour « compléter » l'IA du bootstrap.
 
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
 - [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Frontières futures Portal/Game
+
+Perception → Goals → Evaluation → Decision → Action reste dans le Game Backend, indépendant de
+la présence ou de la disponibilité Portal. L’IA appelle les mêmes services métier que l’humain et
+la simulation headless. Les comptes globaux ne lui confèrent aucun accès omniscient. Les mécanismes
+de planification AI_TURN et leurs budgets restent à implémenter, aucune cadence fixée par la passation.

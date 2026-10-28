@@ -1,6 +1,6 @@
 # Brouillard de guerre
 
-**Statut : connaissance limitée validée ; états conceptuels.**
+**Statut : Orientation validée pour connaissance limitée et quatre états ; transitions futures ouvertes.**
 
 
 | État conceptuel | Sens de travail, à préciser en Q08 |

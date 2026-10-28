@@ -56,3 +56,10 @@ ColonyView réserve quatre sous-sections avec navigation native #colony/<vue>, s
 Colonie conservée, état explicite sans univers/colonie. Aucune requête d’API métier, donnée de démo
 ou mutation. Les scénarios Playwright existants couvrent aussi Défense, liens directs et clavier.
 La défense reste un système futur. Le domaine interne ne rend pas le frontend interactif en 5A.
+
+## Parcours cible compte/parties — décision validée, future
+
+Landing publique → inscription/login → compte/lobby/liste des parties → créer/rejoindre → sélectionner
+Universe → Game UI. Compte global multi-parties, handoff vers session Game autonome. L’application
+actuelle est le shell Game ; elle n’implémente ni ces écrans Portal ni une authentification.
+L’API/UI Colony interactive est désormais 5D après contrats 5B et fondation 5C selon cadrage.

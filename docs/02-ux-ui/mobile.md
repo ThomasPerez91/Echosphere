@@ -32,3 +32,11 @@ basse et de la safe area. Les drawers de gameplay restent futurs.
 Les quatre sous-sections internes utilisent deux colonnes sur écran étroit et quatre au-delà.
 Commandes de 44 px minimum, contenu et liens sans débordement à 320/390/768/1440. La barre basse
 globale reste inchangée ; Défense n’y est pas ajoutée. Aucune action de défense ou donnée fictive.
+
+## Cible future Portal/Game
+
+**Statut : Orientation validée, non implémentée.**
+
+Le futur parcours Portal vers Game doit permettre choix de partie et retour au lobby sans
+surcharger la navigation basse Game. Login, expiration, logout et panne Portal restent à concevoir
+avec le contrat de session ; aucun nouvel écran ou comportement implémenté dans la passation.

@@ -44,3 +44,17 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
 - [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Contrats Portal/Game à définir en 5B — non implémentés
+
+Décisions validées dans [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : Portal expose
+futurs services de compte/lobby, Game porte les commandes autoritaires et leurs projections.
+Après handoff, GameSession autorise l’accès direct à Game sans proxy/consultation Portal par commande.
+Game vérifie session → accès/membership/univers → permissions/empire → propriété et visibilité.
+Aucune nouvelle URL, méthode de login, forme de token/cookie ou enveloppe d’erreur n’est fixée ici.
+
+Les opérations internes provision universe, grant/revoke access, join et association membership/empire
+passent exclusivement par Game, authentifiées service-to-service et idempotentes ; jamais par SQL
+Portal→Game DB ni via une API publique normale. Clés d’idempotence, authentification, ordre/retry,
+réconciliation et révocation restent à contractualiser (Q46/Q53/Q54). Un accès interne réseau seul
+ne suffit pas à prouver une identité de service. Aucun endpoint interne ou public ajouté dans ce lot.

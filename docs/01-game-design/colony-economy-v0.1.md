@@ -9,12 +9,13 @@ nouvelle dépendance. Ces valeurs sont un point de départ d’équilibrage, pas
 
 ## Colonie de référence
 
-12 secteurs, 2 slots orbitaux réservés pour plus tard, Command Core hors secteurs (conceptuel,
+Départ de référence v0.1 seulement : 12 secteurs, 2 slots orbitaux réservés pour plus tard, Command Core hors secteurs (conceptuel,
 sans bâtiment/table ajouté). Secteurs 1–4 : Extraction Complex I, Flux Reactor I, Data Node I,
 Industrial Complex I ; 8 libres. Stocks : 2000 Alliages, 1500 Flux, 750 Données. Production initiale :
 120/100/60 par heure. Capacité sans Logistics Center : 10 000 de chaque ressource.
 Le service initialise une colonie existante sur une planète de capacité conforme au ruleset ;
-il ne génère pas d’univers, ne colonise pas et ne crée pas d’identité utilisateur.
+il ne génère pas d’univers, ne colonise pas et ne crée pas d’identité utilisateur. Ce contrôle
+actuel est limité à la référence ; il n’impose pas 12/2 à toutes les futures planètes.
 
 ## Catalogue et niveaux continus
 
@@ -118,7 +119,10 @@ les 100/80 % sans inventer de stock hors plafond ni perdre un remboursement sile
 
 Domaine interne uniquement : pas d’API publique de lecture/mutation, d’identité factice, de partie
 jouable, défense effective, orbitaux, flotte, recherche, combat ou multijoueur. L’UI réserve les quatre
-sous-sections Colony sans afficher de stocks/bâtiments/timers fictifs. Étape 5B attend Q16.
+sous-sections Colony sans afficher de stocks/bâtiments/timers fictifs. La suite est 5B contrats identité/Portal-Game, 5C compte/lobby selon cadrage, 5D API/UI sécurisées.
 
 - [Domaine et persistance](../03-technical/data-model.md) · [ADR 0007](../adr/0007-colony-economy.md)
 - [Défense future](planetary-defense.md) · [Questions](../05-project/open-questions.md)
+
+**Qualification de la cascade** : comportement implémenté, proposition produit/UX encore à confirmer
+sous Q01. Les 100/80 % sont les règles v0.1 explicitement demandées ; Q39 garde la saturation ouverte.

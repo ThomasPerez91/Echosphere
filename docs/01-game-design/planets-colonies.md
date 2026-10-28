@@ -1,6 +1,6 @@
 # Planètes et colonies
 
-**Statut : secteurs validés ; quantités orientatives.**
+**Statut : Décision validée pour les secteurs ; Balance provisoire pour le départ v0.1, capacités futures variables.**
 
 
 Une planète est un lieu physique ; une colonie est son exploitation par un empire. Cette distinction
@@ -43,3 +43,11 @@ Voir [Économie v0.1](colony-economy-v0.1.md) pour stocks, production, stockage,
 La [défense planétaire](planetary-defense.md) appartient à la colonie : infrastructure stratégique
 persistante à modules limités, avec coût d’opportunité surface/orbite. Aucun système défensif actif,
 réparation ou occupation orbitale dans le lot actuel. Pas de tables de défense anticipées.
+
+## Portée des 12 secteurs / 2 orbitaux
+
+**Balance provisoire** : ces chiffres concernent uniquement la planète initiale de référence v0.1,
+non l’ensemble des futures planètes. **Orientation validée** : leurs capacités pourront varier ;
+secteurs abstraits, spécialisation émergente par allocation, pas de classe de planète imposée.
+**Implémenté** : initialize_colony contrôle aujourd’hui la capacité du ruleset de référence ; il ne
+constitue pas encore un initialiseur général de planètes variées. Voir [audit #5](../06-handoff/pr-5-audit.md).

@@ -5,7 +5,8 @@
 
 Le conflit est optionnel dans la boucle, mais un combat minimal fait partie du MVP final. Les unités
 et dommages doivent être produits et résolus par les règles communes ; pas de flotte IA gratuite.
-Aucune mécanique de combat n'est implémentée à l'étape 0.
+Aucune mécanique de combat n’est implémentée jusqu’au checkpoint 5A. Résolution automatisée
+future, jamais un RTS ; cette mission n’ajoute aucun combat.
 
 ## Contraintes validées
 

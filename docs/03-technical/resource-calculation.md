@@ -3,7 +3,8 @@
 **Statut : représentation technique de l'étape 3 implémentée ; équilibrage toujours ouvert (Q03).**
 
 Trois clés internes seulement : alloys, flux, data, correspondant aux noms de travail Alliages,
-Flux, Données. Aucune valeur de rendement, coût ou capacité de gameplay n'est fournie par ce lot.
+Flux, Données. Le socle historique étape 3 n’imposait pas de valeurs ; les valeurs v0.1
+sont désormais fournies par game_data au domaine Colony 5A.
 
 ## Représentation
 
@@ -23,10 +24,11 @@ Pas de taux négatif/entretien dans ce socle : son modèle métier reste Q03.
 
 ## Capacité optionnelle
 
-Le calcul accepte une capacité explicite nullable. Aucune capacité n'est choisie pour le jeu : NULL
+Le socle générique accepte une capacité explicite nullable. Pour ses usages historiques, NULL
 signifie absence de plafond configuré. Si elle est fournie, le stock sature au plafond et le surplus,
 y compris son reste fractionnaire, est écarté. Cela évite de récupérer des heures de surplus après
-une dépense. Choix d'un plafond, évolution, entrepôts et politique d'entretien restent ouverts.
+une dépense. Le domaine 5A fixe les plafonds provisoires de sa référence et Logistics Center ; entretien et
+évolutions supplémentaires restent ouverts.
 Une absence de durée écoulée ne modifie ni stock ni reste. Un temps antérieur est refusé.
 
 ## Changements de taux et rattrapage
@@ -34,8 +36,8 @@ Une absence de durée écoulée ne modifie ni stock ni reste. Un temps antérieu
 À un événement t1, le moteur règle [t0,t1] avec l'ancien taux, applique le nouveau puis poursuit
 [t1,t2]. En retard de plusieurs heures, il emploie l'heure logique des événements, pas celle du poll.
 Les trois ressources partagent settled_at économique ; cursor_at du stream est distinct. Tout ancrage incohérent bloque l'événement.
-Les coûts, multiplicateurs, valeurs initiales et durées resteront versionnés dans game_data à l'étape
-Colony ; l'initialisation actuelle n'est qu'un service interne exigeant des valeurs explicites.
+Les coûts, multiplicateurs, valeurs initiales et durées sont versionnés dans game_data v0.1 pour
+Colony. L’initialisation générique historique reste un service interne à valeurs explicites.
 
 ## Concurrence et commandes futures
 
@@ -44,8 +46,8 @@ rattraperont d'abord les événements jusqu'à l'instant de commande et exigeron
 vérification des fonds, dépense et enregistrement dans une seule transaction. Aucun endpoint de
 ressources, bouton de récolte ou calcul critique navigateur n'est ajouté maintenant.
 
-Q03 est partiellement cadrée pour représentation/arrondis ; plafonds, coûts et gameplay économique
-restent ouverts. L'historique et le stockage des événements sont définis dans le moteur temporel.
+Q03 est partiellement cadrée : représentation/arrondis et balance v0.1 implémentés ; les chiffres
+restent provisoires, entretien et rééquilibrage ouverts. L'historique et le stockage des événements sont définis dans le moteur temporel.
 
 [Moteur temporel](event-engine.md) · [Économie](../01-game-design/resources-economy.md) · [Questions](../05-project/open-questions.md)
 

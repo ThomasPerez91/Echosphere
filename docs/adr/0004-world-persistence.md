@@ -26,3 +26,8 @@ besoin mesuré ; il ajouterait une seconde convention aux deux sondes actuelles.
 génération galactique et choix d'équilibrage restent hors de ce lot.
 
 [Modèle](../03-technical/data-model.md) · [Backend](../03-technical/backend.md) · [Index ADR](README.md)
+
+## Portée et évolution documentaire
+
+Note de portée : les exclusions et cinq modèles décrivent le lot historique 1–2. Les migrations
+0002–0004 ajoutent temps et domaine Colony ; compte/Portal futurs dans [ADR 0008](0008-control-plane-game-data-plane.md).

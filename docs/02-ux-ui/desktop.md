@@ -26,3 +26,10 @@ implémente sidebar, topbar de contexte, bilan et états vides, sans contenu mé
 Quatre sous-sections internes dans la zone centrale : Vue d’ensemble, Infrastructures, Orbite,
 Défense. Liens natifs de sous-navigation, sans huitième entrée globale. Aucune valeur ou défense
 construisible inventée. Le dashboard Empire pourra plus tard afficher une synthèse défensive.
+
+## Cible future Portal/Game
+
+**Statut : Orientation validée, non implémentée.**
+
+Portal compte/lobby et Game UI seront des espaces distincts du parcours : sélection de partie
+avant entrée, compte global multi-parties. Aucun écran Portal ou sélecteur réel implémenté ici.

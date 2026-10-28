@@ -7,7 +7,8 @@ La galaxie est un graphe de systèmes stellaires et routes, pas une grille de co
 Les positions 2D servent la représentation ; les edges définissent les trajets. Des carrefours,
 frontières, accès défendables et régions lointaines doivent compter dans les décisions.
 
-Orientation : 30–50 systèmes pour le prototype/MVP, 100–150 pour un univers standard futur.
+Repère provisoire : 30–50 systèmes pour le prototype/MVP. Les tailles futures seront configurables ;
+100–150 est une ancienne proposition, pas une taille standard validée.
 Génération procédurale reproductible avec seed. La reproductibilité exige aussi une version du
 générateur et de ses données ; une seed seule n'est pas une garantie entre versions.
 

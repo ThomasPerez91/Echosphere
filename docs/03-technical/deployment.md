@@ -25,10 +25,11 @@ docker compose exec backend alembic check
 
 Compose exécute désormais le service migrate (alembic upgrade head) avant API/worker.
 L'API ne migre pas le schéma au démarrage de chaque worker. Relancer upgrade head reste idempotent. `/ready`
-prouve la connexion PostgreSQL, pas la version du schéma. Les migrations 0001/0002/0003 aboutissent à neuf tables,
-sans données. `upgrade head` peut être relancé sans répéter ses effets. `alembic check` vérifie la
+prouve la connexion PostgreSQL, pas la version du schéma. Sur la branche 5A, les migrations 0001–0004 aboutissent à 13 tables métier, plus alembic_version,
+sans partie créée automatiquement. `upgrade head` peut être relancé sans répéter ses effets. `alembic check` vérifie la
 dérive entre ORM et schéma ; ce n'est pas un contrôle d'intégrité des données.
-Ne pas exécuter de downgrade sur des données à garder : un downgrade base supprime ces tables.
+Ne pas exécuter de downgrade sur des données à garder : le downgrade 0004 peuplé est refusé ;
+un downgrade vide/base reste destructif pour le schéma.
 La CI teste le downgrade uniquement dans une base dédiée jetable.
 
 ## Exploitation locale
@@ -76,3 +77,24 @@ Sources : [ordre de démarrage Compose](https://docs.docker.com/compose/how-tos/
 
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
 - [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Cible locale future Portal/Game — documentation seulement
+
+**Décision validée, non implémentée** : Windows 11 + Ubuntu WSL2 + VS Code + Docker + Codex local,
+ChatGPT Desktop facultatif. Machine partagée permise au développement ; séparation opérationnelle
+possible en déploiement. Le Compose actuel n’est pas modifié et conserve ses cinq services Game.
+
+| Composant futur possible | Plan |
+| --- | --- |
+| Portal frontend | Landing/compte/lobby |
+| Portal backend | Control Plane |
+| Accounts PostgreSQL | Stockage de compte, credentials hors Game |
+| Game frontend | Jeu après sélection d’univers |
+| Game backend | Commandes/lectures de partie |
+| Game worker | Production et échéances, indépendant de Portal |
+| Game PostgreSQL | État autoritaire des parties |
+
+Noms de services, routage/TLS, placement, pools et budgets futurs à spécifier ; pas des services
+lancés aujourd’hui. CPU/RAM/scaling/bases/réseau doivent être isolables pour limiter l’impact des
+attaques Portal. Voir [ADR 0008](../adr/0008-control-plane-game-data-plane.md). Aucune recette WSL2
+réelle n’est revendiquée ici ; [reprise concrète](../06-handoff/work-codex-handoff.md).

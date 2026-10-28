@@ -1,6 +1,6 @@
 # Scheduler générique et règlement économique
 
-**Statut : étape 3 corrigée sur PR #3 ; scheduler extensible, économie de colonie comme premier adaptateur.**
+**Statut : Implémenté depuis PR #3 fusionnée, avec construction 5A sur PR #5 ; scheduler Game extensible.**
 
 ## Deux responsabilités explicites
 
@@ -64,8 +64,8 @@ TimeEngine.catch_up(session, colony_id, until) utilise ce contrat et règle les 
 si le stream est complet. Un service de dépense futur exigera cette complétude sous le même verrou
 avant coûts et écritures dans sa transaction ; aucun tel endpoint public n'est exposé maintenant.
 
-Le seul handler métier technique livré est RESOURCE_RATE_CHANGE (alloys/flux/data, taux entier
-non négatif). Les exemples BUILDING_COMPLETE, RESEARCH_COMPLETE, AI_TURN, FLEET_ARRIVAL/RETURN,
+Les handlers livrés sont RESOURCE_RATE_CHANGE (alloys/flux/data, taux entier non négatif) et
+CONSTRUCTION_COMPLETE en 5A. Les exemples RESEARCH_COMPLETE, AI_TURN, FLEET_ARRIVAL/RETURN,
 EXPLORATION_COMPLETE sont des extensions documentées, pas des handlers factices ou features implémentés.
 Un type inconnu suit la politique retry/blocked, jamais une réussite silencieuse.
 
@@ -100,3 +100,10 @@ même date logique. Effets et événement suivant sont dans la transaction du sc
 ou autre lock de stream. Annulation sous le même lock après catch-up ; échéance annulée acquittée
 avec error_code cancelled, sans modifier sa date ni terminer le chantier métier. Le worker reprend
 les événements persistants sans joueur connecté. Voir [ADR 0007](../adr/0007-colony-economy.md).
+
+## Autonomie de Game, cible future
+
+Les workers et échéances appartiennent à Game DB et au Game Backend ; ils ne doivent pas attendre
+le Portal/auth/lobby ni une session joueur. La séparation [ADR 0008](../adr/0008-control-plane-game-data-plane.md)
+ne change pas ce scheduler ou ses transactions. Provision/grant/revoke internes futurs ne doivent
+pas ajouter d’appels réseau Portal dans un handler ou une dépense. Aucun nouveau scheduler ici.

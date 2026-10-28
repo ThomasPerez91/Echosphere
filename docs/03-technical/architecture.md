@@ -1,55 +1,69 @@
 # Architecture technique
 
-**Statut : monolithe modulaire validé.**
+**Statuts : Game Backend implémenté jusqu’à 5A sur PR #5 ouverte ; cible Portal/Game validée,
+non implémentée.** État d’intégration et CI dans [progress.md](../../progress.md).
 
+## Réalité du dépôt
 
-Frontend React/TypeScript/Vite ; backend Python/FastAPI ; PostgreSQL source de vérité.
-SQLAlchemy 2 et Alembic ont été introduits pour les cinq premiers modèles et leurs migrations (étapes 1–2).
-Redis est facultatif plus tard ; aucun besoin actuel. Pas de microservices.
+React/TypeScript/Vite ; Game Backend Python/FastAPI, SQLAlchemy/Alembic ; PostgreSQL autoritaire.
+Le Compose actuel comprend frontend, backend, postgres, migrate et worker. API/worker sont deux
+processus du même monolithe gameplay, pas deux microservices. Aucun Portal ou Accounts DB présent.
+Le frontend est un shell sans partie active, pas un lobby ni un client de gameplay interactif.
 
-## Frontières futures
+| Zone actuelle | Responsabilité implémentée |
+| --- | --- |
+| backend/app/api, core, persistence | Sondes, configuration/pool et modèles, aucune API métier publique |
+| backend/app/simulation | Horloge UTC, production exacte, EventStream/ScheduledEvent et worker |
+| backend/app/colony | Domaine interne construction/économie, transactions et snapshots |
+| game_data/rulesets/v0.1 | Paramètres validés strictement, balance provisoire, copie par univers |
+| backend/migrations | 0001–0004, migrations explicites avant API/worker |
+| frontend/src | Navigation responsive et sous-vues Colony en préparation, readiness via proxy |
 
-Modules envisagés : univers, empires/colonies, économie/construction, recherche, exploration,
-flottes/combat, connaissance/rapports, relations et IA. Ils composent un même backend, avec une base
-transactionnelle commune. Les noms de packages finaux ne sont pas une décision acquise.
-Les services d'application orchestrent les commandes ; les règles de domaine ne dépendent pas du web.
-Les adaptateurs HTTP et IA utilisent les mêmes services et validations.
+Les domaines Game futurs restent modulaires : recherche, exploration/connaissance/rapports,
+flottes/combat, relations et IA. Ils partagent les transactions Game pertinentes. Humains, IA et
+headless doivent utiliser les mêmes services ; le domaine ne dépend pas d’HTTP ou de la présence.
+Redis/WebSocket ne sont pas livrés et ne seront jamais l’autorité gameplay.
 
-## État livré
+## Cible de plateforme — décision validée, future
 
-`backend/app/main.py` compose une application injectable ; `api/probes.py` porte les sondes,
-`core/config.py` valide l'environnement, `persistence/` contient moteur SQLAlchemy, sessions et modèles.
-`backend/migrations/` versionne le schéma. Aucun endpoint métier n'est exposé sans authentification.
-`frontend/src/` : placeholder et requête de disponibilité. `game_data/` : intention documentée,
-aucun paramètre de jeu. Docker lance trois services locaux. Le proxy Vite relaie `/api/*` vers le
-backend ; le navigateur ne résout jamais le hostname Docker `backend`.
+[ADR 0008](../adr/0008-control-plane-game-data-plane.md) est la référence canonique : deux backends
+indépendants, chacun monolithe modulaire, bases conceptuellement distinctes et séparables.
 
-## Temps livré à l'étape 3
+| Plan | Backend et DB futurs | Frontière |
+| --- | --- | --- |
+| Portal Control Plane | Accounts/Auth/Lobby → Accounts DB | Comptes globaux, plusieurs parties, création/join et cycle de vie global des participations |
+| Game Data Plane | Monolithe gameplay existant → Game DB | État autoritaire, droits minimaux nécessaires au jeu, événements et workers |
 
-`backend/app/simulation/` ajoute des streams génériques d’univers, un adaptateur économique de colonie et des événements persistants.
-API et worker partagent les services et la même base ; le worker est un processus du monolithe,
-pas un microservice. 0002 ajoute les tables économiques/événements, 0003 extrait les EventStream génériques, sans créer de partie.
-Le service migrate de Compose applique les migrations une fois avant API et worker.
+Portal ne peut pas écrire en SQL dans Game DB. Provision/grant/revoke/join passent par une interface
+Game interne, authentifiée et idempotente. Le client fait ensuite ses commandes **directement à
+Game**, sans transit ni appel synchrone au Portal par commande. Après ticket très court/unique,
+Game établit une GameSession autonome ; format, durées, révocation et protocoles restent ouverts.
 
-## Instance et isolation
+L’isolation cible inclut CPU/RAM, pools, scaling, DB et réseau distincts ; la logique en modules ne
+suffit pas. Portal indisponible peut bloquer nouvelles connexions/entrées, pas interrompre les
+univers/workers ou sessions Game établies dans leur contrat. Pas de garantie DDoS sur la pile locale.
+Le Game Backend ne conserve pas les mots de passe/credentials Accounts.
 
-Universe est la frontière de la partie (solo MVP, privée/persistante futures), pas un User ni un
-processus. Entités rattachées directement/indirectement et contexte d'univers dans chaque future
-API/permission. Workers multi-univers ; pas de singleton de configuration gameplay. Règles/vitesses
-futures par Universe ou ruleset/version. Les comptes/memberships restent conceptuels (ADR 0006).
+**Historique remplacé en partie** : l’ADR 0001 prévoyait initialement un backend unique pour toute
+la plateforme. ADR 0008 affine cette frontière ; le monolithe modulaire gameplay est conservé.
+Il ne s’agit pas d’une autorisation de créer 10–20 microservices ni de modifier Docker maintenant.
 
-Scheduler générique → EventStream(universe_id) → ScheduledEvent(stream_id, universe_id).
-ColonyTimeline lie explicitement sa colonie et son stream du même univers ; settled_at/ressources
-restent économiques. Futurs adaptateurs typés Empire/Fleet/Universe pourront référencer un stream
-sans réécrire l'historique d'événements. Aucun owner_kind/owner_id sans FK ni mode anticipé.
+## Invariants d’instance et temps
 
-## Évolution contrôlée
+Universe est la frontière d’une partie, pas un User ou un processus. Compte global →
+UniverseMembership → Universe → éventuellement Empire/rôle/permissions ; l’empire partagé reste Q21.
+Les FK composites, scopes d’univers et projections de fog complètent les contrôles applicatifs.
+Controller_type human/ai ne prouve ni identité ni droit. Memberships/comptes restent sans tables.
 
-Le worker temporel est un processus distinct du même codebase ; cela ne crée pas un microservice. Extraire un composant seulement sur besoin mesuré et ADR. Les interactions métier,
-UTC, transactions et visibilité sont décrites dans les documents spécialisés.
+EventStream(universe_id,cursor_at,next_sequence) → ScheduledEvent(stream_id,universe_id).
+ColonyTimeline associe explicitement colonie/stream/univers ; settled_at et ResourceBalance règlent
+l’économie. Pas de owner_kind/owner_id sans FK ni second scheduler. Handlers sans commit, effet
+externe ou verrou d’un autre stream. Rattrapage complet avant dépense ; exactitude indépendante
+de la fréquence de lecture. Ruleset et vitesses par univers, jamais en singleton métier.
 
+## Prochain travail
 
-## Références
-
-- [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
-- [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+Passation documentaire seulement. Après revue/intégration et autorisation du lot : 5B contrats
+identité/session/Portal-Game avant 5C fondation compte/lobby, puis 5D API Colony protégée.
+Voir [roadmap](../05-project/roadmap.md), [sécurité](security.md), [API](api.md),
+[modèle](data-model.md), [temps](event-engine.md) et [questions](../05-project/open-questions.md).

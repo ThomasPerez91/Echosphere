@@ -13,6 +13,14 @@
 - Aucun secret, logs sensibles, code généré inutile ou dépendance non justifiée.
 - PR compréhensible : comportement final, validation réelle et limites ; pas de merge automatique.
 
+## Passation documentaire
+
+Même branche #5 si état attendu, pas de nouveau code/migration/game_data/dépendance/Compose/test.
+Sources et accès partiels qualifiés, pas de conversation privée publiée. Références canoniques,
+index des décisions, ADR 0008, Q01–Q39 préservées/Q40–Q56 ouvertes, lecture Work/Codex et prochain
+point de reprise cohérents. Check liens/index et diff autorisé ; CI réelle de tête observée.
+PR mise à jour et laissée non fusionnée. WSL2/protection DDoS non revendiqués comme testés.
+
 ## Étape 5A
 
 PR #4 intégrée et CI master verte avant la branche. Ruleset réel strict, niveaux 1–5 et >5,

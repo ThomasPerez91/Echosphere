@@ -1,6 +1,6 @@
 # Civilisations IA
 
-**Statut : règles communes validées ; Utility/Goals orienté.**
+**Statut : Orientation validée — Utility/Goals, équité et testabilité ; moteur non implémenté.**
 
 
 L'IA est un acteur économique et stratégique autonome : elle explore, construit, recherche,
@@ -32,3 +32,13 @@ aucun handicap caché ne doit être ajouté au motif de rendre une partie plus d
 - [Vision](../00-product-vision.md) · [Questions ouvertes](../05-project/open-questions.md)
 - [Boucle](core-loop.md) · [Équilibrage](balance-philosophy.md)
 - [Temps serveur](../03-technical/event-engine.md)
+
+## Vision consolidée — orientation validée, future
+
+Perception → Goals → Evaluation → Decision → Action. La perception vient seulement des projections
+accessibles au même empire humain. L’IA peut faire de mauvaises décisions ; elle n’a ni moyens
+créés gratuitement ni connaissance compensatoire pour gagner. Profils possibles : expansionist,
+economic/cautious, aggressive ; traits aggression/expansion/economy/research/risk/diplomacy proposés,
+poids et cadence Q11. Un dialogue génératif éventuel est une couche future facultative, jamais
+l’autorité stratégique ou le service validant une commande. Aucun LLM requis au moteur stratégique.
+Diplomatie/commerce avancés restent post-MVP, mécanismes non décidés ; Q18 concerne les relations minimales.

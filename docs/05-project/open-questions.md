@@ -21,7 +21,7 @@ les moments limites pour décider avant de dépendre du choix.
 | Q13 | Ordre simultané, locks, rattrapage, retries et compatibilité des versions | 3 | [Événements](../03-technical/event-engine.md) |
 | Q14 | Victoire/défaite, durée d'univers, resets et rattrapage | cadrage MVP | [Progression](../01-game-design/progression.md) |
 | Q15 | Validation finale de la navigation proposée étape 4, carte tactile, libellés et tokens | 4 | [UX](../02-ux-ui/information-architecture.md) |
-| Q16 | Mode d'auth/session futur, contrats d'erreur/idempotence et permissions | 1/2 | [Sécurité](../03-technical/security.md) |
+| Q16 | Identité/session et autorisation : architecture partiellement validée, mécanismes ouverts Q40–Q56 | 5B avant 5C/5D | [Sécurité](../03-technical/security.md) |
 | Q17 | Budgets de performance et charge de référence | 3 puis 17 | [Performance](../04-quality/performance.md) |
 | Q18 | Contenu exact des relations minimales, hostilité et négociation | 13 | [Roadmap](roadmap.md) |
 
@@ -46,9 +46,10 @@ Q22 distingue les familles ; Q02 et Q25 devront être conciliées sans décider 
 
 ## Cadrage actuel des questions
 
-Q16 est cadrée aux étapes 1–2 : pas de mutation HTTP publique tant que identité/session, contrôle
-objet et idempotence ne sont pas décidés ; les sondes gardent leur contrat. Elle reste ouverte,
-aucune méthode d'authentification n'a été choisie arbitrairement.
+Q16, cadrage historique 1–2 : aucune mutation publique sans identité/contrôle objet/idempotence.
+**Évolution validée 2026-10-28** : compte global multi-parties, Membership, Portal/Game séparés,
+Accounts DB/Game DB distinctes, pas de SQL Portal→Game, interface interne et GameSession autonome.
+Ces décisions ne ferment pas les mécanismes Q40–Q56. Les sondes gardent leur contrat.
 Q04 n'est pas fermée par le schéma : les capacités sont fournies explicitement, sans plafond
 9–18 ou défaut 12 imposé. Q07 reste ouverte : la table colonies représente l'occupation actuelle,
 le cycle de vie et l'historique nécessiteront une migration au lot colonisation.
@@ -91,7 +92,9 @@ rendre le montant exact, sans overflow/perte cachée ; choix conservateur à val
 ## Arbitrages fournis pour 5A — 2026-10-28, balance v0.1 provisoire
 
 Q01 partielle : trois ordres actif inclus, un seul actif, réservation immédiate, remboursement
-queued 100 % / active 80 %, cascade des upgrades dépendants et activation à la date logique.
+queued 100 % / active 80 % et activation à la date logique. La cascade des upgrades dépendants
+est implémentée ; sa confirmation produit/UX reste sous Q01, elle n’est pas promue en validation
+utilisateur par sa seule présence en code.
 Q03 partielle : stocks, taux, coûts et capacités de référence dans game_data ; production perdue au
 plafond, récurrences rationnelles et arrondis côté serveur. Entretien général reste ouvert.
 Q04 partielle : cinq types économiques, 12 secteurs/2 orbitaux de référence, producteurs répétables,
@@ -100,4 +103,42 @@ réaffectation et orbitaux jouables restent ouverts. Q12 : JSON strict validé e
 simulations d’équilibrage et politique d’édition/migration futures restent ouvertes.
 Q26 partielle : multiplicateurs économie/construction par univers, ×1 de référence, vitesses
 recherche/flotte réservées sans système associé. Changement de vitesse d’un univers actif à cadrer.
-Q16 reste ouverte, bloque 5B ; aucune API gameplay ou identité globale factice ajoutée.
+Q16 reste partiellement ouverte : 5B doit préciser les contrats avant 5C/5D ; aucune API gameplay
+ou identité globale factice ajoutée.
+
+## Identité / Portal-Game — Q16 partiellement cadrée, aucune implémentation (2026-10-28)
+
+**Décisions validées** : compte global, plusieurs univers simultanés, participation via
+UniverseMembership, pas de Empire.owner_user_id unique ; empire partagé Q21 reste ouvert. Portal
+Control Plane et Game Data Plane indépendants/isolables, Accounts DB/Game DB distinctes/séparables ;
+aucun credential en Game DB, aucune écriture SQL Portal→Game. Interface interne contrôlée,
+authentifiée et idempotente pour provision/grant/revoke/join. Ticket très court/usage unique puis
+GameSession autonome ; gameplay direct à Game sans dépendance Portal par commande. Panne Portal
+ne doit pas interrompre univers/workers/sessions établies selon le contrat à définir.
+Référence canonique : [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
+
+Les lignes suivantes restent **Question ouverte**, aucun protocole ou chiffre n’est déduit :
+
+| ID | Arbitrage restant | Dépendance / référence |
+| --- | --- | --- |
+| Q40 | Méthode de login, credentials et récupération compte | 5B/5C, [sécurité](../03-technical/security.md) |
+| Q41 | Cookie/session Portal, durées et politique de stockage | 5B, sécurité |
+| Q42 | Format/expiration du ticket, nonce, audience, usage unique et résistance au rejeu | 5B, ADR 0008 |
+| Q43 | Durée, stockage et limites de GameSession | 5B avant 5D, ADR 0008 |
+| Q44 | Refresh, expiration et révocation en fonctionnement normal ou panne Portal | 5B, ADR 0008 |
+| Q45 | Logout global vs logout Game et effets sur les autres parties | 5B/5C, compte multi-parties |
+| Q46 | Auth service-to-service et exposition réseau de l’interface interne | 5B, aucun mTLS/signature/credential choisi |
+| Q47 | CSRF, origines, cookies et politique CORS liée au découpage | 5B/5C/5D, sécurité |
+| Q48 | MFA et récupération associée | Cadrage 5B, implémentation selon périmètre |
+| Q49 | Fournisseur email, verification et récupération | 5B/5C |
+| Q50 | Anti-bot/CAPTCHA, limites IP/compte et protections brute force | 5B/5C, pas de produit choisi |
+| Q51 | Modèle exact rôles/permissions et contexte empire | 5B, sans fermer Q21 |
+| Q52 | Membership suspendu, reprise et droits lors d’un accès Game | 5B, compatible Q23/Q24 |
+| Q53 | Synchronisation Portal/Game, ordre/retries, autorité des droits et réconciliation | 5B avant provision/join |
+| Q54 | Révocation pendant GameSession, propagation et limites en panne Portal | 5B, autonomie sans promesse d’instantanéité |
+| Q55 | Politique d’accès/sécurité des univers privés et persistants | 5B puis lots modes, Q19–Q29 préservées |
+| Q56 | Validation autonome du ticket, clés/rotation et dépendances de handoff en mode dégradé | 5B, format crypto non décidé |
+
+12 secteurs/2 slots orbitaux concernent seulement le départ de référence v0.1 ; distribution et
+capacités variables futures restent Q04/Q06. Q39 reste ouverte. Q01–Q39 ne sont ni supprimées,
+renumérotées ni fermées par cet ajout. Les comptes/memberships restent sans nouvelles tables.

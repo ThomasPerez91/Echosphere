@@ -12,9 +12,9 @@
 
 ## Checks livrés
 
-Backend : Ruff et 21 tests unitaires pour sondes, configuration et production exacte. Le succès de connexion est simulé dans le test unitaire ; cela ne
+Checkpoint 5A : Ruff et 101 tests backend (42 unitaires, 59 intégrations PostgreSQL). Le succès de connexion est simulé dans le test unitaire ; cela ne
 remplace pas le SELECT 1 réel du smoke Compose.
-Frontend : ESLint, TypeScript strict, build Vite, trois tests Vitest (succès, panne/réessai, 503).
+Frontend : ESLint, TypeScript strict, build Vite, 11 tests Vitest et 5 scénarios Chromium.
 Documentation : script vérifiant les liens Markdown locaux et les fichiers obligatoires.
 CI : jobs backend, frontend/documentation et smoke Docker avec PostgreSQL réel. Le smoke vérifie
 la reprise après arrêt/redémarrage de PostgreSQL et préserve /health pendant l'indisponibilité.
@@ -48,7 +48,7 @@ rejeu et absence de doublon. Cela ne remplace pas encore une campagne de fault i
 L'horloge figée vérifie les taux segmentés à l'heure logique, événements enfants simultanés,
 backoff, blocage/reprise, idempotence et rattrapage incomplet. Les tests purs comparent mille petites
 lectures à une longue durée, vérifient microsecondes, capacité, overflow et refus de temps naïf/inversé.
-Le job Compose applique 0002, vérifie l'absence de dérive et exécute aussi le CLI du worker.
+Le job Compose applique head (0004 sur 5A), vérifie l'absence de dérive et exécute aussi le CLI du worker.
 
 ## Commandes sans Docker
 
@@ -92,3 +92,13 @@ roundtrip upgrade/downgrade/upgrade et alembic check incluent les nouvelles tabl
 Playwright conserve 320/390/768/1440 et teste les sous-sections Colony, clavier et absence de commandes
 défensives réelles. Aucun snapshot artificiel ajouté. Compose teste en plus le chargement v0.1 dans
 l’image du worker. Les fixtures économiques restent dans les tests, jamais au démarrage normal.
+
+## Passation documentaire et résilience future
+
+Mission présente : check documentaire, liens/index ADR, recherche des contradictions et diff de
+périmètre contre 5be00da. Aucun test fonctionnel modifié ; aucune nouvelle exécution WSL2 annoncée.
+Les jobs CI existants continuent à s’exécuter et leur résultat de tête doit être relu.
+Scénarios futurs [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : Portal indisponible avec
+Game/worker actifs, sessions existantes utilisables, handoff non rejouable, interfaces internes
+non autorisées refusées, provision/grant idempotents, synchronisation et révocation selon contrat.
+Ces tests ne sont ni ajoutés ni déclarés passés par la passation.

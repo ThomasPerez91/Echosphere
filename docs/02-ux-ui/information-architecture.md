@@ -38,3 +38,12 @@ d’ensemble. Le focus suit h1 au changement de sous-section, liens directs et h
 La sélection globale reste Colonie. Pas de huitième destination principale Defense.
 Aucun univers / aucune colonie active est explicite ; aucune fixture runtime, stock, bâtiment ou
 minuterie fictifs. Défense indique un système futur sans bouton de construction. Q15 reste ouverte.
+
+## Portal puis Game — décision validée, écrans futurs
+
+Landing publique → inscription/connexion → espace compte/lobby → liste des parties → créer/rejoindre
+→ sélectionner Universe → Game UI. Un même compte peut revenir à sa liste et choisir une autre partie.
+Le parcours ne suppose pas un empire unique global ; choix des rôles/empire partagé restent Q21/Q51.
+Les sessions Game autonomes et handoff relèvent de [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
+Pas de nouveau menu implémenté ici : sept domaines Game conservés, Défense reste dans Colony.
+Les UX de login, ticket expiré, logout et panne Portal attendent Q40–Q56, sans fausse route cliquable.

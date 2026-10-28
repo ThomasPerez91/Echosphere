@@ -50,3 +50,12 @@ late join, protection des nouveaux, vitesses, pause privée, équipes et dimensi
 Aucune de ces décisions ne doit être prise par un agent pour faciliter une implémentation anticipée.
 
 [Vision](../00-product-vision.md) · [ADR 0006](../adr/0006-universe-game-instance.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Compte global et plusieurs parties — décision validée, non implémentée
+
+Un utilisateur peut participer simultanément à plusieurs univers et y avoir des empires différents.
+User → UniverseMembership → Universe → éventuellement Empire/rôles/permissions ; le partage d’empire
+reste Q21. Entrée via Portal/lobby puis handoff vers GameSession propre au Game Backend.
+[ADR 0008](../adr/0008-control-plane-game-data-plane.md) cadre les frontières, pas les règles de join/leave.
+Parties rapides/intermédiaires/classiques/persistantes sont des exemples de vitesses configurables,
+sans valeurs supplémentaires validées. v0.1 reste ×1 ; autres tests de vitesse ne sont pas des presets produit.
