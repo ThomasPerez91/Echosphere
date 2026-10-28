@@ -155,12 +155,15 @@ class TimeEngine(Scheduler):
     """Production composition: generic scheduler plus the existing colony rate handler."""
 
     def __init__(self, *args, handlers=None, **kwargs):
+        from app.colony.service import complete_construction
+
         super().__init__(
             *args,
             handlers=handlers
             if handlers is not None
             else {
                 "RESOURCE_RATE_CHANGE": change_rate,
+                "CONSTRUCTION_COMPLETE": complete_construction,
             },
             **kwargs,
         )

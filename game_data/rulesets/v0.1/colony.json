@@ -1,0 +1,38 @@
+{
+  "version": "v0.1",
+  "sectors": 12,
+  "orbital_slots": 2,
+  "queue_limit": 3,
+  "base_capacity": 10000,
+  "initial_stocks": {
+    "alloys": 2000,
+    "flux": 1500,
+    "data": 750
+  },
+  "initial_infrastructures": [
+    "extraction_complex",
+    "flux_reactor",
+    "data_node",
+    "industrial_complex"
+  ],
+  "refund_queued_bps": 10000,
+  "refund_active_bps": 8000,
+  "speeds": {
+    "economy": {
+      "numerator": 1,
+      "denominator": 1
+    },
+    "construction": {
+      "numerator": 1,
+      "denominator": 1
+    },
+    "research": {
+      "numerator": 1,
+      "denominator": 1
+    },
+    "fleet": {
+      "numerator": 1,
+      "denominator": 1
+    }
+  }
+}

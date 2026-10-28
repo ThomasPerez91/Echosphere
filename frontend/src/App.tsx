@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ColonyView } from './components/ColonyView';
 import { Badge, Button, EmptyState, Panel } from './components/ui';
 import { useReadiness } from './hooks/useReadiness';
 
@@ -23,7 +24,8 @@ export default function App() {
   const moreButton = useRef<HTMLButtonElement>(null);
   const previousRoute = useRef(route);
   const { status, retry } = useReadiness();
-  const section = sections.find(item => item.id === route);
+  const [destination, colonyView = 'overview'] = route.split('/');
+  const section = sections.find(item => item.id === destination && (item.id === 'colony' || !route.includes('/')));
 
   useEffect(() => {
     const navigate = () => { setRoute(currentRoute()); setMoreOpen(false); };
@@ -53,16 +55,16 @@ export default function App() {
         }}>
         {sections.slice(0, 4).map(item => <a key={item.id} href={`#${item.id}`}
           className="nav-link"
-          aria-current={route === item.id ? 'page' : undefined}>
+          aria-current={destination === item.id ? 'page' : undefined}>
           <span className="nav-symbol" aria-hidden="true">{item.symbol}</span><span>{item.label}</span>
         </a>)}
         <div id="more-sections" className="more-sections">
           {sections.slice(4).map(item => <a key={item.id} href={`#${item.id}`} className="nav-link secondary-link"
-            aria-current={route === item.id ? 'page' : undefined}>
+            aria-current={destination === item.id ? 'page' : undefined}>
             <span className="nav-symbol" aria-hidden="true">{item.symbol}</span><span>{item.label}</span>
           </a>)}
         </div>
-        <button ref={moreButton} type="button" className={`more-toggle ${sections.slice(4).some(item => item.id === route) ? 'has-active-route' : ''}`} aria-expanded={moreOpen} aria-controls="more-sections"
+        <button ref={moreButton} type="button" className={`more-toggle ${sections.slice(4).some(item => item.id === destination) ? 'has-active-route' : ''}`} aria-expanded={moreOpen} aria-controls="more-sections"
           onClick={() => setMoreOpen(value => !value)}>
           <span aria-hidden="true">{moreOpen ? '×' : '···'}</span><span>Plus</span>
         </button>
@@ -79,7 +81,7 @@ export default function App() {
           <h1 ref={heading} tabIndex={-1}>{section?.title ?? 'Page introuvable'}</h1>
           <p>{section?.description ?? 'Cette destination n’existe pas. Retrouvez les sections dans la navigation.'}</p>
         </div>
-        {!section ? <a className="button" href="#empire">Revenir à l’Empire</a> : route === 'empire' ? <>
+        {!section ? <a className="button" href="#empire">Revenir à l’Empire</a> : destination === 'empire' ? <>
           <section className="hero" aria-labelledby="hero-title">
             <div className="hero-copy"><Badge tone="accent">Les fondations sont en place</Badge>
               <h2 id="hero-title">Préparez la suite<br />de votre histoire.</h2>
@@ -98,7 +100,7 @@ export default function App() {
               <p>Cette vérification indique si les services sont joignables. Elle ne confirme pas qu’une partie est active.</p>
               <Button disabled={status === 'checking'} onClick={retry}>{status === 'checking' ? 'Vérification…' : 'Vérifier la connexion'}</Button>
             </Panel></div>
-        </> : <section className="panel destination-panel"><Badge>À venir</Badge>
+        </> : destination === 'colony' ? <ColonyView view={colonyView} /> : <section className="panel destination-panel"><Badge>À venir</Badge>
           <EmptyState title={`${section.label} : espace en préparation`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
           <a className="text-link" href="#empire">← Retour à l’Empire</a>
         </section>}

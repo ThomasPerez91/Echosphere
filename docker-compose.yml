@@ -1,7 +1,9 @@
 name: echosphere
 x-backend: &backend
   image: echosphere-backend:dev
-  build: ./backend
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
   environment:
     POSTGRES_HOST: postgres
     POSTGRES_DB: ${POSTGRES_DB:?Copy .env.example to .env}

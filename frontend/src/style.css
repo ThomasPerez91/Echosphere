@@ -124,3 +124,9 @@ main { max-width: 1500px; margin: auto; padding: 36px; }
   .panel { padding: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+
+.colony-navigation { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 20px; }
+.colony-navigation a { display: flex; align-items: center; justify-content: center; min-height: 44px; border: 1px solid var(--border); border-radius: 8px; padding: 10px 8px; color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; text-align: center; }
+.colony-navigation a[aria-current] { border-color: #32636b; color: var(--accent); background: #153038; }
+.colony-context p { font-size: .8rem; margin-top: 12px; }
+@media (max-width: 520px) { .colony-navigation { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
