@@ -20,7 +20,7 @@ les moments limites pour décider avant de dépendre du choix.
 | Q12 | Mesure du ratio 80/20, métriques et format validé de game_data | 5 puis 16 | [Balance](../01-game-design/balance-philosophy.md) |
 | Q13 | Ordre simultané, locks, rattrapage, retries et compatibilité des versions | 3 | [Événements](../03-technical/event-engine.md) |
 | Q14 | Victoire/défaite, durée d'univers, resets et rattrapage | cadrage MVP | [Progression](../01-game-design/progression.md) |
-| Q15 | Navigation finale, détails carte tactile, libellés et tokens | 4 | [UX](../02-ux-ui/information-architecture.md) |
+| Q15 | Validation finale de la navigation proposée étape 4, carte tactile, libellés et tokens | 4 | [UX](../02-ux-ui/information-architecture.md) |
 | Q16 | Mode d'auth/session futur, contrats d'erreur/idempotence et permissions | 1/2 | [Sécurité](../03-technical/security.md) |
 | Q17 | Budgets de performance et charge de référence | 3 puis 17 | [Performance](../04-quality/performance.md) |
 | Q18 | Contenu exact des relations minimales, hostilité et négociation | 13 | [Roadmap](roadmap.md) |

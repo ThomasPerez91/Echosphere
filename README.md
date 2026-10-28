@@ -5,7 +5,7 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : fondations et scheduler générique et économie de colonie (étape 3), sans gameplay jouable.**
+**État actuel : fondations, scheduler et shell responsive (étape 4), sans gameplay jouable.**
 
 Lire [context.md](context.md) pour reprendre le cadre et [progress.md](progress.md) pour l'état exact.
 `master` est l’intégration stable. Nouvelles branches courtes `work/...` depuis master, PR vers master,
@@ -64,7 +64,7 @@ pour un serveur public. Ne pas exposer Vite sur internet.
 
 | Service | Technologie | Rôle actuel |
 | --- | --- | --- |
-| frontend | React, TypeScript strict, Vite, Node 22 | Placeholder responsive et test de readiness via proxy |
+| frontend | React, TypeScript strict, Vite, Node 22 | Navigation responsive, sections en préparation et readiness via proxy |
 | backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes et cinq modèles persistants, sans endpoint métier |
 | postgres | PostgreSQL 17 | Source de vérité et volume persistant local |
 | migrate | Même image backend | Alembic upgrade head, puis sortie 0 |

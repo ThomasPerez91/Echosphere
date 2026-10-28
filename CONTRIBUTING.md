@@ -10,7 +10,7 @@ Synchroniser master, créer une branche courte work/..., développer, vérifier 
 PR vers master. Revue et merge uniquement sur autorisation. master est l'intégration stable ; aucun
 passage obligatoire par develop. Tags/releases identifiées seront ajoutés plus tard sur instruction.
 Ne pas empiler une branche pour contourner une dépendance ouverte ; faire intégrer la fondation
-ou signaler le blocage. Pour cette correction, continuer la branche existante de PR #3.
+ou signaler le blocage. La fondation et le scheduler sont intégrés ; chaque nouveau lot repart de master.
 
 Commits cohérents avec préfixes docs/chore/feat/fix/test/ci. Aucun secret, .env, node_modules,
 .venv ou dist ; pas de force push ni réécriture partagée. Ne supprimer une branche que sur instruction

@@ -26,11 +26,14 @@ constitue une autorisation permanente de merge, publication ou suppression de br
 
 ## État et autorisation de cette mission
 
-PR #2 était ouverte vers master au début et a été fusionnée sur instruction explicite de Thomas :
-a065ad80eeb6db73438e61b1d6cde8bc3293e06d. PR #3 reste sur work/step-3-time-engine, cible master.
-Thomas a autorisé sa correction puis sa fusion après vérification de la CI finale, ainsi que la
-suppression conditionnelle de develop sans écart à conserver. Consulter GitHub pour confirmer les
-résultats effectifs ; ne pas prendre ce texte pour une autorisation couvrant d'autres PR.
+PR #2 et PR #3 corrigée sont fusionnées sur master. Fusion PR #3 vérifiée :
+4ee81dd447726b5d72eaf1d26626215d14d1c931 ; tête source 4f29a81e57d39c1df6ba041bcc9c4e5b0ee0f6b1.
+Thomas a supprimé develop ; absence distante confirmée. Son instruction « reprend » lance le lot
+Étape 4 : design system et shell responsive, depuis master, branche work/step-4-responsive-shell.
+Ce lot prépare les sections Empire/Colonie/Recherche/Galaxie/Flottes/Rapports/Relations, avec états
+vides explicites, sans stocks fictifs ou ordres de jeu. Pas de backend métier ajouté.
+La PR #4 de ce lot vise master et reste non fusionnée. Source e5d661c validée en CI ;
+voir progress.md pour le checkpoint et ses limites. Aucune autorisation permanente de merge.
 
 ## Architecture et garanties
 
@@ -48,5 +51,5 @@ Voir progress.md pour CI/SHA, [ADR 0005](docs/adr/0005-colony-time-engine.md) po
 [ADR 0006](docs/adr/0006-universe-game-instance.md) et [modes](docs/01-game-design/game-modes.md).
 Q01–Q29 restent au registre selon leur statut, sans inventer réponses multijoueurs/équilibrage.
 Une future API vérifie User → Membership → Universe → permissions → Entity, plus fog of war.
-Aucune Étape 4 ni branche correspondante avant correction, revue et fusion de PR #3 ; cette mission
-s'arrête après PR #3 corrigée/intégrée et le contrôle conditionnel de develop.
+Les prérequis de l’étape 4 sont satisfaits. Prochain lot après revue de ce shell : boucle Colony
+(étape 5), à cadrer avec coûts, rendements et files encore ouverts avant toute implémentation.

@@ -32,8 +32,8 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 Statut exact dans [progress.md](../../progress.md). master est l'intégration stable ; nouvelles
 branches work/... depuis master et PR vers master, CI/revue puis merge sur autorisation. Tags et
 releases identifiées plus tard. develop n'est plus une étape permanente ou obligatoire.
-PR #2 est fusionnée sur master ; la correction de PR #3 se fait sur work/step-3-time-engine, sans
-branche empilée ni branche Étape 4. Étape 4 seulement après correction, revue et fusion de PR #3.
+Étapes 0–3 intégrées sur master ; develop supprimée. Étape 4 en cours sur
+work/step-4-responsive-shell : shell responsive, composants utilisés et états réseau ; pas de gameplay.
 
 ## Compatibilité des modes futurs
 

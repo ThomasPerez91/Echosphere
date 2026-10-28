@@ -1,30 +1,51 @@
 # Frontend
 
-**Statut : bootstrap implémenté.**
+**Statut : shell responsive implémenté à l’étape 4 ; aucune API de gameplay.**
 
+React + TypeScript strict + Vite. Navigation par fragments natifs `#empire`, `#colony`, `#research`,
+`#galaxy`, `#fleets`, `#reports`, `#relations` ; liens directs, rechargement et précédent/suivant
+sans configuration serveur SPA additionnelle. Destination inconnue : explication et retour Empire.
+Pas de dépendance de routage ou d’état global pour ces sept sections statiques.
 
-React + TypeScript strict + Vite. `src/App.tsx` affiche le titre et teste la disponibilité complète
-via `/api/ready`. États checking/connected/unavailable, délai de 5 secondes, annulation au démontage
-et bouton de nouvelle vérification. Aucune formule métier et aucune ressource fictive affichée.
+`src/App.tsx` compose le shell et les vues en préparation. `components/ui.tsx` contient Button,
+Badge, Panel et EmptyState, utilisés dans les écrans. `hooks/useReadiness.ts` garde le contrat réseau
+séparé du rendu. Pas de chiffres de démonstration ni de calcul métier navigateur ; les ressources
+sont explicitement indisponibles tant qu’il n’y a pas de partie/API métier.
 
-## Configuration réseau
+## Réseau
 
 Vite utilise `API_PROXY_TARGET` côté serveur : `http://backend:8000` dans Compose,
-`http://localhost:8000` hors Docker. Le navigateur appelle son propre origin ; pas de CORS permissif
-à ajouter. La variable n'est pas une variable `VITE_*` compilée dans le navigateur.
+`http://localhost:8000` hors Docker. Le navigateur appelle `/api/ready` sur son propre origin ;
+pas de CORS permissif ni de secret frontend. Aucune variable `VITE_*` ajoutée.
 
-## Évolution
+Checking/connected/unavailable : le succès exige HTTP réussi et JSON `{status: "ready"}`. Timeout
+5 secondes, annulation au démontage, réponse tardive ignorée. Retry manuel désactivé pendant la
+requête. Le statut reste visible sur toutes les sections ; le bouton est dans Empire. Il mesure
+API + PostgreSQL au dernier contrôle, pas la progression du worker ni une connexion temps réel.
+Aucun polling, cache, mutation ou indicateur simulé. La navigation reste disponible en cas d’erreur.
 
-Introduire navigation, cache de requêtes ou état global lorsque les écrans le justifient.
-Organiser les features autour des domaines, garder contrats et vues distincts. Aucun calcul critique
-côté navigateur ; les compteurs et simulations visuelles sont indicatifs. Réconcilier les mutations
-avec l'état confirmé du serveur.
+## Navigation et qualité
 
-Lint ESLint, build `tsc -b && vite build`, tests Vitest/jsdom et Testing Library. Le serveur Vite de
-Compose est réservé au développement. Le build vérifié n'est pas servi en production dans cette étape.
+Sidebar desktop, barre basse et divulgation « Plus » jusqu’à 800 px. Pas de modal : pas de focus
+piégé, Échap replie les sections secondaires et rend le focus au bouton. Après navigation, focus
+sur le titre h1 ; lien d’évitement vers main. Les choix sont provisoires pour Q15, carte tactile future.
 
+```bash
+cd frontend
+npm ci
+npm run lint
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+Vitest cible `src/**/*.test.{ts,tsx}` ; Playwright cible `e2e/`. Les tests Chromium utilisent une
+réponse readiness interceptée pour valider UI/navigation/clavier et largeurs 320/390/768/1440.
+La CI Compose conserve la vérification HTTP réelle API/PostgreSQL/proxy et panne/reprise.
+Le serveur Vite de Compose reste réservé au développement ; pas de déploiement de production.
 
 ## Références
 
-- [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
-- [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+- [Architecture](architecture.md) · [Design system](../02-ux-ui/design-system.md)
+- [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)

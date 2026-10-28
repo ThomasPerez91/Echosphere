@@ -73,3 +73,11 @@ headless consignent seeds et versions. Définir les seuils de balance avant d'in
 
 Voir [Definition of Done](definition-of-done.md), [événements](../03-technical/event-engine.md),
 [balance](../01-game-design/balance-philosophy.md).
+
+## Shell responsive (étape 4)
+
+`cd frontend && npx playwright install chromium && npm run test:e2e` lance Chromium contre Vite,
+avec readiness interceptée. Vérifie 320/390/768/1440, absence de débordement, commandes tactiles
+minimum 44 px, lien d’évitement, navigation clavier, focus, historique, liens directs et retry réseau.
+Les captures sont locales dans frontend/test-results (ignoré Git). La CI installe Chromium et ses
+libs système ; cela ne remplace pas la recette tactile/lecteur d’écran réelle ou les tests Compose.
