@@ -1,64 +1,98 @@
-# Vision produit
+# Vision produit — Echosphere
 
-**Statut : validé sauf orientations signalées.**
+**Statut : Décision validée pour la vision et les limites, sauf propositions explicitement signalées.**
+Source : brief initial conservé dans le dépôt, confirmé/précisé par la mission de passation du
+2026-10-28. [Index des décisions](06-handoff/decision-status.md), [provenance](06-handoff/source-map.md).
 
+Echosphere est un jeu de stratégie spatiale **web, asynchrone et persistant**. Développer un empire,
+spécialiser ses colonies, explorer un univers partiellement inconnu, rencontrer et influencer des
+civilisations autonomes. Solo humain + civilisations IA pour le MVP ; privé/persistant multijoueur futurs.
+Universe représente une partie, pas un compte ou un processus. La boucle complète reste à construire.
 
-Echosphere est un jeu de stratégie spatiale persistant dans un navigateur. Le joueur développe
-un empire et spécialise ses colonies, explore une galaxie partiellement inconnue et rencontre
-des civilisations autonomes. Le MVP initial se construit en solo face aux IA. Parties privées et univers partagés persistants
-sont des familles futures : Universe est la frontière d'une instance, pas d'un utilisateur.
+## Usage et promesse
 
-## Promesse et critères de réussite
+**Décision validée** : environ dix minutes de gestion quotidienne pour organiser les priorités,
+puis pouvoir quitter. Une à deux heures permettent d’analyser, explorer, optimiser et décider ;
+rester connecté n’accroît pas artificiellement la production. Pas de bouton de récolte manuelle,
+aucun rendement fondé sur les clics. Production et échéances progressent hors ligne ; univers continu.
+Le combat est une possibilité de la progression, pas sa seule finalité. Aucun pay-to-win.
 
-Une préparation quotidienne d'environ dix minutes doit permettre de lancer les priorités et de
-quitter le jeu. Une session de une à deux heures apporte du renseignement et améliore les décisions,
-sans accélérer la production par la présence ou le clic. Aucun bouton de récolte manuelle.
-Le serveur poursuit les activités hors connexion.
+Inspiration : progression asynchrone type OGame, **sans clone** de ses mécaniques ni grille de galaxie.
+Echosphere ne vise pas un Stellaris web lourd. Les mockups donnent un ton visuel, pas des règles :
+nourriture, matière sombre ou biens qui y figureraient n’ajoutent pas de ressource principale.
 
-Les civilisations IA utilisent les mêmes règles, informations accessibles et services métier que
-les humains. Elles produisent leurs moyens ; aucun renfort gratuit ni omniscience de scénario.
-La personnalité modifie les décisions, pas les règles de validation.
+## Boucle et deux couches
 
-## Périmètre du MVP cible
+**Décision validée** : Develop → Explore → Discover → Colonize → Encounter → Interact → Strengthen
+→ Expand influence → éventuellement Fight → recommencer. Référence : [boucle](01-game-design/core-loop.md).
 
-Créer un univers, recevoir un empire, développer une colonie, produire, construire, rechercher,
-explorer, former des flottes, coloniser, rencontrer des IA et éventuellement combattre.
-Les noms des technologies, les statistiques des vaisseaux et les règles de combat restent à définir.
-L'étape 0 livre uniquement documentation, sondes HTTP, page placeholder, Docker et qualité.
+| Couche | Rôle cible |
+| --- | --- |
+| Empire | Progression lente/asynchrone : économie, infrastructures, files, recherche et colonies |
+| Command | Décisions actives compatibles avec l’asynchrone : missions, renseignement, mouvements, relations |
 
-## Non-goals
+Le MVP cible réunit production/construction, recherche globale, graphe/exploration/fog, flottes,
+colonisation, IA puis combat automatisé minimal et relations compréhensibles. Cela ne signifie pas
+que ces systèmes sont livrés par la branche actuelle. Noms, stats et règles non décidées restent Qxx.
 
-- Clone d'OGame ou Stellaris web.
-- RTS, city-builder, simulateur spatial 3D.
-- Connexion permanente ou rendement fondé sur les clics.
-- Des dizaines de ressources, simulation détaillée de population ou citoyens individuels.
-- Armées terrestres complexes et logistique militaire ultra détaillée au MVP.
-- Cinquante types de vaisseaux ou éditeur complexe de vaisseaux au MVP.
-- Pay-to-win.
+## Contraintes et orientations métier
 
-Les mockups sont des références artistiques : nourriture, biens de consommation ou matière sombre
-qui y figureraient ne deviennent pas des ressources validées.
+- **Décision validée** : trois ressources cœur seulement, Alliages, Flux, Données.
+- **Décision validée** : secteurs abstraits sans grille city-builder ; upgrade dans le même secteur,
+  spécialisation émergente sans classe de planète imposée. Capacités variables futures.
+- **Implémenté / Balance provisoire** : économie v0.1 interne de PR #5, cinq infrastructures,
+  niveaux continus ; 1–5 = early game seulement. 12 secteurs/2 orbitaux = départ de référence,
+  pas toutes les planètes. Les facteurs de croissance sont à simuler, pas des constantes définitives.
+- **Décision validée, future** : recherche globale d’empire ; domaines Ingénierie/Énergétique/Calcul/
+  Xénoscience provisoires ; pas des centaines de technologies au MVP.
+- **Décision validée, future** : galaxie graphe 2D avec routes et génération seedée ; 30–50 systèmes
+  pour prototype = repère, tailles futures configurables ; hubs/frontières/chokepoints possibles.
+- **Orientation validée, future** : UNKNOWN/DETECTED/MAPPED/MONITORED ; humain et IA connaissent
+  seulement leur projection, transitions/capteurs/fiabilité non encore fixés.
+- **Orientation validée, future** : petit catalogue de rôles de flottes, missions asynchrones,
+  pas de designer complexe. Combat automatisé futur, Q02/Q10 à résoudre avant exposition.
+- **Orientation validée, future** : réseau défensif stratégique limité à modules persistants,
+  coût surface/orbite/économie, dommages/réparations et Flux éventuel ; renseignement progressif.
+  Défense dans Colony, pas de huitième entrée globale. Q30–Q38 restent ouvertes.
+- **Orientation validée, future** : IA Utility/Goals déterministe/testable sans LLM stratégique,
+  mêmes services, économie et fog que l’humain ; pas de spawn gratuit, possibilité de mauvaises
+  décisions. Dialogue génératif éventuel facultatif et sans autorité stratégique.
 
-## Familles d'instances futures
+[Économie v0.1](01-game-design/colony-economy-v0.1.md), [planètes](01-game-design/planets-colonies.md),
+[recherche](01-game-design/research.md), [galaxie](01-game-design/galaxy.md),
+[flottes](01-game-design/fleets.md), [fog](01-game-design/fog-of-war.md),
+[défense](01-game-design/planetary-defense.md) et [IA](01-game-design/artificial-intelligence.md)
+restent les références détaillées ; leurs propositions ne deviennent pas des décisions par ce résumé.
 
-Solo, partie multijoueur privée et univers multijoueur persistant doivent rester compatibles avec les
-fondations. L'univers persistant fonctionne en continu sans durée maximale obligatoire, indépendamment
-des connexions ; le late join est une possibilité à préserver, ses règles restent ouvertes.
-Invitations, nombre de places, partage d'empire, vitesses, pause et conditions de fin ne sont pas
-implémentés ni arbitrés. Voir [modes](01-game-design/game-modes.md) et [ADR 0006](adr/0006-universe-game-instance.md).
+## Comptes, modes et parcours d’accès
 
-## Principes d'arbitrage
+**Décision validée, non implémentée** : compte global, plusieurs parties simultanées par utilisateur.
+Landing → inscription/connexion → espace compte/lobby → liste/créer/rejoindre → sélectionner Universe
+→ Game UI. User → UniverseMembership → Universe → éventuellement Empire/rôle/permissions ;
+Empire.owner_user_id ne suffit pas. Empire partagé reste Q21.
 
-Privilégier une règle lisible, simulable et accessible sur mobile. Reporter un système intéressant
-s'il n'aide pas directement la boucle MVP. L'orientation 80/20 de puissance commune/spécialisée
-est un objectif de balance à mesurer, pas une formule déjà prouvée.
+Solo = base MVP. Privé = futur 2 à X humains, invitations/IA/vitesses/fin encore ouvertes. Persistant =
+futur, potentiellement beaucoup de joueurs, aucune durée maximale obligatoire, late join préservé
+architecturalement mais règles/protection non décidées. Les vitesses pourront varier par ruleset :
+rapide, intermédiaire, classique, persistant sont des exemples, sans nouveaux multiplicateurs validés.
+Voir [modes](01-game-design/game-modes.md) et [ADR 0008](adr/0008-control-plane-game-data-plane.md).
 
+## Hors périmètre et limites
 
-## Références
+**Abandonné / hors périmètre MVP** : clone OGame, Stellaris web lourd, RTS temps réel, city-builder
+détaillé, simulateur 3D, population/citoyens complexes, logistique physique lourde, armées terrestres
+complexes, cinquante classes de vaisseaux, éditeur de vaisseaux avancé. Pas de quatrième ressource
+principale sans décision. Diplomatie/commerce/espionnage/alliances avancés = futur/post-MVP ; les
+relations IA minimales restent prévues, sans mécanismes inventés pour combler Q18.
 
+## État réel et méthode
 
-- [Boucle](01-game-design/core-loop.md) · [Sessions](01-game-design/player-session.md)
-- [Planètes](01-game-design/planets-colonies.md) · [Recherche](01-game-design/research.md)
-- [Galaxie](01-game-design/galaxy.md) · [Flottes](01-game-design/fleets.md) · [IA](01-game-design/artificial-intelligence.md)
-- [UX](02-ux-ui/information-architecture.md) · [Architecture](03-technical/architecture.md)
-- [Questions ouvertes](05-project/open-questions.md) · [Roadmap](05-project/roadmap.md)
+Étapes 0–4 intégrées ; 5A et cette passation sont sur PR #5 ouverte au début de mission. Aucun
+compte/Portal/API gameplay, défense active, flotte, recherche, colonisation, IA ou combat jouable.
+La cible technique sépare Portal et Game avec sessions autonomes, mais le code/Compose n’est pas
+refondu ici. [Architecture](03-technical/architecture.md), [ADR 0008](adr/0008-control-plane-game-data-plane.md).
+
+**Proposition de balance** : ratio 80/20 socle/spécialisation, tailles standard futures et seuils
+restent à mesurer/valider. Seeds, simulations et playtests vérifieront les hypothèses ; aucune
+balance ou garantie de capacité multijoueur n’est prouvée par les tests de construction.
+[Roadmap](05-project/roadmap.md), [questions](05-project/open-questions.md), [progress](../progress.md).

@@ -13,6 +13,23 @@
 - Aucun secret, logs sensibles, code généré inutile ou dépendance non justifiée.
 - PR compréhensible : comportement final, validation réelle et limites ; pas de merge automatique.
 
+## Passation documentaire
+
+Même branche #5 si état attendu, pas de nouveau code/migration/game_data/dépendance/Compose/test.
+Sources et accès partiels qualifiés, pas de conversation privée publiée. Références canoniques,
+index des décisions, ADR 0008, Q01–Q39 préservées/Q40–Q56 ouvertes, lecture Work/Codex et prochain
+point de reprise cohérents. Check liens/index et diff autorisé ; CI réelle de tête observée.
+PR mise à jour et laissée non fusionnée. WSL2/protection DDoS non revendiqués comme testés.
+
+## Étape 5A
+
+PR #4 intégrée et CI master verte avant la branche. Ruleset réel strict, niveaux 1–5 et >5,
+arrondis/représentation et vitesses par instance testés. Secteurs, unicité, file, réservation,
+annulation, concurrence/idempotence, crash/reprise, bonus et stockage testés avec PostgreSQL.
+0004 additive, roundtrip vide, refus peuplé et absence de dérive ; Docker contient les données.
+UI Colony quatre sous-sections responsive/clavier sans fausse partie. Défense documentée seulement,
+Q30–Q39 ouvertes ; aucune API gameplay, faux user, Combat ou défense active. PR vers master non fusionnée.
+
 ## Étape 4
 
 Shell aux largeurs 320/390/768/1440, navigation clavier, focus, historique et liens directs vérifiés.

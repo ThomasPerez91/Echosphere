@@ -1,6 +1,6 @@
 # 0001 — Monolithe modulaire
 
-- Statut : acceptée (brief projet).
+- Statut : décision historique acceptée, **affinée / superseded partiellement par ADR 0008** pour la frontière de plateforme.
 - Date de transcription : 2026-10-28.
 
 ## Contexte
@@ -8,7 +8,7 @@
 Un produit encore en définition doit pouvoir partager ses transactions et faire évoluer ses règles
 sans coordination distribuée. Humains et IA doivent appeler les mêmes services.
 
-## Décision
+## Décision historique (bootstrap)
 
 Un backend Python/FastAPI en monolithe modulaire, PostgreSQL unique source de vérité ; frontend
 React/TypeScript/Vite. SQLAlchemy et Alembic lors de la persistance métier. Redis seulement sur besoin.
@@ -20,3 +20,11 @@ code dans un processus dédié. Simplicité opérationnelle et transactions comm
 pour éviter un module omniscient. Microservices rejetés au départ : coût sans besoin démontré.
 
 [Architecture](../03-technical/architecture.md) · [Index ADR](README.md)
+
+## Évolution validée au 2026-10-28
+
+[ADR 0008](0008-control-plane-game-data-plane.md) fait désormais foi pour la plateforme : Portal
+Accounts/Auth/Lobby et Game gameplay deviennent deux backends indépendants/isolables, Accounts DB
+et Game DB distinctes. Le monolithe modulaire gameplay et son worker sont conservés, pas un réseau
+de microservices. Le texte historique ci-dessus ne prescrit plus un backend/DB unique pour les comptes
+et le jeu. Aucun code de séparation ajouté dans la mission documentaire.

@@ -10,7 +10,7 @@
 | B03 | P0 / 3 | Décider précision, ancrages et ordre temporel | Q03/Q13 arbitrées, cas de rattrapage écrits |
 | B04 | P0 / 3 | Exécuter les événements persistants | Crash et rejeu sans doublons, métriques de retard |
 | B05 | P0 / 4 | Composants et navigation responsive | Mobile/clavier et états erreur/chargement |
-| B06 | P0 / 5 | Construire et produire | Aucun stock négatif, changement de taux exact |
+| B06 | P0 / 5A | Construire et produire | Aucun stock négatif, changement de taux exact |
 | B07 | P1 / 6 | Recherche globale | File limitée et fin unique |
 | B08 | P1 / 7–8 | Graphe, fog, exploration et vues système | Seed rejouable, aucune donnée cachée divulguée |
 | B09 | P1 / 9–10 | Missions et colonisation | Trajets et concurrence vérifiés |
@@ -23,3 +23,13 @@
 Pas d'estimations de jours sans retour d'implémentation. L'ordre détaillé suit les dépendances de la
 [roadmap](roadmap.md), la priorité n'autorise pas à élargir le lot de développement courant sans le documenter.
 Toute nouvelle fonctionnalité doit préciser objectif, portée, statuts et tests avant développement.
+
+## Dépendances ajoutées par la passation (décision validée, travail futur)
+
+| ID | Étape | Travail cible | Sortie attendue |
+| --- | --- | --- | --- |
+| B15 | 5B | Contrats identité/membership/Portal-Game et dégradation | Q16/Q40–Q56 cadrées, aucun protocole arbitraire |
+| B16 | 5C | Fondation minimale Portal compte/lobby selon contrat | Isolation et accès aux parties, sans Portal complet ou multijoueur anticipé |
+| B17 | 5D | API Colony sécurisée et UI branchée aux données réelles | Même domaine 5A, autorisation/session/fog et résilience testées |
+
+Cette liste n’autorise pas à développer ces lots au titre d’une mission documentaire.

@@ -32,3 +32,10 @@ n'a pas de durée maximale obligatoire ; ses modalités de late join restent ouv
 sont détaillées dans game-modes.md et Q19–Q29, pas converties en colonnes/configuration maintenant.
 
 [Modes](../01-game-design/game-modes.md) · [Modèle](../03-technical/data-model.md) · [Questions](../05-project/open-questions.md)
+
+## Portée et évolution documentaire
+
+Note d’évolution : [ADR 0008](0008-control-plane-game-data-plane.md) confirme compte global,
+plusieurs parties par utilisateur, Membership et sessions Game, sans implémentation de tables.
+L’isolation Universe reste valide ; la v0.1 5A épingle désormais règles/vitesses économie/construction.
+Les exclusions de code et valeurs non fixées ci-dessus décrivent le lot historique étape 3.

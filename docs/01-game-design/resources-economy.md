@@ -32,3 +32,11 @@ Les détails d'intégration, d'arrondi et de changement de taux sont décrits da
 - [Vision](../00-product-vision.md) · [Questions ouvertes](../05-project/open-questions.md)
 - [Boucle](core-loop.md) · [Équilibrage](balance-philosophy.md)
 - [Temps serveur](../03-technical/event-engine.md)
+
+## Économie v0.1 implémentée (domaine interne)
+
+Coûts, production, stockage, durées, file de trois ordres et annulation sont maintenant chargés dans
+[game_data](../../game_data/README.md), avec détail dans [Économie Colony v0.1](colony-economy-v0.1.md).
+Progression continue au-delà de cinq niveaux ; vitesses rationnelles par univers, normales ×1.
+Les futurs systèmes défensifs pourront consommer du Flux en combat/alerte ; aucune consommation
+ou défense réelle ajoutée maintenant. Voir [défense](planetary-defense.md).

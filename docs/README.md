@@ -1,6 +1,8 @@
 # Documentation Echosphere
 
-L'étape 0 définit le produit et prépare un lancement local. Elle ne livre aucune boucle jouable.
+État courant : étape 5A, domaine économique interne, scheduler et shell. Aucune partie jouable ni
+API gameplay publique. [Économie v0.1](01-game-design/colony-economy-v0.1.md) et
+[défense future](01-game-design/planetary-defense.md) distinguent règles implémentées et orientations.
 
 ## Lire dans cet ordre
 
@@ -12,16 +14,31 @@ L'étape 0 définit le produit et prépare un lancement local. Elle ne livre auc
 
 Les fichiers de chaque domaine sont indexés depuis la vision, l'architecture et la roadmap.
 
-## Statuts des décisions
+## Statuts obligatoires
 
-| Marque | Sens | Modification |
-| --- | --- | --- |
-| Validé | Contrainte du projet acceptée dans le brief | Proposition explicite, docs et ADR si structurel |
-| Orientation | Direction de travail actuelle | Peut évoluer avec justification et tests |
-| Provisoire | Nom ou valeur de travail, aucune garantie d'équilibrage | Changement documenté |
-| Question ouverte | Choix encore indéterminé, référencé par Qxx | Arbitrage enregistré avant implémentation |
-| Futur | Hors étape 0, parfois hors MVP | Ne pas implémenter par anticipation |
+| Statut | Sens |
+| --- | --- |
+| Implémenté | Présent dans le code de la branche indiquée ; ne signifie ni fusionné ni validé produit |
+| Décision validée | Validation utilisateur claire et source identifiable |
+| Balance provisoire | Chiffre/nom/courbe à simuler et rééquilibrer |
+| Orientation validée | Direction confirmée, détails et implémentation encore ouverts |
+| Proposition | Suggestion non validée, même si ancienne réponse d’assistant |
+| Question ouverte | Arbitrage Qxx à résoudre, pas réponse déduite du code |
+| Futur / post-MVP | Système non implémenté ou reporté ; ne l’autorise pas dans le lot présent |
+| Abandonné / hors périmètre | Exclu de la cible concernée, pas une feature en attente automatique |
 
-Le brief est traduit ici sans transformer les chiffres indicatifs en règles figées. Le code actuel
-est décrit dans le README et les contrats API ; les autres mécanismes métier sont **à construire**.
-Une proposition technique ajoutée à la documentation n'est pas automatiquement une décision de gameplay.
+Les anciennes marques « validé/orientation/provisoire/futur » se lisent selon cette table et la
+portée indiquée. Une valeur v0.1 peut être implémentée et provisoire simultanément. Les ADR acceptées
+ne prouvent pas la présence de leur code ; une proposition ne devient décision qu’avec validation claire.
+
+## Accès durable et références
+
+- [Passation](06-handoff/README.md), [sources](06-handoff/source-map.md), [décisions](06-handoff/decision-status.md),
+  [risques](06-handoff/known-gaps.md), [audit #5](06-handoff/pr-5-audit.md), [Work ↔ Codex](06-handoff/work-codex-handoff.md).
+- [Portal/Game ADR 0008](adr/0008-control-plane-game-data-plane.md) : décision cible **non implémentée** ;
+  [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
+- [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
+
+Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
+sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
+sur les conversations Space Game qui n’ont pas pu être consultées.

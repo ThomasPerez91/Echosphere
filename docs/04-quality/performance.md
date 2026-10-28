@@ -26,3 +26,11 @@ Le build actuel est une base, sans budget JS final ni dépendance de cartographi
 Optimiser sur mesures ; ne pas ajouter Redis pour contourner prématurément une requête mal conçue.
 
 Voir [architecture](../03-technical/architecture.md) et [tests](testing-strategy.md).
+
+## Cible future Portal/Game
+
+**Statut : Orientation validée, non implémentée.**
+
+La cible Portal/Game impose des budgets et ressources isolables : surcharge Portal ne doit pas
+épuiser pools/CPU/RAM Game ou empêcher les workers. Mesurer l’isolation réelle, pas seulement
+la séparation de modules ; aucun benchmark ni garantie DDoS réalisé par cette documentation.

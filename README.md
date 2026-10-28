@@ -5,13 +5,14 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : fondations, scheduler et shell responsive (étape 4), sans gameplay jouable.**
+**État actuel : domaine Colony/économie v0.1 et shell responsive (étape 5A), sans API gameplay ni partie jouable.**
 
-Lire [context.md](context.md) pour reprendre le cadre et [progress.md](progress.md) pour l'état exact.
+Lire [AGENTS.md](AGENTS.md), [context.md](context.md), [progress.md](progress.md), puis
+[la passation Work/Codex](docs/06-handoff/README.md) pour reprendre sans historique de chat.
 `master` est l’intégration stable. Nouvelles branches courtes `work/...` depuis master, PR vers master,
 CI/revue et merge sur autorisation ; tags et releases identifiées plus tard.
 
-## Démarrage ce soir sous WSL2
+## Démarrage local proposé sous WSL2 (recette réelle non attestée ici)
 
 Prérequis : Git, Docker Desktop démarré avec intégration WSL2 pour votre distribution et
 Docker Compose v2 récent. Garder les ports 5173 et 8000 disponibles. Aucun Python/Node hôte requis
@@ -40,7 +41,7 @@ Depuis Windows :
 
 | URL | Résultat attendu |
 | --- | --- |
-| http://localhost:5173 | Echosphere, Development build, Backend: connected |
+| http://localhost:5173 | Shell Echosphere sans partie active ; Services disponibles si /ready répond |
 | http://localhost:8000/health | 200, `{"status":"ok"}` |
 | http://localhost:8000/ready | 200, `{"status":"ready"}` avec PostgreSQL disponible |
 | http://localhost:8000/docs | OpenAPI des deux sondes |
@@ -65,13 +66,13 @@ pour un serveur public. Ne pas exposer Vite sur internet.
 | Service | Technologie | Rôle actuel |
 | --- | --- | --- |
 | frontend | React, TypeScript strict, Vite, Node 22 | Navigation responsive, sections en préparation et readiness via proxy |
-| backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes et cinq modèles persistants, sans endpoint métier |
+| backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes, modèles et domaine économique interne, sans endpoint métier |
 | postgres | PostgreSQL 17 | Source de vérité et volume persistant local |
 | migrate | Même image backend | Alembic upgrade head, puis sortie 0 |
 | worker | Même code backend | Streams temporels multi-univers, sans port publié |
 
 Le worker est un autre processus du même monolithe : événements SQL idempotents, production exacte
-et reprise après redémarrage. Aucun rendement/coût ou stock de départ n'est fourni ; pas de partie jouable.
+et reprise après redémarrage. Les valeurs v0.1 sont dans game_data, mais aucune colonie/partie n’est injectée au démarrage.
 Compose applique les migrations via le service migrate avant API/worker. /ready vérifie la connexion,
 pas l'état de progression du worker. Pas de Redis, auth ou WebSockets.
 
@@ -91,7 +92,7 @@ liens documentaires et un vrai démarrage Compose. Son résultat doit être cons
 ```text
 backend/                 FastAPI, probes, tests, Dockerfile et dépendances figées
 frontend/                React + TypeScript + Vite, tests et Dockerfile
-game_data/               Répertoire réservé à l'équilibrage futur
+game_data/               Ruleset économique v0.1 validé et versionné
 docs/                    Vision, game design, UX, technique, qualité, roadmap et ADR
 scripts/                 Vérification documentaire et smoke Compose
 .github/workflows/       CI backend, frontend et Compose
@@ -118,10 +119,34 @@ Voir [modes de jeu](docs/01-game-design/game-modes.md).
 ## Lire et contribuer
 
 - [Documentation et statuts](docs/README.md) · [Vision et non-goals](docs/00-product-vision.md).
-- [Architecture](docs/03-technical/architecture.md) · [Modèle temporel futur](docs/03-technical/event-engine.md).
+- [Architecture](docs/03-technical/architecture.md) · [Modèle temporel](docs/03-technical/event-engine.md).
 - [Roadmap complète](docs/05-project/roadmap.md) · [Questions ouvertes](docs/05-project/open-questions.md).
 - [CONTRIBUTING](CONTRIBUTING.md) · [AGENTS](AGENTS.md) · [Definition of Done](docs/04-quality/definition-of-done.md).
 
 En cas de panne : vérifier `docker version`, `docker compose version` et l'intégration WSL2, puis
 les logs/healthchecks. Les changements d'identifiants PostgreSQL ne s'appliquent pas automatiquement
 à un volume déjà initialisé. La procédure et les limites sont dans [exécution locale](docs/03-technical/deployment.md).
+
+## Domaine Colony — Étape 5A
+
+Services internes dans backend/app/colony : configure_universe, initialize_colony, enqueue et cancel.
+[game_data](game_data/README.md) fournit les valeurs v0.1, [économie](docs/01-game-design/colony-economy-v0.1.md)
+les contrats et [ADR 0007](docs/adr/0007-colony-economy.md) la persistance/scheduler. Transaction du
+caller et scope univers/empire explicites ; aucune commande ne remplace une authentification HTTP.
+Le contexte de build backend est la racine pour embarquer game_data ; utiliser Docker Compose.
+Aucun seed/demo runtime : l’UI Colony réserve ses quatre sections et indique l’absence de partie.
+[Défense planétaire](docs/01-game-design/planetary-defense.md) documentée, sans effet actif.
+
+## Architecture cible et reprise durable
+
+**Décision validée, non implémentée** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md)
+sépare Portal Control Plane (compte global/lobby, Accounts DB) et Game Data Plane (backend actuel,
+Game DB). Plusieurs parties par compte ; interface interne contrôlée, jamais SQL Portal→Game DB.
+Handoff court/unique puis GameSession autonome, gameplay direct à Game. Aucun Portal, login,
+protocole d’auth ou changement Compose n’est livré par cette documentation.
+
+[Procédure locale et relais](docs/06-handoff/work-codex-handoff.md),
+[sources/statuts](docs/06-handoff/source-map.md) et [prochain lot](docs/05-project/roadmap.md) :
+5B contrats identité/Portal-Game → 5C compte/lobby selon cadrage → 5D API Colony sécurisée/UI réelle.
+Au checkpoint de passation, #5 est ouverte : master n’inclut 5A/passation qu’après sa fusion future.
+La branche de travail actuelle est work/step-5a-colony-domain ; vérifier GitHub réel avant pull/merge.

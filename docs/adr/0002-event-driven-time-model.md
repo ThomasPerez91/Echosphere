@@ -21,3 +21,8 @@ Rattrapage chronologique et segmentation des taux nécessaires. Ordre simultané
 ou perte à la reprise. Aucun scheduler implémenté dans cette PR.
 
 [Architecture](../03-technical/architecture.md) · [Index ADR](README.md)
+
+## Portée et évolution documentaire
+
+Note d’évolution : le texte de cette ADR décrit l’étape 0. Le moteur est **Implémenté depuis
+PR #3** et étendu par 5A, voir [ADR 0005](0005-colony-time-engine.md) et [ADR 0007](0007-colony-economy.md).

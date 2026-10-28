@@ -7,7 +7,7 @@ Backend autoritaire et PostgreSQL source de vérité. Ne jamais faire confiance 
 stocks, coûts ou timestamps envoyés par le navigateur. Les futures commandes vérifient identité,
 propriété, univers et visibilité avant tout effet.
 
-## Étape 0
+## Protections locales conservées depuis l’étape 0
 
 Pas de gestion d'utilisateurs, paiement ou administration. Ports frontend/backend liés à 127.0.0.1,
 aucun port PostgreSQL publié. L'exemple .env contient seulement des valeurs publiques de développement ;
@@ -47,3 +47,33 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
 - [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Domaine interne Étape 5A
+
+Aucune API gameplay, même read-only : l’absence de contrat de participation autorisé pourrait
+créer une fuite. Les commandes internes reçoivent univers/empire/colonie explicites, vérifient la
+propriété avant consultation puis sous le lock et dédupliquent les clés. Ces paramètres de confiance
+ne sont pas un substitut à une session HTTP. La future API 5D vérifiera identité/membership/permissions avant
+appel des mêmes services humains/IA/headless. Pas de faux user global ou bypass de Q16.
+
+## Portal/Game — décisions validées, protections futures non implémentées
+
+[ADR 0008](../adr/0008-control-plane-game-data-plane.md) : compte global multi-parties, deux backends
+isolables et deux bases distinctes/séparables. Portal gère credentials et sessions de compte ; Game
+ne possède que l’identité minimale et les autorisations de partie nécessaires, jamais les credentials.
+Aucun accès SQL direct Portal→Game DB ; interface Game interne authentifiée et idempotente.
+Les requêtes gameplay passent directement à Game avec sa session propre après ticket court/unique.
+La validation Game doit rester locale au plan Game, sans contacter Portal/Auth à chaque commande.
+
+Portal est exposé aux bots/brute force/scraping/spam/DDoS applicatif ; protections futures possibles :
+CDN/WAF, rate limiting IP/compte, anti-bot/challenge/CAPTCHA si nécessaire, email verification et
+Redis temporaire. Aucun outil/protocole/fournisseur n’est choisi ou installé ici. Redis/WAF ne sont
+jamais source de vérité gameplay. Game protège aussi son ingress, objets, univers et fog.
+Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver ; ne pas promettre une protection DDoS par le seul
+fait d’avoir deux applications sur une machine partagée.
+
+Q16 est **partiellement cadrée** ; login/cookies/CSRF/MFA/email/anti-bot, ticket/GameSession,
+refresh/revocation/logout, authentification S2S, rôles/suspension/synchronisation et politiques
+privées/persistantes restent Q40–Q56. Pas de JWT/OAuth/mTLS sélectionné par cette documentation.
+Autonomie d’une session pendant panne Portal ne signifie pas ignorer toute révocation indéfiniment :
+contrat et comportement dégradé à décider et tester avant API interactive. Aucun compte fictif global.

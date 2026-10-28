@@ -1,9 +1,9 @@
 # Recherche
 
-**Statut : portée globale orientée ; domaines provisoires.**
+**Statut : Décision validée pour la recherche globale d’empire ; domaines provisoires, système futur.**
 
 
-La recherche est principalement globale à l'empire. Quatre domaines de travail : Ingénierie,
+La recherche est globale à l’empire (précision validée dans la mission de passation du 2026-10-28). Quatre domaines de travail : Ingénierie,
 Énergétique, Calcul, Xénoscience. Les noms et les technologies sont provisoires.
 
 ## Lisibilité et réversibilité

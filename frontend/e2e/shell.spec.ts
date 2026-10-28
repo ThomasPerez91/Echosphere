@@ -38,6 +38,15 @@ for (const width of [320, 390, 768, 1440]) {
     await expect(colony).toHaveAttribute('aria-current', 'page');
     await page.reload();
     await expect(colony).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByText('Aucun univers / aucune colonie active')).toBeVisible();
+    const defense = page.getByRole('link', { name: 'Défense', exact: true });
+    await defense.focus();
+    await page.keyboard.press('Enter');
+    await expect(defense).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+    await expect(page.getByText('Défense — système futur')).toBeVisible();
+    await expect(page.getByRole('button', { name: /construire|attaquer|réparer/i })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('colony.png'), fullPage: true });
     await page.getByRole('link', { name: 'Empire', exact: true }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Votre horizon commence ici.');

@@ -38,6 +38,10 @@ def test_migrations_roundtrip_and_no_model_drift(database_engine, migration_conf
     command.upgrade(migration_config, "head")
     command.check(migration_config)
     assert set(inspect(database_engine).get_table_names()) == {
+        "universe_economies",
+        "colony_economies",
+        "colony_infrastructures",
+        "construction_orders",
         "event_streams",
         "colony_timelines",
         "resource_balances",

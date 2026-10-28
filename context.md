@@ -1,55 +1,65 @@
-# Contexte de reprise — Echosphere
+# Contexte stable — Echosphere
 
-Mis à jour le 2026-10-28. Lire [AGENTS.md](AGENTS.md) puis [progress.md](progress.md) et vérifier
-l'état GitHub réel avant toute action. Ce fichier décrit le cadre stable, pas une autorisation générale.
+**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-28.
+Vérifier GitHub réel puis lire AGENTS → context → progress → [passation](docs/06-handoff/README.md).
 
-## Produit et instance
+## Produit validé, état distinct
 
-Stratégie spatiale persistante web, préparation quotidienne d'environ dix minutes, sessions longues
-pour mieux décider et non produire par clic. Trois ressources Alliages/Flux/Données. IA sans LLM
-au départ, mêmes règles/services et connaissance limitée. Pas de pay-to-win ni de récolte manuelle.
+Jeu web de stratégie spatiale asynchrone/persistant ; environ 10 minutes quotidiennes, 1–2 h utiles
+pour analyser/décider sans rendement de présence. Trois ressources Alliages/Flux/Données, pas de
+récolte manuelle ou pay-to-win. Empire lent + Command actif/asynchrone, combat éventuel dans la boucle.
+IA stratégique sans LLM, Utility/Goals testable, mêmes règles/services/fog que les humains, pas de triche.
+[Vision](docs/00-product-vision.md), [décisions](docs/06-handoff/decision-status.md).
 
-Universe est la frontière d'une instance isolée : solo (MVP humain+IA), partie privée future, univers
-multijoueur persistant futur. Ce dernier fonctionne sans durée maximale obligatoire et indépendamment
-des connexions. Ne pas supposer Universe=User ou processus=Universe. Aucune fonctionnalité multijoueur
-implémentée : pas de comptes, membership, invitations, lobby, matchmaking, équipe ou alliance.
-Concept futur : User/Account ↔ UniverseMembership ↔ éventuellement Empire ↔ rôles/permissions.
-Pas de owner_user_id ajouté à Empire ; controller_type human/ai n'authentifie personne.
-Règles/vitesses futures par Universe/ruleset/version, jamais singleton gameplay serveur.
+Solo humain+IA = MVP ; privé/persistant futurs, pas de durée maximale obligatoire en persistant.
+Universe = frontière d’instance, ni User ni processus ; late join et protections restent ouverts.
+Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
+éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
 
-## Workflow actuel (remplace develop)
+## Implémentation — checkpoint du 28/10/2026, pas partie jouable
 
-master = intégration stable. Synchroniser master, créer work/feature, CI, PR vers master, revue puis
-merge uniquement sur instruction. Pas de develop permanente ni de branche empilée pour contourner
-une dépendance non intégrée. Tags/releases identifiées plus tard. Aucun changement du workflow ne
-constitue une autorisation permanente de merge, publication ou suppression de branches.
+Checkpoint du 28/10/2026 : 5A et la passation sont portées par PR #5, alors ouverte.
+Vérifier GitHub : après fusion de #5, considérer 5A/passation comme intégrées à master ; l’état
+GitHub réel prévaut sur ce checkpoint. Fondations et shell 0–4 intégrés dans master 54f928e au départ ;
+source fonctionnelle 58e8f7c, checkpoint 5be00da vert (101 backend, 11 frontend, 5 Chromium, Compose).
+Aucun compte, Portal/auth, membership, lobby, API gameplay ou multijoueur implémenté.
+Game : FastAPI/SQLAlchemy/Alembic/PostgreSQL + worker, React/TypeScript/Vite ; UTC, autorité serveur.
+EventStream/ScheduledEvent génériques ; ColonyTimeline/ResourceBalance pour économie exacte.
+Migration 0004 ajoute les quatre tables économiques sans modifier les anciennes révisions.
 
-## État et autorisation de cette mission
+Ruleset JSON v0.1 strict, copie par univers, vitesses rationnelles et snapshots d’ordres ; balance
+provisoire. Niveaux continus, pas plafond 5. 12 secteurs/2 orbitaux = planète de départ de référence
+seulement, pas invariant futur. File 3/1, réservation immédiate, annulation 100/80, bonus industriel
+à activation ; production réglée à date logique. Q39 reste ouverte pour saturation du remboursement.
+Cascade dépendante implémentée, confirmation produit/UX à garder sous Q01. Voir [économie](docs/01-game-design/colony-economy-v0.1.md)
+et [audit](docs/06-handoff/pr-5-audit.md) pour limites de capacité/immutabilité/initialiseur.
 
-PR #2 et PR #3 corrigée sont fusionnées sur master. Fusion PR #3 vérifiée :
-4ee81dd447726b5d72eaf1d26626215d14d1c931 ; tête source 4f29a81e57d39c1df6ba041bcc9c4e5b0ee0f6b1.
-Thomas a supprimé develop ; absence distante confirmée. Son instruction « reprend » lance le lot
-Étape 4 : design system et shell responsive, depuis master, branche work/step-4-responsive-shell.
-Ce lot prépare les sections Empire/Colonie/Recherche/Galaxie/Flottes/Rapports/Relations, avec états
-vides explicites, sans stocks fictifs ou ordres de jeu. Pas de backend métier ajouté.
-La PR #4 de ce lot vise master et reste non fusionnée. Source e5d661c validée en CI ;
-voir progress.md pour le checkpoint et ses limites. Aucune autorisation permanente de merge.
+Défense future : réseau persistant à capacité/modules limités, coût surface/orbite, dommages/réparation,
+Flux et renseignement à cadrer. UI Colony réservée à Vue d’ensemble/Infrastructures/Orbite/Défense,
+sans données fictives ni huitième domaine global. Aucun combat/défense effective ; Q30–Q38 ouvertes.
 
-## Architecture et garanties
+## Architecture validée future — ADR 0008
 
-Monolithe modulaire React/TypeScript/Vite, Python/FastAPI, PostgreSQL, SQLAlchemy/Alembic. UTC,
-backend autoritaire, migrations explicites avant API/worker. Aucun endpoint métier non protégé.
-Scheduler générique : EventStream(universe_id,cursor_at,next_sequence) → ScheduledEvent.
-ColonyTimeline lie explicitement colonie/stream/univers et garde settled_at/ResourceBalance.
-FK composites, ordre due_at/séquence, idempotence, SKIP LOCKED, transactions/SAVEPOINT, retries et
-reprise après crash. Les futurs adaptateurs typés de scope ne nécessitent pas de réécrire les événements.
-Aucun owner_kind/owner_id sans FK. Les workers traitent plusieurs univers sans présence de navigateur.
+Deux backends indépendants et isolables, chacun monolithe modulaire : Portal Accounts/Auth/Lobby
+avec Accounts DB, Game gameplay existant avec Game DB. Bases/pools/CPU/RAM/scaling/réseau séparables.
+Portal n’écrit jamais en SQL Game DB ; provision/grant/revoke/join via interface interne contrôlée,
+authentifiée et idempotente. Pas de credentials de compte en Game DB.
+Ticket court/unique puis GameSession autonome, commandes client directement à Game sans appel
+Portal par commande. Panne Portal peut empêcher nouvelles entrées, pas arrêter univers/workers ou
+sessions établies dans le contrat à définir. Mécanismes/durées/révocation restent Q40–Q56, Q16 partielle.
+Ceci affine le backend unique historique ; aucun Portal, protocole ou Compose nouveau dans ce lot.
+[ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), [architecture](docs/03-technical/architecture.md).
 
-## Reprise
+## Workflow et prochain travail
 
-Voir progress.md pour CI/SHA, [ADR 0005](docs/adr/0005-colony-time-engine.md) pour la correction du temps,
-[ADR 0006](docs/adr/0006-universe-game-instance.md) et [modes](docs/01-game-design/game-modes.md).
-Q01–Q29 restent au registre selon leur statut, sans inventer réponses multijoueurs/équilibrage.
-Une future API vérifie User → Membership → Universe → permissions → Entity, plus fog of war.
-Les prérequis de l’étape 4 sont satisfaits. Prochain lot après revue de ce shell : boucle Colony
-(étape 5), à cadrer avec coûts, rendements et files encore ouverts avant toute implémentation.
+master stable, work/... → PR master → CI/revue → merge explicitement autorisé. Pas de develop
+permanente, force push, branche empilée ou release implicite. Work/Codex publient leur checkpoint
+pour l’autre environnement ; [procédure commune](docs/06-handoff/work-codex-handoff.md).
+La passation était limitée aux documents sur la branche existante #5, sans nouvelle PR, merge,
+code métier, migration, game_data, dépendance, Docker ou test modifié. Si #5 est encore ouverte et
+que la mission porte dessus, reprendre cette branche. Après sa fusion, synchroniser master et
+partir sur une nouvelle branche work/... pour tout nouveau lot autorisé, sans recréer la branche #5.
+progress porte le checkpoint et les actions de reprise avant/après fusion.
+Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation
+compte/lobby selon cadrage, 5D API Colony sécurisée/UI réelle. Ne pas commencer Portal complet ou
+multijoueur automatiquement. [Roadmap](docs/05-project/roadmap.md), [Q01–Q56](docs/05-project/open-questions.md).

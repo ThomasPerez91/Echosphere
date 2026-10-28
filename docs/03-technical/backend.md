@@ -1,6 +1,6 @@
 # Backend
 
-**Statut : fondation des étapes 1–2 implémentée ; gameplay futur.**
+**Statut : Implémenté — Game Backend, fondations/temps/Colony interne jusqu’à 5A ; API gameplay future.**
 
 Python 3.12, FastAPI, SQLAlchemy 2, psycopg, Alembic et pydantic-settings. `create_app(settings)`
 compose les adaptateurs. `app/api/probes.py` garde les contrats /health et /ready. `app/core/config.py`
@@ -22,7 +22,7 @@ Pas de repository générique ou de bus de commande vide introduit à l'avance.
 
 ## Persistance
 
-Cinq modèles : Universe, Empire, StellarSystem, Planet et Colony. Première migration explicite,
+Fondation historique 0001 : Universe, Empire, StellarSystem, Planet et Colony. Première migration explicite,
 indépendante des classes ORM courantes. Pas de `create_all` au démarrage ni de migration concurrente
 par worker API. Les migrations sont une action séparée et vérifiable (voir déploiement).
 Les migrations ne peuplent aucune donnée de galaxie, de ressource, de bâtiment ou d'utilisateur.
@@ -52,3 +52,15 @@ capacités valides, timestamps UTC et rollback complet. CI exécute les intégra
 ne remplace les garanties PostgreSQL. Les bases de tests doivent se terminer par `_test`.
 
 [Architecture](architecture.md) · [Modèle](data-model.md) · [API](api.md) · [Déploiement](deployment.md)
+
+## État 5A et séparation cible
+
+Le code actuel comporte 13 tables métier (fondations, temps et quatre tables économiques), plus
+alembic_version ; aucune table de compte/session. app/colony porte configure_universe,
+initialize_colony, enqueue et cancel ; droits de confiance internes, pas un mécanisme d’auth HTTP.
+Le scheduler du worker réutilise TimeEngine et CONSTRUCTION_COMPLETE, sans service Portal.
+
+**Décision validée future** : ce backend reste le monolithe Game ; Portal Accounts/Auth/Lobby sera
+un backend indépendant avec sa propre base et ressources isolables. Aucun appel au Portal par
+commande Game, ni credential Accounts en Game DB. [ADR 0008](../adr/0008-control-plane-game-data-plane.md)
+fait foi ; l’implémentation de la séparation n’appartient pas à cette mission documentaire.

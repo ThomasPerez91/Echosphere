@@ -31,6 +31,8 @@ REQUIRED = {
             "balance-philosophy",
             "progression",
             "game-modes",
+            "colony-economy-v0.1",
+            "planetary-defense",
         )
     ],
     *[
@@ -76,6 +78,15 @@ REQUIRED = {
             "0004-world-persistence",
             "0005-colony-time-engine",
             "0006-universe-game-instance",
+            "0007-colony-economy",
+            "0008-control-plane-game-data-plane",
+        )
+    ],
+    *[
+        f"docs/06-handoff/{name}.md"
+        for name in (
+            "README", "source-map", "decision-status", "work-codex-handoff",
+            "known-gaps", "pr-5-audit",
         )
     ],
 }

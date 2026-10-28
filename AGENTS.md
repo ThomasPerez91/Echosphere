@@ -1,122 +1,126 @@
-# Instructions pour les agents — Echosphere
+# Procédure commune des agents — Echosphere
 
-## Mission et état du dépôt
+**Statut : règle de travail Work / Codex local.** GitHub est la source commune du code, décisions,
+architecture et progression. Ne jamais supposer que la mémoire du chat suffit. Lire les statuts de
+[docs/README](docs/README.md) ; une proposition d’assistant ne vaut pas validation utilisateur.
 
-Jeu de stratégie spatiale persistant web responsive. MVP solo avec IA ; parties privées et univers
-multijoueurs persistants sont futurs, sans fonctionnalités multijoueurs implémentées.
-Étapes 0–3 fusionnées sur master (PR #1–3). Lot courant : étape 4, design system et navigation responsive, sur instruction « reprend ». Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
-Mettre progress.md à jour avant chaque livraison avec périmètre, tests, limites et prochaine action.
-Ne pas implémenter de nouvelle étape sans périmètre explicite. Le socle temporel est implémenté ; auth complète,
-IA, combat, Redis, WebSocket, paiement et administration ne sont pas encore livrés.
+## Début de chaque session
 
-## Sources de vérité à lire
+1. Vérifier GitHub réel avant modification : branche stable, PR/base/head/SHA, branches et CI.
+2. Contrôler l’état local, fetch puis synchronisation ff-only appropriée ; préserver toute divergence
+   ou modification non publiée. Aucun reset/force-push, suppression ou merge implicite.
+3. Lire AGENTS.md → [context.md](context.md) → [progress.md](progress.md).
+4. Lire [passation](docs/06-handoff/README.md), [roadmap](docs/05-project/roadmap.md),
+   [questions](docs/05-project/open-questions.md), documents métier et ADR du lot.
+5. Identifier le dernier travail publié Work ou Codex, sa CI et ses limites. Ne pas démarrer deux
+   modifications concurrentes sur la même branche ni inventer l’identité de l’agent précédent.
+6. Définir le périmètre autorisé : une documentation future n’autorise pas son implémentation.
 
-1. [Vision/non-goals](docs/00-product-vision.md) et [statuts](docs/README.md).
-2. [Questions ouvertes](docs/05-project/open-questions.md), [roadmap](docs/05-project/roadmap.md).
-3. [Architecture](docs/03-technical/architecture.md), [temps](docs/03-technical/event-engine.md),
-   [calcul des ressources](docs/03-technical/resource-calculation.md), [sécurité](docs/03-technical/security.md).
-4. Documentation du domaine modifié et [ADR](docs/adr/README.md).
-5. [Definition of Done](docs/04-quality/definition-of-done.md).
+## Fin de chaque session
 
-Ne pas relire une conversation pour inventer une règle absente : identifier une question ouverte.
-Les assets/mockups ne sont pas des spécifications métier. Trois ressources principales seulement :
-Alliages, Flux, Données (noms de travail). IA sans LLM et sans triche, mêmes services que l'humain.
-Préparation quotidienne autour de dix minutes, aucun bouton de récolte, pas de pay-to-win.
+1. Documenter résultat et décisions dans leurs références canoniques, avec statut/provenance.
+2. Mettre progress.md à jour : objectif, branche/base/tête, fichiers, validations réellement faites,
+   checks non exécutés, limites, risques/Qxx, prochaine action et environnement si connu.
+3. Actualiser context.md si le cadre stable change ; ne pas recopier les ADR en doublon.
+4. Vérifier diff, qualité et confidentialité ; commits cohérents, push sur la bonne branche,
+   ouvrir/actualiser la PR selon le lot. Relire SHA distant et CI effective après publication.
+5. Aucune fusion/tag/release/déploiement ou suppression de branche sans instruction propre.
 
-## Architecture et structure
+Même DoD dans Work et Codex. Pas de résultat CI configuré présenté comme exécuté ; pas de WSL2
+annoncé testé sans recette réelle attestée. Procédure concrète :
+[Work ↔ Codex](docs/06-handoff/work-codex-handoff.md), [DoD](docs/04-quality/definition-of-done.md).
 
-Monolithe modulaire, aucun microservice. Frontend React/TypeScript/Vite ; backend Python/FastAPI ;
-PostgreSQL source de vérité. SQLAlchemy 2 et Alembic sont utilisés pour la persistance versionnée.
-`backend/app/api/` contient HTTP, `core/` la configuration, `persistence/` les modèles et sessions ;
-`backend/app/simulation/` porte le temps et le worker ; `backend/migrations/` porte les migrations, `backend/tests/` les tests ; `frontend/src/` les vues et tests ;
-`game_data/` réservera les valeurs d'équilibrage ; `docs/` les références ; `scripts/` les checks ;
-`.github/workflows/ci.yml` les jobs qualité. Pas de couche métier générique à créer pour deux probes.
+## Mission documentaire historique et reprise Git
 
-## Invariants obligatoires
+master = intégration stable ; work/... → PR master → CI/revue → merge sur autorisation explicite.
+Le workflow historique develop/release est superseded, aucune develop permanente. Pour un nouveau
+lot après intégration de sa fondation : master synchronisée puis branche courte, sans empilement.
 
-- Backend autoritaire : vérifier propriété, prérequis, stocks, routes et échéances côté serveur.
-- Aucun calcul métier critique dans le navigateur ; estimations UI uniquement, réconciliées au serveur.
-- PostgreSQL conserve états et échéances ; un cache ou timer mémoire n'est jamais l'autorité.
-- UTC partout en stockage/calcul ; timestamps avec fuseau, conversion locale à l'affichage.
-- Production différée et événements persistants : utiliser app/simulation, pas de scheduler parallèle.
-- Prendre le verrou timeline, respecter due_at/séquence et complete=True avant une future dépense.
-- Ressources en micro-unités entières, taux horaires et reste persisté ; jamais de float critique.
-- Handler sans commit, effet externe ou verrou d’un autre stream ; rollback atomique sur échec.
-- Humain et IA utilisent les mêmes commandes et une connaissance limitée.
-- Mobile obligatoire ; pas de simple dashboard réduit, pas d'action importante seulement au hover.
-- Ne pas ajouter une feature non spécifiée sans documenter sa portée et son statut ; rester dans
-  l'étape autorisée. Une documentation prospective n'autorise pas son implémentation immédiate.
+Checkpoint du 28/10/2026 : la passation documentaire a été portée par
+**work/step-5a-colony-domain / PR #5**, ouverte et non fusionnée au départ sur 5be00da.
+L’état GitHub réel prévaut toujours sur les consignes contextuelles d’un ancien checkpoint.
 
-## Compatibilité des instances et isolation
+- Si PR #5 est encore ouverte et que la mission porte dessus, reprendre sa branche existante ;
+  ne pas créer de nouvelle branche ni PR #6 pour ce lot, ni merger sans autorisation explicite.
+- Si PR #5 est fusionnée, cette consigne est historique : ne pas reprendre sa branche pour un
+  nouveau lot. Tout nouveau lot autorisé repart de master synchronisée sur une nouvelle branche
+  courte work/..., selon son périmètre. Ne pas recréer la branche de PR #5.
 
-Universe est la frontière d'une instance de jeu : données rattachées directement/indirectement,
-FK composites conservées et requêtes/commandes à contexte Universe explicite. Ne jamais supposer
-un Universe = un User, ni un processus = un Universe. Workers multi-univers, indépendants des connexions.
-Le scheduler verrouille EventStream (universe_id) ; ColonyTimeline garde seulement son ancrage
-économique et son lien explicite stream/univers. Ne pas remettre colony_id dans ScheduledEvent.
-Pas de owner_kind/owner_id sans FK pour modéliser les futurs propriétaires de stream.
+Le périmètre de la passation était **documents uniquement**, plus scripts/check_docs.py si nécessaire
+aux nouveaux documents. Services, gameplay, migrations/SQL, game_data (même son README), dépendances,
+Compose/Docker et tests fonctionnels étaient exclus. Toute anomalie de code observée dans cette
+mission va dans [audit](docs/06-handoff/pr-5-audit.md)/[risques](docs/06-handoff/known-gaps.md), sans
+correctif dans ce lot. Une nouvelle instruction et progress déterminent le prochain lot ; aucun
+force-push ou suppression de branche implicite.
 
-Participation future : User/Account ↔ UniverseMembership ↔ éventuellement Empire ↔ rôle/permissions.
-Ne pas créer cette table ou Empire.owner_user_id maintenant. Toute future API authentifiée vérifiera
-User → Membership → Universe → permissions → Empire/Entity. Pas de règles gameplay en singleton
-serveur ; les rulesets/vitesses seront versionnés par instance. Notifications/WebSockets jamais autorité.
-Lire [modes](docs/01-game-design/game-modes.md) et [ADR 0006](docs/adr/0006-universe-game-instance.md).
+## Produit et données
 
-## Conventions
+Stratégie spatiale web asynchrone/persistante. Solo humain+IA MVP, privé et persistant multijoueurs
+futurs ; dix minutes quotidiennes, sessions longues pour mieux décider. Aucune récolte manuelle,
+production liée à la présence, quatrième ressource principale ou pay-to-win. Alliages/Flux/Données.
+Pas de clone OGame/Stellaris lourd, RTS, city-builder/population ou logistique physique complexes.
+Les mockups ne sont jamais des spécifications métier. Humain/IA utilisent les mêmes règles/services,
+IA sans LLM stratégique ni spawn gratuit, perception limitée et déterministe/testable.
 
-Code et identifiants anglais, documentation principale en français, noms de fichiers kebab-case.
-Python snake_case, annotations publiques, Ruff ; React composants PascalCase et TypeScript strict.
-Petites fonctions et frontières explicites. Valeurs d'équilibrage futures séparées du moteur.
-Secrets via environnement, jamais dans Git ni variables frontend exposées. Lockfiles committés.
-Chaque décision métier modifiée entraîne mise à jour du document de référence, du registre et des
-tests ; ADR pour décision structurelle. Signaler hypothèses, ne pas fermer silencieusement une Qxx.
+12 secteurs/2 orbitaux = **départ de référence v0.1 seulement**, pas toutes les planètes. Secteur
+identifiable par infrastructure, upgrade sans nouvelle place, capacités variables futures.
+Niveaux continus ; 1–5 seulement early game, pas de plafond 5. Paramètres/facteurs/arrondis dans
+game_data validé et versionné ; valeurs de balance provisoires, jamais copiées en constantes métier.
 
-## Commandes principales
+## Architecture actuelle et cible
+
+Actuel : backend Game FastAPI modulaire, worker du même code, PostgreSQL, SQLAlchemy/Alembic,
+frontend React/TypeScript/Vite. backend/app/persistence, simulation et colony portent les domaines ;
+backend/migrations les révisions, game_data les rulesets, frontend/src les vues. Pas d’API gameplay.
+
+**Décision validée future** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), deux backends
+isolables chacun monolithe modulaire : Portal Accounts/Auth/Lobby → Accounts DB ; Game gameplay →
+Game DB. CPU/RAM/pools/scaling/bases/réseau séparables ; ne pas créer 10–20 microservices.
+Portal ne fait jamais de SQL direct Game DB ; interface interne Game contrôlée, authentifiée,
+idempotente. Le client gameplay appelle Game directement ; pas de dépendance Portal par commande.
+Ticket court/usage unique puis GameSession autonome : format/crypto/durées/révocation ouverts.
+Aucun credential Accounts en Game DB. Portal indisponible ne doit pas arrêter univers/worker ou
+sessions Game établies dans le contrat à définir. Aucun Portal/auth/DB supplémentaire implémenté ici.
+
+Compte global, plusieurs parties : User → UniverseMembership → Universe → éventuellement Empire/
+rôle/permissions. Ne pas réduire à Empire.owner_user_id ; empire partagé Q21 reste ouvert.
+Universe n’est ni User ni processus. Pas de compte global factice ou accès implicite pour une démo.
+Q16 est partiellement cadrée ; 5B contrats identité/Portal-Game, 5C compte/lobby selon cadrage,
+5D API Colony sécurisée. Ne pas commencer ces systèmes au titre de la passation.
+
+## Invariants techniques à préserver
+
+- Backend Game autoritaire, PostgreSQL conserve états/échéances ; cache/UI/notifications non autorités.
+- UTC et timestamps aware ; micro-unités entières, taux horaires et reste persisté, pas de float critique.
+- EventStream(universe_id) est le scope de lock/ordre/idempotence ; ColonyTimeline garde son ancrage
+  économique. Pas de colony_id dans ScheduledEvent ni owner_kind/owner_id sans FK.
+- Rattrapage complet sous verrou avant dépense, coûts et ordre dans la transaction du caller.
+  Handler sans commit, effet externe ou lock d’un autre stream ; rollback atomique et reprise.
+- 5A : trois ordres actif inclus, un actif ; réservation immédiate, snapshots par univers/ordre,
+  bonus industriel au démarrage du suivant. Annulation 100/80 idempotente ; Q39 pas définitivement
+  arbitrée, refus de saturation actuel à préserver sans en faire une décision produit finale.
+- FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
+  pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
+- Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède
+  Vue d’ensemble/Infrastructures/Orbite/Défense, pas de huitième domaine global. Q30–Q38 ouvertes.
+- Mobile/clavier obligatoires, pas de hover seul, aucune fixture runtime ou mutation sans identité.
+
+## Conventions et validation
+
+Code/identifiants anglais, docs françaises, snake_case Python, PascalCase React, TypeScript strict,
+Ruff/ESLint. Secrets par environnement, jamais .env/credential/log privé dans Git ou VITE_*.
+Ne publier que des décisions Echosphere synthétisées, aucun transcript privé ou élément personnel.
+Tests pertinents pour comportement nouveau, refus/concurrence/reprise selon risque ; pas de tests
+artificiels qui recopient le code. Mission docs : checks documentaires/diff, CI existante observée.
 
 ```bash
-cp .env.example .env
-docker compose up --build -d --wait --wait-timeout 180
-docker compose ps
-docker compose exec backend alembic upgrade head
-docker compose exec backend alembic check
-python3 scripts/smoke_compose.py
-docker compose down
 python3 scripts/check_docs.py
 (cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q)
 (cd frontend && npm ci && npm run lint && npm test && npm run build)
 (cd frontend && npx playwright install chromium && npm run test:e2e)
 ```
 
-Installation native et commandes Docker de test : [README](README.md) et
-[stratégie de tests](docs/04-quality/testing-strategy.md). Ne pas lancer `down -v` sur des données
-à conserver. Pas de port PostgreSQL hôte dans Compose.
-
-## Tests et recette
-
-Tests obligatoires pour le comportement ajouté/modifié. Couvrir refus métier et erreurs, puis
-concurrence, idempotence et reprise selon le domaine. Horloge injectée pour le futur moteur ; pas
-de sleeps de durée gameplay. Tester l'accessibilité et responsive pour les vues touchées.
-Exécuter lint/tests/build et check docs. Docker modifié : smoke Compose avec DB réelle si disponible.
-Rapporter toute vérification impossible, sans affirmer qu'une CI simplement configurée a réussi.
-Appliquer la Definition of Done avant de déclarer une étape terminée.
-
-## Git et livraison
-
-`master` est la branche d'intégration stable. Toute évolution suit
-`work/<feature>` → PR vers master → CI et revue → merge sur autorisation explicite.
-Pas de develop permanente ou de branche empilée pour contourner une dépendance non intégrée.
-Tags et releases seront créés plus tard sur instruction, sans réserver master aux seules releases.
-
-```bash
-git switch master
-git pull --ff-only origin master
-git switch -c work/nom-du-lot
-```
-
-PR #2 et PR #3 corrigée sont fusionnées ; develop a été supprimée par Thomas.
-Le lot actuel continue work/step-4-responsive-shell, PR vers master laissée non fusionnée. Ne pas supprimer d'autres branches, forcer un push ou réécrire l'historique partagé.
-Toute fusion future, tag ou déploiement requiert son autorisation propre.
-
-Avant de déclarer une livraison terminée : vérifier la tête distante et sa CI, mettre à jour
-context.md/progress.md et rapporter SHA, tests et limites réelles. Étape 4 limitée au shell UI,
-aux composants utilisés et aux états réseau. Aucun gameplay, endpoint métier ou étape 5 sans nouveau lot.
+Intégrations : PostgreSQL dédié *_test et RUN_DB_TESTS=1, jamais les données à conserver.
+Compose/migrations/smoke et commandes détaillées dans [reprise](docs/06-handoff/work-codex-handoff.md).
+Ne pas lancer down -v ou downgrade sur données à garder. Toujours distinguer passé vérifié,
+CI du commit actuel, tests ignorés et limites réelles.

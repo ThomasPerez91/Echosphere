@@ -1,11 +1,11 @@
 # Modèle de données conceptuel
 
-**Statut : fondations et temps de colonie persistants ; autres domaines futurs.**
+**Statut : Implémenté jusqu’au domaine Colony 5A sur PR #5 ; identité et autres domaines futurs.**
 
 
 | Concept | Responsabilité et relations proposées |
 | --- | --- |
-| Universe | Frontière d’instance de jeu ; seed actuelle, ruleset/version futurs |
+| Universe | Frontière d’instance de jeu ; seed et appartenance d’instance ; ruleset/version via universe_economies en 5A |
 | Empire | Appartient à un univers ; pilotage humain ou IA |
 | System / Route | Nœud et liaison du graphe, propres à un univers |
 | Planet | Monde physique d'un système, traits et capacité |
@@ -69,8 +69,8 @@ Le downgrade nécessite une base en ligne pour cette vérification. 0001 et 0002
 Universe n'est implicitement ni solo ni possédé par un User unique. Account/User ↔ UniverseMembership
 ↔ éventuellement Empire ↔ rôle/permissions est une future association, pas une table actuelle.
 Plusieurs humains, éventuel partage d'empire et spectateur/admin restent possibles sans être décidés.
-Règles gameplay par Universe ou ruleset/version, jamais un singleton serveur. Aucun champ de mode,
-place ou vitesse ajouté maintenant. Voir [ADR 0006](../adr/0006-universe-game-instance.md).
+Règles gameplay par Universe ou ruleset/version, jamais un singleton serveur. Aucune table d’identité ou champ de mode/place ajouté ; les vitesses économie/construction
+existent dans le snapshot universe_economies v0.1, sans nouveau mécanisme de mode. Voir [ADR 0006](../adr/0006-universe-game-instance.md).
 
 ## Invariants des étapes futures
 
@@ -79,8 +79,8 @@ une exploitation active d'un monde selon les règles à définir, unicité d'eff
 Utiliser `timestamptz`, UTC applicatif et contraintes DB en complément des services.
 L'historique d'occupation et les collisions de colonisation relèvent de Q07.
 
-Proposition : IDs opaques, index des échéances et clés de visibilité par empire. Choix des types
-numériques et précision monétaire/ressources à arrêter en Q03. Ne pas créer toutes ces tables
+Proposition : IDs opaques, index des échéances et clés de visibilité par empire. La représentation des ressources est déjà micro-unités BIGINT et reste exact (étape 3) ;
+les autres paramètres économiques encore ouverts restent Q03. Ne pas créer toutes ces tables
 simplement parce que le diagramme conceptuel les mentionne.
 
 
@@ -88,3 +88,32 @@ simplement parce que le diagramme conceptuel les mentionne.
 
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
 - [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
+
+## Persistance économique Étape 5A
+
+Migration 0004_colony_economy additive : universe_economies (ruleset validé épinglé et vitesses),
+colony_economies (ancrage et séquence), colony_infrastructures (type, niveau, sector_index),
+construction_orders (snapshot, coût réservé, séquence, états et dates, remboursement enregistré).
+FK composites colonie/univers, unicité secteur et clé de commande, niveau >=1, un actif par index
+partiel. Capacité de planète, unicité configurable des types et queue_limit sont vérifiées sous
+verrou de stream par le service, sans duplication de game_data en CHECK SQL. Aucun service de
+redimensionnement de planète. ResourceBalance et ColonyTimeline restent l’autorité économique.
+Aucune table DefenseNetwork/DefenseModule créée ; les futurs adaptateurs typés peuvent s’ajouter.
+Voir [ADR 0007](../adr/0007-colony-economy.md) et [règles v0.1](../01-game-design/colony-economy-v0.1.md).
+
+## Identité et bases cibles — décision validée, non implémentée
+
+Compte global et plusieurs univers simultanés ; User → UniverseMembership → Universe →
+éventuellement Empire/rôle/permissions. Pas de réduction à Empire.owner_user_id, partage Q21 ouvert.
+[ADR 0008](../adr/0008-control-plane-game-data-plane.md) sépare Accounts DB et Game DB :
+
+| Base future | Données conceptuelles, aucune table créée ici |
+| --- | --- |
+| Accounts DB, propriétaire Portal | users, credentials/hashes, sessions Portal, MFA/récupération, informations globales membership/lobby |
+| Game DB, propriétaire Game | État gameplay existant et futures références minimales global_user_id/universe_id/membership ou access id/empire éventuel/role/status |
+
+Aucun mot de passe/credential Accounts répliqué en Game DB, pas de FK inter-bases imposée.
+Portal n’écrit pas dans Game DB ; changements via interface interne Game authentifiée/idempotente.
+Autorité exacte des droits, synchronisation et révocation Q51–Q54 ; aucun SQL nouveau dans ce lot.
+Les FK composites d’univers actuelles restent inchangées. Pas de User/Membership/GameSession
+implémenté sous prétexte que le schéma conceptuel les mentionne.

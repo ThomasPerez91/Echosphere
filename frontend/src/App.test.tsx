@@ -75,8 +75,8 @@ test('supports deep links, route changes, focus and browser history events', asy
   navigate('#colony');
   expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
   expect(screen.getByRole('link', { name: 'Colonie' })).toHaveAttribute('aria-current', 'page');
-  expect(screen.getByText('Colonie : espace en préparation')).toBeInTheDocument();
-  expect(screen.getByText(/Aucun ordre de jeu/)).toBeInTheDocument();
+  expect(screen.getByRole('navigation', { name: 'Sections de la colonie' })).toBeInTheDocument();
+  expect(screen.getByText('Aucun univers / aucune colonie active')).toBeInTheDocument();
   navigate('#galaxy');
   expect(screen.getByRole('link', { name: 'Galaxie' })).toHaveAttribute('aria-current', 'page');
   await screen.findByText('Services disponibles', { selector: '[role="status"]' });
@@ -100,5 +100,21 @@ test('unknown destinations give a route back to Empire', async () => {
   render(<App />);
   expect(screen.getByRole('heading', { name: 'Page introuvable' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Revenir à l’Empire' })).toHaveAttribute('href', '#empire');
+  await screen.findByText('Services disponibles', { selector: '[role="status"]' });
+});
+
+
+test('colony subnavigation preserves global selection and exposes no defense action', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ready));
+  window.history.replaceState(null, '', '#colony/defense');
+  render(<App />);
+  expect(screen.getByRole('link', { name: 'Colonie' })).toHaveAttribute('aria-current', 'page');
+  expect(screen.getByRole('link', { name: 'Défense' })).toHaveAttribute('aria-current', 'page');
+  expect(screen.getByText('Défense — système futur')).toBeInTheDocument();
+  expect(screen.getByText('Aucun univers / aucune colonie active')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /construire|attaquer|réparer/i })).not.toBeInTheDocument();
+  navigate('#colony/infrastructure');
+  expect(screen.getByRole('link', { name: 'Infrastructures' })).toHaveAttribute('aria-current', 'page');
+  expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
   await screen.findByText('Services disponibles', { selector: '[role="status"]' });
 });

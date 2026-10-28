@@ -1,0 +1,8 @@
+{
+  "version": "v0.1",
+  "resources": [
+    "alloys",
+    "flux",
+    "data"
+  ]
+}

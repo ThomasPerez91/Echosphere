@@ -5,7 +5,8 @@
 
 Le conflit est optionnel dans la boucle, mais un combat minimal fait partie du MVP final. Les unités
 et dommages doivent être produits et résolus par les règles communes ; pas de flotte IA gratuite.
-Aucune mécanique de combat n'est implémentée à l'étape 0.
+Aucune mécanique de combat n’est implémentée jusqu’au checkpoint 5A. Résolution automatisée
+future, jamais un RTS ; cette mission n’ajoute aucun combat.
 
 ## Contraintes validées
 
@@ -31,3 +32,9 @@ absence de double résolution, résultat explicable, égalité des règles humai
 - [Vision](../00-product-vision.md) · [Questions ouvertes](../05-project/open-questions.md)
 - [Boucle](core-loop.md) · [Équilibrage](balance-philosophy.md)
 - [Temps serveur](../03-technical/event-engine.md)
+
+## Orientation défense planétaire
+
+Voir [Défense planétaire](planetary-defense.md) : réseau limité de modules persistants, dommages et
+réparations envisagés, coût surface/orbite et consommation future de Flux. Pas de piles de canons
+jetables. Ciblage, pertes, défense/flotte et intégrité restent Q30–Q38 ; aucun moteur actif en 5A.

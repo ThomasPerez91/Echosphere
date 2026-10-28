@@ -10,8 +10,9 @@ sans augmenter indéfiniment la charge quotidienne.
 ## Repères actuels
 
 1 planète au départ ; 2–3 en early ; 4–6 en mid ; environ 8–12 tard avant automatisation éventuelle.
-Ces termes ne spécifient pas des durées en jours ni des déblocages obligatoires. Les infrastructures
-I à V et l'arbre de recherche lisible limitent l'inflation de complexité.
+Ces termes ne spécifient pas des durées en jours ni des déblocages obligatoires. Les niveaux continus des infrastructures
+et l’arbre de recherche lisible permettent une progression longue. Les niveaux 1–5
+ne bornent plus les infrastructures économiques : ils définissent l’early game v0.1 seulement.
 
 ## Choix encore ouverts
 
