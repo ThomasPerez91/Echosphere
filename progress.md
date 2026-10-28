@@ -58,7 +58,7 @@ ADR 0007, docs produit/UX/tech/qualité, AGENTS, context et roadmap actualisés.
 5A domaine/économie/construction et 5B API/UI interactive après contrat identité/autorisation Q16.
 Les arbitrages v0.1 ne ferment pas les questions générales d’équilibrage et de modes.
 
-## Validation en cours
+## Validation source vérifiée
 
 Local : Ruff, 42 tests unitaires backend, ESLint, 11 tests frontend, build, 5 scénarios Chromium et
 56 documents/liens. Captures Colony/Défense inspectées à 320 et 1440 ; scénarios aux quatre largeurs
@@ -68,11 +68,17 @@ Local : Ruff, 42 tests unitaires backend, ESLint, 11 tests frontend, build, 5 sc
 Première CI source 789aa96 : frontend et Compose verts, backend 98 réussis/1 échec de test.
 L’intervalle de saturation logistique était de dix jours, insuffisant pour les Données ; corrigé
 à vingt jours. Ajout de tests d’édition réelle du catalogue sans repricing et d’événement étranger.
-Vérifier la prochaine tête et sa CI finale avant livraison ; une CI configurée n’est pas une preuve.
+CI source finale entièrement verte sur `58e8f7cf32c1b2fbfd9568ec2317cc4338ae7642` :
+[run 40720967410](https://github.com/ThomasPerez91/Echosphere/actions/runs/40720967410).
+101 tests backend réussis (42 unitaires + 59 PostgreSQL), 11 frontend, 5 Chromium, lint/build,
+56 documents/liens, migrations/absence de dérive, chargement v0.1 dans l’image et smoke Compose avec
+panne/reprise PostgreSQL. Tous les scénarios antérieurs sont conservés. Ce checkpoint documentaire
+suit la source validée ; vérifier la CI de sa propre tête avant toute future fusion autorisée.
 
 ## Limites et reprise
 
-1. Vérifier tête/CI/revue de PR #5, consigner le résultat effectif puis laisser non fusionnée.
+1. PR #5 prête pour revue, laissée non fusionnée. Vérifier sa tête documentaire finale et sa CI ;
+   le code source 58e8f7c est validé par le run indiqué ci-dessus.
 2. Règles v0.1 provisoires, pas de simulation d’équilibrage longue ou charge massive revendiquée.
 3. Aucun PostgreSQL/Docker local exploitable ; intégrations, migrations et Compose validés sur GitHub.
    Pas de recette WSL2/Docker Desktop, tactile/lecteur d’écran réel, Safari/Firefox.

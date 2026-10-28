@@ -29,7 +29,8 @@ constitue une autorisation permanente de merge, publication ou suppression de br
 PR #4 fusionnée sur master : 54f928e2348781db43b335d4dcf569aadc0db6e9.
 CI master verte vérifiée, run 40716684879, avant création de work/step-5a-colony-domain.
 Thomas demande de poursuivre le brief joint : Étape 5A, domaine Colony et économie v0.1.
-PR #5 vise master et reste non fusionnée. Aucun merge/tag/release/déploiement autorisé pour ce lot.
+PR #5 vise master et reste non fusionnée. Source 58e8f7c entièrement verte en CI (101 backend,
+11 frontend, 5 Chromium, migrations/Compose) ; checkpoint et limites dans progress.md. Aucun merge/tag/release/déploiement autorisé pour ce lot.
 Domaine interne uniquement ; Q16 bloque API publique et UI interactive de 5B. Pas de faux user.
 
 ## Architecture et garanties
