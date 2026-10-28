@@ -2,64 +2,54 @@
 
 Dernière mise à jour : 2026-10-28. Cadre stable : [context.md](context.md).
 
-## État livré sur master / base develop
+## Intégré
 
-- Étape 0 fusionnée : [PR #1](https://github.com/ThomasPerez91/Echosphere/pull/1).
-- Commit de fusion : 1ffeab068b3cbe205acfcd59ceee65e22262c5f5.
-- develop créée depuis cette fusion ; master est désormais réservée aux releases.
-- CI étape 0 vérifiée verte : backend, frontend et Docker/PostgreSQL réel avec panne/reprise.
+Étape 0 : [PR #1](https://github.com/ThomasPerez91/Echosphere/pull/1) fusionnée sur master à la demande
+de Thomas. develop créée au commit 1ffeab068b3cbe205acfcd59ceee65e22262c5f5 ; master réservée aux releases.
 
-## Lot courant : fondation 1–2
+Fondation 1–2 : [PR #2](https://github.com/ThomasPerez91/Echosphere/pull/2) toujours ouverte vers develop,
+CI verte sur sa tête 333533146822a88170bf5d8eefd987d318931e4c. Elle n'est pas annoncée comme intégrée.
+Elle apporte configuration, SQLAlchemy/Alembic et modèles Universe/Empire/System/Planet/Colony.
 
-Branche : `work/step-1-2-foundation`, créée depuis develop. PR : [#2](https://github.com/ThomasPerez91/Echosphere/pull/2), cible develop.
-Les fonctionnalités ci-dessous restent sur cette branche jusqu'à examen/fusion de sa PR.
+## Lot courant : étape 3, temps de colonie
 
-- Configuration centralisée validée (pydantic-settings), secrets masqués et délais bornés.
-- Fabrique FastAPI ; modules API/core/persistence ; pool SQLAlchemy et transactions explicites.
-- Modèles Universe, Empire, StellarSystem, Planet, Colony ; UUID et timestamps UTC.
-- FK composites : pas de planète/colonie liée à un autre univers ; occupation courante unique.
-- Alembic 0001, migration explicite, réversible seulement sur base jetable pour les tests.
-- CI sur develop/master et branches work ; tests PostgreSQL dédiés et migration dans l'image Docker.
-- Règles Git actualisées, context.md et progress.md inclus dans le check documentaire.
+Branche : `work/step-3-time-engine`, créée depuis develop puis avancée sur les commits de PR #2 pour
+satisfaire sa dépendance, sans fusionner cette PR. La nouvelle PR cible develop et doit être examinée
+après PR #2 ; son diff inclut cette fondation tant qu'elle n'est pas intégrée à develop.
 
-Ce lot ne livre ni écran de jeu ni endpoint de création de partie : aucune authentification n'est
-encore décidée. La fondation prépare les services suivants sans exposer de mutations non protégées.
+Livré dans la branche : horloge injectable UTC, production entière avec reste exact, timeline par
+colonie, trois ressources, événements datés idempotents, ordre stable, rattrapage borné et retries
+persistants. Handler interne RESOURCE_RATE_CHANGE seulement. Worker du même monolithe et migration
+0002. Compose ajoute un migrate one-shot et un worker sans port exposé ; aucune donnée de jeu créée.
+Pas de bâtiment, recherche, flotte, combat, auth, interface jouable ou nouvelle ressource.
 
-## Vérification et clôture du lot
+## Validation du lot
 
-Commandes locales : Ruff backend/scripts, pytest, génération SQL offline Alembic, check docs,
-ESLint/Vitest/build frontend. Les tests DB sont ignorés localement sans PostgreSQL ; la CI exécute
-les douze tests d'intégration sur une base *_test et le smoke Docker réel.
-Résultats locaux vérifiés : 8 tests unitaires backend, 3 tests frontend, Ruff/ESLint/build,
-SQL offline et 50 documents/liens. Les 12 tests PostgreSQL sont ignorés localement sans serveur.
-
-CI vérifiée verte sur le commit source `958df32e5fb21b2f2e74c74f7188a43d14c45aad` :
-[exécution 40684461204](https://github.com/ThomasPerez91/Echosphere/actions/runs/40684461204).
-20 tests backend passent, dont 12 intégrations PostgreSQL réelles ; 3 tests frontend passent.
-Upgrade/downgrade/upgrade, dérive ORM, build Docker, migrations dans le runtime et panne/reprise DB
-sont validés. La première exécution avait révélé une mauvaise attente de type d'erreur dans un test,
-corrigée en distinguant limite de longueur et contrainte de contrôleur.
-Ce checkpoint documentaire s'ajoute au commit source testé ; consulter la CI de la tête de PR avant fusion.
-Le lot est prêt à examiner dans PR #2, **pas encore intégré à develop**. Aucun merge de PR #2,
-tag, release ou déploiement n'a été autorisé ou exécuté.
-La recette visuelle et le test spécifique Docker Desktop/WSL2 restent à effectuer par l'utilisateur.
+21 tests unitaires locaux réussis ; les intégrations PostgreSQL sont ignorées localement faute de
+serveur et doivent passer dans la CI. Les nouveaux scénarios couvrent crash avant/après commit,
+rollback des effets/enfants, idempotence, ordre identique, backoff/blocage, reprise explicite,
+rattrapage borné et deux workers (même colonie et colonies distinctes).
+Lint, SQL offline Alembic, check documentaire, build et tests frontend font partie de la recette.
+Vérifier le résultat réel de la CI sur la nouvelle PR avant toute intégration ; ne pas confondre
+les résultats verts de PR #2 avec ceux du nouveau moteur.
 
 ## Reprendre ici
 
-1. Vérifier la PR work/step-1-2-foundation → develop et sa CI ; corriger tout échec avant fusion.
-2. Une fois le lot intégré à develop, préparer l'étape 3 (temps), sur une nouvelle branche depuis develop.
-3. Cadrer Q03 : précision/arrondis, stock et taux ; Q13 : ordre simultané, locks et reprise.
-4. Implémenter horloge injectable, calcul différé et événements persistants, avec tests de crash,
-   rejeu et concurrence ; aucun cron/timer mémoire comme autorité et aucune simulation par seconde.
+1. Vérifier la nouvelle PR temporelle et sa CI ; corriger tout échec avant de déclarer le lot prêt.
+2. Faire examiner PR #2 puis la PR temporelle vers develop, sans merge implicite sur master.
+3. Étape 4 : design system responsive et navigation de base, en conservant les états réseau et clavier.
+4. Étape 5 : Colony, paramètres game_data et premier service de construction après décisions Q01/Q03/Q04.
+   Tout service de dépense doit rattraper sa timeline et exiger complete=True dans sa transaction.
 
-## Questions qui restent ouvertes
+## Décisions encore ouvertes
 
-Q16 : mode d'identité/session, erreurs de commandes et idempotence ; blocage de toute mutation HTTP.
-Q04 : catalogue et capacités exactes (aucun défaut 12 ni maximum 18 imposé par ce schéma).
-Q07 : coûts, concurrence métier, abandon et historique de colonisation.
-Q02 : protections hors connexion avant combat. Toutes les autres Q restent dans le registre central.
+Q03 : coûts/taux/capacités de gameplay et entretien ; seule la représentation/arrondi est cadrée.
+Q13 : interactions entre plusieurs agrégats, flottes/combat, compatibilité/archivage des événements.
+Q16 : identité/session, contrôle objet et contrats HTTP avant de créer des mutations publiques.
+Q02 : protection hors connexion avant combat ; Q04/Q07 : catalogue et colonisation.
+Voir le [registre central](docs/05-project/open-questions.md) et [ADR 0005](docs/adr/0005-colony-time-engine.md).
 
-## Historique bref
+## Historique
 
-- 2026-10-28 : étape 0 publiée et vérifiée, puis fusionnée sur instruction ; develop créée.
-- 2026-10-28 : lot 1–2 publié dans PR #2 vers develop ; CI PostgreSQL/Docker verte, en attente d’examen.
+- 2026-10-28 : bootstrap fusionné, develop créée, fondation publiée dans PR #2 et CI validée.
+- 2026-10-28 : étape 3 implémentée sur branche dépendante de PR #2 ; validation de la nouvelle CI en cours.

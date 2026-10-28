@@ -35,6 +35,15 @@ Q04 n'est pas fermée par le schéma : les capacités sont fournies explicitemen
 le cycle de vie et l'historique nécessiteront une migration au lot colonisation.
 Q02 est un prérequis du futur combat : aucun endpoint d'attaque ne sera livré avant arbitrage.
 
+## Cadrage technique étape 3 (partiel)
+
+Q03 : micro-unités entières (1 unité = 1 000 000), taux horaires et reste exact persisté. BIGINT non
+négatif avec dépassement explicite. Capacité optionnelle saturante sans valeur par défaut de gameplay.
+Coûts, rendements, entrepôts et entretien restent ouverts.
+Q13 : pour une colonie, ordre due_at/séquence sous verrou, rattrapage à date logique, SAVEPOINT pour
+reprise atomique, retries bornés et blocage de tête. L'ordre multi-agrégats, flotte/combat et migrations
+de payload/archivage restent ouverts. Détails dans [ADR 0005](../adr/0005-colony-time-engine.md).
+
 ## Décisions techniques prises pour le bootstrap
 
 Python 3.12, Node 22 dans Docker, PostgreSQL 17, psycopg direct pour les sondes, proxy Vite même

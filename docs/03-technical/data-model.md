@@ -1,6 +1,6 @@
 # Modèle de données conceptuel
 
-**Statut : cinq premiers concepts persistants ; autres domaines futurs.**
+**Statut : fondations et temps de colonie persistants ; autres domaines futurs.**
 
 
 | Concept | Responsabilité et relations proposées |
@@ -39,6 +39,16 @@ univers. Les index suivent les relations de contenance. Suppression restrictive 
 ne détruit silencieusement un empire. Le modèle représente seulement l'exploitation courante,
 sans historique, abandon ou conquête ; Q07 reste ouverte. Une migration ultérieure pourra conserver
 cet historique sans transformer l'unicité présente en règle de colonisation définitive.
+
+## Schéma temporel livré (0002_colony_time)
+
+colony_timelines : colony_id PK/FK, settled_at, next_sequence ; verrou et ancrage commun.
+resource_balances : clé colony_id/resource, stock, rate_per_hour et remainder BIGINT, capacity nullable,
+updated_at. Exactement trois lignes fournies par initialize ; aucune ligne automatiquement peuplée.
+scheduled_events : UUID, colony, due_at, séquence, clé idempotente, type/payload JSONB, statut,
+tentatives, prochaine tentative, completed_at et code d'erreur générique. Unicité des clés/séquences
+par colonie et index de file. Les timestamps sont timestamptz. Aucune suppression en cascade.
+Ces trois tables ne spécifient pas encore bâtiments, recherche, missions ou événements inter-empires.
 
 ## Invariants des étapes futures
 

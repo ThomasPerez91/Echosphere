@@ -31,8 +31,8 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 
 Le statut vérifiable et la prochaine action sont dans [progress.md](../../progress.md).
 Étape 0 fusionnée sur master (PR #1). Branches de travail depuis develop, PR vers develop ; master
-réservée aux releases. Le lot suivant implémente les fondations 1–2 ; la boucle temporelle 3 viendra
-après ses arbitrages. Une fondation persistante ne signifie pas qu'une partie est déjà jouable.
+réservée aux releases. Les fondations 1–2 sont dans PR #2 ; le lot 3 ajoute le socle temporel
+avec cadrage partiel de Q03/Q13. Les interactions multi-agrégats restent futures. Une fondation persistante ne signifie pas qu'une partie est déjà jouable.
 
 ## Dépendances et risques
 

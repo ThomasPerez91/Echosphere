@@ -24,10 +24,16 @@ Les adaptateurs HTTP et IA utilisent les mêmes services et validations.
 aucun paramètre de jeu. Docker lance trois services locaux. Le proxy Vite relaie `/api/*` vers le
 backend ; le navigateur ne résout jamais le hostname Docker `backend`.
 
+## Temps livré à l'étape 3
+
+`backend/app/simulation/` ajoute une timeline par colonie, calcul exact et événements persistants.
+API et worker partagent les services et la même base ; le worker est un processus du monolithe,
+pas un microservice. La migration 0002 ajoute trois tables temporelles sans initialiser de partie.
+Le service migrate de Compose applique les migrations une fois avant API et worker.
+
 ## Évolution contrôlée
 
-Un worker temporel futur pourra être un processus distinct du même codebase ; cela ne crée pas un
-microservice. Extraire un composant seulement sur besoin mesuré et ADR. Les interactions métier,
+Le worker temporel est un processus distinct du même codebase ; cela ne crée pas un microservice. Extraire un composant seulement sur besoin mesuré et ADR. Les interactions métier,
 UTC, transactions et visibilité sont décrites dans les documents spécialisés.
 
 

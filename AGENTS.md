@@ -3,10 +3,9 @@
 ## Mission et état du dépôt
 
 Jeu de stratégie spatiale persistant, web responsive, solo cible et coopération post-MVP.
-Étape 0 fusionnée sur master (PR #1). Lot courant : étapes 1 et 2, fondation technique et premiers
-modèles persistants. Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
+Étape 0 fusionnée sur master (PR #1). Lot courant : étape 3, moteur temporel pour une colonie, après la fondation des étapes 1–2. Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
 Mettre progress.md à jour avant chaque livraison avec périmètre, tests, limites et prochaine action.
-Ne pas implémenter de nouvelle étape sans périmètre explicite. Moteur temporel (étape 3), auth complète,
+Ne pas implémenter de nouvelle étape sans périmètre explicite. Le socle temporel est implémenté ; auth complète,
 IA, combat, Redis, WebSocket, paiement et administration ne sont pas encore livrés.
 
 ## Sources de vérité à lire
@@ -28,7 +27,7 @@ Préparation quotidienne autour de dix minutes, aucun bouton de récolte, pas de
 Monolithe modulaire, aucun microservice. Frontend React/TypeScript/Vite ; backend Python/FastAPI ;
 PostgreSQL source de vérité. SQLAlchemy 2 et Alembic sont utilisés pour la persistance versionnée.
 `backend/app/api/` contient HTTP, `core/` la configuration, `persistence/` les modèles et sessions ;
-`backend/migrations/` porte les migrations, `backend/tests/` les tests ; `frontend/src/` les vues et tests ;
+`backend/app/simulation/` porte le temps et le worker ; `backend/migrations/` porte les migrations, `backend/tests/` les tests ; `frontend/src/` les vues et tests ;
 `game_data/` réservera les valeurs d'équilibrage ; `docs/` les références ; `scripts/` les checks ;
 `.github/workflows/ci.yml` les jobs qualité. Pas de couche métier générique à créer pour deux probes.
 
@@ -38,7 +37,10 @@ PostgreSQL source de vérité. SQLAlchemy 2 et Alembic sont utilisés pour la pe
 - Aucun calcul métier critique dans le navigateur ; estimations UI uniquement, réconciliées au serveur.
 - PostgreSQL conserve états et échéances ; un cache ou timer mémoire n'est jamais l'autorité.
 - UTC partout en stockage/calcul ; timestamps avec fuseau, conversion locale à l'affichage.
-- Production différée et événements transactionnels, idempotents, récupérables ; moteur futur seulement.
+- Production différée et événements persistants : utiliser app/simulation, pas de scheduler parallèle.
+- Prendre le verrou timeline, respecter due_at/séquence et complete=True avant une future dépense.
+- Ressources en micro-unités entières, taux horaires et reste persisté ; jamais de float critique.
+- Handler sans commit, effet externe ou verrou d’une autre colonie ; rollback atomique sur échec.
 - Humain et IA utilisent les mêmes commandes et une connaissance limitée.
 - Mobile obligatoire ; pas de simple dashboard réduit, pas d'action importante seulement au hover.
 - Ne pas ajouter une feature non spécifiée sans documenter sa portée et son statut ; rester dans
@@ -84,7 +86,9 @@ Appliquer la Definition of Done avant de déclarer une étape terminée.
 ## Git et livraison
 
 `develop` est la branche d'intégration de référence. Toute nouvelle branche part du dernier develop ;
-les PR de développement ciblent develop. `master` contient les versions destinées aux releases.
+les PR de développement ciblent develop. Si une dépendance validée en CI attend sa revue, une branche
+créée depuis develop peut intégrer ses commits sans fusionner sa PR ; noter la dépendance explicitement
+sur la nouvelle PR. Ne pas contourner l'examen en fusionnant develop ou master sans instruction. `master` contient les versions destinées aux releases.
 Une promotion develop → master, un tag ou une publication requiert une instruction de release.
 L'autorisation de fusionner PR #1 était ponctuelle ; ne pas en déduire une autorisation permanente.
 

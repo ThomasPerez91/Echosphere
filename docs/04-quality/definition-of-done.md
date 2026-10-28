@@ -20,6 +20,15 @@ cohérents, contraintes cross-universe et unicité vérifiées sur PostgreSQL r�
 sur base jetable et absence de dérive ORM. Aucun endpoint métier non autorisé. context.md/progress.md
 à jour ; branches de travail et CI ciblent develop, releases réservées à master.
 
+## Étape 3
+
+Horloge injectable, calcul exact stable à la fréquence de lecture, production segmentée aux dates
+logiques. Ordre/verrou par colonie, reprises avant/après commit et isolation des workers vérifiés sur
+PostgreSQL. Pas d'avancement au-delà d'une échéance bloquée ou du budget de rattrapage. Retry borné,
+diagnostic sans payload sensible et relance explicite. Migrations et runtime Compose vérifiés.
+Décisions Q03/Q13 cadrées sans fermer les paramètres métier ou le multi-agrégat. Aucun nouvel endpoint
+public non protégé. Dépendance de PR #2 signalée tant qu'elle n'est pas fusionnée.
+
 ## Étape 0 (historique)
 
 Tous les fichiers demandés existent, liens valides et questions ouvertes centralisées.

@@ -25,7 +25,7 @@ Pas de repository générique ou de bus de commande vide introduit à l'avance.
 Cinq modèles : Universe, Empire, StellarSystem, Planet et Colony. Première migration explicite,
 indépendante des classes ORM courantes. Pas de `create_all` au démarrage ni de migration concurrente
 par worker API. Les migrations sont une action séparée et vérifiable (voir déploiement).
-Le schéma ne crée aucune donnée, galaxie, ressource, bâtiment ni utilisateur.
+Les migrations ne peuplent aucune donnée de galaxie, de ressource, de bâtiment ou d'utilisateur.
 
 ## Contrats et sécurité (Q16 cadrée, toujours ouverte)
 
@@ -34,6 +34,14 @@ en attendant une identité authentifiée et un contrôle d'accès objet. Le type
 contrôleur d'empire, il n'authentifie personne. Identité/session, enveloppe d'erreur métier et contrat
 d'idempotence seront arbitrés avant la première mutation HTTP. Aucune JWT factice ni clé de dev ne
 contourne ces décisions.
+
+## Temps de colonie
+
+Le module simulation apporte une horloge injectable, des calculs purs et un processeur PostgreSQL.
+Le service migrate de Compose exécute Alembic avant API/worker. Une migration par processus API reste
+interdite. Voir [contrat temporel](event-engine.md) avant toute commande qui touche un stock.
+Les mutations HTTP et l'auth restent hors de ce lot ; le changement de taux est un handler interne,
+pas un endpoint permettant au joueur de choisir son rendement.
 
 ## Validation
 

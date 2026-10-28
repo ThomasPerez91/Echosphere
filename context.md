@@ -26,16 +26,18 @@ Aucune autorisation générale de fusion/tag/déploiement ne découle de la fusi
 Monolithe modulaire : React/TypeScript/Vite ; Python/FastAPI ; PostgreSQL 17 ; SQLAlchemy 2/Alembic.
 UTC partout en calcul/stockage. API dans backend/app/api, config dans core, DB/sessions/modèles dans
 persistence, migrations versionnées dans backend/migrations. Aucun calcul critique dans le navigateur.
-Production et événements futurs seront persistants et transactionnels, sans tick global par seconde.
+Le socle temporel de colonie est persistant et transactionnel, sans tick global par seconde.
+Micro-unités entières, reste exact, ordre due_at/séquence et verrou de timeline commun aux services.
 Le frontend est encore un placeholder responsive ; les modèles ne constituent pas un jeu jouable.
 
 ## Ordre de travail et décisions
 
-Roadmap 0–17 : [roadmap](docs/05-project/roadmap.md). Le lot courant 1–2 prépare l'étape 3 temporelle.
+Roadmap 0–17 : [roadmap](docs/05-project/roadmap.md). Le lot courant 3 livre le socle temporel. PR #2 reste une dépendance en revue tant qu’elle n’est pas fusionnée.
 Ne pas coder tout le MVP en interprétant une simple demande de poursuite comme validation de tous
 les choix ouverts. Distinguer validé, orientation, provisoire, question ouverte et futur.
 Registre Q01–Q18 : [questions ouvertes](docs/05-project/open-questions.md).
-Q03/Q13 sont des prérequis du temps/production ; Q02 du combat ; Q16 de toute mutation HTTP.
+Q03/Q13 sont partiellement cadrées par ADR 0005 ; économie et interactions multi-agrégats restent ouvertes.
+Q02 précède le combat ; Q16 toute mutation HTTP. Aucun endpoint métier non protégé n’est ajouté.
 Aucune authentification complète, commande de jeu, IA ou génération de galaxie n'existe encore.
 
 ## Protocole de reprise

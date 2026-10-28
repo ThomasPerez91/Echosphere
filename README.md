@@ -5,7 +5,7 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : fondations techniques et premiers modèles persistants (étapes 1–2), sans gameplay jouable.**
+**État actuel : fondations et moteur temporel de colonie (étape 3), sans gameplay jouable.**
 
 Lire [context.md](context.md) pour reprendre le cadre et [progress.md](progress.md) pour l'état exact.
 `develop` est la base des nouvelles branches et la cible des PR de développement. `master` reçoit les releases.
@@ -30,9 +30,9 @@ docker compose exec backend alembic check
 ```
 
 Pour tester un lot en PR avant son intégration, sélectionner sa branche ; pour le lot courant :
-`git fetch origin work/step-1-2-foundation` puis `git switch --track origin/work/step-1-2-foundation`.
-Le premier build télécharge les images et dépendances. Attendre les trois statuts healthy ; les
-healthchecks conditionnent l'ordre postgres → backend → frontend. Pour attendre automatiquement :
+`git fetch origin work/step-3-time-engine` puis `git switch --track origin/work/step-3-time-engine`.
+Le premier build télécharge les images et dépendances. Postgres, backend et frontend doivent être healthy ; worker running et migrate terminé avec code 0.
+L'ordre est postgres → migrate → API/worker → frontend. Pour attendre automatiquement :
 `docker compose up --build -d --wait --wait-timeout 180`.
 
 Depuis Windows :
@@ -65,10 +65,14 @@ pour un serveur public. Ne pas exposer Vite sur internet.
 | --- | --- | --- |
 | frontend | React, TypeScript strict, Vite, Node 22 | Placeholder responsive et test de readiness via proxy |
 | backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes et cinq modèles persistants, sans endpoint métier |
-| postgres | PostgreSQL 17 | Source de vérité future, volume persistant local |
+| postgres | PostgreSQL 17 | Source de vérité et volume persistant local |
+| migrate | Même image backend | Alembic upgrade head, puis sortie 0 |
+| worker | Même code backend | File temporelle persistante par colonie, sans port publié |
 
-Pas de Redis, auth, moteur d'événements ou WebSockets. Les modèles et migrations ne créent aucune donnée de jeu.
-Les migrations se lancent explicitement ; /ready vérifie la connexion, pas la version du schéma.
+Le worker est un autre processus du même monolithe : événements SQL idempotents, production exacte
+et reprise après redémarrage. Aucun rendement/coût ou stock de départ n'est fourni ; pas de partie jouable.
+Compose applique les migrations via le service migrate avant API/worker. /ready vérifie la connexion,
+pas l'état de progression du worker. Pas de Redis, auth ou WebSockets.
 
 ```bash
 # Qualité dans les images de développement :
@@ -91,6 +95,17 @@ docs/                    Vision, game design, UX, technique, qualité, roadmap e
 scripts/                 Vérification documentaire et smoke Compose
 .github/workflows/       CI backend, frontend et Compose
 ```
+
+## Examiner le temps et les incidents
+
+```bash
+docker compose logs --tail=100 worker migrate
+docker compose exec worker python -m app.simulation.worker --blocked --limit 50
+docker compose exec worker python -m app.simulation.worker --once --limit 50
+```
+
+La file est vide tant qu'aucun service métier n'a créé de colonie/ordre : aucun événement ou ressource
+n'est injecté pour une démo. Contrats, retries et reprise explicite : [moteur temporel](docs/03-technical/event-engine.md).
 
 ## Lire et contribuer
 
