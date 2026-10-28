@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 from alembic import command
 from sqlalchemy import inspect, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DataError, IntegrityError
 
 from app.persistence.database import create_session_factory
 from app.persistence.models import Colony, Empire, Planet, StellarSystem, Universe
@@ -109,11 +109,14 @@ def test_invalid_capacity_rejected(session, field, value):
         session.flush()
 
 
-def test_controller_type_rejected(session):
+@pytest.mark.parametrize("value,error_type", [("bot", IntegrityError), ("cheating_bot", DataError)])
+def test_controller_type_rejected(session, value, error_type):
     _, empire, _, _ = world(session)
-    empire.controller_type = "cheating_bot"
-    with pytest.raises(IntegrityError):
+    empire.controller_type = value
+    with pytest.raises(error_type) as error:
         session.flush()
+    if error_type is IntegrityError:
+        assert error.value.orig.diag.constraint_name == "ck_empires_controller_type"
 
 
 def test_invalid_write_rolls_back_whole_service_transaction(database_engine):
