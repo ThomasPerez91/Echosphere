@@ -5,7 +5,8 @@
 
 Le produit possède deux présentations, desktop et mobile, fondées sur les mêmes objets et actions.
 Les sections cibles sont Empire, Colonie, Recherche, Galaxie, Flottes, Rapports et Relations.
-Leur ordre final, libellés et regroupements seront validés à l'étape 4 (Q15).
+L’étape 4 propose cet ordre provisoire : Empire, Colonie, Recherche, Galaxie, Flottes, Rapports,
+Relations. Q15 reste ouverte pour la validation produit et la future carte tactile.
 
 ## Priorités
 
@@ -19,7 +20,10 @@ Chaque écran détaille l'information au moment où une décision l'exige.
 Alerte → objet concerné → décision → confirmation et prochaine échéance.
 Colonie → infrastructure → coût et durée → ordre serveur → file actualisée.
 Galaxie → système connu → comparaison → mission. Ce sont des parcours cibles, pas des routes
-frontend déjà implémentées. Le bootstrap n'a qu'une page sans navigation de gameplay.
+de gameplay implémentés. Le shell propose maintenant ces sept destinations par fragments URL ;
+seul Empire présente le bilan technique, les autres sections expliquent leur état de préparation.
+Mobile : quatre destinations principales et Plus pour Flottes/Rapports/Relations ; sélection
+indiquée par aria-current, historique natif et focus sur le titre après un changement de destination.
 
 
 ## Références

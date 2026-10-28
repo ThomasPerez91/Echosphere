@@ -18,7 +18,9 @@ La carte est un risque spécifique : prévoir navigation structurée/listes et r
 système au lieu de rendre le canvas indispensable. Zoom 200 %, mise en page étroite, lecteur d'écran
 et contrôle tactile complètent les outils automatiques.
 
-Au bootstrap : langue française, viewport, heading, bouton natif, statut live et focus CSS.
+Étape 4 : langue française, viewport, titres, boutons/liens natifs, aria-current, statut live unique,
+lien d’évitement et focus CSS. Le focus suit le titre lors d’un changement de section ; Plus
+reste une divulgation non modale, refermable par Échap. Tests clavier Chromium aux quatre largeurs.
 Une vérification automatisée seule ne vaut pas recette d'accessibilité complète.
 
 

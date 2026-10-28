@@ -2,60 +2,68 @@
 
 Mise à jour : 2026-10-28. Cadre : [context.md](context.md).
 
-## État initial vérifié et intégration de la fondation
+## État vérifié à la reprise
 
-Au début de cette mission : PR #2 et PR #3 ouvertes vers master, aucune fusion ; develop/master
-étaient encore les branches historiques. PR #2 tête 333533146822a88170bf5d8eefd987d318931e4c ;
-PR #3 tête 348c2e5e5276ddf71d850ec1b9c0017154f7e10f, ancienne file attachée aux colonies.
+PR #2 et PR #3 corrigée sont fusionnées sur master. Fusion #3 :
+`4ee81dd447726b5d72eaf1d26626215d14d1c931`, tête source
+`4f29a81e57d39c1df6ba041bcc9c4e5b0ee0f6b1`.
+Thomas a supprimé develop ; absence confirmée via la liste des branches GitHub.
+Instruction « reprend » : poursuite du prochain lot, Étape 4, après satisfaction du prérequis #3.
+Branche `work/step-4-responsive-shell` créée depuis ce master. PR vers master sans fusion.
 
-PR #2 fusionnée sur master sur instruction explicite, après CI verte :
-a065ad80eeb6db73438e61b1d6cde8bc3293e06d. Fondation validée : SQLAlchemy/Alembic et les cinq modèles,
-contraintes inter-univers, aucun user_id lié à Empire. PR #1/étape 0 était déjà intégrée.
+## Lot actuel — Étape 4
 
-## Correction actuelle — PR #3
+- Shell responsive : sidebar desktop, barre basse mobile/tablette jusqu’à 800 px ; Plus donne accès
+  à Flottes/Rapports/Relations. Fermeture par Échap avec retour du focus ; pas de modal.
+- Sept destinations par fragments URL, liens directs, historique natif, destination inconnue avec
+  retour Empire. Focus sur h1 au changement de section, lien d’évitement, sélection aria-current.
+- Composants Button/Badge/Panel/EmptyState réellement utilisés, tokens CSS et illustration orbitale
+  décorative CSS. Pas d’images externes ni de nouvelle dépendance runtime.
+- Empire : stocks explicitement indisponibles, aucune partie active, vérification réseau manuelle.
+  Autres sections : espace en préparation. Aucun stock, mission, ordre ou progrès fictif.
+- Hook readiness séparé : contrat existant /api/ready, timeout 5 secondes, annulation au démontage,
+  réponse tardive ignorée, retry. API/PostgreSQL vérifiés au dernier contrôle, pas le worker.
+- Playwright ajouté en dev uniquement ; scénarios Chromium et installation dans la CI frontend.
+  Vitest et Playwright ont des répertoires de collecte distincts. Pas de changement backend/BDD/Compose.
+- Documents UX/techniques, AGENTS, context et roadmap actualisés. Q15 reste ouverte pour validation
+  des choix proposés et future carte tactile. Aucune question d’équilibrage fermée implicitement.
 
-Branche existante work/step-3-time-engine, PR vers master ; aucune nouvelle branche ni Étape 4.
-Scheduler générique EventStream par univers, événements attachés au stream, adaptateur économique
-ColonyTimeline distinct. FK composites pour rattachement colonie/stream/univers et événement/stream.
-Cursor logique du stream séparé de settled_at économique ; handlers de taux et calcul exact conservés.
-Aucun domaine Research/Fleet/AI/Combat anticipé. Les tests existants restent présents et adaptés.
+## Vérifications du lot
 
-Migration ajoutée 0003_generic_event_streams ; 0001/0002 inchangées. Backfill des données 0002,
-préservation de l'historique et roundtrip peuplé. Refus du downgrade avant DDL pour streams non
-représentables ou curseurs non alignés, sans suppression d'événement pour contourner le refus.
+Local : ESLint, 10 tests Vitest, build TypeScript/Vite et 5 scénarios Chromium réussis.
+Chromium : 320/390/768/1440 px, pas de débordement, liens principaux de 44 px minimum,
+lien d’évitement, clavier, h1 focus, Plus/Échap, liens directs/rechargement, précédent et retry.
+Captures Empire/Colonie inspectées, desktop et mobile ; aucune valeur métier présentée comme réelle.
+Ruff et 21 tests backend unitaires passent ; 31 intégrations PostgreSQL ignorées localement faute
+de base de test activée. 53 documents/liens vérifiés. Docker non exécuté localement.
 
-Modes de jeu et ADR 0006 ajoutés, Universe=frontière d'instance. Q19–Q29 ouvertes pour multijoueur,
-aucune règle décidée ni feature créée. Workflow corrigé partout : master stable, work/... → PR master,
-CI/revue et autorisation. develop n'est plus nécessaire ; suppression seulement après contrôle d'écarts.
+CI distante du lot : à vérifier après publication ; aucun résultat de la précédente étape n’est
+présenté comme validation de cette tête. Le job backend exécutera les 52 tests avec PostgreSQL et
+Compose vérifiera migration/worker/proxy avec panne/reprise de la base.
 
-## Validation du correctif et autorisation de clôture
+Limites : Chromium desktop émulant les dimensions, pas de recette tactile/lecteur d’écran réel,
+Safari/Firefox, ni Docker Desktop/WSL2. Les sondes interceptées du navigateur ne remplacent pas
+la CI Compose. Pas de certification d’accessibilité revendiquée ni de partie jouable.
 
-CI source corrigée vérifiée verte sur `0068209e016733c6f0a1cfe84c826c5dd40a5ce1` :
-[exécution 40694329712](https://github.com/ThomasPerez91/Echosphere/actions/runs/40694329712).
-52 tests backend réussis (21 unitaires + 31 intégrations PostgreSQL), 3 tests frontend, lint/build,
-53 documents et liens vérifiés. Compose/migrations/worker et panne/reprise PostgreSQL passent.
+## Point de reprise
 
-Les anciens tests de précision, idempotence, retries/blocked, rollback, interruption et concurrence
-sont conservés. Nouveaux cas : streams sans colonie dans plusieurs univers, scope incorrect et FK
-inter-univers, séparation cursor/settled_at, roundtrip peuplé 0002→0003→0002→0003 et refus de
-downgrade sans destruction. 0001/0002 non réécrites, aucun user_id ajouté à Empire.
+1. Consulter la PR de cette branche, sa tête et sa CI ; corriger tout échec avant livraison.
+2. La laisser non fusionnée : les autorisations de merge #2/#3 ne couvrent pas ce lot.
+3. Après revue/intégration de ce shell, cadrer l’étape 5 (boucle Colony) : coûts/rendements/version
+   des règles, stocks initiaux, secteurs et taille des files encore ouverts. Ne pas déduire ces
+   valeurs de la présente interface. Continuer sur une nouvelle branche depuis master intégrée.
+4. Ne pas anticiper Research/Fleets/AI/Combat ou les modes/participations multijoueurs.
 
-Ce checkpoint documentaire suit le commit source testé ; vérifier la CI de sa tête avant fusion.
-Thomas a explicitement demandé de fusionner PR #3 corrigée sur master après vérification finale.
-Le résultat effectif (fusion/SHA) est à confirmer sur GitHub, cette entrée ne simule pas une fusion.
-Aucune feature multijoueur ni branche Étape 4 créée. La recette visuelle/WSL2 spécifique et la charge
-massive ne sont pas revendiquées par les tests actuels.
+## Historique des fondations
 
-Dévelop historique : comparaison vérifiée après fusion de PR #2, zéro commit propre et six commits
-de retard, tous dans master. Aucun travail à préserver identifié. Suppression autorisée sous cette
-condition ; vérifier son état distant final (l'intégration ne propose pas delete-ref et le navigateur
-nécessite une connexion GitHub pour cette opération). Le workflow ne dépend plus de cette branche.
-
-## Reprendre après ce lot
-
-1. Vérifier l'état GitHub de PR #3, sa tête, sa CI et son éventuelle fusion, sans déduire un état de ce texte seul.
-2. Après correction/revue/fusion, prochaine étape autorisée : Étape 4, design system responsive/shell.
-3. Recette UI cible : 320/390/768/1440 px, mobile prioritaire, contrôles tactiles ~44 px, aucun hover obligatoire.
-4. Pas de nouvelle branche Étape 4 dans la présente mission ; ne pas démarrer Colony/Research/Fleet/AI/Combat.
+PR #1 : bootstrap. PR #2 : SQLAlchemy/Alembic et cinq modèles Universe/Empire/System/Planet/Colony,
+contraintes inter-univers ; merge `a065ad80eeb6db73438e61b1d6cde8bc3293e06d`.
+PR #3 : scheduler générique EventStream, événements liés au stream/univers, adaptateur économique
+ColonyTimeline ; ordre/idempotence/retries/SKIP LOCKED/rollback/reprise, ressources entières exactes.
+Migration 0003 avec historique préservé, roundtrip peuplé et downgrade protégé ; 0001/0002 intactes.
+CI finale de #3 : 52 tests backend, 3 frontend, lint/build/docs, PostgreSQL/migrations/Compose verts :
+[exécution 40694696012](https://github.com/ThomasPerez91/Echosphere/actions/runs/40694696012).
+Modes documentés et ADR 0006 : Universe = instance isolée, pas User/processus ; aucune feature
+multijoueur implémentée. master reste l’intégration stable, work/... → PR master → revue/autorisation.
 
 [PR #2](https://github.com/ThomasPerez91/Echosphere/pull/2) · [PR #3](https://github.com/ThomasPerez91/Echosphere/pull/3)

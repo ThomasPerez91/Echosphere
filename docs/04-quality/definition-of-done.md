@@ -13,6 +13,13 @@
 - Aucun secret, logs sensibles, code généré inutile ou dépendance non justifiée.
 - PR compréhensible : comportement final, validation réelle et limites ; pas de merge automatique.
 
+## Étape 4
+
+Shell aux largeurs 320/390/768/1440, navigation clavier, focus, historique et liens directs vérifiés.
+Readiness : chargement, échec, timeout, réponse invalide/tardive, démontage et reprise. Aucun stock
+fictif ou ordre de jeu. Lint/tests/build/docs et tests navigateur en CI ; recette visuelle des captures.
+Limites tactiles, lecteur d’écran réel et WSL2 signalées. Q15 reste ouverte pour validation produit.
+
 ## Étapes 1–2
 
 Configuration validée, sondes compatibles, sessions et transactions explicites. Modèles/migration

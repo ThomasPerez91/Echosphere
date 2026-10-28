@@ -13,8 +13,8 @@ Afficher coûts, contraintes et échéance avant validation. Les erreurs réseau
 et proposent une reprise explicite sans répéter une dépense incertaine.
 
 Validation future : clavier complet, zoom 200 %, fenêtre étroite, redimensionnement et parcours de
-dix minutes. Le dashboard cinématique n'est pas une contrainte pixel-perfect. La page actuelle
-est volontairement un placeholder, sans sidebar prématurée.
+dix minutes. Le dashboard cinématique n'est pas une contrainte pixel-perfect. Le shell étape 4
+implémente sidebar, topbar de contexte, bilan et états vides, sans contenu métier inventé.
 
 
 ## Références

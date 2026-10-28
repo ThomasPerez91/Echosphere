@@ -4,7 +4,7 @@
 
 Jeu de stratégie spatiale persistant web responsive. MVP solo avec IA ; parties privées et univers
 multijoueurs persistants sont futurs, sans fonctionnalités multijoueurs implémentées.
-Étape 0 fusionnée sur master (PR #1). Lot courant : étape 3, scheduler générique et adaptateur économique de colonie, après la fondation des étapes 1–2. Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
+Étapes 0–3 fusionnées sur master (PR #1–3). Lot courant : étape 4, design system et navigation responsive, sur instruction « reprend ». Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
 Mettre progress.md à jour avant chaque livraison avec périmètre, tests, limites et prochaine action.
 Ne pas implémenter de nouvelle étape sans périmètre explicite. Le socle temporel est implémenté ; auth complète,
 IA, combat, Redis, WebSocket, paiement et administration ne sont pas encore livrés.
@@ -84,6 +84,7 @@ docker compose down
 python3 scripts/check_docs.py
 (cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q)
 (cd frontend && npm ci && npm run lint && npm test && npm run build)
+(cd frontend && npx playwright install chromium && npm run test:e2e)
 ```
 
 Installation native et commandes Docker de test : [README](README.md) et
@@ -112,12 +113,10 @@ git pull --ff-only origin master
 git switch -c work/nom-du-lot
 ```
 
-La correction actuelle continue work/step-3-time-engine / PR #3, sans nouvelle branche.
-Thomas a explicitement autorisé la fusion de PR #2 puis de PR #3 corrigée, après CI verte ; cette
-autorisation est limitée à ces PR. La suppression de develop est conditionnelle à l'absence d'écart
-à conserver. Ne pas supprimer d'autres branches, forcer un push ou réécrire l'historique partagé.
+PR #2 et PR #3 corrigée sont fusionnées ; develop a été supprimée par Thomas.
+Le lot actuel continue work/step-4-responsive-shell, PR vers master laissée non fusionnée. Ne pas supprimer d'autres branches, forcer un push ou réécrire l'historique partagé.
 Toute fusion future, tag ou déploiement requiert son autorisation propre.
 
 Avant de déclarer une livraison terminée : vérifier la tête distante et sa CI, mettre à jour
-context.md/progress.md et rapporter SHA, tests et limites réelles. L'étape 4 ne commence qu'après
-correction, revue et intégration de PR #3 ; aucune branche Étape 4 dans cette mission.
+context.md/progress.md et rapporter SHA, tests et limites réelles. Étape 4 limitée au shell UI,
+aux composants utilisés et aux états réseau. Aucun gameplay, endpoint métier ou étape 5 sans nouveau lot.
