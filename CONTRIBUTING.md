@@ -2,14 +2,15 @@
 
 Lire [AGENTS.md](AGENTS.md), la [vision](docs/00-product-vision.md), les
 [questions ouvertes](docs/05-project/open-questions.md) et la documentation du domaine touché.
-L'étape 0 ne doit pas contenir de gameplay, même pour démontrer un écran.
+Lire aussi [context.md](context.md) et [progress.md](progress.md), qui indiquent le lot courant et le point de reprise.
 
 ## Workflow
 
-Créer une branche de travail depuis master ; changements ciblés, commits cohérents avec préfixes
+Créer toute nouvelle branche de travail depuis le dernier develop ; changements ciblés, commits cohérents avec préfixes
 `docs:`, `chore:`, `feat:`, `fix:`, `test:` ou `ci:`. Pas de secret, .env, node_modules, .venv ou dist.
-Ne pas réécrire une branche partagée ni forcer un push. Ouvrir une PR vers master ; pas de merge
-ou déploiement automatique par un agent.
+Ne pas réécrire une branche partagée ni forcer un push. Ouvrir une PR vers develop ; pas de merge
+ou déploiement automatique sans instruction. Les releases passent par une PR develop → master,
+puis un tag/publication explicitement autorisés. La CI vérifie les branches et PR develop/master.
 
 ## Modifier une règle
 

@@ -3,9 +3,11 @@
 ## Mission et état du dépôt
 
 Jeu de stratégie spatiale persistant, web responsive, solo cible et coopération post-MVP.
-Étape 0 : documentation, probes, placeholder et Docker seulement. Ne pas anticiper une étape sans
-instruction. Ni auth complète, modèles métier, moteur temporel, IA, combat, WebSocket, Redis,
-paiement ou administration dans ce bootstrap.
+Étape 0 fusionnée sur master (PR #1). Lot courant : étapes 1 et 2, fondation technique et premiers
+modèles persistants. Lire [context.md](context.md) puis [progress.md](progress.md) au début d'une reprise.
+Mettre progress.md à jour avant chaque livraison avec périmètre, tests, limites et prochaine action.
+Ne pas implémenter de nouvelle étape sans périmètre explicite. Moteur temporel (étape 3), auth complète,
+IA, combat, Redis, WebSocket, paiement et administration ne sont pas encore livrés.
 
 ## Sources de vérité à lire
 
@@ -24,8 +26,9 @@ Préparation quotidienne autour de dix minutes, aucun bouton de récolte, pas de
 ## Architecture et structure
 
 Monolithe modulaire, aucun microservice. Frontend React/TypeScript/Vite ; backend Python/FastAPI ;
-PostgreSQL source de vérité. SQLAlchemy/Alembic prévus quand les modèles seront introduits.
-`backend/app/` contient le serveur, `backend/tests/` les tests ; `frontend/src/` les vues et tests ;
+PostgreSQL source de vérité. SQLAlchemy 2 et Alembic sont utilisés pour la persistance versionnée.
+`backend/app/api/` contient HTTP, `core/` la configuration, `persistence/` les modèles et sessions ;
+`backend/migrations/` porte les migrations, `backend/tests/` les tests ; `frontend/src/` les vues et tests ;
 `game_data/` réservera les valeurs d'équilibrage ; `docs/` les références ; `scripts/` les checks ;
 `.github/workflows/ci.yml` les jobs qualité. Pas de couche métier générique à créer pour deux probes.
 
@@ -56,6 +59,8 @@ tests ; ADR pour décision structurelle. Signaler hypothèses, ne pas fermer sil
 cp .env.example .env
 docker compose up --build -d --wait --wait-timeout 180
 docker compose ps
+docker compose exec backend alembic upgrade head
+docker compose exec backend alembic check
 python3 scripts/smoke_compose.py
 docker compose down
 python3 scripts/check_docs.py
@@ -78,9 +83,19 @@ Appliquer la Definition of Done avant de déclarer une étape terminée.
 
 ## Git et livraison
 
-Branche dédiée, commits cohérents, PR vers master. Ne pas merger automatiquement, réécrire
-l'historique partagé, forcer un push ou inclure des fichiers générés/secrets.
-Avant toute modification distante, lire l'état réel et préserver le travail existant.
-Si le dépôt est vide, un commit minimal sur master est autorisé pour initialiser, puis branche
-`work/step-0-bootstrap`. Si l'accès GitHub refuse l'écriture, terminer les travaux locaux,
-les vérifier et expliquer le blocage : ne jamais inventer une URL de PR ou prétendre avoir publié.
+`develop` est la branche d'intégration de référence. Toute nouvelle branche part du dernier develop ;
+les PR de développement ciblent develop. `master` contient les versions destinées aux releases.
+Une promotion develop → master, un tag ou une publication requiert une instruction de release.
+L'autorisation de fusionner PR #1 était ponctuelle ; ne pas en déduire une autorisation permanente.
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c work/nom-du-lot
+```
+
+Commits cohérents, pas de force push, de réécriture partagée, de secrets ou de fichiers générés.
+Lire l'état distant avant toute mutation et préserver le travail existant. Décrire les tests réels
+sur la PR, vérifier la CI avant d'annoncer le lot validé ; laisser la PR à examiner sauf instruction
+de fusion. Mettre à jour contexte/progression sans y copier secrets, logs complets ou hypothèses
+présentées comme décisions. Ne jamais annoncer un push ou une PR qui n'existe pas.

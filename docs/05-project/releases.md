@@ -16,7 +16,17 @@ Une modification d'équilibrage peut changer une simulation sans changer les API
 version des game_data et les hypothèses dans les rapports. La compatibilité des univers déjà créés
 avec de nouvelles règles reste Q13/Q14.
 
-Les PR sont examinées avant merge. Pas de déploiement public ou merge automatique dans cette mission.
+## Branches (décision utilisateur du 28 octobre 2026)
+
+`develop` est la référence de développement : branches de travail depuis develop et PR vers develop.
+`master` est réservé aux releases. La PR #1 a été fusionnée sur master à la demande de Thomas,
+puis develop a été créée depuis ce même commit. Cette initialisation n'est pas un schéma à répéter.
+
+Pour une release : vérifier la CI de develop, préparer notes et versions/migrations, ouvrir une PR
+develop → master et fusionner uniquement sur instruction. Tag et publication ne sont pas automatiques.
+Après un éventuel correctif de release, réintégrer le changement dans develop par une PR.
+
+Les PR sont examinées avant merge. Aucun déploiement public ou merge automatique sans instruction.
 Une CI écrite mais jamais exécutée ne doit pas être présentée comme verte.
 
 Voir [roadmap](roadmap.md) et [Definition of Done](../04-quality/definition-of-done.md).
