@@ -14,7 +14,7 @@ Elle apporte configuration, SQLAlchemy/Alembic et modèles Universe/Empire/Syste
 ## Lot courant : étape 3, temps de colonie
 
 Branche : `work/step-3-time-engine`, créée depuis develop puis avancée sur les commits de PR #2 pour
-satisfaire sa dépendance, sans fusionner cette PR. La nouvelle PR cible develop et doit être examinée
+satisfaire sa dépendance, sans fusionner cette PR. La [PR #3](https://github.com/ThomasPerez91/Echosphere/pull/3) cible develop et doit être examinée
 après PR #2 ; son diff inclut cette fondation tant qu'elle n'est pas intégrée à develop.
 
 Livré dans la branche : horloge injectable UTC, production entière avec reste exact, timeline par
@@ -25,17 +25,24 @@ Pas de bâtiment, recherche, flotte, combat, auth, interface jouable ou nouvelle
 
 ## Validation du lot
 
-21 tests unitaires locaux réussis ; les intégrations PostgreSQL sont ignorées localement faute de
-serveur et doivent passer dans la CI. Les nouveaux scénarios couvrent crash avant/après commit,
-rollback des effets/enfants, idempotence, ordre identique, backoff/blocage, reprise explicite,
-rattrapage borné et deux workers (même colonie et colonies distinctes).
-Lint, SQL offline Alembic, check documentaire, build et tests frontend font partie de la recette.
-Vérifier le résultat réel de la CI sur la nouvelle PR avant toute intégration ; ne pas confondre
-les résultats verts de PR #2 avec ceux du nouveau moteur.
+CI vérifiée verte sur le commit source `493311333900cc937ebd81f900c92f8e32c18543` :
+[exécution 40688487764](https://github.com/ThomasPerez91/Echosphere/actions/runs/40688487764).
+46 tests backend réussis, dont 25 intégrations PostgreSQL réelles ; 3 tests frontend, lint, build,
+SQL/migrations et 51 documents/liens vérifiés. Le smoke Docker démarre PostgreSQL, le service migrate,
+API, worker et frontend ; Alembic check/upgrade, CLI worker et panne/reprise de la DB passent.
+
+Les scénarios temporels couvrent crash simulé avant/après commit, rollback effets/enfants,
+idempotence, ordre stable, backoff/blocage, reprise explicite, rattrapage borné et concurrence des
+workers sur même colonie/colonies distinctes. Les calculs purs vérifient la précision indépendante
+du nombre de lectures. Pas de fault injection OS ni de benchmark de charge revendiqué.
+
+Le checkpoint documentaire est ajouté après ce commit source testé ; consulter la CI de la tête de
+PR avant fusion. PR #2 et PR #3 restent ouvertes, ni develop ni master n'ont reçu ce lot. La recette
+visuelle et le test Docker Desktop/WSL2 spécifiques restent à effectuer ; aucune UI de jeu n'est ajoutée.
 
 ## Reprendre ici
 
-1. Vérifier la nouvelle PR temporelle et sa CI ; corriger tout échec avant de déclarer le lot prêt.
+1. Relire PR #3 et la CI de sa tête ; le lot source est validé et prêt à examiner.
 2. Faire examiner PR #2 puis la PR temporelle vers develop, sans merge implicite sur master.
 3. Étape 4 : design system responsive et navigation de base, en conservant les états réseau et clavier.
 4. Étape 5 : Colony, paramètres game_data et premier service de construction après décisions Q01/Q03/Q04.
@@ -52,4 +59,4 @@ Voir le [registre central](docs/05-project/open-questions.md) et [ADR 0005](docs
 ## Historique
 
 - 2026-10-28 : bootstrap fusionné, develop créée, fondation publiée dans PR #2 et CI validée.
-- 2026-10-28 : étape 3 implémentée sur branche dépendante de PR #2 ; validation de la nouvelle CI en cours.
+- 2026-10-28 : étape 3 publiée dans PR #3 dépendante de PR #2 ; CI PostgreSQL/concurrence/Docker verte.

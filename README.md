@@ -14,12 +14,12 @@ Lire [context.md](context.md) pour reprendre le cadre et [progress.md](progress.
 
 Prérequis : Git, Docker Desktop démarré avec intégration WSL2 pour votre distribution et
 Docker Compose v2 récent. Garder les ports 5173 et 8000 disponibles. Aucun Python/Node hôte requis
-pour lancer les trois services.
+pour lancer la pile locale.
 
 ```bash
 mkdir -p ~/projects
 cd ~/projects
-git clone --branch develop https://github.com/ThomasPerez91/Echosphere.git
+git clone --branch work/step-3-time-engine https://github.com/ThomasPerez91/Echosphere.git
 cd Echosphere
 cp .env.example .env
 docker compose config --quiet
@@ -29,8 +29,8 @@ docker compose exec backend alembic upgrade head
 docker compose exec backend alembic check
 ```
 
-Pour tester un lot en PR avant son intégration, sélectionner sa branche ; pour le lot courant :
-`git fetch origin work/step-3-time-engine` puis `git switch --track origin/work/step-3-time-engine`.
+Ces commandes testent directement la branche de PR #3, avant son intégration.
+Après intégration, utiliser develop pour le travail courant et créer les nouvelles branches depuis develop.
 Le premier build télécharge les images et dépendances. Postgres, backend et frontend doivent être healthy ; worker running et migrate terminé avec code 0.
 L'ordre est postgres → migrate → API/worker → frontend. Pour attendre automatiquement :
 `docker compose up --build -d --wait --wait-timeout 180`.
