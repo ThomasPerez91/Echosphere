@@ -37,9 +37,12 @@ Captures Empire/Colonie inspectées, desktop et mobile ; aucune valeur métier p
 Ruff et 21 tests backend unitaires passent ; 31 intégrations PostgreSQL ignorées localement faute
 de base de test activée. 53 documents/liens vérifiés. Docker non exécuté localement.
 
-CI distante du lot : à vérifier après publication ; aucun résultat de la précédente étape n’est
-présenté comme validation de cette tête. Le job backend exécutera les 52 tests avec PostgreSQL et
-Compose vérifiera migration/worker/proxy avec panne/reprise de la base.
+CI source du lot entièrement verte sur `e5d661cad550cd9ac6d67639675ca0410ec6a340` :
+[exécution 40701089415](https://github.com/ThomasPerez91/Echosphere/actions/runs/40701089415).
+Les trois jobs backend/frontend/compose-smoke réussissent : 52 tests backend avec PostgreSQL,
+10 tests Vitest, 5 scénarios Chromium, lint/build/docs, migrations/worker/proxy et panne/reprise DB.
+[PR #4](https://github.com/ThomasPerez91/Echosphere/pull/4) ouverte vers master, non fusionnée.
+Ce checkpoint documentaire suit la source validée ; vérifier la CI de sa propre tête avant merge.
 
 Limites : Chromium desktop émulant les dimensions, pas de recette tactile/lecteur d’écran réel,
 Safari/Firefox, ni Docker Desktop/WSL2. Les sondes interceptées du navigateur ne remplacent pas
@@ -47,7 +50,7 @@ la CI Compose. Pas de certification d’accessibilité revendiquée ni de partie
 
 ## Point de reprise
 
-1. Consulter la PR de cette branche, sa tête et sa CI ; corriger tout échec avant livraison.
+1. Consulter PR #4, sa tête et sa CI ; le code source e5d661c est validé, ce checkpoint suit.
 2. La laisser non fusionnée : les autorisations de merge #2/#3 ne couvrent pas ce lot.
 3. Après revue/intégration de ce shell, cadrer l’étape 5 (boucle Colony) : coûts/rendements/version
    des règles, stocks initiaux, secteurs et taille des files encore ouverts. Ne pas déduire ces

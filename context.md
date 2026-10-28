@@ -32,7 +32,8 @@ Thomas a supprimé develop ; absence distante confirmée. Son instruction « rep
 Étape 4 : design system et shell responsive, depuis master, branche work/step-4-responsive-shell.
 Ce lot prépare les sections Empire/Colonie/Recherche/Galaxie/Flottes/Rapports/Relations, avec états
 vides explicites, sans stocks fictifs ou ordres de jeu. Pas de backend métier ajouté.
-La PR de ce lot vise master et reste non fusionnée. Aucune autorisation permanente de merge.
+La PR #4 de ce lot vise master et reste non fusionnée. Source e5d661c validée en CI ;
+voir progress.md pour le checkpoint et ses limites. Aucune autorisation permanente de merge.
 
 ## Architecture et garanties
 
