@@ -48,9 +48,16 @@ Les limitations techniques relevées sont consignées, non corrigées : borne se
 immutabilité de snapshot par contrat applicatif, initialiseur limité à la référence ; Q39 et UX de
 cascade encore à valider. Aucun problème bloquant nouveau démontré par la lecture ciblée.
 
-CI de la nouvelle tête documentaire à vérifier après publication. Les tests fonctionnels ne sont
-pas relancés localement pour une mission docs ; CI existante complète conservée et ses résultats
-seront observés, pas assimilés à une recette WSL2/tactile/charge/anti-DDoS.
+Passation publiée en deux commits :
+- 14fd4db40b3a422228433af7ede9842caa61c363 — docs: consolidate product and Portal-Game isolation decisions.
+- 2748d41fba0fdd3fcf09ce2e60c4ad1f07e999cd — docs: add durable Work and Codex handoff procedure.
+
+[CI 40742149137](https://github.com/ThomasPerez91/Echosphere/actions/runs/40742149137) entièrement
+verte sur 2748d41 : backend/frontend/compose-smoke, 101 tests backend (42 unitaires + 59 PostgreSQL),
+11 frontend, 5 Chromium, build/lint, 63 documents/liens et démarrage/panne-reprise PostgreSQL.
+Les tests fonctionnels ne sont pas relancés localement pour la mission docs ; leurs fichiers sont
+inchangés. Ces résultats CI ne sont pas une recette WSL2/tactile/charge/anti-DDoS. Le présent commit
+de checkpoint suit cette tête validée : vérifier aussi sa propre CI avant toute fusion autorisée.
 
 Prochaine action : relire la tête publiée et sa CI/revue, laisser #5 non fusionnée. Après intégration
 et instruction d’un nouveau lot, cadrer 5B (Q16/Q40–Q56), sans commencer directement une API Colony
