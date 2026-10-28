@@ -3,6 +3,7 @@ from alembic import context
 from app.core.config import Settings
 from app.persistence.database import create_database_engine
 from app.persistence.models import Base
+from app.simulation import models as simulation_models  # noqa: F401
 
 if context.is_offline_mode():
     # Do not render a credential-bearing URL into logs or configparser interpolation.
