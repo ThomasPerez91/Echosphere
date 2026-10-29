@@ -38,17 +38,9 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
 - [Portal/Game ADR 0008](adr/0008-control-plane-game-data-plane.md) : décision cible **non implémentée** ;
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
-- [Contrats 5B](03-technical/identity-contracts.md) : décisions utilisateur partielles Q40–Q44
-  et comportement Q45 du 2026-10-29, non implémentés ; mécanismes encore proposés, Q16/Q46–Q56 ouvertes.
-
-Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
-Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
-Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
-Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
-Q48 partiellement arbitrée : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme,
-step-up des comptes équipés sur actions sensibles. TOTP/WebAuthn, limites et principes de secours
-validés ; WebAuthn obligatoire pour privilèges. Crypto/RP, stockage TOTP, codes détaillés, support,
-effets sur sessions et mécanismes de step-up ouverts ; aucun mécanisme implémenté.
+- [Contrats 5B](03-technical/identity-contracts.md) : décisions validées et consolidées le 2026-10-29,
+  **non implémentées** ; lot documentaire terminé pour revue finale de PR #6. Le registre Q40–Q56
+  distingue clôtures, détails techniques délégués et reports support/email/modes. Aucun début de 5C.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité

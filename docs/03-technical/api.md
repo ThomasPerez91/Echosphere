@@ -18,7 +18,7 @@ Le frontend appelle `/api/ready`, relayé par Vite sur `/ready`.
 Les routes métier ne sont pas encore créées. Elles valideront identité, droits sur l'empire,
 appartenance à l'univers et état des commandes. Ne jamais accepter les stocks, coûts, taux ou dates
 de fin calculés par le client comme autorité. Définir pagination, erreurs structurées et clé
-idempotente des commandes avant les premières mutations. Format d'erreur global : Q16.
+idempotente des commandes avant les premières mutations. Contrat logique d’erreur dans [identity-contracts](identity-contracts.md), schéma détaillé délégué.
 
 Les réponses seront des projections filtrées selon la connaissance. Aucun endpoint « carte entière »
 exposé puis masqué côté UI. L'affichage d'échéances nécessite des timestamps absolus UTC avec offset,
@@ -45,31 +45,29 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
 - [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
 
-## Contrats Portal/Game à définir en 5B — non implémentés
+## Contrats Portal/Game validés en 5B — non implémentés
 
-Les [contrats 5B](identity-contracts.md) distinguent les décisions utilisateur du 2026-10-29
-(login MVP, principes de récupération, limites Portal/Game/ticket et validité des droits)
-des objets, opérations internes, erreurs et échanges encore proposés. Aucune route livrée.
-Q40–Q44 sont partiellement closes, Q45 close pour le comportement produit, Q16/Q46–Q56 restent ouvertes ; aucune validation de protocole
-ou de sécurité implémentée n’est déduite de ces arbitrages.
-Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
-Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
-Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
-Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
-Q48 partiellement arbitrée : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme,
-step-up des comptes équipés sur actions sensibles. TOTP/WebAuthn, limites et principes de secours
-validés ; WebAuthn obligatoire pour privilèges. Crypto/RP, stockage TOTP, codes détaillés, support,
-effets sur sessions et mécanismes de step-up ouverts ; aucun mécanisme implémenté.
+[identity-contracts](identity-contracts.md) porte les autorités, opérations internes, handoff,
+sessions, erreurs et règles compte/MFA validés le 2026-10-29. Le [registre Q40–Q56](../05-project/open-questions.md)
+distingue contrats clos, détails techniques délégués et reports. Aucun endpoint livré ; les sondes
+restent les seules routes applicatives actuelles. 5B terminé documentairement pour revue de PR #6.
 
-Décisions validées dans [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : Portal expose
-futurs services de compte/lobby, Game porte les commandes autoritaires et leurs projections.
-Après handoff, GameSession autorise l’accès direct à Game sans proxy/consultation Portal par commande.
-Game vérifie session → accès/membership/univers → permissions/empire → propriété et visibilité.
-Login MVP fixé dans le canonique : email/mot de passe ; aucune nouvelle URL, forme de token/cookie
-ou enveloppe d’erreur n’est fixée ici.
+Portal expose les futurs services compte/lobby. Après ticket signé 60 s/unique lié au navigateur,
+GameSession opaque : accès direct Game, sans proxy ni consultation Portal par commande. Game vérifie
+session → accès/membership/univers → permissions/binding Empire → propriété/visibilité, puis
+revalide les droits dans la transaction d’acceptation d’une commande.
 
-Les opérations internes provision universe, grant/revoke access, join et association membership/empire
-passent exclusivement par Game, authentifiées service-to-service et idempotentes ; jamais par SQL
-Portal→Game DB ni via une API publique normale. Clés d’idempotence, authentification, ordre/retry,
-réconciliation et révocation restent à contractualiser (Q46/Q53/Q54). Un accès interne réseau seul
-ne suffit pas à prouver une identité de service. Aucun endpoint interne ou public ajouté dans ce lot.
+Interface interne privée mTLS, autorisée par service/opération ; aucune écriture SQL Portal→Game DB.
+Contrat de livraison : intention/outbox Portal, effet/résultat idempotent Game, révisions ordonnées,
+retry/acquittement/réconciliation, révocations ciblées et absence de résurrection par ancien ticket.
+Noms d’opérations et erreurs logiques dans le canonique ; URLs/OpenAPI/schémas détaillés délégués
+à 5C/5D avant code dépendant. Aucun join privé/persistant ajouté par implication.
+
+Chaque frontend utilise son API même origine ; CORS credentials refusé par défaut, exception sur
+besoin explicite et allowlist minimale. CSRF, cookies host-only Secure/HttpOnly, protections du
+POST de handoff et activité explicite classée côté serveur sont des obligations du contrat, pas
+des protections déjà présentes dans le runtime. Aucun secret localStorage.
+
+5C compte/lobby puis 5D API Colony/UI protégée nécessitent leur instruction distincte. Tests futurs
+et prérequis opérationnels sont référencés dans la matrice du canonique ; aucun test d’auth réalisé
+par la rédaction. [ADR 0008](../adr/0008-control-plane-game-data-plane.md).

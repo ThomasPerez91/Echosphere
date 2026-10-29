@@ -1,6 +1,10 @@
 # Reprise et relais Work ↔ Codex local
 
-**Statut : procédure commune validée ; environnement Windows/WSL2 non testé dans cette mission.**
+**Statut : procédure commune validée ; recette initialement proposée dans la passation du 28/10.**
+Actualisation 29/10 : PR #5 fusionnée sur master 8214e0b ; recette locale WSL2 réalisée depuis,
+preuves/limites dans [progress](../../progress.md). Les exemples #5 ci-dessous sont conditionnels ou
+historiques. PR #6 porte désormais 5B documentaire terminé pour revue finale ; reprendre sa branche
+pour sa revue, sans nouveau lot/merge implicite. [Contrats](../03-technical/identity-contracts.md).
 Les agents partagent GitHub, pas leur mémoire ni nécessairement un disque, des processus ou secrets.
 La qualité attendue est identique dans les deux environnements.
 

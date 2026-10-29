@@ -5,20 +5,14 @@
 - Affine [ADR 0001](0001-modular-monolith.md) et [ADR 0006](0006-universe-game-instance.md).
   Ne remplace ni ne renumérote [ADR 0007](0007-colony-economy.md).
 
-**Évolution 5B du 2026-10-29 :** l’utilisateur a depuis validé le login MVP et les limites
-temporelles décrites dans [identity-contracts](../03-technical/identity-contracts.md), parties de
-Q40–Q44, ainsi que le comportement de déconnexion Q45. Regroupement par appareil et protocoles
-restent ouverts. Les passages ci-dessous indiquant des durées/login non choisis décrivent
-la décision de plateforme du 28/10 ; les nouvelles décisions les précisent sans choisir les
-formats, la crypto, le stockage ou les mécanismes de Q46–Q56. Aucune implémentation ajoutée.
-Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
-Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
-Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
-Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
-Q48 partiellement arbitrée : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme,
-step-up des comptes équipés sur actions sensibles. TOTP/WebAuthn, limites et principes de secours
-validés ; WebAuthn obligatoire pour privilèges. Crypto/RP, stockage TOTP, codes détaillés, support,
-effets sur sessions et mécanismes de step-up ouverts ; aucun mécanisme implémenté.
+**Complément validé 5B du 2026-10-29 :** les
+[contrats identité/Portal-Game](../03-technical/identity-contracts.md) précisent désormais cette
+architecture : sessions opaques, ticket signé asymétriquement/local, mTLS privé, synchronisation
+outbox/idempotence/révisions, révocations ciblées et règles compte/MFA. Bloc final validé avec
+corrections MFA sans global systématique, plafonds de sessions configurables et CORS refusé par défaut.
+Le [registre Q40–Q56](../05-project/open-questions.md) distingue clôtures 5B, détails délégués et reports
+support/email/modes. L’ADR garde sa provenance du 28/10, sans laisser ses anciens points ouverts
+contredire le complément validé. Aucune implémentation ajoutée.
 
 ## Contexte et décision
 
@@ -54,40 +48,44 @@ flowchart TD
 ## Bases et frontière de confiance
 
 Accounts DB pourra porter users, credentials/password hashes, sessions Portal, MFA, récupération et
-informations globales de lobby/membership. Game DB ne porte **jamais les credentials**. Elle ne
+informations globales de lobby/membership. Game DB ne porte **jamais les credentials de compte Portal**. Elle ne
 conservera que les références et droits nécessaires : global_user_id, universe_id, membership/access id,
-empire_id éventuel, role et status. Noms, types, tables et autorité de synchronisation restent à
-spécifier en 5B ; aucune migration n’est autorisée par ce diagramme. Pas de FK SQL inter-bases supposée.
+empire_id éventuel, role et status. Portal possède l’intention, Game l’accès effectif selon le contrat
+5B ; noms/types/tables relèvent du détail délégué aux lots dépendants. Aucune migration autorisée par
+ce diagramme. Pas de FK SQL inter-bases supposée.
 
 **Portal ne doit jamais écrire directement dans Game DB**, même pour provisionner un univers,
 rejoindre une partie ou associer un empire. Provision/grant/revoke/join passent par une interface
 interne du Game Backend : authentification service-to-service, idempotence, validation et scope
-explicites ; elle n’est pas une route publique normale. Réseau privé, mTLS, signatures ou credentials
-de service restent des possibilités, pas des protocoles choisis. La disponibilité de l’interface ne
-remplace pas l’autorisation : seul un appel interne authentifié et autorisé peut demander un effet.
-Livraison, ordre, retries, réconciliation et droits effectifs sont à cadrer en Q46/Q53/Q54.
+explicites ; elle n’est pas une route publique normale. Le complément 5B retient réseau privé et mTLS,
+autorisation par service/opération, outbox, idempotence, révisions ordonnées et réconciliation.
+La disponibilité ne remplace pas l’autorisation ; schémas, PKI et mécanismes de déploiement sont
+délégués à 5C/5D, avec recette avant utilisation.
 
 ## Handoff et autonomie de GameSession
 
-**Orientation validée, format et protocole non décidés** :
+**Contrat validé, non implémenté ; détails dans le canonique 5B** :
 
 1. L’utilisateur authentifié au Portal sélectionne un Universe auquel il peut accéder.
 2. Le Portal émet un ticket très court, à usage unique, destiné au Game Backend.
 3. Le client est redirigé vers Game, qui vérifie l’authenticité, l’expiration, l’audience, le scope
-   et l’absence de rejeu selon le contrat à définir.
+   et l’absence de rejeu selon le contrat 5B, avec liaison navigateur et consommation atomique.
 4. Game établit sa propre GameSession ; les commandes passent ensuite par Game et ses contrôles locaux.
 
-Contenu conceptuel : global user id, universe id, membership id, rôle éventuel, expiration courte,
-nonce, audience Game. Aucun JWT/OAuth/mTLS, algorithme, TTL chiffré, cookie ou route n’est sélectionné
-ici. Modalités d’usage unique, clés, rotation et état temporaire restent Q42/Q56.
+Contenu lié au compte/appareil, membership/univers, destination, échéance et état navigateur ; les
+permissions restent locales à Game. Ticket signé asymétriquement 60 s/unique, pré-auth 5 min, clés
+publiques prédistribuées, clé inconnue refusée localement. Format/algorithme, claims détaillés et
+rotation concrète sont délégués ; aucune nouvelle route créée par l’ADR.
 Chaque commande Game devra encore vérifier session, accès/membership/univers, permissions/empire,
 propriété des entités et fog ; un ticket, un UUID ou controller_type human/ai n’est pas une permission
 universelle. Ne pas appeler Portal/Accounts DB à chaque commande.
 
 Une GameSession déjà établie doit permettre de continuer à jouer pendant une indisponibilité
-momentanée du Portal. Durée, expiration, refresh, révocation et logout ne sont pas résolus par ce
-principe : Q43–Q45/Q52/Q54 doivent définir et tester leur compatibilité avec cette autonomie.
-Aucune promesse de session infinie, de refresh disponible ou de révocation instantanée n’est déduite.
+momentanée du Portal : Game 8 h absolues/2 h inactif, accès au plus 8 h depuis confirmation Portal,
+sans glissement ni reset en panne. Portal 7 j absolus/72 h inactif ; seule activité explicite classée
+serveur comptée. Révocation reçue immédiate, distante persistée jusqu’à acquittement avec UI fidèle.
+Renouvellement par Portal disponible et nouveau handoff ; pas de session infinie ni promesse distante
+instantanée. Portées et scénarios Q43–Q45/Q52/Q54 cadrés par 5B, preuves futures en 5C/5D.
 
 ## Résilience et isolation opérationnelle
 
@@ -117,7 +115,8 @@ ceci reste une cible documentaire, pas une commande de lancement actuelle.
 
 5A : domaine Colony. Puis 5B : architecture identité et contrats Portal/Game ; 5C : fondation minimale
 compte/lobby selon cadrage ; 5D : API Colony sécurisée et UI réelle. Pas de Portal complet ou
-multijoueur développé par anticipation. Q16 est partiellement cadrée par cet ADR, pas fermée.
+multijoueur développé par anticipation. Q16 a son cadrage 5B clos ; réalisation et reports restent
+explicites au registre. 5B terminé documentairement, revue finale de PR #6 avant merge autorisé.
 
 ## Conséquences et critères futurs
 

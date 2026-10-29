@@ -37,7 +37,9 @@ indépendants, chacun monolithe modulaire, bases conceptuellement distinctes et 
 Portal ne peut pas écrire en SQL dans Game DB. Provision/grant/revoke/join passent par une interface
 Game interne, authentifiée et idempotente. Le client fait ensuite ses commandes **directement à
 Game**, sans transit ni appel synchrone au Portal par commande. Après ticket très court/unique,
-Game établit une GameSession autonome ; format, durées, révocation et protocoles restent ouverts.
+Game établit une GameSession opaque autonome. Contrats 5B validés : ticket signé 60 s/unique,
+révocations ciblées persistées, accès borné à 8 h depuis confirmation Portal, interface privée mTLS
+et synchronisation idempotente. Détails techniques délégués à 5C/5D, sans nouvelle route en 5B.
 
 L’isolation cible inclut CPU/RAM, pools, scaling, DB et réseau distincts ; la logique en modules ne
 suffit pas. Portal indisponible peut bloquer nouvelles connexions/entrées, pas interrompre les
@@ -63,9 +65,11 @@ de la fréquence de lecture. Ruleset et vitesses par univers, jamais en singleto
 
 ## Prochain travail
 
-PR #5 fusionnée sur master 8214e0b. Le lot 5B autorisé le 2026-10-29 prépare les contrats
-identité/session/Portal-Game dans [identity-contracts](identity-contracts.md) : décisions utilisateur
-partielles Q40–Q44 sur login et limites temporelles, comportement de déconnexion Q45 validé, mécanismes encore proposés et non implémentés.
-Les arbitrages nécessaires précèdent 5C fondation compte/lobby, puis 5D API Colony protégée.
+PR #5 fusionnée sur master 8214e0b. Les [contrats 5B](identity-contracts.md) sont validés et
+consolidés, non implémentés ; PR #6 destinée à la revue finale avant fusion sur autorisation.
+Le [registre Q40–Q56](../05-project/open-questions.md) distingue clôtures, détails techniques délégués
+et reports support/email/modes. Aucune nouvelle décision produit nécessaire à 5B identifiée.
+Prochaine action : revue finale, sans début de 5C. Après intégration et instruction distincte :
+5C fondation compte/lobby, puis 5D API Colony protégée.
 Voir [roadmap](../05-project/roadmap.md), [sécurité](security.md), [API](api.md),
-[modèle](data-model.md), [temps](event-engine.md) et [questions](../05-project/open-questions.md).
+[modèle](data-model.md) et [temps](event-engine.md).

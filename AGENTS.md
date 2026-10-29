@@ -78,14 +78,16 @@ isolables chacun monolithe modulaire : Portal Accounts/Auth/Lobby → Accounts D
 Game DB. CPU/RAM/pools/scaling/bases/réseau séparables ; ne pas créer 10–20 microservices.
 Portal ne fait jamais de SQL direct Game DB ; interface interne Game contrôlée, authentifiée,
 idempotente. Le client gameplay appelle Game directement ; pas de dépendance Portal par commande.
-Ticket court/usage unique puis GameSession autonome : format/crypto/durées/révocation ouverts.
+Ticket signé court/unique puis GameSession opaque autonome : contrats 5B validés dans
+[identity-contracts](docs/03-technical/identity-contracts.md), détails techniques délégués à 5C/5D.
 Aucun credential Accounts en Game DB. Portal indisponible ne doit pas arrêter univers/worker ou
-sessions Game établies dans le contrat à définir. Aucun Portal/auth/DB supplémentaire implémenté ici.
+sessions Game établies dans les limites du contrat 5B validé. Aucun Portal/auth/DB supplémentaire implémenté ici.
 
 Compte global, plusieurs parties : User → UniverseMembership → Universe → éventuellement Empire/
 rôle/permissions. Ne pas réduire à Empire.owner_user_id ; empire partagé Q21 reste ouvert.
 Universe n’est ni User ni processus. Pas de compte global factice ou accès implicite pour une démo.
-Q16 est partiellement cadrée ; 5B contrats identité/Portal-Game, 5C compte/lobby selon cadrage,
+Q16 a son cadrage 5B couvert ; détails délégués et reports Q48/Q49/Q55 au registre.
+5B documentaire terminé pour revue, 5C compte/lobby sur instruction distincte,
 5D API Colony sécurisée. Ne pas commencer ces systèmes au titre de la passation.
 
 ## Invariants techniques à préserver

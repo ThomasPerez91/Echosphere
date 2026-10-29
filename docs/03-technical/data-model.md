@@ -103,9 +103,10 @@ Voir [ADR 0007](../adr/0007-colony-economy.md) et [règles v0.1](../01-game-desi
 
 ## Identité et bases cibles — décision validée, non implémentée
 
-La [préparation 5B](identity-contracts.md) propose une distinction Membership souhaitée côté Portal,
-accès effectif versionné et bindings d’Empire côté Game. Ces objets restent conceptuels,
-sans migration ni nouvelles contraintes décidées ; Q21 et Q51–Q54 restent ouvertes.
+Les [contrats 5B validés](identity-contracts.md) distinguent Membership souhaitée côté Portal,
+accès effectif versionné et bindings d’Empire côté Game ; une participation par compte/univers.
+Ces objets restent non implémentés, sans migration. Schémas/contraintes sont délégués à 5C/5D ;
+Q51–Q54 closes pour leurs contrats 5B, Q21 partage d’Empire toujours ouverte.
 
 Compte global et plusieurs univers simultanés ; User → UniverseMembership → Universe →
 éventuellement Empire/rôle/permissions. Pas de réduction à Empire.owner_user_id, partage Q21 ouvert.
@@ -118,6 +119,7 @@ Compte global et plusieurs univers simultanés ; User → UniverseMembership →
 
 Aucun mot de passe/credential Accounts répliqué en Game DB, pas de FK inter-bases imposée.
 Portal n’écrit pas dans Game DB ; changements via interface interne Game authentifiée/idempotente.
-Autorité exacte des droits, synchronisation et révocation Q51–Q54 ; aucun SQL nouveau dans ce lot.
+Portal porte l’intention ; Game l’application locale. Outbox, révisions/idempotence et révocations
+ciblées Q51–Q54 validées ; détails de stockage délégués, aucun SQL nouveau dans ce lot.
 Les FK composites d’univers actuelles restent inchangées. Pas de User/Membership/GameSession
 implémenté sous prétexte que le schéma conceptuel les mentionne.

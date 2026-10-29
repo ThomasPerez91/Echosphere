@@ -13,13 +13,23 @@
 - Aucun secret, logs sensibles, code généré inutile ou dépendance non justifiée.
 - PR compréhensible : comportement final, validation réelle et limites ; pas de merge automatique.
 
-## Passation documentaire
+## Passation documentaire historique PR #5
 
 Même branche #5 si état attendu, pas de nouveau code/migration/game_data/dépendance/Compose/test.
 Sources et accès partiels qualifiés, pas de conversation privée publiée. Références canoniques,
 index des décisions, ADR 0008, Q01–Q39 préservées/Q40–Q56 ouvertes, lecture Work/Codex et prochain
 point de reprise cohérents. Check liens/index et diff autorisé ; CI réelle de tête observée.
 PR mise à jour et laissée non fusionnée. WSL2/protection DDoS non revendiqués comme testés.
+
+## Étape 5B — contrats documentaires
+
+Décisions validées et provenance dans identity-contracts ; Q40–Q56 distinguent contrats clos,
+détails délégués et reports explicites Q48/Q49/Q55. Q01–Q39 conservées, seul cadrage Q16 actualisé.
+ADR 0008, sécurité, API, modèle, roadmap et reprise cohérents, sans propositions obsolètes présentées
+comme questions produit courantes. Corrections MFA/sessions configurables/CORS préservées.
+Diff documentaire et unique ajout REQUIRED de check_docs.py, sans implémentation 5C/5D.
+Check documentaire/liens, diff/confidentialité et CI de la tête publiée observée ; aucun test futur
+présenté comme passé. PR compréhensible pour revue finale, sans merge ni début de 5C.
 
 ## Étape 5A
 

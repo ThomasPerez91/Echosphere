@@ -2,13 +2,68 @@
 
 Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
-## Lot courant — préparation 5B : contrats identité / Portal-Game
+## Lot courant — 5B : contrats identité / Portal-Game consolidés
 
-**Statut : décisions utilisateur partielles Q40–Q44 intégrées ; mécanismes encore proposés,
-activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 partiellement validée, flux email sans MFA, échéance/remplacement et révocation globale validés (mécanismes ouverts), périmètre/facteurs/limites et récupération MFA Q48 validés (contrats détaillés ouverts), 5B non déclarée achevée.**
-Après la mission de reprise en lecture seule, l’utilisateur a autorisé le prochain lot sur une
-nouvelle branche. Interprétation appliquée selon roadmap : cadrage 5B, sans implémentation 5C/5D.
-Environnement : Codex local, Linux WSL2. Aucune délégation ni identité d’agent précédent supposée.
+**Statut : 5B documentaire terminé, prêt pour revue finale de PR #6 sous réserve de la CI publiée.**
+Contrats validés et non implémentés ; aucun début de 5C et aucun merge autorisé.
+
+### Consolidation finale du bloc 5B — 2026-10-29
+
+Objectif : intégrer la validation utilisateur de l’ensemble des quatorze points, avec trois corrections,
+puis revue de cohérence de toute PR #6. Provenance : arbitrage utilisateur explicite, synthétisé dans
+le canonique sans conversation brute. Environnement Codex local/WSL2, aucune délégation à des agents.
+
+Reprise vérifiée : branche work/step-5b-identity-contracts propre et synchronisée depuis
+10499b6f60f241a5fecc2cfd56c19ff7da548708 ; master/origin master inchangées sur
+8214e0bd30a00bf0336264a428e6975d307350ba. PR #6 OPEN/brouillon vers master, non fusionnée ;
+CI de départ push 40920709168 et PR 40920717330 completed/success sur 10499b6, trois jobs verts.
+Fetch initial refusé par sandbox (.git en lecture seule), puis réussi avec autorisation ; aucun défaut
+Git/WSL2 démontré. Aucun travail concurrent ni divergence distante détecté.
+
+Résultat : canonique identity-contracts réécrit pour séparer décisions closes, détails techniques
+explicitement délégués et reports. Registre Q40–Q56 consolidé sans renumérotation ni fermeture des
+questions gameplay Q01–Q39 ; Q16 actualisée uniquement pour le cadrage identité/autorisation couvert.
+Corrections prioritaires : pas de global systématique pour ajout MFA/régénération volontaire des
+secours avec step-up existant ; caps 10 appareils/10 univers actifs configurables sans limite de
+memberships ; APIs même origine et CORS credentials refusé par défaut, exceptions explicites minimales.
+MFA/step-up/secours, compte/email, appareil, handoff/clés, S2S, synchronisation/révocation, permissions,
+anti-abus et audit désormais cadrés. Aucun arbitrage produit supplémentaire inventé.
+
+Décisions fermées dans le périmètre 5B : Q40–Q47, Q50–Q54 et Q56. Q48 : contrat MVP clos mais procédures
+support renforcé joueur/privilégié différées, aucun déblocage sans approbation. Q49 : flux clos mais
+fournisseur/domaines/configuration de production différés. Q55 : règles des modes futurs explicitement
+différées ; Q19–Q29/Q21 préservées. Détails techniques délégués à 5C/5D avant code dépendant ; aucun
+nouveau questionnaire par bibliothèque/paramètre, aucun bypass ou service payant implicite.
+
+Fichiers : 22 Markdown de consolidation : identity-contracts, registre Qxx, ADR 0008/index, sécurité,
+API, modèle, architecture, roadmap/backlog, UX, DoD, index docs/décisions/provenance, README/AGENTS/
+context/progress et passation/lacunes. Revue de PR entière
+contre master, pas seulement du dernier diff. Anciennes mentions ouvertes/proposées remplacées
+pour décisions validées ; checkpoints historiques ci-dessous conservés et identifiés comme tels.
+Aucun code métier, test, migration, game_data, dépendance ou Compose modifié par cette consolidation.
+Le script check_docs.py déjà changé au début de PR #6 reste limité à son document requis ajouté.
+
+Validation locale exécutée : `python3 scripts/check_docs.py` réussi (64 fichiers, chemins requis et
+liens locaux), `git diff --check` sans erreur. Vérification ponctuelle du registre : Q01–Q56 exactement
+une fois ; lignes Q01–Q39 identiques à la tête de reprise sauf cadrage Q16 ; toutes Q40–Q56 séparent
+clôture/délégation/report. Consolidation Markdown seulement ; PR complète = 22 Markdown + unique ajout
+REQUIRED identity-contracts de check_docs.py. Diff complet contre master relu, confidentialité et
+renvois/statuts obsolètes contrôlés ; aucune revue ou discussion inline existante sur GitHub.
+Après commit/push, relire SHA distant et observer sa propre CI ; résultats exacts à consigner dans
+la description de PR #6 après exécution, sans nouvelle boucle de commits de checkpoint.
+Aucun test fonctionnel Portal/MFA/GameSession exécuté,
+ces mécanismes étant absents. Suites fonctionnelles locales et Docker non relancés pour le diff
+documentaire ; les résultats de reprise antérieure restent historiques et distincts.
+
+Prochaine action : revue finale de PR #6 ; fusion uniquement sur instruction. 5C n’a pas commencé.
+Après intégration et lot distinct autorisé : cadrer l’incrément compte/lobby 5C, appliquer les détails
+techniques délégués et prérequis de son périmètre ; 5D pour l’accès Colony interactif et résilience.
+
+## Historique des checkpoints 5B — superseded pour les statuts ouverts
+
+Les sections suivantes conservent l’état et les preuves à leur date. Les formulations « prochain
+arbitrage », « proposition » ou « question ouverte » décrivent ces checkpoints, pas le contrat final
+ci-dessus. Les décisions actuelles et reports font foi dans identity-contracts et le registre Qxx.
 
 ### Facteurs et récupération MFA Q48 — 2026-10-29
 

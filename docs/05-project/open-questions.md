@@ -4,10 +4,10 @@ Chaque Q reste ouverte jusqu'à un arbitrage explicite. Les propositions des doc
 Consigner date, raison, impact, document modifié et ADR si nécessaire. Les étapes indiquées sont
 les moments limites pour décider avant de dépendre du choix.
 
-Lot 5B du 2026-10-29 : [contrats identité/Portal-Game](../03-technical/identity-contracts.md),
-avec décisions utilisateur et mécanismes encore proposés explicitement distingués.
-Les parties de Q40–Q44 listées en fin de registre sont closes sur arbitrage utilisateur explicite
-pour PR #6 ; leurs autres parties restent ouvertes. Q45 est close pour le comportement produit décrit plus bas. Q16, Q21 et Q46–Q56 restent ouvertes.
+Lot 5B du 2026-10-29 : [contrats identité/Portal-Game](../03-technical/identity-contracts.md)
+validés par l’utilisateur, dont le bloc final en quatorze points avec corrections MFA, sessions
+configurables et CORS. Le cadrage 5B est terminé ; aucun mécanisme implémenté par cette clôture.
+Le tableau Q40–Q56 distingue décisions closes, détails techniques délégués et sujets différés.
 
 | ID | Question ouverte | À traiter avant | Référence |
 | --- | --- | --- | --- |
@@ -26,7 +26,7 @@ pour PR #6 ; leurs autres parties restent ouvertes. Q45 est close pour le compor
 | Q13 | Ordre simultané, locks, rattrapage, retries et compatibilité des versions | 3 | [Événements](../03-technical/event-engine.md) |
 | Q14 | Victoire/défaite, durée d'univers, resets et rattrapage | cadrage MVP | [Progression](../01-game-design/progression.md) |
 | Q15 | Validation finale de la navigation proposée étape 4, carte tactile, libellés et tokens | 4 | [UX](../02-ux-ui/information-architecture.md) |
-| Q16 | Identité/session et autorisation : architecture partiellement validée, mécanismes ouverts Q40–Q56 | 5B avant 5C/5D | [Sécurité](../03-technical/security.md) |
+| Q16 | Cadrage identité/session/autorisation 5B clos ; réalisation 5C/5D et reports explicites Q48/Q49/Q55 ; modes et partage futurs distincts | 5B avant 5C/5D | [Sécurité](../03-technical/security.md) |
 | Q17 | Budgets de performance et charge de référence | 3 puis 17 | [Performance](../04-quality/performance.md) |
 | Q18 | Contenu exact des relations minimales, hostilité et négociation | 13 | [Roadmap](roadmap.md) |
 
@@ -54,7 +54,7 @@ Q22 distingue les familles ; Q02 et Q25 devront être conciliées sans décider 
 Q16, cadrage historique 1–2 : aucune mutation publique sans identité/contrôle objet/idempotence.
 **Évolution validée 2026-10-28** : compte global multi-parties, Membership, Portal/Game séparés,
 Accounts DB/Game DB distinctes, pas de SQL Portal→Game, interface interne et GameSession autonome.
-Ces décisions ne ferment pas les mécanismes Q40–Q56. Les sondes gardent leur contrat.
+Le complément 5B du 29/10 clôt les contrats Q40–Q56 dans les limites du tableau ci-dessous ; les sondes gardent leur contrat.
 Q04 n'est pas fermée par le schéma : les capacités sont fournies explicitement, sans plafond
 9–18 ou défaut 12 imposé. Q07 reste ouverte : la table colonies représente l'occupation actuelle,
 le cycle de vie et l'historique nécessiteront une migration au lot colonisation.
@@ -108,177 +108,59 @@ réaffectation et orbitaux jouables restent ouverts. Q12 : JSON strict validé e
 simulations d’équilibrage et politique d’édition/migration futures restent ouvertes.
 Q26 partielle : multiplicateurs économie/construction par univers, ×1 de référence, vitesses
 recherche/flotte réservées sans système associé. Changement de vitesse d’un univers actif à cadrer.
-Q16 reste partiellement ouverte : 5B doit préciser les contrats avant 5C/5D ; aucune API gameplay
-ou identité globale factice ajoutée.
+À ce checkpoint 5A, Q16 restait partiellement ouverte. Son cadrage 5B est désormais clos selon le
+tableau ci-dessous ; aucune API gameplay ou identité globale factice ajoutée.
 
-## Identité / Portal-Game — Q16 partiellement cadrée, aucune implémentation (2026-10-28)
+## Identité / Portal-Game — clôture du cadrage 5B, 2026-10-29
 
-**Décisions validées** : compte global, plusieurs univers simultanés, participation via
-UniverseMembership, pas de Empire.owner_user_id unique ; empire partagé Q21 reste ouvert. Portal
-Control Plane et Game Data Plane indépendants/isolables, Accounts DB/Game DB distinctes/séparables ;
-aucun credential en Game DB, aucune écriture SQL Portal→Game. Interface interne contrôlée,
-authentifiée et idempotente pour provision/grant/revoke/join. Ticket très court/usage unique puis
-GameSession autonome ; gameplay direct à Game sans dépendance Portal par commande. Panne Portal
-ne doit pas interrompre univers/workers/sessions établies selon le contrat à définir.
-Référence canonique : [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
+**Provenance : validation utilisateur explicite pour PR #6**, arbitrages successifs puis bloc final
+complet, corrigé sur trois points. **Décisions validées, non implémentées.** Canonique :
+[identity-contracts](../03-technical/identity-contracts.md), qui précise [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
+La clôture de contrat ne signifie ni livraison, ni test fonctionnel, ni autorisation de 5C ou de merge.
 
-Les lignes suivantes conservent les travaux restants. **Q40–Q44 partiellement closes** par les
-arbitrages du 2026-10-29 décrits après le tableau ; aucune de ces questions n’est entièrement close.
-Q45 est **close pour le comportement produit**, non implémentée. Q49 est **partiellement close** pour la récupération et le changement d’email ; Q48 est **partiellement close** pour le périmètre MFA MVP ; les autres Q46–Q56 restent **Question ouverte**,
-sans validation implicite de leurs mécanismes ; regroupement appareil Q41/Q43 toujours ouvert.
+« Clos 5B » clôt l’arbitrage du contrat indiqué ; « délégué » est un travail technique autorisé pour
+le futur lot dépendant, pas une question produit à reposer. « Différé » reste ouvert avec son échéance.
 
-| ID | Arbitrage restant | Dépendance / référence |
-| --- | --- | --- |
-| Q40 | Partiellement close : login MVP, récupération 30 min/unique, réémission et effets du reset validés ; restent bibliothèque/paramètres Argon2id, mécanismes de récupération ; changement email sans MFA, demande unique 1 h/remplacement complet et révocation globale validés, mécanismes ouverts | 5B/5C, [contrats](../03-technical/identity-contracts.md) |
-| Q41 | Partiellement close : 7 j absolus / 72 h d’inactivité et activité explicite classée côté serveur validés ; restent cookies/stockage et rotation | 5B, contrats |
-| Q42 | Partiellement close : ticket 60 s/usage unique validé ; restent format/crypto, nonce/audience, liaison navigateur et consommation anti-rejeu | 5B, contrats et ADR 0008 |
-| Q43 | Partiellement close : 8 h absolues / 2 h d’inactivité et expiration anticipée par GameAccess validées, activité explicite classée côté serveur ; restent stockage et limites de sessions | 5B avant 5D, contrats |
-| Q44 | Partiellement close : plafond non glissant 8 h depuis confirmation Portal, refus à échéance et renouvellement avec Portal/confirmation/handoff validés ; restent protocoles et mécanismes de révocation/renouvellement | 5B, contrats |
-| Q45 | Close — comportement produit : retour lobby sans logout ; déconnexion Game limitée à sa session ; compte sur appareil courant ; action distincte tous appareils ; progression conservée, révocation persistée/rejouée et état en attente | Validé utilisateur 2026-10-29, non implémenté ; appareil Q41/Q43 et protocoles Q53/Q54 ouverts, [contrats](../03-technical/identity-contracts.md) |
-| Q46 | Auth service-to-service et exposition réseau de l’interface interne | 5B, aucun mTLS/signature/credential choisi |
-| Q47 | CSRF, origines, cookies et politique CORS liée au découpage | 5B/5C/5D, sécurité |
-| Q48 | Partiellement close : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme sans exemption interne ; step-up des comptes équipés sur actions sensibles et identité/gameplay conservés. TOTP actif unique et jusqu’à 5 WebAuthn nommables, WebAuthn privilégié obligatoire, secours/récupération et audit validés. Restent crypto/RP, stockage TOTP, format/nombre des codes, support final, effets sur sessions et step-up | Cadrage 5B, [contrats](../03-technical/identity-contracts.md), aucune implémentation |
-| Q49 | Partiellement close : récupération 30 min/unique, invalidation des anciens liens, effets globaux du reset, notification email et non-énumération validés ; changement sans MFA avec double confirmation/pending, notifications et réauthentification validé ; demande unique 1 h, remplacement complet et révocation globale validés ; restent fournisseur/livraison et mécanismes | 5B/5C |
-| Q50 | Anti-bot/CAPTCHA, limites IP/compte et protections brute force | 5B/5C, pas de produit choisi |
-| Q51 | Modèle exact rôles/permissions et contexte empire | 5B, sans fermer Q21 |
-| Q52 | Membership suspendu, reprise et droits lors d’un accès Game | 5B, compatible Q23/Q24 |
-| Q53 | Synchronisation Portal/Game, ordre/retries, autorité des droits et réconciliation | 5B avant provision/join |
-| Q54 | Révocation pendant GameSession, propagation et limites en panne Portal | 5B, autonomie sans promesse d’instantanéité |
-| Q55 | Politique d’accès/sécurité des univers privés et persistants | 5B puis lots modes, Q19–Q29 préservées |
-| Q56 | Validation autonome du ticket, clés/rotation et dépendances de handoff en mode dégradé | 5B, format crypto non décidé |
+| ID | Décisions désormais closes | Détails techniques délégués | Différé / échéance |
+| --- | --- | --- | --- |
+| Q40 | **Clos 5B** : email/mot de passe, identité indépendante, Argon2id ; 15–128 caractères/espaces, refus courants/compromis, pas de rotation imposée ; vérification initiale ; reset et changement volontaire avec révocation globale sans auto-login ; flux email avec/sans MFA et invalidations croisées | Bibliothèque/paramètres mesurés, vérification compromis sans mot de passe brut transmis, schémas/transactions — 5C | OIDC supplémentaire futur ; support sous Q48, livraison sous Q49 |
+| Q41 | **Clos 5B** : Portal 7 j absolus/72 h inactif, activité explicite classée serveur ; opaque/cookies protégés/rotation ; appareil = profil navigateur ; plafond initial configurable 10 appareils, aucune limite de memberships | Stockage, rattachement sécurisé, comptage concurrent, nettoyage et rotation — 5C | Hôtes/configuration production avant déploiement sous Q47 |
+| Q42 | **Clos 5B** : ticket signé asymétriquement, 60 s/unique, liaison compte/appareil/membership/univers/destination/navigateur ; pré-auth 5 min ; consommation atomique, jamais en URL/log/localStorage | Format/algorithme/bibliothèque, claims, schémas, index et tolérance sans extension d’échéance — 5C/5D | Aucun arbitrage produit restant pour ce contrat |
+| Q43 | **Clos 5B** : Game 8 h absolues/2 h inactif, bornée par accès ; opaque/isolation univers ; une session compte/appareil/univers partagée par onglets ; plafond initial configurable 10 univers actifs/appareil, jamais memberships | Cookies, comptage/nettoyage concurrents, stockage et recette multi-univers — 5C/5D | Aucun arbitrage produit restant pour ce contrat |
+| Q44 | **Clos 5B** : droits 8 h maximum depuis confirmation Portal sans glissement/reset en panne ; refus à échéance ; renouvellement Portal + nouvelle confirmation/handoff ; révocation reçue immédiate | Protocole, bornage dates, renouvellement sérialisé avec révocation — 5C/5D | Preuves de panne/résilience avant API interactive 5D |
+| Q45 | **Clos 5B** : retour lobby sans logout ; logout Game seule ; Portal courant et Games du même appareil ; action distincte tous appareils/univers ; état en attente et progression conservée | Ciblage session/appareil/compte, UI et courses avec handoff — 5C/5D | Aucun arbitrage produit restant pour ces portées |
+| Q46 | **Clos 5B** : interface interne privée, mTLS, autorisation par service/opération ; proxy authentifié seulement, aucun header client fiable | PKI, rotation/certificats, topologie, limites et recette — 5C avant interface utilisée | Configuration de déploiement avant exposition |
+| Q47 | **Clos 5B** : frontend→API même origine, CORS credentials refusé par défaut, exception seulement sur besoin explicite/allowlist minimale ; CSRF et cookies Secure/HttpOnly/host-only, aucun secret localStorage | Noms/SameSite/hôtes locaux, recette navigateur et handoff par navigation POST — 5C/5D | Domaines publics avant déploiement ; autre topologie exige recette adaptée |
+| Q48 | **Contrat MVP clos 5B ; support différé** : MFA facultative joueurs, obligatoire privilégiés ; TOTP unique/cinq WebAuthn nommables ; deux WebAuthn avant privilèges production ; step-up par action 5 min/unique ; révocations MFA ciblées, audit/notifications ; dix secours ≥128 bits, récupération 15 min sans Game/admin ; aucun bypass perte totale | Crypto, stockage TOTP chiffré/clé séparée, vérification WebAuthn/RP, enrôlement, preuves, schémas et tests — 5C selon cadrage compte/MFA | Procédures support renforcé joueur/privilégié ouvertes, lot distinct avant activation du service ; compte bloqué sans procédure approuvée |
+| Q49 | **Flux clos 5B ; production différée** : vérification initiale 24 h unique/réémission ; reset 30 min/unique/dernier lien ; demande email 1 h unique/preuves liées ; notifications et réauthentification ; livraison persistée/retentée sans faux succès, non-énumération | Adaptateur indépendant du fournisseur, jetons, transactions, signalement de sécurité et tests — 5C | Fournisseur, domaines et réglages d’envoi avant déploiement ; aucun achat/abonnement 5B |
+| Q50 | **Clos 5B** : limites compte/IP/opération, ralentissement progressif login/MFA, quotas inscription/email, non-énumération ; aucun verrouillage permanent provoqué par tiers ni CAPTCHA tiers obligatoire au lancement | Seuils configurables documentés et testés — 5C avant exposition publique | Ajout ultérieur d’un prestataire CAPTCHA = décision distincte |
+| Q51 | **Clos 5B** : membership unique compte/univers ; binding Empire explicite et permissions consultation/construction/annulation ; aucun droit gameplay admin implicite | Représentation permissions/bindings et contrôles d’objet/fog — 5C/5D | Partage Empire Q21, spectateurs et rôles de modes futurs non tranchés |
+| Q52 | **Clos 5B** : suspension interdit nouveaux handoffs/commandes après application sans arrêter univers ; réactivation par nouvelle décision/handoff sans restaurer sessions | États/révisions et sérialisation droits/commandes — 5C/5D | Règles métier join/leave/late join Q23/Q24 conservées |
+| Q53 | **Clos 5B** : Portal intention/Game application ; outbox atomique ; identifiants stables, effets/résultats atomiques idempotents, révisions ordonnées, retry/acquittement/réconciliation ; anti-rejeu conservé | Enveloppes, verrous, délais, déduplication et purge sûre — 5C/5D | Sauvegarde/purge opérationnelles avant production ; pas de purge anti-rejeu au seul TTL audit |
+| Q54 | **Clos 5B** : révocations session/appareil/compte/membership ; persistées jusqu’à acquittement ; UI fidèle ; anciennes preuves sans résurrection ; commandes revérifiées à acceptation, progression conservée | Générations/stockage, messages ciblés et courses avec handoff/renouvellement — 5C/5D | Recette de résilience 5D, sans promesse distante instantanée |
+| Q55 | **Différé explicitement** : aucun accès public aux univers privés/persistants créé par défaut, aucun join livré par implication | Conserver scopes et extension du modèle — 5C/5D | Politique invitations/admission/administration privée et persistante : futurs lots modes Q19–Q29 |
+| Q56 | **Clos 5B** : validation locale ticket signé, clés publiques prédistribuées ; clé inconnue refusée sans découverte Portal ; ticket déjà émis consommable sous contrôles en panne, révocation reçue prioritaire ; rotation/compromission séparées de S2S | Algorithmes, distribution/rotation, tolérance, rétention anti-rejeu et tests — 5C/5D | Domaines/RP et recette clés avant déploiement |
 
-## Arbitrages explicites 5B — 2026-10-29, parties closes uniquement
+### Corrections prioritaires du bloc final
 
-**Source/provenance : décision utilisateur explicite pour poursuivre PR #6**, synthétisée sans
-transcript privé. Statut **Décision validée, non implémentée**. Canonique :
-[identity-contracts](../03-technical/identity-contracts.md). Les décisions ne valent ni protocole
-accepté pour les autres Qxx, ni livraison de code, ni autorisation de fusion ou de passage à 5C.
+- MFA : révocation globale après activation initiale, désactivation, remplacement/suppression réduisant
+  ou remplaçant la protection, récupération après perte ou reset MFA. Pas de révocation globale
+  imposée pour ajout d’authentificateur ou régénération volontaire des secours avec step-up valide
+  via un facteur déjà enregistré ; ces opérations restent sensibles, auditées et notifiées.
+- Sessions : 10 appareils/compte et 10 univers Game actifs/appareil sont seulement des paramètres
+  techniques initiaux configurables ; ils ne limitent jamais les memberships.
+- CORS : chaque frontend appelle sa propre API même origine ; credentials cross-origin refusés
+  par défaut, aucune origine autorisée sans besoin explicite et allowlist minimale.
 
-- Q40 : MVP email/mot de passe, adresse vérifiée avant premier handoff Game, récupération par
-  jeton court à usage unique, hash Argon2id via bibliothèque maintenue. global_user_id indépendant
-  de l’email et de la méthode de connexion. Google/OIDC futur comme méthode supplémentaire du même
-  compte, sans dépendance MVP. Bibliothèque et paramètres restent ouverts ; durée et comportement
-  de récupération sont désormais précisés par le complément Q40/Q49 ci-dessous, indépendamment
-  du ticket de handoff de 60 s.
-- Q41 : session Portal au plus 7 jours absolus et 72 heures d’inactivité ; l’activité ne prolonge
-  pas l’absolu. La proposition initiale de 24 h d’inactivité est remplacée par cet arbitrage.
-- Q42 : ticket de handoff au plus 60 secondes, usage unique. Format, crypto, nonce/audience,
-  liaison au navigateur et preuve de consommation unique restent à contractualiser.
-- Q43 : session Game au plus 8 heures absolues et 2 heures d’inactivité ; GameAccess peut la faire
-  expirer plus tôt. L’activité ne prolonge pas l’absolu. Stockage et limites simultanées restent ouverts.
-- Q44 : droits Game valides au plus 8 heures depuis leur dernière confirmation Portal, fenêtre
-  jamais glissante sur l’activité Game, sans reset au début d’une panne. Révocation/suspension reçue
-  appliquée immédiatement. Si Portal ou la liaison est indisponible, une nouvelle révocation peut
-  rester sans effet jusqu’à valid_until ; aucune autonomie de renouvellement illimitée. À cette
-  échéance, nouvelles commandes refusées, univers/workers poursuivant leur progression. Un
-  renouvellement nécessite Portal disponible et une nouvelle confirmation/handoff valide.
+### Reports assumés et condition de sortie
 
-Q46 (S2S), Q47 (cookies/CSRF/origines), Q48 (MFA), Q49 (fournisseur email et détails
-de vérification/récupération), Q50 (anti-abus), Q51–Q53 (permissions/membership/synchronisation),
-Q54 (propagation de révocation), Q55 (modes) et Q56 (crypto/clés) restent ouvertes.
-La fenêtre validée sous Q44 ne ferme pas les mécanismes de Q54.
+Q48 et Q49 conservent uniquement les reports indiqués, Q55 reste une question future ouverte.
+Les détails techniques délégués ne sont ni des arbitrages produit manquants ni une implémentation.
+Q16 a son cadrage identité/session/autorisation couvert par 5B ; sa réalisation relève de 5C/5D,
+les politiques futures liées aux modes restant ouvertes dans leurs propres Qxx.
+Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B n’a été identifié à la consolidation.
 
-**Complément utilisateur validé Q41/Q43 — 2026-10-29 :** seules les interactions explicites
-réinitialisent l’inactivité : navigation volontaire, action/commande, modification/sauvegarde d’un
-réglage, actualisation demandée ou autre requête explicitement classée comme telle par le serveur.
-Polling, refresh périodique, heartbeat, réception WebSocket, reconnexion automatique, prefetch,
-télémétrie et onglet ouvert ne comptent pas. Classification par type de requête/action côté serveur,
-sans confiance dans un timestamp navigateur. Aucune prolongation des limites absolues ni de
-GameAccess.valid_until. Décision non implémentée ; les scénarios restent des critères futurs.
-
-### Q45 — comportement produit validé le 2026-10-29, non implémenté
-
-Source : arbitrage explicite utilisateur pour PR #6. Q45 close, aucune autre Qxx close par implication.
-Retour lobby/quitter l’écran n’est pas une déconnexion : GameSession conservable dans ses limites.
-Déconnexion Game : seule la session concernée, univers et appareil/session courants ; ni autres
-GameSessions du même appareil, ni autres univers/appareils, ni session Portal invalidés.
-Déconnexion du compte sur cet appareil : PortalSession courante et toutes les GameSessions du
-même compte sur cet appareil invalidées ; autres appareils préservés, aucune partie silencieusement
-laissée connectée. « Déconnecter tous les appareils » est distinct et explicite : toutes les
-PortalSessions/GameSessions du compte, tous appareils et univers.
-Memberships, empires, états, progression des univers/workers et actions déjà acceptées conservés.
-Si Game est injoignable pendant la révocation globale : demande persistée/rejouée jusqu’à acquittement,
-UI terminée/en attente sur certains services ; aucune instantanéité distante prétendue. Sessions
-non atteintes toujours bornées par les échéances validées, dont valid_until et maximum 8 h depuis
-confirmation Portal. Regroupement technique par appareil sous Q41/Q43, protocoles sous Q53/Q54
-restent ouverts ; aucune acceptation implicite d’epoch, outbox ou stockage.
-
-### Q40/Q49 — récupération validée le 2026-10-29, parties closes uniquement
-
-Source : validation explicite utilisateur pour PR #6 ; non implémentée. Jeton valable au maximum
-30 minutes depuis émission, usage unique et expiration serveur. Nouvelle émission : tous les
-anciens jetons encore valides du compte immédiatement invalidés, anciennes URLs inutilisables ;
-seul le parcours le plus récent peut aboutir.
-Reset réussi : toutes les PortalSessions du compte invalidées sur tous appareils, demande de
-révocation de toutes ses GameSessions tous univers/appareils, tous jetons de récupération invalidés.
-Nouvelle connexion normale imposée, aucun auto-login ; email notifiant la modification, aucun
-mot de passe dans les emails. Memberships, empires et états gameplay conservés.
-Game injoignable : révocation persistée/rejouée jusqu’à acquittement, sans promesse instantanée ;
-valid_until et maximum 8 h depuis dernière confirmation Portal inchangés, aucun reset de fenêtre.
-Réponse de demande non énumérable ; contrôles anti-abus restent Q50. Q40/Q49 restent partiellement
-ouvertes, fournisseur/livraison/changement d’email et mécanismes non choisis. Q48, Q50, Q53 et Q54
-ne sont pas fermées par implication. Canonique : section 6 des contrats identité.
-
-### Q40/Q49 — changement d’email validé le 2026-10-29, parties closes uniquement
-
-Source : arbitrage explicite utilisateur pour PR #6 ; non implémenté. Sans MFA : session Portal
-valide, mot de passe actuel ressaisi, confirmation depuis l’ancienne adresse et confirmation de
-la nouvelle obligatoires. Adresse nouvelle pending jusqu’aux deux confirmations et jamais effective
-avant validation. Succès : notifier les deux adresses, nouvelle authentification requise ;
-global_user_id, memberships, empires et états gameplay conservés.
-Ancienne adresse inaccessible : aucun bypass mot de passe seul ; flux distinct avec preuve
-indépendante déjà établie (MFA, codes ou support seulement si décidés/disponibles). Sans ce mécanisme
-dans le MVP, changement bloqué. Si Q48 valide et implémente MFA forte : remplacement possible de
-la confirmation ancienne, réauthentification selon contrat, MFA et confirmation nouvelle obligatoires,
-ancienne adresse notifiée avec moyen de signaler une opération non reconnue ; politique exacte Q48
-ouverte. Aucun mécanisme de récupération indépendant/MFA/support n’est accepté ou implémenté ici.
-
-**Complément utilisateur validé — 2026-10-29 :** demande unique active par compte, maximum 1 h
-absolue depuis création ; les deux confirmations partagent cette échéance sans délai glissant.
-À échéance toute la demande expire. Nouvelle demande : ancienne demande, deux liens et confirmations
-acquises immédiatement invalidés ; deux nouvelles confirmations requises, jamais de mélange de demandes.
-Succès après toutes validations : nouvelle adresse active ; toutes les sessions Portal/Game du compte
-révoquées, tous appareils/univers et session courante inclus ; nouvelle connexion normale avec la
-nouvelle adresse, sans maintien automatique. Game injoignable : intention persistée/rejouée jusqu’à
-acquittement, aucune instantanéité promise, valid_until/8 h depuis confirmation Portal jamais relancés.
-Notifications aux deux adresses après succès sans credential/token sensible ; identité et états conservés.
-Q40/Q49 restent partiellement ouvertes pour fournisseur/livraison et mécanismes. Q48/Q50/Q53/Q54
-ne sont pas fermées par implication.
-
-### Q48 — place de la MFA validée le 2026-10-29, parties closes uniquement
-
-Source : arbitrage explicite utilisateur pour PR #6, non implémenté. MFA facultative pour les
-joueurs standards du MVP, activable depuis les paramètres ; aucune obligation d’enrôlement pour
-créer/utiliser un compte standard. Une fois activée, elle devient une exigence normale de sécurité
-pour ce compte selon le contrat à définir.
-MFA obligatoire pour tout compte avec privilèges d’administration/opération de plateforme : aucune
-fonction privilégiée utilisable sans configuration correcte, aucune exemption compte interne.
-Les simples rôles gameplay d’Empire ne sont pas concernés par cette obligation.
-Comptes équipés : step-up avant changement d’email, désactivation/remplacement MFA et génération/
-remplacement de moyens de récupération MFA. « Déconnecter tous les appareils » reste un candidat
-éventuel ; catalogue exact à préciser avec les API. Sans MFA, preuves Q40/Q49 toujours applicables.
-Activation/désactivation/remplacement ne changent ni global_user_id, ni memberships/empires/univers,
-ni état gameplay. Aucun code, facteur ou moyen de récupération livré.
-**Complément utilisateur validé — facteurs et récupération, 2026-10-29 :** MVP TOTP et WebAuthn/
-passkeys ; joueurs TOTP, WebAuthn ou les deux. Maximum un secret TOTP actif par compte, remplacement
-sans accumulation ; jusqu’à 5 credentials WebAuthn, chacun nommable. Privilèges plateforme : au
-moins un WebAuthn, TOTP seul insuffisant ; opérations admin sensibles avec preuve WebAuthn valide.
-Prévoir deux authentificateurs WebAuthn pour les comptes privilégiés utilisés en production ;
-TOTP possible en complément seulement. Rôles gameplay Empire distincts.
-Récupération joueur : autre authentificateur déjà enregistré et codes de secours uniques, générés
-à activation, régénérables explicitement avec invalidation de tous les anciens. Codes aléatoires
-robustes, vérifiables sans secret exploitable stocké en clair, jamais journalisés. Utilisation/
-régénération sensibles. Perte totale : aucune récupération automatique email + mot de passe ;
-procédure support renforcée distincte à définir. Compte privilégié : secours peut ouvrir un état de
-récupération sans droits admin ; réenregistrement WebAuthn valide et procédure privilégiée requis
-avant restitution des fonctions, jamais bascule TOTP seule.
-Ajout/suppression/remplacement audités, preuve renforcée par facteur existant si disponible ;
-identité/memberships/empires/univers/gameplay conservés. Non implémenté, Q48 partiellement close.
-Restent crypto/RP WebAuthn, stockage TOTP, format/nombre des codes, procédures support finales,
-effets sur sessions et mécanismes de step-up/remplacement. Aucune autre Qxx fermée par implication.
-Prochain arbitrage nécessaire : effets des changements/récupérations MFA sur les sessions et
-fraîcheur/portée du step-up ; pas de 5C.
-
-12 secteurs/2 slots orbitaux concernent seulement le départ de référence v0.1 ; distribution et
-capacités variables futures restent Q04/Q06. Q39 reste ouverte. Q01–Q39 ne sont ni supprimées,
-renumérotées ni fermées par cet ajout. Les comptes/memberships restent sans nouvelles tables.
+5B documentaire terminé pour revue finale de PR #6, vérifications et CI propres à la tête publiée.
+Pas de merge ni début de 5C. Q01–Q39 ne sont pas renumérotées ; leurs arbitrages gameplay restent
+inchangés, dont Q39 ouverte. Seul le cadrage identité/autorisation de Q16 est actualisé par 5B.
+Aucune nouvelle table de compte/membership.

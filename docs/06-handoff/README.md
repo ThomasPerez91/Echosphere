@@ -23,18 +23,14 @@ décrivait #5 ouverte ; il reste historique. Vérifier GitHub réel avant d’ag
 Accounts DB/Game DB séparées, interface interne contrôlée et GameSession autonome après handoff.
 **Non implémenté** : Portal/auth/lobby, API gameplay et systèmes futurs du MVP.
 
-Préparation 5B autorisée le 2026-10-29 sur work/step-5b-identity-contracts :
-[contrats](../03-technical/identity-contracts.md), non implémentés, avec arbitrages utilisateur
-partiels Q40–Q44, comportement Q45 validé et mécanismes encore proposés. Q46–Q56 restent ouvertes ; PR #6 non fusionnée.
-Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
-Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
-Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
-Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
-Q48 partiellement arbitrée : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme,
-step-up des comptes équipés sur actions sensibles. TOTP/WebAuthn, limites et principes de secours
-validés ; WebAuthn obligatoire pour privilèges. Crypto/RP, stockage TOTP, codes détaillés, support,
-effets sur sessions et mécanismes de step-up ouverts ; aucun mécanisme implémenté.
-La recette locale et ses limites figurent dans [progress](../../progress.md).
+5B autorisé puis consolidé le 2026-10-29 sur work/step-5b-identity-contracts :
+[contrats validés](../03-technical/identity-contracts.md), **non implémentés**, PR #6 non fusionnée.
+Lot documentaire terminé pour revue finale, sans début de 5C. Le
+[registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
+délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
+ajout de facteur/régénération volontaire des secours avec step-up existant ; plafonds 10/10 configurables et sans effet sur
+memberships ; APIs même origine et CORS credentials refusé par défaut. La recette locale, les checks
+documentaires et les CI réellement observées restent distingués dans [progress](../../progress.md).
 
 Ce dossier indexe les références canoniques ; il ne remplace ni game_data, ni les ADR, ni le registre
 Qxx. Les informations de provenance sont limitées à ce qui a réellement été accessible. Aucun

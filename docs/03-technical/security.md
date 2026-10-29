@@ -16,9 +16,10 @@ Les erreurs de readiness sont génériques ; les conteneurs applicatifs utilisen
 
 ## Avant un accès distant
 
-Définir auth et politique de session, contrôle d'accès objet, TLS, protections CSRF selon le mode
-d'authentification, limites de requêtes, stockage des secrets, sauvegardes et restauration.
-CORS restreint si des origins distincts sont nécessaires ; le proxy local évite ce besoin au bootstrap.
+Implémenter et tester les [contrats 5B](identity-contracts.md) : identité/session, contrôles objet,
+TLS/CSRF, limites et stockage des secrets ; compléter sauvegardes/restauration avant production.
+Chaque frontend appelle son API même origine. CORS credentials refusé par défaut ; aucune origine
+cross-origin sans besoin explicite et allowlist minimale.
 La publication du serveur Vite sur internet n'est pas un déploiement supporté.
 
 ## Revue continue
@@ -56,84 +57,53 @@ propriété avant consultation puis sous le lock et dédupliquent les clés. Ces
 ne sont pas un substitut à une session HTTP. La future API 5D vérifiera identité/membership/permissions avant
 appel des mêmes services humains/IA/headless. Pas de faux user global ou bypass de Q16.
 
-## Portal/Game — décisions validées, protections futures non implémentées
+## Portal/Game — contrats 5B validés, protections futures non implémentées
 
-[Contrats 5B](identity-contracts.md) : décisions utilisateur du 2026-10-29 sur le login MVP
-email/mot de passe avec Argon2id, email vérifié avant premier handoff, récupération courte/unique,
-identité globale indépendante des méthodes et limites temporelles. Portal : 7 j absolus/72 h
-d’inactivité ; Game : 8 h absolues/2 h d’inactivité ; ticket : 60 s/unique. Droits Game au plus 8 h
-depuis confirmation Portal, non glissants, sans reset en panne ; révocation/suspension reçue immédiate.
-Renouvellement avec Portal disponible et nouvelle confirmation/handoff valide, refus à valid_until.
-Seules les interactions explicites classées côté serveur réinitialisent l’inactivité ; polling et
-autres trafics automatiques exclus, aucun timestamp navigateur faisant autorité. Les limites
-absolues et valid_until restent inchangées.
-Ces décisions restent non implémentées ; mécanismes de session, crypto, interface interne et
-protections conservent leur statut Proposition/Question ouverte.
+[Canonique identité](identity-contracts.md) et [ADR 0008](../adr/0008-control-plane-game-data-plane.md) :
+Accounts DB/Portal et Game DB/Game isolables. Aucun credential Accounts en Game DB, aucun SQL direct
+Portal→Game. Interface interne privée mTLS avec autorisation ; outbox, effets idempotents et révisions
+pour livraisons, renouvellements et révocations. Game contrôle localement ses droits sans appel Portal
+par commande. Les choix ne valent ni implémentation ni preuve de sécurité production.
 
-[ADR 0008](../adr/0008-control-plane-game-data-plane.md) : compte global multi-parties, deux backends
-isolables et deux bases distinctes/séparables. Portal gère credentials et sessions de compte ; Game
-ne possède que l’identité minimale et les autorisations de partie nécessaires, jamais les credentials.
-Aucun accès SQL direct Portal→Game DB ; interface Game interne authentifiée et idempotente.
-Les requêtes gameplay passent directement à Game avec sa session propre après ticket court/unique.
-La validation Game doit rester locale au plan Game, sans contacter Portal/Auth à chaque commande.
+Contrats clos pour 5B selon le [registre Q40–Q56](../05-project/open-questions.md) :
 
-Portal est exposé aux bots/brute force/scraping/spam/DDoS applicatif ; protections futures possibles :
-CDN/WAF, rate limiting IP/compte, anti-bot/challenge/CAPTCHA si nécessaire, email verification et
-Redis temporaire. Aucun outil/protocole/fournisseur n’est choisi ou installé ici. Redis/WAF ne sont
-jamais source de vérité gameplay. Game protège aussi son ingress, objets, univers et fog.
-Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver ; ne pas promettre une protection DDoS par le seul
-fait d’avoir deux applications sur une machine partagée.
+- Email/mot de passe Argon2id, 15–128 caractères, refus des mots de passe courants/compromis sans
+  transmission brute ; vérification initiale 24 h/unique avant tout handoff.
+- Portal 7 j absolus/72 h inactif ; Game 8 h absolues/2 h inactif ; activité explicite classée
+  serveur seulement. Accès Game au plus 8 h depuis confirmation Portal, jamais glissant ni relancé
+  par panne ; reçu révoqué immédiatement, expiré refusé ; workers et univers continuent.
+- Ticket signé asymétriquement 60 s/unique, pré-auth navigateur 5 min, consommation atomique ;
+  clés prédistribuées, clé inconnue refusée localement, aucun secret URL/log/localStorage.
+- Sessions opaques serveur, cookies Secure/HttpOnly/host-only, rotation à transition auth ; APIs
+  même origine, CSRF, CORS credentials refusé par défaut ; exceptions explicites minimales seulement.
+- Appareil = profil navigateur ; caps initiaux configurables 10 appareils/compte et 10 univers
+  Game actifs/appareil ; jamais plafonds de memberships. Une GameSession compte/appareil/univers.
+- Logout Game seul, compte sur appareil ou compte entier distincts ; révocations persistées/rejouées
+  jusqu’à acquittement, UI en attente fidèle, aucune fenêtre de huit heures redémarrée.
+- Reset 30 min/unique/dernier lien, changement volontaire du mot de passe et changement d’email
+  réussi : révocation globale et connexion normale sans auto-login ; notifications sans credential.
+  Email pending, demande unique 1 h et preuves non mélangeables ; liens invalidés entre flux selon
+  canonique. Mot de passe seul ne contourne ni ancienne adresse inaccessible ni MFA.
+- MFA facultative joueurs ; TOTP actif unique/cinq WebAuthn nommables ; WebAuthn privilégié requis,
+  deux authentificateurs avant privilèges production. Step-up par action 5 min/unique lié session et
+  paramètres ; catalogue inclut logout tous appareils, déconnexion ordinaire possible sans step-up.
+- Révocation globale après activation/désactivation MFA, réduction/remplacement de protection ou
+  récupération/reset MFA. **Aucune révocation globale imposée** après ajout d’authentificateur ou
+  régénération volontaire de secours avec step-up via facteur déjà enregistré ; audit/notification.
+- Dix secours ≥128 bits, uniques/affichés à génération seulement, stockage non réversible ;
+  récupération 15 min sans Game/admin, facteur rétabli puis connexion normale et nouveaux secours.
+  Perte totale bloquée sans procédure renforcée approuvée, jamais email/mot de passe seuls.
+- Anti-abus compte/IP/opération, ralentissement progressif et quotas email/inscription, réponses
+  non énumérables ; aucun verrouillage permanent provoqué par tiers, CAPTCHA tiers non obligatoire.
+- Audit sécurité 90 jours avec accès restreint, aucun secret ; protection anti-rejeu conservée
+  séparément. Secrets TOTP chiffrés avec clés séparées, WebAuthn sans secret privé côté serveur.
 
-Récupération Q40/Q49 validée, non implémentée : jeton 30 min maximum depuis émission, unique,
-expiration serveur ; nouvelle émission invalide immédiatement les anciens liens. Reset réussi :
-invalidation de toutes les sessions Portal et jetons de récupération, demande de révocation Game
-tous appareils/univers, nouvelle connexion normale sans auto-login, notification email sans mot
-de passe. Réponse de demande non énumérable. Si Game injoignable : révocation persistée/rejouée
-jusqu’à acquittement, aucune instantanéité annoncée ; valid_until/8 h depuis confirmation Portal
-jamais relancés au reset. Memberships/empires/états conservés. Fournisseur/livraison et mécanismes
-restent ouverts ; Q48/Q50/Q53/Q54 inchangées. Voir section 6 des contrats pour critères futurs.
+Détails techniques délégués : bibliothèques/paramètres mesurés, schémas, crypto, RP, verrous, retry,
+rotation et tests. Fournisseur email/domaines/configuration avant production ; procédures support
+joueur/privilégié différées, comptes bloqués sans procédure ; règles privées/persistantes dans leurs
+lots. Aucun bypass ou service payant introduit par cette délégation.
 
-Changement d’email Q40/Q49 validé, non implémenté : session Portal valide, mot de passe actuel
-ressaisi et confirmations ancienne/nouvelle adresses ; pending jusqu’à validation effective des deux.
-Ancienne adresse inaccessible : aucun bypass par mot de passe seul, blocage sans récupération
-indépendante déjà établie et disponible. MFA future conditionnelle sous Q48, aucune implémentation
-ni procédure support implicite. Après succès : notifier les deux adresses, nouvelle authentification,
-identité et états conservés. Demande unique 1 h absolue, échéance commune sans glissement ; nouvelle
-demande invalide ancienne/liens/confirmations, deux nouvelles preuves sans mélange. Succès : toutes
-sessions Portal/Game révoquées, courante comprise, tous appareils/univers ; connexion avec nouvelle
-adresse et notifications finales sans credential/token sensible. Révocation Game persistée/rejouée
-jusqu’à acquittement, sans instantanéité distante ni reset des 8 h. Mécanismes et Q48/Q50/Q53/Q54
-ouverts. Canonique : section 6 des contrats.
-
-Q48 partiellement validée, non implémentée : MFA facultative pour joueurs standards MVP, activable
-via paramètres puis exigée selon contrat du compte. MFA obligatoire pour utiliser les fonctions
-privilégiées plateforme/administration/opération, sans exemption interne ; rôles Empire distincts.
-Pour comptes équipés : step-up avant email, désactivation/remplacement MFA et génération/remplacement
-des moyens de récupération ; logout tous appareils seulement candidat. Sans MFA, preuves Q40/Q49
-inchangées. Identité/memberships/empires/univers/gameplay conservés lors des changements MFA.
-Facteurs MVP validés : un secret TOTP actif maximum, jusqu’à 5 credentials WebAuthn nommables,
-TOTP/WebAuthn ou les deux pour joueurs. Privilégiés : WebAuthn obligatoire et exigé sur opérations
-admin sensibles, TOTP seul insuffisant ; prévoir deux authentificateurs WebAuthn en production.
-Récupération joueur par autre facteur enregistré ou codes uniques ; génération à activation,
-régénération invalide tous anciens codes ; codes robustes, vérification sans clair exploitable stocké,
-aucune journalisation. Perte totale sans bypass email/mot de passe, support renforcé à définir.
-État de récupération privilégié sans retour automatique des droits admin : WebAuthn réenregistré
-et procédure privilégiée tous deux requis. Changements de facteurs audités, step-up avec facteur
-existant disponible. Crypto/RP, stockage TOTP, format/nombre des codes, support final, effets sur
-sessions et mécanismes précis de step-up restent ouverts ; aucun service ni console livrés.
-
-Q45 validée, non implémentée : retour lobby sans logout ; déconnexion Game d’une seule session ;
-logout Portal de la session courante et de toutes les GameSessions du compte sur cet appareil ;
-action distincte pour toutes les sessions du compte sur tous les appareils/univers. Conservation
-des memberships/empires/états et de la progression/actions acceptées. Révocation globale persistée,
-rejouée jusqu’à acquittement ; UI terminée/en attente, aucune instantanéité si Game injoignable.
-Regroupement appareil Q41/Q43 et protocoles Q53/Q54 restent ouverts. Un epoch commun à tous les
-appareils ne peut servir au logout d’un seul appareil sans violer sa portée validée.
-
-Q16 est **partiellement cadrée**. Seules les parties listées de Q40–Q44 sont closes ;
-cookies/stockage, CSRF, MFA, fournisseur email, anti-abus, format/crypto du ticket, protocoles de
-renouvellement/révocation/logout, S2S, rôles/membership/synchronisation et politiques de modes
-restent ouverts. Q46–Q56 ne sont pas fermées ; pas de JWT/OAuth/mTLS sélectionné.
-Autonomie d’une session pendant panne Portal ne signifie pas ignorer toute révocation indéfiniment :
-fenêtre de huit heures validée, mécanismes restant à définir et tester avant API interactive.
-Aucun compte fictif global.
+Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver. Deux applications sur le même hôte ne prouvent
+pas la résistance à une saturation réseau ou DDoS. Aucun WAF/Redis installé ou utilisé comme autorité
+gameplay. Les scénarios de refus, concurrence, reprise et panne sont des obligations de 5C/5D,
+non des tests déjà exécutés. 5B documentaire terminé pour revue finale ; aucun début de 5C.
