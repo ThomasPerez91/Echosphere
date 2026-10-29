@@ -5,12 +5,36 @@ Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/R
 ## Lot courant — préparation 5B : contrats identité / Portal-Game
 
 **Statut : décisions utilisateur partielles Q40–Q44 intégrées ; mécanismes encore proposés,
-activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 à examiner, 5B non déclarée achevée.**
+activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 partiellement validée, changement d’email à examiner, 5B non déclarée achevée.**
 Après la mission de reprise en lecture seule, l’utilisateur a autorisé le prochain lot sur une
 nouvelle branche. Interprétation appliquée selon roadmap : cadrage 5B, sans implémentation 5C/5D.
 Environnement : Codex local, Linux WSL2. Aucune délégation ni identité d’agent précédent supposée.
 
-### Déconnexions Q45 — 2026-10-29
+### Récupération Q40/Q49 — 2026-10-29
+
+Source : arbitrage explicite utilisateur pour PR #6, synthétisé sans transcript. Décision validée,
+non implémentée : jeton 30 min maximum depuis émission, unique, expiration serveur ; réémission
+invalide tous les anciens liens. Reset réussi : invalidation de toutes les PortalSessions et jetons
+de récupération, demande de révocation de toutes les GameSessions tous appareils/univers ; nouvelle
+connexion normale sans auto-login, notification email sans mot de passe. Réponse de demande non
+énumérable ; memberships/empires/états conservés. Si Game injoignable, révocation persistée/rejouée
+jusqu’à acquittement, aucune instantanéité promise, valid_until/8 h jamais relancés au reset.
+Seules ces parties Q40/Q49 sont closes ; Q48/Q50/Q53/Q54 restent ouvertes.
+
+Reprise vérifiée : fetch, arbre propre, branche work/step-5b-identity-contracts synchronisée sur
+cbf088c5c22974ce0c548fe4faeb2e1b9eec5533 ; PR #6 OPEN/brouillon, master 8214e0b inchangée.
+CI de cette tête observée verte : push 40892359042 et PR 40892370513, backend/frontend/compose-smoke.
+Fichiers : contrats, Qxx, context/progress, sécurité, roadmap, index des décisions et références
+passation/index/API/ADR 0008. Critères futurs ajoutés : frontière 30 min, réémission/consommation
+concurrentes, reset global et panne sans extension. Aucun mécanisme futur testé ou implémenté.
+Checks locaux : documentation/liens, diff et périmètre Markdown, Q01–Q56 sans trou/doublon et seules
+lignes Q40/Q49 modifiées. Suites fonctionnelles backend/frontend/Compose et Ruff non relancées
+localement pour ce diff documentaire. Relire SHA distant/CI de la nouvelle tête après push ;
+les résultats du commit précédent ne valent pas ceux du nouveau. Résultats publiés dans PR après observation.
+Prochain arbitrage : changement d’email Q40/Q49 (preuve préalable, vérification, notifications,
+effets sur sessions), puis périmètre MFA Q48. Aucun merge de PR #6 ni démarrage de 5C.
+
+### Déconnexions Q45 — 2026-10-29 (checkpoint antérieur à la récupération)
 
 Source : validation explicite utilisateur pour PR #6. Comportement produit Q45 clos, non implémenté :
 retour lobby sans logout ; déconnexion Game d’une seule session ; compte sur appareil courant
@@ -31,8 +55,8 @@ README/index/passation/décisions/lacunes. Résumés périmés corrigés ; Markd
 Checks locaux : check documentaire, diff, Q01–Q56 et comparaison des statuts ; seules les décisions
 Q45 changent, aucune autre fermeture. Suites fonctionnelles backend/frontend/Compose et Ruff
 non relancées localement pour ce diff documentaire ; CI de la nouvelle tête à observer après push.
-Prochain arbitrage nécessaire : Q40/Q49, durée du jeton de récupération, réémission et effets sur
-sessions ; puis changement d’email et périmètre MFA Q48. Aucun choix implicite depuis Q45.
+Prochain arbitrage à ce checkpoint : récupération Q40/Q49, depuis validée dans le complément
+ci-dessus ; changement d’email et MFA restent ouverts.
 Aucun merge de PR #6, passage à 5C ou implémentation ; résultats CI publiés dans la PR après observation.
 
 ### Complément activité Q41/Q43 — 2026-10-29 (checkpoint antérieur à Q45)

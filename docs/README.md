@@ -41,6 +41,9 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
 - [Contrats 5B](03-technical/identity-contracts.md) : décisions utilisateur partielles Q40–Q44
   et comportement Q45 du 2026-10-29, non implémentés ; mécanismes encore proposés, Q16/Q46–Q56 ouvertes.
 
+Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
+Q49 reste partiellement ouverte (fournisseur/livraison, vérification/changement d’email et mécanismes).
+
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
 sur les conversations Space Game qui n’ont pas pu être consultées.

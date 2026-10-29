@@ -84,6 +84,15 @@ jamais source de vérité gameplay. Game protège aussi son ingress, objets, uni
 Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver ; ne pas promettre une protection DDoS par le seul
 fait d’avoir deux applications sur une machine partagée.
 
+Récupération Q40/Q49 validée, non implémentée : jeton 30 min maximum depuis émission, unique,
+expiration serveur ; nouvelle émission invalide immédiatement les anciens liens. Reset réussi :
+invalidation de toutes les sessions Portal et jetons de récupération, demande de révocation Game
+tous appareils/univers, nouvelle connexion normale sans auto-login, notification email sans mot
+de passe. Réponse de demande non énumérable. Si Game injoignable : révocation persistée/rejouée
+jusqu’à acquittement, aucune instantanéité annoncée ; valid_until/8 h depuis confirmation Portal
+jamais relancés au reset. Memberships/empires/états conservés. Fournisseur/livraison et mécanismes
+restent ouverts ; Q48/Q50/Q53/Q54 inchangées. Voir section 6 des contrats pour critères futurs.
+
 Q45 validée, non implémentée : retour lobby sans logout ; déconnexion Game d’une seule session ;
 logout Portal de la session courante et de toutes les GameSessions du compte sur cet appareil ;
 action distincte pour toutes les sessions du compte sur tous les appareils/univers. Conservation

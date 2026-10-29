@@ -11,6 +11,8 @@ Q40–Q44, ainsi que le comportement de déconnexion Q45. Regroupement par appar
 restent ouverts. Les passages ci-dessous indiquant des durées/login non choisis décrivent
 la décision de plateforme du 28/10 ; les nouvelles décisions les précisent sans choisir les
 formats, la crypto, le stockage ou les mécanismes de Q46–Q56. Aucune implémentation ajoutée.
+Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
+Q49 reste partiellement ouverte (fournisseur/livraison, vérification/changement d’email et mécanismes).
 
 ## Contexte et décision
 

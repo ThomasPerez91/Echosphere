@@ -6,7 +6,7 @@ Source : arbitrage utilisateur explicite pour poursuivre PR #6, synthétisé ci-
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) reste la décision de plateforme acceptée.
 Seules les parties précisées de [Q40–Q44](../05-project/open-questions.md) sont closes ; ces Q restent
 partiellement ouvertes. Q45 est close pour son comportement produit (section 5).
-Q16 et Q46–Q56 restent ouvertes ; regroupement technique par appareil sous Q41/Q43 non choisi.
+Q49 est partiellement arbitrée pour la récupération (section 6). Q16 et les autres Q46–Q56 restent ouvertes ; regroupement technique par appareil sous Q41/Q43 non choisi.
 Aucune route, table, dépendance, migration ou application Portal n’est livrée par ce document.
 
 ## Arbitrages validés — 2026-10-29
@@ -17,11 +17,12 @@ cookies par univers, compteurs de révision/epoch, mTLS, outbox et synchronisati
 
 | Partie close | Décision utilisateur | Reste ouvert |
 | --- | --- | --- |
-| Q40 — login et principes de récupération | MVP email/mot de passe, email vérifié avant premier handoff, récupération par jeton court/unique, hash Argon2id via bibliothèque maintenue ; global_user_id indépendant de l’email et de la méthode de login | Bibliothèque, paramètres Argon2id et politique détaillée de récupération, dont durée exacte et effets sur sessions |
+| Q40 — login et principes de récupération | MVP email/mot de passe, email vérifié avant premier handoff, récupération par jeton court/unique, hash Argon2id via bibliothèque maintenue ; global_user_id indépendant de l’email et de la méthode de login | Bibliothèque, paramètres Argon2id, mécanismes de récupération et changement d’email ; comportement et durée de récupération validés sous Q40/Q49 |
 | Q41 — durées et activité Portal | Maximum absolu 7 jours, inactivité maximum 72 h ; interaction explicite classée côté serveur seule comptabilisée, sans prolongation de l’absolu | Stockage/cookies et rotation |
 | Q42 — durée et unicité du ticket | 60 secondes, usage unique | Format/crypto, audience/nonce, liaison navigateur et mécanisme atomique de consommation |
 | Q43 — durées et activité Game | Maximum absolu 8 h, inactivité maximum 2 h, expiration anticipée possible par GameAccess ; interaction explicite classée côté serveur seule comptabilisée, sans prolongation de l’absolu | Stockage, rotation, limites de sessions simultanées et nettoyage |
 | Q44 — limites en panne et renouvellement | Droits au plus 8 h depuis confirmation Portal, non glissants ; révocation/suspension reçue appliquée immédiatement ; nouvelle confirmation/handoff valide avec Portal disponible pour renouveler | Protocole de renouvellement et synchronisation/propagation, concurrence avec révocation et mise en œuvre des portées validées Q45 |
+| Q40/Q49 — récupération | Jeton 30 min/unique contrôlé serveur, réémission invalidant les anciens ; reset réussi : invalidation Portal globale, demande de révocation Game globale, tous jetons invalidés, connexion normale et notification email, sans auto-login ; panne sans reset des 8 h | Fournisseur/email, changement d’adresse, stockage/transaction et protocoles Q53/Q54 ; MFA Q48 et anti-abus Q50 ouverts |
 | Q45 — portée des déconnexions | Retour lobby sans logout ; session Game seule, compte sur appareil courant ou tous appareils selon action explicite ; progression conservée et révocation distante persistée/rejouée avec état en attente | Regroupement appareil Q41/Q43 et protocoles Q53/Q54, sans clôture implicite |
 
 Google/OIDC pourra être ajouté plus tard comme méthode supplémentaire du même compte global,
@@ -322,9 +323,43 @@ méthode d’authentification : changer d’email ou ajouter une méthode ne cr�
 Google/OIDC pourra être ajouté ultérieurement comme méthode supplémentaire du même compte,
 sans être requis pour le MVP et sans remplacer cette identité globale.
 
-Restent ouverts : bibliothèque et paramètres Argon2id, durée exacte et politique de récupération
-(réémission, invalidation et effets sur sessions), règles de changement d’email et d’association
-d’une méthode supplémentaire. Aucun mécanisme OIDC n’est ajouté à 5C par anticipation.
+### Récupération du mot de passe — Q40/Q49 partiellement closes, 2026-10-29
+
+**Décision utilisateur explicite pour PR #6, non implémentée.** La récupération est un événement
+de sécurité fort ; son comportement ne découle pas implicitement du logout Q45.
+
+| Étape | Comportement validé |
+| --- | --- |
+| Émission du jeton | Maximum 30 minutes depuis l’émission, usage unique, expiration contrôlée côté serveur |
+| Nouvelle émission | Invalidation immédiate de tous les anciens jetons de récupération encore valides du compte ; anciennes URLs inutilisables, seul le parcours le plus récent peut aboutir |
+| Réinitialisation réussie | Invalidation de toutes les PortalSessions du compte sur tous les appareils ; demande d’invalidation de toutes ses GameSessions, tous univers/appareils ; invalidation de tous ses jetons de récupération encore existants |
+| Suite du parcours | Nouvelle connexion normale obligatoire, aucun auto-login ; notification email de modification du mot de passe, sans mot de passe dans les emails |
+| Données de partie | Memberships, empires et états gameplay conservés |
+| Game injoignable | Révocation persistée et rejouée jusqu’à acquittement, sans annoncer une déconnexion distante instantanée |
+| Demande de récupération | Réponse non énumérable ; rate limiting et autres contrôles anti-abus restent à cadrer sous Q50 |
+
+Expression de la limite validée : `recovery_expires_at <= recovery_issued_at + 30 minutes` ;
+refus dès `server_now >= recovery_expires_at`, même si le navigateur indique une autre heure.
+Les 30 minutes de récupération sont distinctes des 60 secondes du ticket de handoff.
+Émettre une nouvelle demande n’est pas une réinitialisation réussie : les effets globaux sur les
+sessions décrits ci-dessus sont attachés au succès du reset, pas à la simple demande de lien.
+
+Une GameSession non encore informée reste bornée par ses limites propres et
+`GameAccess.valid_until`, au maximum 8 h depuis la dernière confirmation Portal. Cette fenêtre
+ne recommence jamais au reset. Exemple contractuel, non testé : confirmation à 08:00 et reset
+à 15:00 pendant une panne Game donnent une borne au plus 16:00, jamais 23:00.
+La persistance/reprise de la demande de révocation est exigée ; son mécanisme Portal→Game reste
+Q53/Q54. Ne pas présenter le succès du changement de mot de passe comme preuve d’acquittement
+par tous les Game. La progression des univers/workers et les actions acceptées restent conservées
+selon le contrat Q45 ; aucune suppression de membership ou état de jeu n’est une déconnexion.
+
+La future implémentation doit démontrer l’usage unique et l’invalidation des anciens liens même
+lors d’émissions/consommations concurrentes, et la reprise des effets requis après interruption.
+Ces obligations ne choisissent ni schéma, verrou, outbox, algorithme de jeton ou protocole distant.
+Q40 et Q49 restent partiellement ouvertes : bibliothèque/paramètres Argon2id, mécanismes exacts
+et livraison email, vérification/changement d’adresse et association d’une méthode supplémentaire.
+Q48 (MFA), Q50 (anti-abus), Q53 et Q54 ne sont pas fermées par cet arbitrage.
+Aucun mécanisme OIDC n’est ajouté à 5C par anticipation.
 Le fournisseur email et ses paramètres restent Q49 ; MFA et sa récupération restent Q48 ;
 les protections anti-abus et leurs seuils restent Q50. Aucune inscription publique livrée ici.
 
@@ -368,6 +403,9 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Interface interne | Appel public, certificat invalide, service hors scope et header forgé refusés | 5C |
 | Livraison | Timeout après commit, doublons, messages désordonnés et même révision contradictoire sans double effet | 5C |
 | Compte MVP | Email non vérifié refusé au premier handoff, récupération courte consommée une seule fois, identité globale indépendante des méthodes | 5C |
+| Jeton de récupération | Refus à 30 min, après consommation et après réémission ; seule la dernière émission peut aboutir, y compris en concurrence ; heure client sans autorité | 5C |
+| Reset réussi | Toutes les sessions Portal et tous les jetons de récupération invalidés ; révocation Game tous univers/appareils demandée durablement ; nouvelle connexion sans auto-login, notification sans mot de passe ; état gameplay conservé | 5C/5D |
+| Reset et panne | Rejeu jusqu’à acquittement Game après reprise, aucune instantanéité annoncée ni remise à zéro des 8 h ; réponse de demande non énumérable | 5C/5D |
 | Limites validées | Portal : refus à 7 j ou 72 h d’inactivité ; Game : refus à 8 h, 2 h d’inactivité ou échéance d’accès antérieure ; ticket refusé à 60 s | 5C/5D |
 | Activité explicite | Chaque catégorie automatique conserve last_activity_at ; navigation/commande/réglage/actualisation volontaire le réinitialisent selon classification serveur ; timestamp client falsifié sans effet ; interaction à expiration refusée ; maxima absolus et valid_until inchangés | 5C/5D |
 | Panne et dates | Confirmation retardée, panne commencée tard et activité Game ne déplacent pas valid_until ; suspension reçue avant échéance appliquée immédiatement | 5C/5D |
@@ -387,7 +425,7 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 
 | Questions | État après arbitrage du 2026-10-29 | Travail restant |
 | --- | --- | --- |
-| Q40 | **Parties closes** : login MVP, Argon2id, email vérifié avant handoff, récupération courte/unique et identité indépendante | Bibliothèque/paramètres et protocole de récupération ; email Q49, MFA Q48 restent ouverts |
+| Q40 | **Parties closes** : login MVP, Argon2id, email vérifié avant handoff, récupération 30 min/unique, réémission et effets du reset validés, identité indépendante | Bibliothèque/paramètres et mécanismes de récupération ; email Q49, MFA Q48 restent ouverts |
 | Q41 | **Parties closes** : 7 j absolus / 72 h d’inactivité, interactions explicites classées côté serveur | Stockage/cookies et rotation |
 | Q42 | **Parties closes** : 60 s et usage unique | Format, protection contre rejeu, audience, liaison navigateur et consommation |
 | Q43 | **Parties closes** : 8 h absolues / 2 h d’inactivité et limite anticipée par GameAccess, interactions explicites classées côté serveur | Stockage, rotation et nombre de sessions |
@@ -395,7 +433,8 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Q45 | **Close — comportement produit** : retour lobby, session Game, compte sur appareil et tous appareils distincts ; portée, conservation et état en panne validés | Implémentation future ; appareil Q41/Q43 et protocoles Q53/Q54 restent ouverts |
 | Q46 | mTLS interne recommandé, alternative credential TLS | Topologie et authentification opérables choisies |
 | Q47 | Deux origines même site, cookies host-only, CSRF | Hôtes local/production et parcours testables définis |
-| Q48/Q49/Q50 | MFA, email, anti-abus | Périmètre et contrôles minimaux avant exposition décidés |
+| Q48/Q50 | MFA, anti-abus : **ouverts** | Périmètre et contrôles minimaux avant exposition décidés |
+| Q49 | **Partiellement close** : durée/réémission/reset/notification et non-énumération validés sous Q40/Q49 | Fournisseur, livraison, vérification et changement d’email ; mécanismes de récupération |
 | Q51/Q52 | Accès local versionné et bindings explicites | Permissions, transitions et règles de réactivation acceptées |
 | Q53 | Intention Portal, application Game, outbox et révisions | Propriétaires, retry/réconciliation/rétention acceptés |
 | Q54 | Fenêtre de 8 h actée sous Q44 ; **question toujours ouverte** | Transport/propagation de révocation et application concurrente à contractualiser |
@@ -404,8 +443,8 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 
 5B progresse avec les décisions ci-dessus, sans être déclarée achevée. L’activité explicite Q41/Q43 est désormais arbitrée.
 Q45 est désormais validée pour le comportement produit. Prochain arbitrage nécessaire :
-récupération de compte Q40/Q49 (durée du jeton, réémission, effets sur les sessions), puis
-changement d’email et périmètre MFA Q48. Aucune politique de récupération n’est déduite de Q45.
+changement d’email Q40/Q49 (preuve préalable, validation de la nouvelle adresse, notifications
+et effets sur les sessions), puis périmètre MFA Q48. Récupération arbitrée explicitement ci-dessus.
 Les autres propositions restent révisables, sans
 fermeture de Q46–Q56. Les bibliothèques et paramètres cryptographiques se choisissent
 avant l’implémentation dépendante, sans solution de démonstration permissive en attendant.

@@ -52,6 +52,8 @@ Les [contrats 5B](identity-contracts.md) distinguent les décisions utilisateur 
 des objets, opérations internes, erreurs et échanges encore proposés. Aucune route livrée.
 Q40–Q44 sont partiellement closes, Q45 close pour le comportement produit, Q16/Q46–Q56 restent ouvertes ; aucune validation de protocole
 ou de sécurité implémentée n’est déduite de ces arbitrages.
+Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
+Q49 reste partiellement ouverte (fournisseur/livraison, vérification/changement d’email et mécanismes).
 
 Décisions validées dans [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : Portal expose
 futurs services de compte/lobby, Game porte les commandes autoritaires et leurs projections.

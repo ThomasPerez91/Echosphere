@@ -51,8 +51,13 @@ authentifiée et idempotente. Pas de credentials de compte en Game DB.
 Ticket court/unique puis GameSession autonome, commandes client directement à Game sans appel
 Portal par commande. Panne Portal peut empêcher nouvelles entrées, pas arrêter univers/workers ou
 sessions encore valides. Décisions 5B validées le 2026-10-29 : email/mot de passe MVP, Argon2id
-via bibliothèque maintenue, email vérifié avant premier handoff, récupération courte/unique et
+via bibliothèque maintenue, email vérifié avant premier handoff, récupération 30 min/unique et
 global_user_id indépendant de l’email/méthode ; OIDC supplémentaire futur facultatif.
+Récupération Q40/Q49 : nouvelle émission invalide tous les anciens liens ; reset réussi invalide
+toutes les PortalSessions et tous les jetons, demande la révocation Game tous appareils/univers,
+impose une nouvelle connexion sans auto-login et notifie par email sans mot de passe. Demande non
+énumérable ; révocation persistée/rejouée jusqu’à acquittement, borne 8 h jamais relancée au reset.
+Memberships/empires/états conservés ; Q40/Q49 partiellement ouvertes, Q48/Q50/Q53/Q54 non fermées.
 Portal : 7 j absolus/72 h d’inactivité ; Game : 8 h absolues/2 h d’inactivité ; ticket : 60 s/unique.
 Inactivité réinitialisée uniquement par interaction explicite classée côté serveur ; trafic
 automatique/onglet ouvert exclus, timestamp navigateur non autoritaire, maxima absolus inchangés.
@@ -83,8 +88,8 @@ Le 2026-10-29, l’utilisateur autorise le prochain lot : préparation 5B sur
 work/step-5b-identity-contracts depuis master synchronisée, PR #6 brouillon non fusionnée.
 Les [contrats](docs/03-technical/identity-contracts.md) distinguent désormais les décisions
 utilisateur ci-dessus des mécanismes encore proposés ; aucun compte/Portal/API livré.
-Activité Q41/Q43 et comportement Q45 arbitrés ; prochain arbitrage : récupération Q40/Q49
-(durée du jeton, réémission, effets sur sessions), puis changement d’email et MFA Q48.
+Activité Q41/Q43, comportement Q45 et récupération Q40/Q49 arbitrés ; prochain arbitrage :
+changement d’email (preuve, vérification, notifications et effets sur sessions), puis MFA Q48.
 Le lot reste 5B ; sa rédaction ne le déclare pas terminé et 5C/5D restent des lots séparés.
 Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation
 compte/lobby selon cadrage, 5D API Colony sécurisée/UI réelle. Ne pas commencer Portal complet ou

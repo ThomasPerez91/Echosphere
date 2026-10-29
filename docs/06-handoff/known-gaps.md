@@ -7,6 +7,8 @@ Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progre
 limites de sessions/ticket et fenêtre non glissante de huit heures validés sur arbitrage utilisateur
 pour PR #6 ; seules ces parties de Q40–Q44 sont closes. Activité explicite validée Q41/Q43, comportement de déconnexion validé Q45 ; regroupement appareil, stockage, transport
 interne, clés, propagation et protections restent à arbitrer. Q46–Q56 demeurent ouvertes.
+Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
+Q49 reste partiellement ouverte (fournisseur/livraison, vérification/changement d’email et mécanismes).
 
 ## Accès incomplet aux sources
 
