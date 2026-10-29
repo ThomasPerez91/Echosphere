@@ -93,6 +93,14 @@ jusqu’à acquittement, aucune instantanéité annoncée ; valid_until/8 h depu
 jamais relancés au reset. Memberships/empires/états conservés. Fournisseur/livraison et mécanismes
 restent ouverts ; Q48/Q50/Q53/Q54 inchangées. Voir section 6 des contrats pour critères futurs.
 
+Changement d’email Q40/Q49 validé, non implémenté : session Portal valide, mot de passe actuel
+ressaisi et confirmations ancienne/nouvelle adresses ; pending jusqu’à validation effective des deux.
+Ancienne adresse inaccessible : aucun bypass par mot de passe seul, blocage sans récupération
+indépendante déjà établie et disponible. MFA future conditionnelle sous Q48, aucune implémentation
+ni procédure support implicite. Après succès : notifier les deux adresses, nouvelle authentification,
+identité et états conservés. Durées/cycle des confirmations et portée exacte des sessions restent
+ouverts ; ne pas recopier automatiquement les effets du reset. Canonique : section 6 des contrats.
+
 Q45 validée, non implémentée : retour lobby sans logout ; déconnexion Game d’une seule session ;
 logout Portal de la session courante et de toutes les GameSessions du compte sur cet appareil ;
 action distincte pour toutes les sessions du compte sur tous les appareils/univers. Conservation

@@ -5,12 +5,35 @@ Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/R
 ## Lot courant — préparation 5B : contrats identité / Portal-Game
 
 **Statut : décisions utilisateur partielles Q40–Q44 intégrées ; mécanismes encore proposés,
-activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 partiellement validée, changement d’email à examiner, 5B non déclarée achevée.**
+activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 partiellement validée, flux email sans MFA partiellement validé (durées/cycle et portée des sessions ouverts), 5B non déclarée achevée.**
 Après la mission de reprise en lecture seule, l’utilisateur a autorisé le prochain lot sur une
 nouvelle branche. Interprétation appliquée selon roadmap : cadrage 5B, sans implémentation 5C/5D.
 Environnement : Codex local, Linux WSL2. Aucune délégation ni identité d’agent précédent supposée.
 
-### Récupération Q40/Q49 — 2026-10-29
+### Changement d’email Q40/Q49 — 2026-10-29
+
+Source : arbitrage explicite utilisateur pour PR #6, synthèse unique des deux réponses identiques.
+Non implémenté : session Portal valide, mot de passe actuel ressaisi, confirmations ancienne et
+nouvelle adresses ; nouvelle pending jusqu’aux deux confirmations et validation effective. Succès :
+notifications aux deux adresses, nouvelle authentification, global_user_id et états de jeu conservés.
+Ancienne adresse inaccessible : blocage sans récupération indépendante déjà établie et disponible,
+pas de bypass mot de passe seul. Variante MFA conditionnelle à Q48 validée/implémentée, politique
+exacte ouverte ; aucun MFA/code de secours/support inventé. Durées/cycle des confirmations et
+portée exacte d’invalidation des sessions toujours ouvertes ; aucune autre Qxx fermée par implication.
+
+Reprise : fetch, branche work/step-5b-identity-contracts propre/synchronisée sur
+38a2b6ac4f79fb66dc165a843c95c8761eb83b17, PR #6 OPEN/brouillon, master 8214e0b inchangée.
+CI de cette tête vérifiée : push 40896112238 et PR 40896122379, backend/frontend/compose-smoke verts.
+Fichiers : contrats, Qxx, context/progress, sécurité, roadmap, index des décisions et références
+API/ADR 0008/index/passation/lacunes. Critères futurs : pas de bascule avec une seule confirmation,
+refus sans preuve indépendante, notifications/réauthentification et identité conservée.
+Checks locaux : documentation/liens, diff, Q01–Q56 uniques, seules lignes Q40/Q49 modifiées ;
+Markdown uniquement. Aucune suite backend/frontend/Compose ou Ruff relancée localement ; aucun
+comportement futur testé. Après publication vérifier SHA et CI propres, résultats consignés dans PR.
+Prochain arbitrage : durées/cycle des confirmations et portée des sessions pour le changement
+réussi, puis MFA Q48. Aucun merge de PR #6, démarrage de 5C ou implémentation.
+
+### Récupération Q40/Q49 — 2026-10-29 (checkpoint antérieur au changement d’email)
 
 Source : arbitrage explicite utilisateur pour PR #6, synthétisé sans transcript. Décision validée,
 non implémentée : jeton 30 min maximum depuis émission, unique, expiration serveur ; réémission
@@ -31,8 +54,8 @@ Checks locaux : documentation/liens, diff et périmètre Markdown, Q01–Q56 san
 lignes Q40/Q49 modifiées. Suites fonctionnelles backend/frontend/Compose et Ruff non relancées
 localement pour ce diff documentaire. Relire SHA distant/CI de la nouvelle tête après push ;
 les résultats du commit précédent ne valent pas ceux du nouveau. Résultats publiés dans PR après observation.
-Prochain arbitrage : changement d’email Q40/Q49 (preuve préalable, vérification, notifications,
-effets sur sessions), puis périmètre MFA Q48. Aucun merge de PR #6 ni démarrage de 5C.
+Prochain arbitrage à ce checkpoint : changement d’email, depuis partiellement validé ci-dessus ;
+durées/cycle et portée des sessions restent ouverts, puis MFA Q48. Aucun merge ni démarrage de 5C.
 
 ### Déconnexions Q45 — 2026-10-29 (checkpoint antérieur à la récupération)
 

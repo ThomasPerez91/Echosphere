@@ -58,6 +58,11 @@ toutes les PortalSessions et tous les jetons, demande la révocation Game tous a
 impose une nouvelle connexion sans auto-login et notifie par email sans mot de passe. Demande non
 énumérable ; révocation persistée/rejouée jusqu’à acquittement, borne 8 h jamais relancée au reset.
 Memberships/empires/états conservés ; Q40/Q49 partiellement ouvertes, Q48/Q50/Q53/Q54 non fermées.
+Changement d’email sans MFA : session Portal valide + mot de passe actuel ressaisi + confirmations
+ancienne/nouvelle adresses ; pending avant double validation. Sans accès à l’ancienne, bloqué tant
+qu’aucune récupération indépendante n’est disponible ; aucun bypass par mot de passe seul.
+Succès : notification aux deux adresses et nouvelle authentification, identité/états conservés.
+Durées/cycle des confirmations et portée des sessions ouverts ; variante MFA conditionnelle sous Q48.
 Portal : 7 j absolus/72 h d’inactivité ; Game : 8 h absolues/2 h d’inactivité ; ticket : 60 s/unique.
 Inactivité réinitialisée uniquement par interaction explicite classée côté serveur ; trafic
 automatique/onglet ouvert exclus, timestamp navigateur non autoritaire, maxima absolus inchangés.
@@ -89,7 +94,8 @@ work/step-5b-identity-contracts depuis master synchronisée, PR #6 brouillon non
 Les [contrats](docs/03-technical/identity-contracts.md) distinguent désormais les décisions
 utilisateur ci-dessus des mécanismes encore proposés ; aucun compte/Portal/API livré.
 Activité Q41/Q43, comportement Q45 et récupération Q40/Q49 arbitrés ; prochain arbitrage :
-changement d’email (preuve, vérification, notifications et effets sur sessions), puis MFA Q48.
+compléments du changement d’email (durées/cycle des confirmations et portée d’invalidation des
+sessions après succès), puis MFA Q48. Flux normal sans MFA validé, aucune récupération indépendante livrée.
 Le lot reste 5B ; sa rédaction ne le déclare pas terminé et 5C/5D restent des lots séparés.
 Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation
 compte/lobby selon cadrage, 5D API Colony sécurisée/UI réelle. Ne pas commencer Portal complet ou

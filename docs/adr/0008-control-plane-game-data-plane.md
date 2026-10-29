@@ -12,7 +12,9 @@ restent ouverts. Les passages ci-dessous indiquant des durées/login non choisis
 la décision de plateforme du 28/10 ; les nouvelles décisions les précisent sans choisir les
 formats, la crypto, le stockage ou les mécanismes de Q46–Q56. Aucune implémentation ajoutée.
 Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
-Q49 reste partiellement ouverte (fournisseur/livraison, vérification/changement d’email et mécanismes).
+Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
+Q49 reste partiellement ouverte (fournisseur/livraison, durées/cycle des confirmations, portée des sessions
+et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
 
 ## Contexte et décision
 

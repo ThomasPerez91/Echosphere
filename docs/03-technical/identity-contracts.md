@@ -6,7 +6,7 @@ Source : arbitrage utilisateur explicite pour poursuivre PR #6, synthétisé ci-
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) reste la décision de plateforme acceptée.
 Seules les parties précisées de [Q40–Q44](../05-project/open-questions.md) sont closes ; ces Q restent
 partiellement ouvertes. Q45 est close pour son comportement produit (section 5).
-Q49 est partiellement arbitrée pour la récupération (section 6). Q16 et les autres Q46–Q56 restent ouvertes ; regroupement technique par appareil sous Q41/Q43 non choisi.
+Q49 est partiellement arbitrée pour la récupération et le changement d’email (section 6). Q16 et les autres Q46–Q56 restent ouvertes ; regroupement technique par appareil sous Q41/Q43 non choisi.
 Aucune route, table, dépendance, migration ou application Portal n’est livrée par ce document.
 
 ## Arbitrages validés — 2026-10-29
@@ -23,6 +23,7 @@ cookies par univers, compteurs de révision/epoch, mTLS, outbox et synchronisati
 | Q43 — durées et activité Game | Maximum absolu 8 h, inactivité maximum 2 h, expiration anticipée possible par GameAccess ; interaction explicite classée côté serveur seule comptabilisée, sans prolongation de l’absolu | Stockage, rotation, limites de sessions simultanées et nettoyage |
 | Q44 — limites en panne et renouvellement | Droits au plus 8 h depuis confirmation Portal, non glissants ; révocation/suspension reçue appliquée immédiatement ; nouvelle confirmation/handoff valide avec Portal disponible pour renouveler | Protocole de renouvellement et synchronisation/propagation, concurrence avec révocation et mise en œuvre des portées validées Q45 |
 | Q40/Q49 — récupération | Jeton 30 min/unique contrôlé serveur, réémission invalidant les anciens ; reset réussi : invalidation Portal globale, demande de révocation Game globale, tous jetons invalidés, connexion normale et notification email, sans auto-login ; panne sans reset des 8 h | Fournisseur/email, changement d’adresse, stockage/transaction et protocoles Q53/Q54 ; MFA Q48 et anti-abus Q50 ouverts |
+| Q40/Q49 — changement d’email | Sans MFA : session Portal valide, mot de passe actuel ressaisi, confirmations ancienne et nouvelle adresses ; pending avant validation ; notifications aux deux adresses et nouvelle authentification après succès ; identité/états conservés | Durées et cycle des confirmations, portée exacte d’invalidation des sessions ; récupération indépendante et variante MFA sous Q48 non livrées |
 | Q45 — portée des déconnexions | Retour lobby sans logout ; session Game seule, compte sur appareil courant ou tous appareils selon action explicite ; progression conservée et révocation distante persistée/rejouée avec état en attente | Regroupement appareil Q41/Q43 et protocoles Q53/Q54, sans clôture implicite |
 
 Google/OIDC pourra être ajouté plus tard comme méthode supplémentaire du même compte global,
@@ -357,7 +358,7 @@ La future implémentation doit démontrer l’usage unique et l’invalidation d
 lors d’émissions/consommations concurrentes, et la reprise des effets requis après interruption.
 Ces obligations ne choisissent ni schéma, verrou, outbox, algorithme de jeton ou protocole distant.
 Q40 et Q49 restent partiellement ouvertes : bibliothèque/paramètres Argon2id, mécanismes exacts
-et livraison email, vérification/changement d’adresse et association d’une méthode supplémentaire.
+et livraison email, détails de vérification/changement d’adresse et association d’une méthode supplémentaire.
 Q48 (MFA), Q50 (anti-abus), Q53 et Q54 ne sont pas fermées par cet arbitrage.
 Aucun mécanisme OIDC n’est ajouté à 5C par anticipation.
 Le fournisseur email et ses paramètres restent Q49 ; MFA et sa récupération restent Q48 ;
@@ -368,6 +369,41 @@ lot explicite selon le mode d’exposition, sans prétendre qu’elle est livré
 sur login/récupération/émission de ticket, réponses non énumérables et métriques d’abus ; seuils
 et éventuel challenge à mesurer/décider, aucun CAPTCHA/WAF/Redis ajouté par principe.
 Un outil email local de test ne devient ni faux utilisateur ni bypass de la vérification en production.
+
+### Changement d’adresse email — Q40/Q49 partiellement closes, 2026-10-29
+
+**Décision utilisateur explicite pour PR #6, non implémentée.** Flux normal sans MFA :
+
+1. Session Portal valide requise.
+2. Ressaisie du mot de passe actuel.
+3. Confirmation du changement depuis l’adresse actuellement enregistrée.
+4. Confirmation de la nouvelle adresse.
+
+La nouvelle adresse reste `pending` tant que les deux confirmations requises ne sont pas obtenues.
+Elle ne devient jamais l’adresse du compte avant validation effective. Une confirmation isolée,
+le seul mot de passe ou la simple saisie d’une adresse ne suffisent pas à basculer le compte.
+Après succès : notifier ancienne et nouvelle adresses ; événement sensible exigeant une nouvelle
+authentification. `global_user_id` reste inchangé ; memberships, empires et états gameplay conservés.
+
+**Ancienne adresse inaccessible :** aucun contournement par le mot de passe seul. Un flux distinct
+de récupération de compte doit utiliser une preuve indépendante déjà établie : MFA, codes de
+récupération ou éventuelle procédure de récupération/support si elle est décidée. Ces exemples
+ne livrent ni n’autorisent un mécanisme. Sans mécanisme indépendant disponible dans le MVP,
+le changement d’adresse reste bloqué. Le reset du mot de passe ne constitue pas ce contournement.
+
+**Évolution conditionnelle, Q48 toujours ouverte :** si MFA est validée et implémentée, une
+authentification MFA forte pourra remplacer la confirmation obligatoire de l’ancienne adresse.
+Ce parcours exigera la réauthentification/mot de passe selon le futur contrat, MFA obligatoire,
+confirmation de la nouvelle adresse et au minimum notification à l’ancienne avec moyen de signaler
+une opération non reconnue. Politique exacte à finaliser sous Q48 ; aucun fournisseur, facteur,
+code de secours, parcours support ou moyen de signalement choisi ici.
+
+**Restent à arbitrer avant finalisation du flux :** durée des confirmations et de la demande pending,
+réémission/invalidation des anciennes demandes, portée exacte d’invalidation des sessions Portal/Game
+après succès. La nouvelle authentification est validée, mais ne choisit pas entre appareil courant
+et tous appareils ; cohérence requise avec Q45 et la récupération, sans recopier leurs effets par
+implication. Les 30 minutes du reset ne fixent pas la durée de ces confirmations. Mécanismes et
+concurrence avec reset/autres demandes restent à contractualiser ; Q48/Q50/Q53/Q54 non fermées.
 
 ## 7. Erreurs, observabilité et isolation proposées
 
@@ -406,6 +442,8 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Jeton de récupération | Refus à 30 min, après consommation et après réémission ; seule la dernière émission peut aboutir, y compris en concurrence ; heure client sans autorité | 5C |
 | Reset réussi | Toutes les sessions Portal et tous les jetons de récupération invalidés ; révocation Game tous univers/appareils demandée durablement ; nouvelle connexion sans auto-login, notification sans mot de passe ; état gameplay conservé | 5C/5D |
 | Reset et panne | Rejeu jusqu’à acquittement Game après reprise, aucune instantanéité annoncée ni remise à zéro des 8 h ; réponse de demande non énumérable | 5C/5D |
+| Changement d’email sans MFA | Session Portal valide et mot de passe actuel requis ; aucune bascule avec une seule confirmation, pending jusqu’aux deux confirmations ; notifications aux deux adresses, nouvelle authentification, identité/états conservés | 5C |
+| Ancienne adresse inaccessible | Mot de passe seul et reset ne contournent pas le flux ; refus sans preuve indépendante déjà établie et mécanisme disponible ; aucune MFA/support fictive | 5C |
 | Limites validées | Portal : refus à 7 j ou 72 h d’inactivité ; Game : refus à 8 h, 2 h d’inactivité ou échéance d’accès antérieure ; ticket refusé à 60 s | 5C/5D |
 | Activité explicite | Chaque catégorie automatique conserve last_activity_at ; navigation/commande/réglage/actualisation volontaire le réinitialisent selon classification serveur ; timestamp client falsifié sans effet ; interaction à expiration refusée ; maxima absolus et valid_until inchangés | 5C/5D |
 | Panne et dates | Confirmation retardée, panne commencée tard et activité Game ne déplacent pas valid_until ; suspension reçue avant échéance appliquée immédiatement | 5C/5D |
@@ -434,7 +472,7 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Q46 | mTLS interne recommandé, alternative credential TLS | Topologie et authentification opérables choisies |
 | Q47 | Deux origines même site, cookies host-only, CSRF | Hôtes local/production et parcours testables définis |
 | Q48/Q50 | MFA, anti-abus : **ouverts** | Périmètre et contrôles minimaux avant exposition décidés |
-| Q49 | **Partiellement close** : durée/réémission/reset/notification et non-énumération validés sous Q40/Q49 | Fournisseur, livraison, vérification et changement d’email ; mécanismes de récupération |
+| Q49 | **Partiellement close** : récupération et flux email sans MFA, pending/double confirmation, notifications/réauthentification validés | Fournisseur/livraison, durées/cycle des confirmations, portée des sessions et mécanismes ; MFA Q48 ouverte |
 | Q51/Q52 | Accès local versionné et bindings explicites | Permissions, transitions et règles de réactivation acceptées |
 | Q53 | Intention Portal, application Game, outbox et révisions | Propriétaires, retry/réconciliation/rétention acceptés |
 | Q54 | Fenêtre de 8 h actée sous Q44 ; **question toujours ouverte** | Transport/propagation de révocation et application concurrente à contractualiser |
@@ -443,8 +481,8 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 
 5B progresse avec les décisions ci-dessus, sans être déclarée achevée. L’activité explicite Q41/Q43 est désormais arbitrée.
 Q45 est désormais validée pour le comportement produit. Prochain arbitrage nécessaire :
-changement d’email Q40/Q49 (preuve préalable, validation de la nouvelle adresse, notifications
-et effets sur les sessions), puis périmètre MFA Q48. Récupération arbitrée explicitement ci-dessus.
+compléter Q40/Q49 sur les durées/cycle des confirmations email et la portée d’invalidation des
+sessions après changement réussi, puis périmètre MFA Q48. Le flux normal est validé ci-dessus.
 Les autres propositions restent révisables, sans
 fermeture de Q46–Q56. Les bibliothèques et paramètres cryptographiques se choisissent
 avant l’implémentation dépendante, sans solution de démonstration permissive en attendant.
