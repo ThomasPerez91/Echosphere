@@ -70,8 +70,15 @@ Game injoignable : intention persistée/rejouée, fenêtre 8 h inchangée. Méca
 Q48 partielle : MFA facultative joueurs MVP, activable depuis paramètres puis exigée pour le compte ;
 obligatoire avant fonctions privilégiées plateforme, sans exemption interne ni assimilation aux rôles
 Empire. Comptes équipés : step-up avant email, désactivation/remplacement MFA et moyens de récupération.
-Logout tous appareils seulement candidat au step-up. Identité/gameplay inchangés ; facteur/nombre,
-secrets, récupération/codes, remplacement et mécanismes de step-up ouverts, non implémentés.
+Logout tous appareils seulement candidat au step-up. MVP : TOTP et WebAuthn/passkeys, un secret TOTP
+actif maximum et jusqu’à 5 credentials WebAuthn nommables ; remplacement TOTP sans accumulation.
+Privilèges : au moins un WebAuthn et preuve WebAuthn pour opérations sensibles ; prévoir deux en
+production privilégiée, TOTP complémentaire seulement. Récupération : autre facteur enregistré ou
+codes uniques générés à activation/régénération invalidant anciens, vérifiables sans clair exploitable,
+jamais journalisés. Perte totale : support renforcé à définir, aucun bypass email + mot de passe.
+Secours privilégié n’accorde pas les fonctions admin : réenregistrement WebAuthn + procédure requise.
+Changements audités/step-up avec facteur existant disponible, identité/gameplay inchangés. Crypto/RP,
+stockage TOTP, format/nombre des codes, support, effets sur sessions et step-up détaillé restent ouverts.
 Portal : 7 j absolus/72 h d’inactivité ; Game : 8 h absolues/2 h d’inactivité ; ticket : 60 s/unique.
 Inactivité réinitialisée uniquement par interaction explicite classée côté serveur ; trafic
 automatique/onglet ouvert exclus, timestamp navigateur non autoritaire, maxima absolus inchangés.
@@ -103,7 +110,8 @@ work/step-5b-identity-contracts depuis master synchronisée, PR #6 brouillon non
 Les [contrats](docs/03-technical/identity-contracts.md) distinguent désormais les décisions
 utilisateur ci-dessus des mécanismes encore proposés ; aucun compte/Portal/API livré.
 Activité Q41/Q43, comportement Q45 et récupération Q40/Q49 arbitrés ; prochain arbitrage :
-facteur MFA et récupération Q48 ; périmètre MVP désormais validé. Flux email sans MFA,
+effets des changements/récupérations MFA sur les sessions et fraîcheur/portée step-up Q48 ;
+facteurs/limites/principes de récupération désormais validés, non implémentés. Flux email sans MFA,
 échéance/remplacement et révocation globale validés ; aucune récupération indépendante livrée.
 Le lot reste 5B ; sa rédaction ne le déclare pas terminé et 5C/5D restent des lots séparés.
 Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation

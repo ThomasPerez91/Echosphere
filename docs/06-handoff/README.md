@@ -31,7 +31,9 @@ Flux email sans MFA également validé : double confirmation/pending, notificati
 Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
 Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
 Q48 partiellement arbitrée : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme,
-step-up des comptes équipés sur actions sensibles. Facteur/récupération et mécanismes restent ouverts.
+step-up des comptes équipés sur actions sensibles. TOTP/WebAuthn, limites et principes de secours
+validés ; WebAuthn obligatoire pour privilèges. Crypto/RP, stockage TOTP, codes détaillés, support,
+effets sur sessions et mécanismes de step-up ouverts ; aucun mécanisme implémenté.
 La recette locale et ses limites figurent dans [progress](../../progress.md).
 
 Ce dossier indexe les références canoniques ; il ne remplace ni game_data, ni les ADR, ni le registre

@@ -43,7 +43,8 @@ Q45 validée pour les déconnexions ; récupération Q40/Q49 partiellement arbit
 effets du reset), flux email sans MFA validé (double confirmation/pending et réauthentification).
 Complément email validé : demande unique 1 h, remplacement complet, révocation globale après succès.
 Q48 partielle : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme ; step-up des
-comptes équipés sur actions sensibles. Prochain arbitrage : facteur MFA et récupération.
+comptes équipés sur actions sensibles. TOTP/WebAuthn, limites et principes de secours validés.
+Prochain arbitrage : effets MFA sur sessions et fraîcheur/portée du step-up ; support/crypto ouverts.
 5B reste en cours : mécanismes encore ouverts, Q46–Q56 non fermées. Aucune implémentation Portal/session ou API Colony livrée. 5C puis 5D
 dépendent des contrats acceptés et d’une autorisation de leur lot.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :

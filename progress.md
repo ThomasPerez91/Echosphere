@@ -5,12 +5,37 @@ Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/R
 ## Lot courant — préparation 5B : contrats identité / Portal-Game
 
 **Statut : décisions utilisateur partielles Q40–Q44 intégrées ; mécanismes encore proposés,
-activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 partiellement validée, flux email sans MFA, échéance/remplacement et révocation globale validés (mécanismes ouverts), périmètre MFA Q48 validé (facteur/récupération ouverts), 5B non déclarée achevée.**
+activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 partiellement validée, flux email sans MFA, échéance/remplacement et révocation globale validés (mécanismes ouverts), périmètre/facteurs/limites et récupération MFA Q48 validés (contrats détaillés ouverts), 5B non déclarée achevée.**
 Après la mission de reprise en lecture seule, l’utilisateur a autorisé le prochain lot sur une
 nouvelle branche. Interprétation appliquée selon roadmap : cadrage 5B, sans implémentation 5C/5D.
 Environnement : Codex local, Linux WSL2. Aucune délégation ni identité d’agent précédent supposée.
 
-### Périmètre MFA Q48 — 2026-10-29
+### Facteurs et récupération MFA Q48 — 2026-10-29
+
+Source : arbitrage explicite utilisateur pour PR #6. Non implémenté : TOTP/WebAuthn MVP, joueur
+choisit l’un ou les deux ; un seul secret TOTP actif, remplacement sans accumulation ; jusqu’à
+5 credentials WebAuthn nommables. Privilèges plateforme : WebAuthn obligatoire et preuve WebAuthn
+sur opérations sensibles, TOTP complémentaire seulement ; prévoir deux WebAuthn en production.
+Secours : autre facteur enregistré et codes uniques, générés à activation, régénération invalidant
+anciens ; robustes, vérification sans secret exploitable stocké en clair, jamais journalisés.
+Perte totale : support renforcé à définir, aucun bypass email/mot de passe. Secours privilégié :
+état de récupération sans droits admin, WebAuthn réenregistré + procédure privilégiée requis.
+Changements audités et step-up via facteur disponible, identité/gameplay conservés. Q48 reste
+partiellement ouverte : crypto/RP, stockage TOTP, format/nombre des codes, support final, effets
+sur sessions et step-up détaillé. Aucune autre Q fermée ni mécanisme implémenté.
+
+Reprise : fetch, work/step-5b-identity-contracts propre/synchronisée sur
+830f3e41e04daa2a8723707bd9f79555438b1c1f ; PR #6 OPEN/brouillon, master 8214e0b inchangée.
+CI de cette tête vérifiée : push 40918608285 et PR 40918613929, backend/frontend/compose-smoke verts.
+Fichiers : contrats, Qxx, context/progress, sécurité, roadmap, décisions, références API/ADR/index/
+passation/lacunes. Critères futurs : limites en concurrence, secours uniques/régénération, refus
+privilégié et audit. Aucun comportement futur testé. Checks locaux : docs/liens, diff, Markdown,
+Q01–Q56 uniques et seule ligne Q48 modifiée. Suites backend/frontend/Compose et Ruff non relancées
+localement ; observer nouvelle CI après publication et consigner résultats dans PR.
+Prochain arbitrage : effets des changements/récupérations MFA sur sessions et fraîcheur/portée
+step-up ; support final reste à spécifier sans bypass. Aucun merge ni démarrage de 5C.
+
+### Périmètre MFA Q48 — 2026-10-29 (checkpoint antérieur aux facteurs)
 
 Source : arbitrage explicite utilisateur pour PR #6. Q48 partiellement close, non implémentée :
 MFA facultative joueurs MVP via paramètres, exigence normale après activation ; obligatoire avant
@@ -28,7 +53,8 @@ API/ADR 0008/index/passation/lacunes. Critères futurs complétés pour périmè
 et step-up ; aucun comportement futur exécuté/testé. Checks locaux : docs/liens, diff, périmètre
 Markdown et Q01–Q56 uniques, seule ligne Q48 modifiée. Suites backend/frontend/Compose et Ruff
 non relancées localement pour ce diff documentaire ; observer CI du nouveau commit après push,
-résultats consignés dans PR. Prochain arbitrage : facteur MFA et récupération Q48.
+résultats consignés dans PR. Prochain arbitrage à ce checkpoint : facteurs/récupération,
+depuis partiellement validés ci-dessus.
 Aucune implémentation, console admin ou MFA anticipée, aucun merge PR #6 ni passage à 5C.
 
 ### Complément email : échéance, remplacement et sessions — 2026-10-29 (checkpoint antérieur à Q48)

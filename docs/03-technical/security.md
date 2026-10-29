@@ -111,8 +111,16 @@ privilégiées plateforme/administration/opération, sans exemption interne ; r�
 Pour comptes équipés : step-up avant email, désactivation/remplacement MFA et génération/remplacement
 des moyens de récupération ; logout tous appareils seulement candidat. Sans MFA, preuves Q40/Q49
 inchangées. Identité/memberships/empires/univers/gameplay conservés lors des changements MFA.
-Facteur, nombre, secrets, récupération/codes, remplacement/réinitialisation et mécanismes step-up
-restent ouverts ; aucune récupération indépendante ou console d’administration livrée.
+Facteurs MVP validés : un secret TOTP actif maximum, jusqu’à 5 credentials WebAuthn nommables,
+TOTP/WebAuthn ou les deux pour joueurs. Privilégiés : WebAuthn obligatoire et exigé sur opérations
+admin sensibles, TOTP seul insuffisant ; prévoir deux authentificateurs WebAuthn en production.
+Récupération joueur par autre facteur enregistré ou codes uniques ; génération à activation,
+régénération invalide tous anciens codes ; codes robustes, vérification sans clair exploitable stocké,
+aucune journalisation. Perte totale sans bypass email/mot de passe, support renforcé à définir.
+État de récupération privilégié sans retour automatique des droits admin : WebAuthn réenregistré
+et procédure privilégiée tous deux requis. Changements de facteurs audités, step-up avec facteur
+existant disponible. Crypto/RP, stockage TOTP, format/nombre des codes, support final, effets sur
+sessions et mécanismes précis de step-up restent ouverts ; aucun service ni console livrés.
 
 Q45 validée, non implémentée : retour lobby sans logout ; déconnexion Game d’une seule session ;
 logout Portal de la session courante et de toutes les GameSessions du compte sur cet appareil ;

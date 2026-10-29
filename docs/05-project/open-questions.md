@@ -137,7 +137,7 @@ sans validation implicite de leurs mécanismes ; regroupement appareil Q41/Q43 t
 | Q45 | Close — comportement produit : retour lobby sans logout ; déconnexion Game limitée à sa session ; compte sur appareil courant ; action distincte tous appareils ; progression conservée, révocation persistée/rejouée et état en attente | Validé utilisateur 2026-10-29, non implémenté ; appareil Q41/Q43 et protocoles Q53/Q54 ouverts, [contrats](../03-technical/identity-contracts.md) |
 | Q46 | Auth service-to-service et exposition réseau de l’interface interne | 5B, aucun mTLS/signature/credential choisi |
 | Q47 | CSRF, origines, cookies et politique CORS liée au découpage | 5B/5C/5D, sécurité |
-| Q48 | Partiellement close : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme sans exemption interne ; step-up des comptes équipés sur actions sensibles et identité/gameplay conservés. Restent facteur/nombre, stockage, récupération/codes, remplacement/réinitialisation et mécanismes précis de step-up | Cadrage 5B, [contrats](../03-technical/identity-contracts.md), aucune implémentation |
+| Q48 | Partiellement close : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme sans exemption interne ; step-up des comptes équipés sur actions sensibles et identité/gameplay conservés. TOTP actif unique et jusqu’à 5 WebAuthn nommables, WebAuthn privilégié obligatoire, secours/récupération et audit validés. Restent crypto/RP, stockage TOTP, format/nombre des codes, support final, effets sur sessions et step-up | Cadrage 5B, [contrats](../03-technical/identity-contracts.md), aucune implémentation |
 | Q49 | Partiellement close : récupération 30 min/unique, invalidation des anciens liens, effets globaux du reset, notification email et non-énumération validés ; changement sans MFA avec double confirmation/pending, notifications et réauthentification validé ; demande unique 1 h, remplacement complet et révocation globale validés ; restent fournisseur/livraison et mécanismes | 5B/5C |
 | Q50 | Anti-bot/CAPTCHA, limites IP/compte et protections brute force | 5B/5C, pas de produit choisi |
 | Q51 | Modèle exact rôles/permissions et contexte empire | 5B, sans fermer Q21 |
@@ -259,9 +259,25 @@ remplacement de moyens de récupération MFA. « Déconnecter tous les appareils
 éventuel ; catalogue exact à préciser avec les API. Sans MFA, preuves Q40/Q49 toujours applicables.
 Activation/désactivation/remplacement ne changent ni global_user_id, ni memberships/empires/univers,
 ni état gameplay. Aucun code, facteur ou moyen de récupération livré.
-Restent ouverts : facteur, nombre autorisé, secrets, récupération en cas de perte, codes éventuels,
-remplacement/réinitialisation et mécanismes précis de step-up. Aucune autre Qxx fermée par implication.
-Prochain arbitrage nécessaire : facteur MFA et récupération Q48, puis détails associés ; pas de 5C.
+**Complément utilisateur validé — facteurs et récupération, 2026-10-29 :** MVP TOTP et WebAuthn/
+passkeys ; joueurs TOTP, WebAuthn ou les deux. Maximum un secret TOTP actif par compte, remplacement
+sans accumulation ; jusqu’à 5 credentials WebAuthn, chacun nommable. Privilèges plateforme : au
+moins un WebAuthn, TOTP seul insuffisant ; opérations admin sensibles avec preuve WebAuthn valide.
+Prévoir deux authentificateurs WebAuthn pour les comptes privilégiés utilisés en production ;
+TOTP possible en complément seulement. Rôles gameplay Empire distincts.
+Récupération joueur : autre authentificateur déjà enregistré et codes de secours uniques, générés
+à activation, régénérables explicitement avec invalidation de tous les anciens. Codes aléatoires
+robustes, vérifiables sans secret exploitable stocké en clair, jamais journalisés. Utilisation/
+régénération sensibles. Perte totale : aucune récupération automatique email + mot de passe ;
+procédure support renforcée distincte à définir. Compte privilégié : secours peut ouvrir un état de
+récupération sans droits admin ; réenregistrement WebAuthn valide et procédure privilégiée requis
+avant restitution des fonctions, jamais bascule TOTP seule.
+Ajout/suppression/remplacement audités, preuve renforcée par facteur existant si disponible ;
+identité/memberships/empires/univers/gameplay conservés. Non implémenté, Q48 partiellement close.
+Restent crypto/RP WebAuthn, stockage TOTP, format/nombre des codes, procédures support finales,
+effets sur sessions et mécanismes de step-up/remplacement. Aucune autre Qxx fermée par implication.
+Prochain arbitrage nécessaire : effets des changements/récupérations MFA sur les sessions et
+fraîcheur/portée du step-up ; pas de 5C.
 
 12 secteurs/2 slots orbitaux concernent seulement le départ de référence v0.1 ; distribution et
 capacités variables futures restent Q04/Q06. Q39 reste ouverte. Q01–Q39 ne sont ni supprimées,

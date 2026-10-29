@@ -6,7 +6,7 @@ Source : arbitrage utilisateur explicite pour poursuivre PR #6, synthétisé ci-
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) reste la décision de plateforme acceptée.
 Seules les parties précisées de [Q40–Q44](../05-project/open-questions.md) sont closes ; ces Q restent
 partiellement ouvertes. Q45 est close pour son comportement produit (section 5).
-Q48 est partiellement arbitrée pour la place de la MFA dans le MVP ; Q49 pour la récupération
+Q48 est partiellement arbitrée pour le périmètre, les facteurs et les principes de récupération MFA ; Q49 pour la récupération
 et le changement d’email (section 6). Q16 et les autres Q46–Q56 restent ouvertes ; regroupement technique par appareil sous Q41/Q43 non choisi.
 Aucune route, table, dépendance, migration ou application Portal n’est livrée par ce document.
 
@@ -25,7 +25,7 @@ cookies par univers, compteurs de révision/epoch, mTLS, outbox et synchronisati
 | Q44 — limites en panne et renouvellement | Droits au plus 8 h depuis confirmation Portal, non glissants ; révocation/suspension reçue appliquée immédiatement ; nouvelle confirmation/handoff valide avec Portal disponible pour renouveler | Protocole de renouvellement et synchronisation/propagation, concurrence avec révocation et mise en œuvre des portées validées Q45 |
 | Q40/Q49 — récupération | Jeton 30 min/unique contrôlé serveur, réémission invalidant les anciens ; reset réussi : invalidation Portal globale, demande de révocation Game globale, tous jetons invalidés, connexion normale et notification email, sans auto-login ; panne sans reset des 8 h | Fournisseur/email, changement d’adresse, stockage/transaction et protocoles Q53/Q54 ; MFA Q48 et anti-abus Q50 ouverts |
 | Q40/Q49 — changement d’email | Sans MFA : session Portal valide, mot de passe actuel ressaisi, confirmations ancienne et nouvelle adresses ; pending avant validation ; notifications aux deux adresses et nouvelle authentification après succès ; identité/états conservés | Demande unique 1 h absolue, remplacement complet et révocation de toutes les sessions validés ci-dessous ; mécanismes ouverts, récupération indépendante/MFA sous Q48 non livrées |
-| Q48 — place de la MFA | Facultative pour les joueurs MVP, exigée une fois activée ; obligatoire pour utiliser des privilèges plateforme, sans exemption interne ; step-up des comptes équipés pour opérations sensibles ; identité/gameplay conservés | Facteur/nombre, secrets, récupération/codes, remplacement/réinitialisation et mécanismes précis de step-up |
+| Q48 — périmètre et facteurs MFA | Facultative pour les joueurs MVP, exigée une fois activée ; obligatoire pour utiliser des privilèges plateforme, sans exemption interne ; step-up des comptes équipés pour opérations sensibles ; identité/gameplay conservés | TOTP/WebAuthn et limites/récupération validés en section 6 ; crypto/RP, stockage TOTP, format/nombre de codes, procédures support et mécanismes de step-up ouverts |
 | Q45 — portée des déconnexions | Retour lobby sans logout ; session Game seule, compte sur appareil courant ou tous appareils selon action explicite ; progression conservée et révocation distante persistée/rejouée avec état en attente | Regroupement appareil Q41/Q43 et protocoles Q53/Q54, sans clôture implicite |
 
 Google/OIDC pourra être ajouté plus tard comme méthode supplémentaire du même compte global,
@@ -366,7 +366,7 @@ Aucun mécanisme OIDC n’est ajouté à 5C par anticipation.
 Le fournisseur email et ses paramètres restent Q49 ; MFA et sa récupération restent Q48 ;
 les protections anti-abus et leurs seuils restent Q50. Aucune inscription publique livrée ici.
 
-Q48 : périmètre MVP validé ci-dessous, facteur/récupération et mécanismes encore ouverts ; aucun
+Q48 : périmètre, facteurs et principes de récupération validés ci-dessous, mécanismes encore ouverts ; aucun
 code MFA livré ni implémentation autorisée en 5B. Q50 : limites
 sur login/récupération/émission de ticket, réponses non énumérables et métriques d’abus ; seuils
 et éventuel challenge à mesurer/décider, aucun CAPTCHA/WAF/Redis ajouté par principe.
@@ -389,8 +389,9 @@ authentification. `global_user_id` reste inchangé ; memberships, empires et ét
 
 **Ancienne adresse inaccessible :** aucun contournement par le mot de passe seul. Un flux distinct
 de récupération de compte doit utiliser une preuve indépendante déjà établie : MFA, codes de
-récupération ou éventuelle procédure de récupération/support si elle est décidée. Ces exemples
-ne livrent ni n’autorisent un mécanisme. Sans mécanisme indépendant disponible dans le MVP,
+récupération ou procédure de récupération/support distincte à définir. Les facteurs et codes
+acceptés sous Q48 ci-dessous restent non implémentés ; aucun mécanisme n’est encore disponible.
+Sans mécanisme indépendant disponible dans le MVP,
 le changement d’adresse reste bloqué. Le reset du mot de passe ne constitue pas ce contournement.
 
 **Évolution conditionnelle, Q48 partiellement ouverte :** après validation des mécanismes et
@@ -398,8 +399,8 @@ implémentation de la MFA, une
 authentification MFA forte pourra remplacer la confirmation obligatoire de l’ancienne adresse.
 Ce parcours exigera la réauthentification/mot de passe selon le futur contrat, MFA obligatoire,
 confirmation de la nouvelle adresse et au minimum notification à l’ancienne avec moyen de signaler
-une opération non reconnue. Politique exacte à finaliser sous Q48 ; aucun fournisseur, facteur,
-code de secours, parcours support ou moyen de signalement choisi ici.
+une opération non reconnue. Facteurs et principes de secours sont désormais précisés sous Q48
+ci-dessous ; politique détaillée, fournisseur, parcours support et moyen de signalement restent ouverts.
 
 **Complément utilisateur validé — 2026-10-29, non implémenté :**
 
@@ -453,13 +454,47 @@ obligation validée dans cet arbitrage (« éventuellement »). Le catalogue exa
 les contrats d’API ; l’action et ses effets Q45 restent inchangés. Aucun rôle administrateur, endpoint
 privilégié ou autorisation de développement de console d’administration n’est créé par cette règle.
 
-**Restent ouverts sous Q48 :** facteur retenu, nombre de facteurs autorisés, stockage des secrets,
-récupération après perte, codes éventuels, remplacement/réinitialisation et mécanismes précis de
-step-up (preuve, fraîcheur, portée). Le principe de MFA facultative MVP impose une possibilité
-d’activation future ; il ne reporte pas automatiquement cette fonctionnalité après le MVP.
-La variante de changement d’email avec MFA reste dépendante de ces contrats et de leur implémentation.
-Aucune récupération indépendante, facteur ou bypass de MFA via reset/email/support n’est accepté
-par cet arbitrage. Q40/Q49 et les autres Qxx conservent leurs limites et statuts propres.
+### Facteurs et récupération MFA — complément Q48 validé le 2026-10-29
+
+**Décision utilisateur explicite pour PR #6, non implémentée.** Le MVP supportera TOTP et
+WebAuthn/passkeys. Le joueur standard peut choisir TOTP, WebAuthn ou les deux ; MFA reste facultative.
+
+| Contrat | Règle validée |
+| --- | --- |
+| TOTP | Un seul secret actif maximum par compte ; remplacement du secret précédent, jamais accumulation de seeds |
+| WebAuthn | Jusqu’à 5 credentials enregistrés par compte ; chaque authentificateur doit pouvoir recevoir un nom explicite pour être identifié |
+| Privilèges plateforme | Au moins un authentificateur WebAuthn obligatoire ; TOTP seul insuffisant ; opérations administratives sensibles exigent une authentification WebAuthn valide |
+| TOTP sur compte privilégié | Peut être enregistré en complément ; ne remplace pas le facteur privilégié WebAuthn |
+| Production privilégiée | Prévoir l’enregistrement de deux authentificateurs WebAuthn pour réduire le risque de verrouillage ; règle distincte du minimum d’un WebAuthn, sans l’étendre aux rôles Empire |
+| Récupération joueur | Autre authentificateur déjà enregistré et codes de secours à usage unique supportés |
+| Génération de secours | Codes générés à l’activation MFA ; régénération explicite invalidant tous les anciens codes |
+| Protection des codes | Aléatoires et suffisamment robustes, utilisables une seule fois ; stockage serveur permettant vérification sans secret exploitable en clair ; jamais journalisés |
+| Opérations sensibles | Utilisation et régénération des moyens de récupération ; changements de facteurs audités, authentification renforcée avec un facteur existant lorsqu’il reste disponible |
+
+La perte de tous les authentificateurs **et** codes interdit toute récupération MFA automatique
+par simple email + mot de passe. L’email ou le reset de mot de passe ne désactive pas silencieusement
+une MFA activée. Une procédure distincte de récupération/support renforcée est requise et reste
+à définir ; sa seule mention n’est pas une autorisation de récupération sans preuve.
+
+Pour un compte privilégié, un code de secours ou un mécanisme de récupération peut ouvrir un
+**état de récupération**, sans restaurer automatiquement les fonctions administratives. Leur
+rétablissement exige le réenregistrement d’un authentificateur WebAuthn valide **et** la satisfaction
+de la procédure de récupération privilégiée de la plateforme, encore à définir. Aucun passage
+automatique à TOTP seul après perte de WebAuthn. Une connexion en récupération ne vaut pas une
+preuve autorisant une opération privilégiée ; ni rôle Empire ni compte interne ne contourne la règle.
+
+Ajouter, supprimer ou remplacer un facteur conserve global_user_id, memberships, empires, univers
+et états gameplay. L’audit de sécurité ne doit jamais contenir de code de secours ; les mécanismes
+de preuve et d’audit restent à spécifier. L’invalidation des anciens codes est distincte d’une
+invalidation de sessions : aucune portée Portal/Game n’est décidée par cette seule règle.
+
+**Restent ouverts sous Q48 :** détails cryptographiques et configuration WebAuthn RP, stockage TOTP,
+format/nombre exact des codes de secours et procédures support finales (joueurs et privilégiés).
+Les mécanismes précis de step-up (preuve, fraîcheur, portée), les effets des changements/récupérations
+MFA sur les sessions et les détails de remplacement/réinitialisation restent à contractualiser.
+Aucun algorithme, bibliothèque, schéma, facteur de repli permissif ou service support livré en 5B.
+La variante email avec MFA dépend encore du contrat détaillé et de l’implémentation ; Q40/Q49 et
+les autres Qxx conservent leurs statuts propres.
 
 ## 7. Erreurs, observabilité et isolation proposées
 
@@ -505,6 +540,10 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Périmètre MFA MVP | Compte standard utilisable sans enrôlement ; activation depuis paramètres puis exigences MFA du compte appliquées ; aucune modification d’identité/gameplay | Lot MFA à cadrer |
 | Privilèges plateforme | Fonctions privilégiées refusées sans MFA correctement configurée, y compris compte interne ; rôle Empire seul sans obligation implicite | Lot administration à cadrer |
 | Step-up | Pour compte équipé, changement email, désactivation/remplacement MFA et génération/remplacement des moyens de récupération protégés ; catalogue final et mécanismes à définir | Lots compte/MFA à cadrer |
+| Facteurs MFA | Remplacement TOTP sans second secret actif ; maximum 5 credentials WebAuthn nommables ; limites préservées en concurrence | Lot MFA à cadrer |
+| Secours MFA | Autre facteur enregistré ou code unique ; régénération invalide tous anciens codes ; double consommation concurrente refusée, aucun code en clair exploitable stocké ou journalisé | Lot MFA à cadrer |
+| Récupération privilégiée | TOTP seul et code de secours ne rétablissent pas les fonctions admin ; WebAuthn réenregistré et procédure privilégiée tous deux exigés ; perte totale sans bypass email/mot de passe | Lot MFA/administration à cadrer |
+| Audit MFA | Ajout/suppression/remplacement audités, preuve renforcée par facteur existant s’il reste disponible ; identité/gameplay inchangés, aucun secret dans audit | Lot MFA à cadrer |
 | Limites validées | Portal : refus à 7 j ou 72 h d’inactivité ; Game : refus à 8 h, 2 h d’inactivité ou échéance d’accès antérieure ; ticket refusé à 60 s | 5C/5D |
 | Activité explicite | Chaque catégorie automatique conserve last_activity_at ; navigation/commande/réglage/actualisation volontaire le réinitialisent selon classification serveur ; timestamp client falsifié sans effet ; interaction à expiration refusée ; maxima absolus et valid_until inchangés | 5C/5D |
 | Panne et dates | Confirmation retardée, panne commencée tard et activité Game ne déplacent pas valid_until ; suspension reçue avant échéance appliquée immédiatement | 5C/5D |
@@ -532,7 +571,7 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Q45 | **Close — comportement produit** : retour lobby, session Game, compte sur appareil et tous appareils distincts ; portée, conservation et état en panne validés | Implémentation future ; appareil Q41/Q43 et protocoles Q53/Q54 restent ouverts |
 | Q46 | mTLS interne recommandé, alternative credential TLS | Topologie et authentification opérables choisies |
 | Q47 | Deux origines même site, cookies host-only, CSRF | Hôtes local/production et parcours testables définis |
-| Q48 | **Partiellement close** : place MVP, obligation pour privilèges plateforme, step-up des comptes équipés et invariance identité/gameplay | Facteur/nombre, stockage, récupération/codes, remplacement/réinitialisation, mécanismes et catalogue exact step-up |
+| Q48 | **Partiellement close** : place MVP, TOTP/WebAuthn et limites, exigence privilégiée WebAuthn, secours et séparation récupération/privilèges, audit et invariants | Crypto/RP, stockage TOTP, nombre/format des codes, support final, effets sur sessions, mécanismes et catalogue step-up |
 | Q50 | Anti-abus : **ouverte** | Périmètre et contrôles minimaux avant exposition décidés |
 | Q49 | **Partiellement close** : récupération et flux email sans MFA, pending/double confirmation, notifications/réauthentification validés | Demande unique 1 h, remplacement complet et révocation globale validés ; fournisseur/livraison et mécanismes ouverts ; MFA Q48 ouverte |
 | Q51/Q52 | Accès local versionné et bindings explicites | Permissions, transitions et règles de réactivation acceptées |
@@ -543,10 +582,11 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 
 5B progresse avec les décisions ci-dessus, sans être déclarée achevée. L’activité explicite Q41/Q43 est désormais arbitrée.
 Q45 est désormais validée pour le comportement produit. Prochain arbitrage nécessaire :
-choisir le facteur MFA et sa récupération sous Q48 ; nombre de facteurs et mécanismes associés
-restent à préciser. La place de la MFA dans le MVP est validée ci-dessus.
+préciser les effets des changements/récupérations MFA sur les sessions et la fraîcheur/portée du
+step-up sous Q48. Facteurs, limites et principes de récupération sont validés ci-dessus ;
+procédures support et détails cryptographiques restent à spécifier sans bypass.
 Le flux email sans MFA, ses durées et sa portée de révocation sont validés ci-dessus ;
-aucun facteur, mécanisme de récupération indépendant ou support n’est implicitement accepté.
+aucun mécanisme supplémentaire de récupération ni procédure support n’est implicitement accepté.
 Les autres propositions restent révisables, sans
 fermeture de Q46–Q56. Les bibliothèques et paramètres cryptographiques se choisissent
 avant l’implémentation dépendante, sans solution de démonstration permissive en attendant.
