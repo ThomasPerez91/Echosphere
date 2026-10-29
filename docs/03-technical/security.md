@@ -58,6 +58,10 @@ appel des mêmes services humains/IA/headless. Pas de faux user global ou bypass
 
 ## Portal/Game — décisions validées, protections futures non implémentées
 
+[Préparation 5B](identity-contracts.md) : proposition datée du 2026-10-29 couvrant session locale,
+révocation bornée, handoff lié au navigateur, interface interne et contrôles futurs.
+Les durées, méthodes de login, crypto et protections proposées ne sont pas des décisions acceptées.
+
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : compte global multi-parties, deux backends
 isolables et deux bases distinctes/séparables. Portal gère credentials et sessions de compte ; Game
 ne possède que l’identité minimale et les autorisations de partie nécessaires, jamais les credentials.

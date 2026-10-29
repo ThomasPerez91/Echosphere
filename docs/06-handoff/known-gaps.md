@@ -2,6 +2,11 @@
 
 **Statut : questions/limites explicites au 2026-10-28.** Ce document n’invente pas les réponses.
 
+Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progress](../../progress.md).
+[Préparation 5B](../03-technical/identity-contracts.md) disponible au statut Proposition :
+fenêtre de révocation, durées, login, transport interne, clés et protections restent à arbitrer.
+La nouvelle proposition ne constitue pas une validation des mécanismes de l’ADR 0008.
+
 ## Accès incomplet aux sources
 
 - Pas d’accès direct à toutes les conversations Space Game ou à un export intégral du projet.
@@ -55,3 +60,25 @@ pas l’isolation CPU/RAM/DB/réseau. Les protections Portal ne dispensent pas G
 Pas de recette réelle Windows 11/WSL2/Docker Desktop attestée dans cette passation. Pas de test
 lecteur d’écran/tactile, Safari/Firefox, charge massive ou simulation économique de plusieurs années.
 Les commandes de reprise sont une procédure, pas la preuve de leur exécution à domicile.
+
+## Constats de la reprise locale du 2026-10-29
+
+La mention précédente décrit la passation du 28/10 : depuis, Compose/Alembic/smoke, 101 tests backend,
+11 frontend et 5 Chromium ont été exécutés localement sous WSL2, avec les limites détaillées dans
+progress. Cela n’atteste toujours pas les parcours graphiques Windows ou une intégration Portal/Game.
+
+Deux adaptations de la procédure de tests Docker ont été nécessaires : le montage des seuls tests
+backend ne conserve pas le chemin relatif vers game_data utilisé par un test d’intégration ;
+monter l’arborescence complète en lecture seule résout ce cas. L’image frontend Alpine n’a pas apt-get
+pour les dépendances Playwright ; les E2E ont réussi dans un conteneur Debian jetable.
+Ces constats ne justifient aucune modification de code ou d’image dans le lot 5B documentaire.
+
+`npm audit` signale 3 dépendances de développement affectées : @vitest/mocker (modérée), tinypool
+et vitest (critiques selon le rapport npm, vitest héritant aussi de ses dépendances).
+Avis retournés : [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9),
+[GHSA-qxg6-89mg-rqv8](https://github.com/advisories/GHSA-qxg6-89mg-rqv8),
+[GHSA-5gmw-xhrv-c9v3](https://github.com/advisories/GHSA-5gmw-xhrv-c9v3),
+[GHSA-85c8-ppgw-ccpr](https://github.com/advisories/GHSA-85c8-ppgw-ccpr).
+Exposition effective et trajectoire de mise à jour à examiner dans un lot de maintenance explicite ;
+aucun exploit démontré ici, aucun npm audit fix ni changement de lockfile effectué.
+Un avertissement de dépréciation Starlette/httpx est également remonté sans échec des tests.

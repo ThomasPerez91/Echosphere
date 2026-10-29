@@ -103,6 +103,10 @@ Voir [ADR 0007](../adr/0007-colony-economy.md) et [règles v0.1](../01-game-desi
 
 ## Identité et bases cibles — décision validée, non implémentée
 
+La [préparation 5B](identity-contracts.md) propose une distinction Membership souhaitée côté Portal,
+accès effectif versionné et bindings d’Empire côté Game. Ces objets restent conceptuels,
+sans migration ni nouvelles contraintes décidées ; Q21 et Q51–Q54 restent ouvertes.
+
 Compte global et plusieurs univers simultanés ; User → UniverseMembership → Universe →
 éventuellement Empire/rôle/permissions. Pas de réduction à Empire.owner_user_id, partage Q21 ouvert.
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) sépare Accounts DB et Game DB :

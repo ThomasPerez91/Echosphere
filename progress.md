@@ -1,8 +1,93 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-10-28. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
-## Dernier lot — passation documentaire Work / Codex
+## Lot courant — préparation 5B : contrats identité / Portal-Game
+
+**Statut : Proposition rédigée, arbitrages utilisateur en attente ; 5B non déclarée achevée.**
+Après la mission de reprise en lecture seule, l’utilisateur a autorisé le prochain lot sur une
+nouvelle branche. Interprétation appliquée selon roadmap : cadrage 5B, sans implémentation 5C/5D.
+Environnement : Codex local, Linux WSL2. Aucune délégation ni identité d’agent précédent supposée.
+
+### Base et périmètre
+
+GitHub relu : PR #5 MERGED, tête acde9d358bfe724be61198cd60fd1e72c6e38459, base master,
+merge 8214e0bd30a00bf0336264a428e6975d307350ba. Fetch effectué ; master locale propre et identique
+à origin/master. Aucune PR ouverte au contrôle, aucune develop. CI master
+[40765430216](https://github.com/ThomasPerez91/Echosphere/actions/runs/40765430216) completed/success
+sur ce merge, jobs backend/frontend/compose-smoke verts. Dernière livraison consignée : passation
+Work par #5 ; cette recette locale lui succède sans attribuer un nom non attesté à son auteur.
+
+Branche : work/step-5b-identity-contracts, créée depuis cette master sans empilement.
+Tête du lot : consulter la tête publiée de cette branche et sa CI ; aucun SHA auto-référentiel
+inventé dans ce document. Aucune fusion, suppression de branche, release ou déploiement autorisé.
+
+Fichiers : nouveau docs/03-technical/identity-contracts.md ; références API/sécurité/modèle/architecture,
+index docs/ADR/décisions, README/passation, roadmap/questions/known-gaps, context/progress et liste
+des documents requis de scripts/check_docs.py. Aucun code métier, game_data, migration, dépendance,
+Compose, composant UI ou test fonctionnel modifié.
+
+### Résultat et statut des propositions
+
+Contrats proposés : autorités Portal/Game, participation/accès local versionné/bindings d’Empire,
+interface interne idempotente avec révisions/outbox/réconciliation, handoff lié au navigateur,
+consommation atomique, session opaque et contrôles locaux, concurrence avec révocation, logout,
+rotation de clés, isolation et matrice de scénarios futurs. Alternatives et sources OWASP/RFC
+publiques consignées. Aucun protocole, algorithme, fournisseur ni durée nouveau présenté comme accepté.
+
+Arbitrage principal proposé : validité locale des droits bornée à 8 h, session Game 8 h absolues/
+2 h d’inactivité, ticket 60 s ; autonomie en panne Portal jusqu’aux limites, révocation appliquée
+dès livraison mais non instantanée si liaison coupée. Ces valeurs sont des propositions à revoir,
+pas une fermeture de Q16/Q40–Q56. Q21 et les questions de modes restent ouvertes. 5C ne commence
+pas automatiquement après la rédaction ; recueillir les arbitrages nécessaires et leur provenance.
+
+### Recette de reprise locale réalisée avant création de la branche
+
+Cette recette appartient à la mission de reprise du 2026-10-29, sur master 8214e0b inchangée ;
+elle ne valide aucun mécanisme futur de 5B et n’a pas été relancée pour le diff documentaire.
+
+- `python3 scripts/check_docs.py` : 63 documents/liens valides.
+- `docker compose ps -a` : postgres/backend/frontend healthy, worker running, migrate Exited (0).
+- `docker compose exec backend alembic check` : aucune dérive ; current = 0004_colony_economy head.
+- `python3 scripts/smoke_compose.py` : succès, frontend/proxy/sondes et panne/reprise PostgreSQL.
+- Backend dans un conteneur Python 3.12 : premier passage 42 réussis/59 ignorés sans RUN_DB_TESTS.
+  Passage complet avec base dédiée echosphere_codex_20261029_test : initialement 100 réussis/1 échec
+  de chemin game_data, puis 101 réussis après montage de l’arborescence complète en lecture seule.
+  La base dédiée a été supprimée ensuite ; aucune suite de downgrade sur la base de jeu.
+  Ruff backend/scripts passe. Avertissement Starlette/httpx déprécié observé.
+- Frontend conteneur Node 22 : npm ci, lint, 11 tests et build réussis. Les empreintes des fichiers
+  App, test, CSS, ColonyView, scénario E2E et package-lock de l’image concordaient avec le dépôt.
+- Playwright : installation impossible dans Alpine (apt-get absent), puis 5 scénarios Chromium
+  réussis dans un conteneur Debian Node 22 jetable, copie de sources montées en lecture seule.
+  Largeurs 320/390/768/1440 et navigation clavier/retry. Aucun test navigateur Windows attesté.
+- Chargement du ruleset dans l’image worker : v0.1. Diff et état Git propres à la fin de la recette.
+
+Limites environnement : noyau 6.18.54.1-microsoft-standard-WSL2, Compose v5.6.1, Python hôte 3.14.4,
+pas de Node/npm hôte ni backend/.venv. Les tests ont utilisé les versions Docker prévues, sans
+installer les outils sur l’hôte. Les premiers accès fetch/socket Docker/localhost ont été refusés
+par le bac à sable puis ont réussi avec autorisation ; aucun défaut WSL2 démontré par ces refus.
+Pas de recette graphique Windows, tactile, lecteur d’écran, Safari/Firefox, charge massive ou
+résilience Portal/Game réel (inexistant). Pile Compose laissée démarrée, volume de jeu conservé.
+
+`npm audit --json` : 3 dépendances affectées (1 modérée, 2 critiques) dans la chaîne de développement
+Vitest/@vitest/mocker/tinypool. Aucun correctif automatique effectué. Voir known-gaps pour les avis.
+
+### Validation du lot documentaire et prochaine action
+
+Checks du diff 5B exécutés : 64 documents/liens valides, git diff --check sans erreur,
+Q01–Q56 présentes exactement une fois dans les tableaux du registre ; périmètre Markdown et
+liste REQUIRED de check_docs.py vérifié. Ruff de scripts/check_docs.py passe dans le conteneur
+Python 3.12 avec dépendances de développement figées. Relecture du nouveau contrat, de ses statuts,
+de ses liens et du diff de confidentialité effectuée. Aucune suite fonctionnelle relancée pour
+ces changements documentaires ; les scénarios 5B sont des critères futurs non exécutés.
+Publication prévue en PR brouillon vers master, à conserver non fusionnée ; au présent checkpoint
+la CI de cette nouvelle tête n’a pas encore été exécutée. Relire son résultat après publication.
+Prochaine action : revue de la proposition 5B, arbitrage des choix répertoriés puis transcription
+des décisions acceptées ; pas d’implémentation Portal/API Colony sur la seule présence du document.
+
+---
+
+## Lot précédent — passation documentaire Work / Codex (historique)
 
 **Périmètre : documents uniquement**, plus liste des documents requis dans scripts/check_docs.py.
 Aucun service, gameplay, migration/SQL, game_data, dépendance, Compose/Docker ou test fonctionnel changé.

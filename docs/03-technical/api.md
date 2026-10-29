@@ -47,6 +47,10 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 
 ## Contrats Portal/Game à définir en 5B — non implémentés
 
+La [préparation 5B](identity-contracts.md) propose désormais les objets, opérations internes,
+erreurs, échanges et scénarios de refus/reprise. Statut **Proposition**, sans route livrée ;
+les mécanismes et durées proposés restent à arbitrer et ne ferment pas Q16/Q40–Q56.
+
 Décisions validées dans [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : Portal expose
 futurs services de compte/lobby, Game porte les commandes autoritaires et leurs projections.
 Après handoff, GameSession autorise l’accès direct à Game sans proxy/consultation Portal par commande.

@@ -35,8 +35,11 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 Statut exact dans [progress.md](../../progress.md). master est l'intégration stable ; nouvelles
 branches work/... depuis master et PR vers master, CI/revue puis merge sur autorisation. Tags et
 releases identifiées plus tard. develop n'est plus une étape permanente ou obligatoire.
-Étapes 0–4 intégrées sur master ; develop supprimée. Étape 5A sur
-work/step-5a-colony-domain, PR #5 vers master sans fusion. Passation documentaire sur la même PR ; 5B cadre identité et contrats Portal/Game avant 5C puis 5D.
+Étapes 0–4, 5A et passation intégrées sur master : PR #5 fusionnée le 2026-10-28, merge 8214e0b.
+Reprise locale vérifiée le 2026-10-29, puis préparation 5B autorisée sur
+work/step-5b-identity-contracts : [proposition de contrats](../03-technical/identity-contracts.md).
+5B reste à arbitrer ; aucune implémentation Portal/session ou API Colony livrée. 5C puis 5D
+dépendent des contrats acceptés et d’une autorisation de leur lot.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).
 

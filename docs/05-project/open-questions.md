@@ -4,6 +4,11 @@ Chaque Q reste ouverte jusqu'à un arbitrage explicite. Les propositions des doc
 Consigner date, raison, impact, document modifié et ADR si nécessaire. Les étapes indiquées sont
 les moments limites pour décider avant de dépendre du choix.
 
+Préparation du 2026-10-29 : [contrats identité/Portal-Game proposés](../03-technical/identity-contracts.md).
+La matrice finale couvre Q40–Q56 et distingue leurs dépendances 5C/5D. Toutes ces questions,
+ainsi que Q16 et Q21, gardent leur statut ouvert ; aucune durée, méthode ou politique nouvelle
+n’est acceptée par la seule autorisation de poursuivre le lot 5B.
+
 | ID | Question ouverte | À traiter avant | Référence |
 | --- | --- | --- | --- |
 | Q01 | Durées quotidiennes, longueur/parallélisme des files, annulation/remboursement | 3 puis 5 | [Sessions](../01-game-design/player-session.md) |

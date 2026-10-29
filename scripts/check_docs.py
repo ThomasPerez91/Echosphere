@@ -57,6 +57,7 @@ REQUIRED = {
             "backend",
             "ai-engine",
             "security",
+            "identity-contracts",
             "deployment",
         )
     ],

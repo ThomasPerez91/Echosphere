@@ -1,6 +1,6 @@
 # Architecture technique
 
-**Statuts : Game Backend implémenté jusqu’à 5A sur PR #5 ouverte ; cible Portal/Game validée,
+**Statuts : Game Backend implémenté jusqu’à 5A, intégré par PR #5 ; cible Portal/Game validée,
 non implémentée.** État d’intégration et CI dans [progress.md](../../progress.md).
 
 ## Réalité du dépôt
@@ -63,7 +63,8 @@ de la fréquence de lecture. Ruleset et vitesses par univers, jamais en singleto
 
 ## Prochain travail
 
-Passation documentaire seulement. Après revue/intégration et autorisation du lot : 5B contrats
-identité/session/Portal-Game avant 5C fondation compte/lobby, puis 5D API Colony protégée.
+PR #5 fusionnée sur master 8214e0b. Le lot 5B autorisé le 2026-10-29 prépare les contrats
+identité/session/Portal-Game dans [identity-contracts](identity-contracts.md), au statut Proposition.
+Les arbitrages nécessaires précèdent 5C fondation compte/lobby, puis 5D API Colony protégée.
 Voir [roadmap](../05-project/roadmap.md), [sécurité](security.md), [API](api.md),
 [modèle](data-model.md), [temps](event-engine.md) et [questions](../05-project/open-questions.md).

@@ -148,5 +148,6 @@ protocole d’auth ou changement Compose n’est livré par cette documentation.
 [Procédure locale et relais](docs/06-handoff/work-codex-handoff.md),
 [sources/statuts](docs/06-handoff/source-map.md) et [prochain lot](docs/05-project/roadmap.md) :
 5B contrats identité/Portal-Game → 5C compte/lobby selon cadrage → 5D API Colony sécurisée/UI réelle.
-Au checkpoint de passation, #5 est ouverte : master n’inclut 5A/passation qu’après sa fusion future.
-La branche de travail actuelle est work/step-5a-colony-domain ; vérifier GitHub réel avant pull/merge.
+PR #5 fusionnée sur master 8214e0b ; recette locale effectuée le 2026-10-29, limites dans progress.
+La [préparation 5B](docs/03-technical/identity-contracts.md) propose les contrats identité/Portal-Game
+sur work/step-5b-identity-contracts. Ces propositions restent à arbitrer, sans nouveau code d’authentification.

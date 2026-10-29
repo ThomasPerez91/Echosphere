@@ -38,6 +38,8 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
 - [Portal/Game ADR 0008](adr/0008-control-plane-game-data-plane.md) : décision cible **non implémentée** ;
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
+- [Préparation 5B](03-technical/identity-contracts.md) : proposition de contrats identité/Portal-Game
+  du 2026-10-29, non implémentée et non arbitrée ; Q16/Q40–Q56 restent ouvertes.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité

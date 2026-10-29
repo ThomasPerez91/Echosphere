@@ -4,6 +4,7 @@
 canonique, puis ce tableau et les Qxx concernés. « Implémenté » décrit le code de la branche, pas
 une validation produit ou une fusion. Statuts définis dans [docs/README](../README.md).
 Sources S1–S5 : [carte de provenance](source-map.md). Une proposition d’assistant seule n’est pas validée.
+Actualisation 2026-10-29 : PR #5 fusionnée sur 8214e0b ; préparation du lot 5B autorisée.
 
 | Décision / élément | Statut | Justification | Canonique / ADR | Impact | Date/source |
 | --- | --- | --- | --- | --- | --- |
@@ -12,7 +13,7 @@ Sources S1–S5 : [carte de provenance](source-map.md). Une proposition d’assi
 | Empire + Command, combat éventuel dans la boucle | Décision validée | Deux rythmes compatibles avec l’asynchrone | [Boucle](../01-game-design/core-loop.md) | MVP cible, pas encore jouable | S1, PR #1 |
 | Alliages / Flux / Données seulement | Décision validée | Lisibilité, pas de quatrième cœur implicite | [Ressources](../01-game-design/resources-economy.md) | Moteur/données/UI | S1, PR #1/#5 |
 | Micro-unités, UTC, événements transactionnels | Implémenté | Exactitude et reprise | [Calcul](../03-technical/resource-calculation.md), ADR 0002/0005 | Autorité Game | PR #3, S3/S4 |
-| Économie Colony, file 3/1, réservation et remboursement 100/80 | Implémenté / Balance provisoire | Première boucle interne et snapshots | [Économie v0.1](../01-game-design/colony-economy-v0.1.md), ADR 0007 | Pas d’API publique | Brief 5A S2, PR #5 ouverte |
+| Économie Colony, file 3/1, réservation et remboursement 100/80 | Implémenté / Balance provisoire | Première boucle interne et snapshots | [Économie v0.1](../01-game-design/colony-economy-v0.1.md), ADR 0007 | Pas d’API publique | Brief 5A S2, PR #5 fusionnée |
 | Niveaux continus, 1–5 = early game | Décision validée / Implémenté | Progression longue | [Infrastructures](../01-game-design/buildings.md) | Remplace ancienne orientation I–V | Brief 5A et S1, 28/10/2026 |
 | Croissances et chiffres v0.1 | Balance provisoire | À rééquilibrer par simulation | [Économie v0.1](../01-game-design/colony-economy-v0.1.md), game_data | Jamais constantes de service | PR #5, S1/S2 |
 | 12 secteurs / 2 orbitaux | Balance provisoire, départ seulement | Capacités futures variables | [Planètes](../01-game-design/planets-colonies.md) | Initialiseur de référence actuel limité | S1, audit #5 |
@@ -31,6 +32,7 @@ Sources S1–S5 : [carte de provenance](source-map.md). Une proposition d’assi
 | Portal/Game, Accounts DB/Game DB séparés | Décision validée, non implémentée | Exposition et disponibilité distinctes | [ADR 0008](../adr/0008-control-plane-game-data-plane.md) | Affine la frontière plateforme de 0001 | S1, 28/10/2026 |
 | Portal sans SQL Game, interface interne idempotente | Décision validée, non implémentée | Frontière de propriété et autorisation | [ADR 0008](../adr/0008-control-plane-game-data-plane.md) | Auth S2S et synchronisation ouvertes | S1 |
 | Ticket court/unique puis GameSession autonome | Orientation validée, non implémentée | Pas de dépendance Portal par commande | [ADR 0008](../adr/0008-control-plane-game-data-plane.md) | Format/TTL/refresh/révocation Q40–Q56 | S1, S5 partiel |
+| Accès local versionné, ticket signé, sessions opaques, révocation bornée et interface interne | Proposition, non implémentée | Préparer les arbitrages de 5B avec alternatives et scénarios | [Contrats proposés](../03-technical/identity-contracts.md) | Aucune Q fermée ; 5B non achevée par rédaction | 29/10/2026, préparation Codex local autorisée ; choix à valider |
 | UX responsive et sept domaines globaux | Implémenté / Proposition visuelle | Mobile/clavier et états explicites | [UX](../02-ux-ui/information-architecture.md), ADR 0003 | Q15 reste ouverte ; Portal non livré | PR #4/#5, S1 |
 | Diplomatie/commerce avancés, alliances, espionnage | Futur / post-MVP | Ne pas inventer des mécaniques pour compléter le MVP | [Roadmap](../05-project/roadmap.md), Q18 | Relations IA minimales étape 13 | Docs initiales ; S1 préserve les questions |
 | master stable, PR, merge explicite | Décision validée | Référence commune Work/Codex | [AGENTS](../../AGENTS.md) | develop historique superseded | Instructions visibles S2, PR #3 |

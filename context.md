@@ -1,6 +1,6 @@
 # Contexte stable — Echosphere
 
-**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-28.
+**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-29.
 Vérifier GitHub réel puis lire AGENTS → context → progress → [passation](docs/06-handoff/README.md).
 
 ## Produit validé, état distinct
@@ -16,7 +16,11 @@ Universe = frontière d’instance, ni User ni processus ; late join et protecti
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
 éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
 
-## Implémentation — checkpoint du 28/10/2026, pas partie jouable
+## Implémentation — 5A intégrée, pas partie jouable
+
+PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
+8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
+et suites 101 backend/11 frontend/5 Chromium effectuées ; périmètre et limites dans progress.
 
 Checkpoint du 28/10/2026 : 5A et la passation sont portées par PR #5, alors ouverte.
 Vérifier GitHub : après fusion de #5, considérer 5A/passation comme intégrées à master ; l’état
@@ -60,6 +64,10 @@ code métier, migration, game_data, dépendance, Docker ou test modifié. Si #5 
 que la mission porte dessus, reprendre cette branche. Après sa fusion, synchroniser master et
 partir sur une nouvelle branche work/... pour tout nouveau lot autorisé, sans recréer la branche #5.
 progress porte le checkpoint et les actions de reprise avant/après fusion.
+Le 2026-10-29, l’utilisateur autorise le prochain lot : préparation 5B sur
+work/step-5b-identity-contracts depuis master synchronisée. Les [contrats proposés](docs/03-technical/identity-contracts.md)
+ne sont pas encore acceptés : aucune Q16/Q40–Q56 fermée, aucun compte/Portal/API livré.
+La préparation doit être revue avant implémentation dépendante ; 5C/5D restent des lots séparés.
 Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation
 compte/lobby selon cadrage, 5D API Colony sécurisée/UI réelle. Ne pas commencer Portal complet ou
 multijoueur automatiquement. [Roadmap](docs/05-project/roadmap.md), [Q01–Q56](docs/05-project/open-questions.md).
