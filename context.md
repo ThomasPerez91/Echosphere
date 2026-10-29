@@ -54,6 +54,8 @@ sessions encore valides. Décisions 5B validées le 2026-10-29 : email/mot de pa
 via bibliothèque maintenue, email vérifié avant premier handoff, récupération courte/unique et
 global_user_id indépendant de l’email/méthode ; OIDC supplémentaire futur facultatif.
 Portal : 7 j absolus/72 h d’inactivité ; Game : 8 h absolues/2 h d’inactivité ; ticket : 60 s/unique.
+Inactivité réinitialisée uniquement par interaction explicite classée côté serveur ; trafic
+automatique/onglet ouvert exclus, timestamp navigateur non autoritaire, maxima absolus inchangés.
 Droits Game : maximum 8 h depuis confirmation Portal, sans glissement sur activité ni reset en panne.
 Révocation/suspension reçue immédiate ; à valid_until nouvelles commandes refusées, worker/univers
 continuent. Renouvellement avec Portal disponible et nouvelle confirmation/handoff valide ; aucun
@@ -76,7 +78,8 @@ Le 2026-10-29, l’utilisateur autorise le prochain lot : préparation 5B sur
 work/step-5b-identity-contracts depuis master synchronisée, PR #6 brouillon non fusionnée.
 Les [contrats](docs/03-technical/identity-contracts.md) distinguent désormais les décisions
 utilisateur ci-dessus des mécanismes encore proposés ; aucun compte/Portal/API livré.
-Prochain arbitrage nécessaire : activité réinitialisant l’inactivité (Q41/Q43), dont polling.
+Activité Q41/Q43 arbitrée ; prochaine décision à examiner : portée des déconnexions Q45.
+Les propositions de logout ne valent pas validation utilisateur.
 Le lot reste 5B ; sa rédaction ne le déclare pas terminé et 5C/5D restent des lots séparés.
 Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation
 compte/lobby selon cadrage, 5D API Colony sécurisée/UI réelle. Ne pas commencer Portal complet ou

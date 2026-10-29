@@ -5,10 +5,31 @@ Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/R
 ## Lot courant — préparation 5B : contrats identité / Portal-Game
 
 **Statut : décisions utilisateur partielles Q40–Q44 intégrées ; mécanismes encore proposés,
-nouvel arbitrage sur l’activité nécessaire ; 5B non déclarée achevée.**
+activité explicite Q41/Q43 validée ; Q45 à examiner, 5B non déclarée achevée.**
 Après la mission de reprise en lecture seule, l’utilisateur a autorisé le prochain lot sur une
 nouvelle branche. Interprétation appliquée selon roadmap : cadrage 5B, sans implémentation 5C/5D.
 Environnement : Codex local, Linux WSL2. Aucune délégation ni identité d’agent précédent supposée.
+
+### Complément activité Q41/Q43 — 2026-10-29
+
+Source : arbitrage explicite utilisateur, synthétisé dans identity-contracts et Qxx. Seules les
+interactions explicites classées côté serveur réinitialisent l’inactivité ; toutes les catégories
+automatiques citées dans le contrat sont exclues. Heure serveur, aucun timestamp client autoritaire ;
+aucune modification des maxima absolus ou de valid_until. Q41/Q43 restent partiellement ouvertes,
+Q45–Q56 inchangées. Aucune implémentation ni fusion autorisée.
+
+Reprise : fetch effectué, arbre propre, tête locale/distante 5dbd9184509ca6323279365944dea9567207cd17,
+PR #6 OPEN/brouillon, base master 8214e0b inchangée. CI de cette tête vérifiée : push 40878132584
+et PR 40878144213, backend/frontend/compose-smoke réussis.
+Fichiers : identity-contracts, open-questions, context, progress, sécurité, roadmap et index des décisions.
+Scénarios futurs complétés : catégories automatiques sans effet, interactions explicites, timestamp
+client falsifié, échéance contrôlée avant réinitialisation et maxima inchangés. Aucun test de ces
+mécanismes futurs exécuté. Vérifications locales : check documentaire, diff et périmètre Markdown ;
+aucune suite fonctionnelle backend/frontend/Compose ni Ruff relancée pour ce complément documentaire.
+Après publication, relire SHA distant et CI effective de cette nouvelle tête ; les résultats de
+5dbd918 ci-dessus ne prouvent pas la CI du présent commit.
+Prochaine décision à examiner : Q45 (déconnexion locale/globale et effets entre parties), sans
+adopter implicitement la proposition du contrat. 5C/5D restent hors de ce lot documentaire.
 
 ### Arbitrages utilisateur intégrés — 2026-10-29, suite de PR #6
 
@@ -25,7 +46,7 @@ du reste de la proposition et aucune autorisation de fusion.
 - Q42, parties closes : ticket de handoff 60 secondes et usage unique. Format, crypto, liaison
   navigateur et mécanismes anti-rejeu toujours ouverts ; aucune durée de récupération déduite.
 - Q43, parties closes : Game 8 h absolues/2 h d’inactivité, GameAccess pouvant expirer plus tôt ;
-  absolu non prolongé par activité. Stockage, définition de l’activité et limites simultanées ouverts.
+  absolu non prolongé par activité. Stockage et limites simultanées ouverts ; activité arbitrée dans le complément ci-dessus.
 - Q44, parties closes : droits au plus 8 h depuis dernière confirmation Portal, non glissants et
   sans reset en panne ; révocation/suspension reçue immédiate ; nouvelles commandes refusées à
   valid_until, univers/workers continuant. Renouvellement avec Portal disponible et nouvelle
@@ -37,8 +58,8 @@ acceptation de mTLS, JWT, stockage opaque, cookies, epoch, outbox ou politique d
 
 Poursuite documentaire : expressions des échéances et exemples de confirmation retardée/panne
 ajoutés, scénarios futurs de frontière et compte MVP précisés. Aucun test artificiel ou code ajouté.
-Prochain arbitrage nécessaire Q41/Q43 : quelles activités réinitialisent l’inactivité, notamment
-polling/rafraîchissements automatiques ? La continuation s’arrête avant de choisir cette politique.
+À ce checkpoint antérieur, l’activité Q41/Q43 restait à arbitrer ; le complément ci-dessus
+consigne désormais sa validation explicite.
 Les autres questions techniques restent listées pour la suite, pas repoussées implicitement à 5C.
 
 Fichiers de cette continuation : identity-contracts, open-questions, context/progress et références

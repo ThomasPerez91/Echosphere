@@ -64,6 +64,9 @@ identité globale indépendante des méthodes et limites temporelles. Portal : 7
 d’inactivité ; Game : 8 h absolues/2 h d’inactivité ; ticket : 60 s/unique. Droits Game au plus 8 h
 depuis confirmation Portal, non glissants, sans reset en panne ; révocation/suspension reçue immédiate.
 Renouvellement avec Portal disponible et nouvelle confirmation/handoff valide, refus à valid_until.
+Seules les interactions explicites classées côté serveur réinitialisent l’inactivité ; polling et
+autres trafics automatiques exclus, aucun timestamp navigateur faisant autorité. Les limites
+absolues et valid_until restent inchangées.
 Ces décisions restent non implémentées ; mécanismes de session, crypto, interface interne et
 protections conservent leur statut Proposition/Question ouverte.
 
@@ -81,7 +84,7 @@ jamais source de vérité gameplay. Game protège aussi son ingress, objets, uni
 Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver ; ne pas promettre une protection DDoS par le seul
 fait d’avoir deux applications sur une machine partagée.
 
-Q16 est **partiellement cadrée**. Seules les parties listées de Q40–Q44 sont closes ; activité,
+Q16 est **partiellement cadrée**. Seules les parties listées de Q40–Q44 sont closes ;
 cookies/stockage, CSRF, MFA, fournisseur email, anti-abus, format/crypto du ticket, protocoles de
 renouvellement/révocation/logout, S2S, rôles/membership/synchronisation et politiques de modes
 restent ouverts. Q45–Q56 ne sont pas fermées ; pas de JWT/OAuth/mTLS sélectionné.

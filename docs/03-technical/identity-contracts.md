@@ -1,6 +1,6 @@
 # Identité et contrats Portal/Game — préparation 5B
 
-**Statut : décisions utilisateur validées pour le compte et les limites temporelles ; mécanismes
+**Statut : décisions utilisateur validées pour le compte, les limites temporelles et l’activité explicite ; mécanismes
 techniques encore proposés ; ensemble non implémenté.** Date : 2026-10-29.
 Source : arbitrage utilisateur explicite pour poursuivre PR #6, synthétisé ci-dessous.
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) reste la décision de plateforme acceptée.
@@ -17,9 +17,9 @@ cookies par univers, compteurs de révision/epoch, mTLS, outbox et synchronisati
 | Partie close | Décision utilisateur | Reste ouvert |
 | --- | --- | --- |
 | Q40 — login et principes de récupération | MVP email/mot de passe, email vérifié avant premier handoff, récupération par jeton court/unique, hash Argon2id via bibliothèque maintenue ; global_user_id indépendant de l’email et de la méthode de login | Bibliothèque, paramètres Argon2id et politique détaillée de récupération, dont durée exacte et effets sur sessions |
-| Q41 — durées Portal | Maximum absolu 7 jours, inactivité maximum 72 h ; activité sans prolongation de l’absolu | Stockage/cookies, rotation et définition de l’activité |
+| Q41 — durées et activité Portal | Maximum absolu 7 jours, inactivité maximum 72 h ; interaction explicite classée côté serveur seule comptabilisée, sans prolongation de l’absolu | Stockage/cookies et rotation |
 | Q42 — durée et unicité du ticket | 60 secondes, usage unique | Format/crypto, audience/nonce, liaison navigateur et mécanisme atomique de consommation |
-| Q43 — durées Game | Maximum absolu 8 h, inactivité maximum 2 h, expiration anticipée possible par GameAccess ; activité sans prolongation de l’absolu | Stockage, activité, rotation, limites de sessions simultanées et nettoyage |
+| Q43 — durées et activité Game | Maximum absolu 8 h, inactivité maximum 2 h, expiration anticipée possible par GameAccess ; interaction explicite classée côté serveur seule comptabilisée, sans prolongation de l’absolu | Stockage, rotation, limites de sessions simultanées et nettoyage |
 | Q44 — limites en panne et renouvellement | Droits au plus 8 h depuis confirmation Portal, non glissants ; révocation/suspension reçue appliquée immédiatement ; nouvelle confirmation/handoff valide avec Portal disponible pour renouveler | Protocole de renouvellement et synchronisation/propagation, concurrence avec révocation, logout Q45 |
 
 Google/OIDC pourra être ajouté plus tard comme méthode supplémentaire du même compte global,
@@ -196,7 +196,7 @@ La validité des droits n’est jamais glissante sur l’activité Game et ne re
 début d’une panne. Un message ancien livré tard ne donne jamais huit heures supplémentaires à
 compter de sa réception ; l’ancrage est la confirmation par Portal. Le protocole proposé transmet
 une échéance absolue que Game doit borner à cette confirmation, mais son format et sa validation
-restent ouverts sous Q44/Q53. Aucune prolongation d’ancienne session ne résulte d’une activité.
+restent ouverts sous Q44/Q53. L’activité ne prolonge ni la limite absolue de session ni les droits.
 Une nouvelle session créée juste avant l’expiration d’accès ne gagne pas huit heures de droits.
 
 Expression des limites validées (dates serveur UTC ; aucune implémentation ici) :
@@ -211,9 +211,30 @@ game_deadline = min(game_created_at + 8 heures, game_last_activity_at + 2 heures
 À l’échéance, une nouvelle commande est refusée. Une révocation/suspension reçue peut refuser
 l’accès avant ces dates ; elle n’attend jamais l’expiration des huit heures. Les délais ne
 garantissent donc pas huit heures d’accès indépendamment des autres limites.
-La définition de `last_activity_at` reste un **arbitrage produit/sécurité nécessaire** sous Q41/Q43 :
-le polling, les tâches d’arrière-plan et les sondes doivent-ils compter ? Aucune réponse n’est
-déduite des durées validées. Le protocole exact de renouvellement reste à décider sous Q44.
+
+### Activité explicite — Q41/Q43, décision utilisateur validée le 2026-10-29
+
+Seules les interactions explicites de l’utilisateur réinitialisent l’inactivité Portal ou Game.
+Le serveur classe les types de requêtes/actions ; le navigateur ne fournit jamais un timestamp
+faisant autorité pour `last_activity_at`. Un indicateur client ne suffit pas à classifier l’action.
+
+| Catégorie | Effet sur l’inactivité |
+| --- | --- |
+| Navigation volontaire, action/commande utilisateur, modification ou sauvegarde d’un réglage, actualisation explicitement demandée | Réinitialisation sur la base de l’heure serveur |
+| Autre requête explicitement classée comme interaction utilisateur par le serveur | Même règle |
+| Polling automatique, refresh périodique, heartbeat, réception WebSocket, reconnexion automatique, prefetch, télémétrie ou simple onglet ouvert | Aucune réinitialisation |
+
+Le traitement automatique doit rester distinct d’une actualisation volontaire dans la classification
+serveur, même si les deux lisent les mêmes données. Le catalogue concret des actions/routes appartient
+aux futurs contrats d’API ; aucune route ni mécanisme de détection navigateur n’est implémenté ici.
+La classification n’est pas une preuve qu’un humain plutôt qu’un automate envoie la requête ;
+les protections anti-abus Q50 restent ouvertes.
+
+Conséquence des échéances validées : contrôler l’expiration avant de prendre en compte une activité ;
+une interaction à l’échéance ou après ne ressuscite pas une session expirée. Une activité admissible
+ne modifie que l’ancrage d’inactivité, jamais la création de session, sa limite absolue ou
+`GameAccess.valid_until`. Laisser un onglet ouvert avec du polling ne maintient pas la session.
+Le protocole exact de renouvellement reste à décider sous Q44.
 
 Exemples déduits des limites acceptées, **illustrations contractuelles sans tests exécutés** :
 
@@ -322,6 +343,7 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Livraison | Timeout après commit, doublons, messages désordonnés et même révision contradictoire sans double effet | 5C |
 | Compte MVP | Email non vérifié refusé au premier handoff, récupération courte consommée une seule fois, identité globale indépendante des méthodes | 5C |
 | Limites validées | Portal : refus à 7 j ou 72 h d’inactivité ; Game : refus à 8 h, 2 h d’inactivité ou échéance d’accès antérieure ; ticket refusé à 60 s | 5C/5D |
+| Activité explicite | Chaque catégorie automatique conserve last_activity_at ; navigation/commande/réglage/actualisation volontaire le réinitialisent selon classification serveur ; timestamp client falsifié sans effet ; interaction à expiration refusée ; maxima absolus et valid_until inchangés | 5C/5D |
 | Panne et dates | Confirmation retardée, panne commencée tard et activité Game ne déplacent pas valid_until ; suspension reçue avant échéance appliquée immédiatement | 5C/5D |
 | Session autonome | Portal coupé : lecture/mutation Game valide et échéance métier progressent ; aucun appel Accounts | 5D |
 | Renouvellement et multi-parties | Renouvellement sans déconnexion des sessions encore valides ; deux onglets d’univers différents sans écrasement de cookie | 5C/5D |
@@ -336,9 +358,9 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Questions | État après arbitrage du 2026-10-29 | Travail restant |
 | --- | --- | --- |
 | Q40 | **Parties closes** : login MVP, Argon2id, email vérifié avant handoff, récupération courte/unique et identité indépendante | Bibliothèque/paramètres et protocole de récupération ; email Q49, MFA Q48 restent ouverts |
-| Q41 | **Partie close** : 7 j absolus / 72 h d’inactivité | Activité, stockage/cookies et rotation |
+| Q41 | **Parties closes** : 7 j absolus / 72 h d’inactivité, interactions explicites classées côté serveur | Stockage/cookies et rotation |
 | Q42 | **Parties closes** : 60 s et usage unique | Format, protection contre rejeu, audience, liaison navigateur et consommation |
-| Q43 | **Parties closes** : 8 h absolues / 2 h d’inactivité et limite anticipée par GameAccess | Activité, stockage, rotation et nombre de sessions |
+| Q43 | **Parties closes** : 8 h absolues / 2 h d’inactivité et limite anticipée par GameAccess, interactions explicites classées côté serveur | Stockage, rotation et nombre de sessions |
 | Q44 | **Parties closes** : validité non glissante 8 h depuis confirmation, panne sans reset, refus à échéance, renouvellement via Portal et nouvelle confirmation/handoff | Protocole de renouvellement, concurrence et mécanismes de révocation |
 | Q45 | Logout local et propagation globale distincts | UX et limites de confirmation validées |
 | Q46 | mTLS interne recommandé, alternative credential TLS | Topologie et authentification opérables choisies |
@@ -350,9 +372,9 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Q55 | Préserver les règles privées/persistantes ouvertes | Aucun join public ajouté avant règles du mode |
 | Q56 | Ticket signé et clés locales toujours proposés ; **question ouverte** | Format/algorithme/rotation et recette de validation autonome |
 
-5B progresse avec les décisions ci-dessus, sans être déclarée achevée. Le prochain arbitrage
-nécessaire porte sur l’activité qui réinitialise les délais d’inactivité (Q41/Q43) ; la préparation
-s’arrête avant de choisir cette politique. Les autres propositions restent révisables, sans
+5B progresse avec les décisions ci-dessus, sans être déclarée achevée. L’activité explicite Q41/Q43 est désormais arbitrée.
+La prochaine décision produit/sécurité à examiner est Q45 : portée des déconnexions Portal, Game
+et globale, notamment sur les autres parties. La proposition de logout ci-dessus reste à valider. Les autres propositions restent révisables, sans
 fermeture de Q46–Q56. Les bibliothèques et paramètres cryptographiques se choisissent
 avant l’implémentation dépendante, sans solution de démonstration permissive en attendant.
 5C reste un lot séparé, à autoriser après les arbitrages nécessaires ; 5D dépend du contrat de

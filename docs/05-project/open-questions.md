@@ -129,9 +129,9 @@ Q45–Q56 restent **Question ouverte**, sans validation implicite de leurs méca
 | ID | Arbitrage restant | Dépendance / référence |
 | --- | --- | --- |
 | Q40 | Partiellement close : login MVP et principes de récupération validés ; restent bibliothèque/paramètres Argon2id et politique détaillée de récupération | 5B/5C, [contrats](../03-technical/identity-contracts.md) |
-| Q41 | Partiellement close : 7 j absolus / 72 h d’inactivité validés ; restent activité, cookies/stockage et rotation | 5B, contrats |
+| Q41 | Partiellement close : 7 j absolus / 72 h d’inactivité et activité explicite classée côté serveur validés ; restent cookies/stockage et rotation | 5B, contrats |
 | Q42 | Partiellement close : ticket 60 s/usage unique validé ; restent format/crypto, nonce/audience, liaison navigateur et consommation anti-rejeu | 5B, contrats et ADR 0008 |
-| Q43 | Partiellement close : 8 h absolues / 2 h d’inactivité et expiration anticipée par GameAccess validées ; restent activité, stockage et limites de sessions | 5B avant 5D, contrats |
+| Q43 | Partiellement close : 8 h absolues / 2 h d’inactivité et expiration anticipée par GameAccess validées, activité explicite classée côté serveur ; restent stockage et limites de sessions | 5B avant 5D, contrats |
 | Q44 | Partiellement close : plafond non glissant 8 h depuis confirmation Portal, refus à échéance et renouvellement avec Portal/confirmation/handoff validés ; restent protocoles et mécanismes de révocation/renouvellement | 5B, contrats |
 | Q45 | Logout global vs logout Game et effets sur les autres parties | 5B/5C, compte multi-parties |
 | Q46 | Auth service-to-service et exposition réseau de l’interface interne | 5B, aucun mTLS/signature/credential choisi |
@@ -176,10 +176,16 @@ de vérification/récupération), Q50 (anti-abus), Q51–Q53 (permissions/member
 Q54 (propagation de révocation), Q55 (modes) et Q56 (crypto/clés) restent ouvertes.
 La fenêtre validée sous Q44 ne ferme pas les mécanismes de Q54.
 
-**Prochain arbitrage nécessaire, Q41/Q43 :** définir l’activité qui réinitialise l’inactivité,
-en particulier le traitement du polling et des requêtes automatiques. La durée seule ne tranche
-pas ce point ; aucune politique n’est implémentée ou promue en décision. Les scénarios de frontière
-et de panne ajoutés aux contrats sont des critères futurs, pas des tests exécutés.
+**Complément utilisateur validé Q41/Q43 — 2026-10-29 :** seules les interactions explicites
+réinitialisent l’inactivité : navigation volontaire, action/commande, modification/sauvegarde d’un
+réglage, actualisation demandée ou autre requête explicitement classée comme telle par le serveur.
+Polling, refresh périodique, heartbeat, réception WebSocket, reconnexion automatique, prefetch,
+télémétrie et onglet ouvert ne comptent pas. Classification par type de requête/action côté serveur,
+sans confiance dans un timestamp navigateur. Aucune prolongation des limites absolues ni de
+GameAccess.valid_until. Décision non implémentée ; les scénarios restent des critères futurs.
+
+Prochaine décision à examiner : Q45, portée des déconnexions Portal/Game/globale et effets sur
+les autres parties ; les propositions du contrat ne valent pas validation utilisateur.
 
 12 secteurs/2 slots orbitaux concernent seulement le départ de référence v0.1 ; distribution et
 capacités variables futures restent Q04/Q06. Q39 reste ouverte. Q01–Q39 ne sont ni supprimées,
