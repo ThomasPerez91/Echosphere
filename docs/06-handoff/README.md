@@ -21,13 +21,15 @@ Fusion vérifiée le 2026-10-29 : master 8214e0b, CI verte. L’ancien checkpoin
 décrivait #5 ouverte ; il reste historique. Vérifier GitHub réel avant d’agir.
 **Décisions validées, futures** : compte global, multi-parties, Portal/Game isolables,
 Accounts DB/Game DB séparées, interface interne contrôlée et GameSession autonome après handoff.
-**Non implémenté** : Portal/auth/lobby, API gameplay et systèmes futurs du MVP.
+**Sur PR #7, non intégré** : [socle Portal C01](../03-technical/portal-foundation.md), backend/frontend,
+Accounts DB et HTTPS local. **Non implémenté** : comptes/auth/lobby fonctionnel, API gameplay et
+systèmes futurs du MVP. C01 ne rend pas les contrats d’auth 5B implémentés.
 
 5B autorisé puis consolidé le 2026-10-29 sur work/step-5b-identity-contracts :
 [contrats validés](../03-technical/identity-contracts.md), **toujours non implémentés**.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1` le 2026-10-29.
 5C devient le lot courant sur work/step-5c-portal-account-lobby depuis ce merge : premier checkpoint
-documentaire, puis cadrage avant code substantiel ; aucun début de 5D. Le
+documentaire et cadrage réalisés, puis C01 autorisé et implémenté ; C02 suit, aucun début de 5D. Le
 [registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
 délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
 ajout de facteur/régénération volontaire des secours avec step-up existant ; plafonds 10/10 configurables et sans effet sur

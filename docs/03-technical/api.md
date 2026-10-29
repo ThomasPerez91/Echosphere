@@ -50,7 +50,8 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 [identity-contracts](identity-contracts.md) porte les autorités, opérations internes, handoff,
 sessions, erreurs et règles compte/MFA validés le 2026-10-29. Le [registre Q40–Q56](../05-project/open-questions.md)
 distingue contrats clos, détails techniques délégués et reports. Aucun endpoint livré ; les sondes
-restent les seules routes applicatives actuelles. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats toujours non implémentés.
+restent les seules routes Game actuelles. C01 ajoute les sondes Portal séparées,
+[documentées ici](portal-foundation.md), aucune route de compte ou gameplay. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats toujours non implémentés.
 
 Portal expose les futurs services compte/lobby. Après ticket signé 60 s/unique lié au navigateur,
 GameSession opaque : accès direct Game, sans proxy ni consultation Portal par commande. Game vérifie

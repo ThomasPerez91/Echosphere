@@ -16,7 +16,7 @@ Universe = frontière d’instance, ni User ni processus ; late join et protecti
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
 éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
 
-## Implémentation — 5A intégrée, pas partie jouable
+## Implémentation — Game 5A intégré, socle Portal C01 sur PR #7
 
 PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
 8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
@@ -26,7 +26,11 @@ Checkpoint du 28/10/2026 : 5A et la passation sont portées par PR #5, alors ouv
 Vérifier GitHub : après fusion de #5, considérer 5A/passation comme intégrées à master ; l’état
 GitHub réel prévaut sur ce checkpoint. Fondations et shell 0–4 intégrés dans master 54f928e au départ ;
 source fonctionnelle 58e8f7c, checkpoint 5be00da vert (101 backend, 11 frontend, 5 Chromium, Compose).
-Aucun compte, Portal/auth, membership, lobby, API gameplay ou multijoueur implémenté.
+Aucun compte, authentification, membership, lobby fonctionnel, API gameplay ou multijoueur implémenté.
+**Sur la branche PR #7, non intégré à master : C01** ajoute le socle Portal backend/frontend,
+Accounts DB/metadata/pool/Alembic p0000 séparés et HTTPS local portal.echosphere.localhost/game.echosphere.localhost:8443.
+Écran de préparation et sondes seulement. [Recette C01](docs/03-technical/portal-foundation.md).
+Routage/TLS et panne croisée des bases testés ; aucune auth/mTLS S2S ou protection de charge prétendue.
 Game : FastAPI/SQLAlchemy/Alembic/PostgreSQL + worker, React/TypeScript/Vite ; UTC, autorité serveur.
 EventStream/ScheduledEvent génériques ; ColonyTimeline/ResourceBalance pour économie exacte.
 Migration 0004 ajoute les quatre tables économiques sans modifier les anciennes révisions.
@@ -98,8 +102,8 @@ reports Q48/Q49/Q55 conservés selon le registre, aucun arbitrage rouvert.
 
 Lot courant autorisé : **5C — Portal Account/Lobby foundation**, branche
 work/step-5c-portal-account-lobby créée depuis master fraîchement synchronisée en fast-forward.
-Premier travail : synchronisation documentaire seule, commit/push avant tout code. Ensuite :
-présenter découpage, tables/migrations Accounts, structure Portal et frontière 5C/5D avant code
-substantiel. Aucun compte/Portal/API ajouté à ce checkpoint. 5D exclu ; aucune nouvelle fusion
+Premier checkpoint documentaire 1c27497 et cadrage 8122cf7 publiés avant code. L’utilisateur a ensuite
+autorisé « alors go » : C01 implémenté et testé sur PR #7, 5C reste en cours. Prochaine action : C02
+comptes selon contrats 5B, sans nouvelle validation par paramètre technique délégué. 5D exclu ; aucune nouvelle fusion
 sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
 [Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).

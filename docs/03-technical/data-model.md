@@ -105,7 +105,8 @@ Voir [ADR 0007](../adr/0007-colony-economy.md) et [règles v0.1](../01-game-desi
 
 Les [contrats 5B validés](identity-contracts.md) distinguent Membership souhaitée côté Portal,
 accès effectif versionné et bindings d’Empire côté Game ; une participation par compte/univers.
-Ces objets restent non implémentés, sans migration. Schémas/contraintes sont délégués à 5C/5D ;
+Ces objets restent non implémentés. C01 initialise seulement portal_alembic_version dans
+Accounts DB, sans table métier ; aucune migration de compte ou d’accès Game. Schémas/contraintes sont délégués à 5C/5D ;
 Q51–Q54 closes pour leurs contrats 5B, Q21 partage d’Empire toujours ouverte.
 
 Compte global et plusieurs univers simultanés ; User → UniverseMembership → Universe →

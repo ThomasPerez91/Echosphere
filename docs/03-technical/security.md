@@ -108,3 +108,10 @@ pas la résistance à une saturation réseau ou DDoS. Aucun WAF/Redis installé 
 gameplay. Les scénarios de refus, concurrence, reprise et panne sont des obligations de 5C/5D,
 non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats toujours non implémentés.
 5C est le lot courant autorisé, sans début de 5D.
+
+## État livré en C01 — PR #7
+
+[Socle Portal](portal-foundation.md) : base/configuration/pool/réseaux séparés et HTTPS local avec
+CA Docker, sans installation hôte. Aucun compte, credential, session, CSRF métier ou mTLS S2S encore
+implémenté. CORS Portal refusé par défaut et sondes sans détails privés. Les contrôles d’authentification
+ci-dessus restent des obligations des prochains tickets, pas une protection déjà livrée.

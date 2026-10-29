@@ -43,14 +43,18 @@ bloc complet corrigé. **5B documentaire terminé et intégré à master via PR 
 [Q40–Q56](open-questions.md) distinguent contrats clos, détails techniques délégués aux lots dépendants
 et reports explicites : support renforcé Q48, fournisseur/configuration production Q49, modes Q55.
 Ces reports ne bloquent pas la clôture du cadrage ; ils bloquent leur fonctionnalité ou déploiement
-concerné tant qu’ils ne sont pas satisfaits. Aucun compte, session, Portal, MFA ou API Colony livré.
+concerné tant qu’ils ne sont pas satisfaits. Aucun compte, session, Portal, MFA ou API Colony livré
+par le lot documentaire 5B ; le socle C01 est décrit ci-dessous.
 
 **Lot courant autorisé : 5C**, branche work/step-5c-portal-account-lobby créée depuis cette master
 synchronisée. Premier checkpoint documentaire commit/push avant code ; ensuite cadrage présenté
 (sous-tickets, tables/migrations Accounts, structure Portal, frontières et dépendances) avant
 implémentation substantielle. Les décisions 5B ne sont pas rouvertes.
 [Cadrage 5C proposé](step-5c-plan.md) : sous-tickets, schémas Accounts et frontière 5D,
-présenté avant toute implémentation substantielle.
+présenté avant toute implémentation substantielle. Depuis, instruction de démarrer C01 :
+[socle Portal C01](../03-technical/portal-foundation.md) implémenté sur PR #7, non intégré à master.
+Accounts DB/Alembic, backend/frontend et HTTPS local testés ; aucun compte/session/handoff livré.
+Prochain ticket : C02 comptes et vérification email ; 5C n’est pas terminé.
 5D reste distinct : API/UI Colony et preuves de résilience gameplay, sans accès permissif transitoire.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :

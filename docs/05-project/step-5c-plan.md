@@ -1,10 +1,11 @@
 # Étape 5C — cadrage Portal Account/Lobby foundation
 
-**Statut : découpage technique proposé, présenté avant implémentation substantielle.** 2026-10-29.
+**Statut : découpage présenté ; C01 autorisé puis implémenté sur PR #7, suite 5C future.** 2026-10-29.
 Autorisation utilisateur : poursuivre 5C après un premier checkpoint documentaire commit/push.
 Contrats de référence **validés, inchangés** : [identity-contracts](../03-technical/identity-contracts.md),
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md), [registre Q40–Q56](open-questions.md).
-Cette proposition n’ajoute aucune décision produit et ne déclare aucun mécanisme implémenté.
+Ce plan n’ajoute aucune décision produit. [Socle C01 livré](../03-technical/portal-foundation.md) ;
+comptes et contrats d’authentification restent non implémentés.
 
 ## 1. Point de départ vérifié et premier commit
 
@@ -48,7 +49,7 @@ Les identifiants Cxx sont des repères de travail locaux, pas des issues GitHub 
 | Ticket | Contenu | Preuve de sortie |
 | --- | --- | --- |
 | C00 | Synchronisation post-merge | Réalisé par 1c27497, docs/Qxx/diff et CI vérifiés |
-| C01 | Socle Portal séparé : configuration, FastAPI, Accounts PostgreSQL, Alembic, frontend React/Vite, sondes et lancement local HTTPS | Deux bases/processus/credentials/pools distincts ; Game existant intact ; migrations avant démarrage, aucun secret Git/VITE |
+| C01 | **Implémenté sur PR #7** : configuration, FastAPI, Accounts PostgreSQL, Alembic indépendant, frontend React/Vite, sondes et HTTPS local | Deux bases/processus/credentials/pools distincts ; Game existant intact ; migrations avant démarrage, aucun secret Git/VITE |
 | C02 | Comptes : User stable, credential Argon2id, inscription, vérification email 24 h, envoi durable et non-énumération | Concurrence d’inscription/vérification/réémission, aucune adresse non vérifiée autorisée à entrer Game |
 | C03 | Sessions Portal/appareils : opaque serveur, CSRF, rotation, activité explicite, gestion des connexions et caps configurables | Frontières 7 j/72 h, trafic automatique sans prolongation, profils/onglets, quota concurrent et logout local |
 | C04 | Compte sensible : step-up par action, reset/changement mot de passe et changement email avec preuves et notifications | Jetons uniques/dernière demande, échéances 30 min/1 h, invalidations croisées et intentions de révocation atomiques, sans auto-login |
@@ -59,7 +60,7 @@ Les identifiants Cxx sont des repères de travail locaux, pas des issues GitHub 
 | C09 | Recette de clôture et passation de l’incrément | Tests ciblés/concurrence PostgreSQL des deux plans, Chromium HTTPS, migration/absence de dérive, reprise workers/livraison, CI et docs de tête ; limites restantes explicites |
 
 Les tests accompagnent chaque ticket ; C09 n’est pas une attente avant de vérifier la sécurité.
-C01 est le premier incrément de code après présentation de ce plan. Les dépendances C04/C05 sont
+C01 est le premier incrément de code après présentation de ce plan, désormais réalisé ; C02 suit. Les dépendances C04/C05 sont
 itératives : aucun endpoint sensible utilisable sans ses preuves requises, aucune route MFA simulée.
 C06/C07 concernent les fondations d’accès, pas les commandes gameplay réservées à 5D.
 Une protection prévue mais absente ne sera jamais annoncée comme livrée dans un checkpoint partiel.
@@ -122,7 +123,8 @@ transactions PostgreSQL ; aucune FK ou connexion SQL vers Game DB depuis Portal.
 | Livraison | control_outbox, email_outbox | Intention de sécurité et livraison dans la transaction Accounts ; identifiants stables, retry/acquittement ; confirmations sensibles chiffrées si matérialisées dans la file, jamais journalisées |
 | Protection/audit | abuse_counters, security_events | Seuils configurables par opération/compte/IP ; audit sans secrets, rétention 90 j distincte de la protection anti-rejeu |
 
-Proposition de migrations Accounts indépendantes :
+Migration Accounts C01 livrée : p0000_portal_baseline, historique seul, aucune table métier.
+Migrations des tickets suivants envisagées :
 
 - P0001 : comptes/credentials, preuves email, appareils/sessions, audit/anti-abus et livraison email ;
 - P0002 : challenges, MFA, secours, step-up et récupération limitée ;
@@ -170,5 +172,5 @@ ensemble le démarrage minimal (Empire/monde, IA absente avant son lot, configur
 et sa place dans la roadmap, sans inventer Q14/Q19–Q29. Le périmètre minimal proposé ne dépend pas
 de cet arbitrage : pas de bouton trompeur ni de fixture runtime en attendant.
 
-Le plan est présenté pour revue avant code substantiel ; il ne vaut pas validation utilisateur
-indépendante des choix de périmètre proposés. Aucun nouveau merge autorisé ; 5D non commencé.
+C01 a reçu l’instruction utilisateur de démarrer après cette présentation. Les tickets futurs
+ne sont pas déclarés implémentés par le code du socle ; aucun nouveau choix produit validé par implication. Aucun nouveau merge autorisé ; 5D non commencé.

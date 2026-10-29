@@ -4,10 +4,64 @@ Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Lot courant — 5C : Portal Account/Lobby foundation
 
-**Statut : premier checkpoint de synchronisation documentaire, avant tout code 5C.**
+**Statut : C01 implémenté et testé sur PR #7 ; 5C en cours, C02 comptes à suivre.**
 5B documentaire terminé et intégré à master via PR #6 ; contrats validés mais toujours non implémentés.
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
+Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C01 est décrit en premier.
+
+### C01 — socle Portal séparé, 2026-10-29
+
+Instruction utilisateur « alors go » après présentation du plan et confirmation qu’aucun arbitrage
+ne bloque C01. Reprise : PR #7 OPEN/brouillon, tête/base 8122cf77d3fb00a8cd5d4c0fa332f42d9d1a2253 /
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611 ; fetch, branche synchronisée/propre. CI push 40930143792
+et PR 40930208556 observées success. Aucun agent délégué ni travail concurrent détecté.
+
+Livré sur work/step-5c-portal-account-lobby, pas sur master : portal/backend (FastAPI, config PORTAL_*,
+engine/pool/metadata indépendants, sondes sans détails privés), Accounts PostgreSQL/rôle/secret/volume/
+réseau propres, migration p0000_portal_baseline initialisant uniquement portal_alembic_version.
+portal/frontend : écran de préparation responsive, readiness propre au Portal et retry explicite.
+Compose garde les cinq services Game et ajoute portal-postgres/migrate/backend/frontend/local-edge.
+Caddy : deux origines HTTPS locales, CA dans volumes Docker, admin et installation de confiance hôte
+désactivées. Aucun compte, User, session, Argon2id, MFA, outbox, mTLS S2S ou API Colony ajouté.
+Aucun changement game_data/migrations/services métier ou lockfile Game ; contrats et Qxx inchangés.
+
+Tests locaux réellement exécutés dans les versions Docker prévues, sans Python/Node installés hôte :
+
+- Backend Portal : Ruff portal_app/migrations/tests et scripts réussi ; premier pytest sans opt-in
+  8 réussis/1 intégration ignorée ; passage complet 9 réussis/aucun ignoré sur base dédiée
+  echosphere_c01_<identifiant>_test créée puis supprimée, aucun downgrade de la base conservée.
+  Upgrade répété/check/downgrade/base/upgrade et timezone UTC vérifiés. Un warning Starlette/httpx.
+- Frontend Portal : npm ci, ESLint, 4 tests et build réussis. Lock autonome, Vitest 4.1.12/Vite 7.3.7 ;
+  npm audit initial 0 vulnérabilité. Génération du lock avec npm 12 après échec interne npm 10
+  « edgesOut » ; consommation ultérieure par npm ci de Node 22 réussie, aucun outil installé hôte.
+- Chromium Debian jetable : 5 scénarios réussis, dont 320/390/768/1440 clavier/focus/retry et absence de
+  débordement et classement same-site des hôtes sur serveur local réel. Les hôtes définitifs
+  portal.echosphere.localhost et game.echosphere.localhost ont un parent commun, conforme à 5B.
+  Captures 320/1440 inspectées. Sondes interceptées pour les tests UI ; pas de recette
+  graphique Windows, tactile ou lecteur d’écran. Captures hors Git.
+- docker compose config --quiet et up --build --wait réussis ; bases/APIs/frontends healthy,
+  worker Game running et migrations Game/Portal Exited(0). Caddy observé v2.11.7.
+- smoke_portal_compose.py réussi : TLS strict avec CA publique en mémoire/noms vérifiés, deux
+  origines/routage et CORS refusé, historiques séparés, panne Accounts sans panne Game puis inverse,
+  reprises. smoke_compose.py Game réussi. Alembic check Portal et Game sans dérive, Game reste 0004.
+  Volumes de données conservés, aucune CA installée dans Windows/WSL2.
+
+CI étendue : jobs portal-backend/portal-frontend et smoke HTTPS ; jobs Game préservés. Documentation
+opérationnelle [portal-foundation](docs/03-technical/portal-foundation.md), références et état courant
+actualisés. Le code CI est une recette, pas encore une CI passée sur la nouvelle tête à ce checkpoint.
+Checks finaux exécutés : 66 documents/chemins/liens valides, git diff --check sans erreur ; registre
+Q01–Q56 et identity-contracts intégralement identiques à 8122cf7. Diff/périmètre/confidentialité relus,
+aucun backend/frontend/game_data Game modifié, aucune clé/certificat/artefact privé staged.
+Après publication, observer SHA/CI
+propres et consigner leurs résultats exacts dans PR #7, sans nouvelle boucle de commits de checkpoint.
+
+Limites : socle local, aucune auth implémentée ; UI Chromium HTTP et smoke TLS réel vérifiés séparément.
+Pas de recette HTTPS navigateur hôte ni résilience de commandes Game futures, charge ou isolation
+CPU/RAM. Dépréciations dev ESLint/whatwg-encoding et Starlette conservées sans échec ; avis Game
+historiques inchangés. C01 ne ferme aucune Qxx supplémentaire. Prochain ticket : C02 comptes,
+Argon2id/vérification email et livraison durable, selon 5B, sans choix de fournisseur production imposé.
+5D non commencé ; PR #7 à actualiser et laisser non fusionnée.
 
 ### Synchronisation après fusion de PR #6 — 2026-10-29
 

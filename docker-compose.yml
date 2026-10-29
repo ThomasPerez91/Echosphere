@@ -10,6 +10,16 @@ x-backend: &backend
     POSTGRES_USER: ${POSTGRES_USER:?Copy .env.example to .env}
     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env}
     TZ: UTC
+x-portal: &portal
+  image: echosphere-portal:dev
+  build: ./portal/backend
+  environment:
+    PORTAL_POSTGRES_HOST: portal-postgres
+    PORTAL_POSTGRES_DB: ${PORTAL_POSTGRES_DB:-echosphere_accounts}
+    PORTAL_POSTGRES_USER: ${PORTAL_POSTGRES_USER:-echosphere_accounts}
+    PORTAL_POSTGRES_PASSWORD: ${PORTAL_POSTGRES_PASSWORD:-accounts_development_only}
+    TZ: UTC
+  networks: [portal_db]
 services:
   postgres:
     image: postgres:17-alpine
@@ -72,5 +82,75 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+  portal-postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${PORTAL_POSTGRES_DB:-echosphere_accounts}
+      POSTGRES_USER: ${PORTAL_POSTGRES_USER:-echosphere_accounts}
+      POSTGRES_PASSWORD: ${PORTAL_POSTGRES_PASSWORD:-accounts_development_only}
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - accounts_data:/var/lib/postgresql/data
+    networks: [portal_db]
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  portal-migrate:
+    <<: *portal
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      portal-postgres:
+        condition: service_healthy
+  portal-backend:
+    <<: *portal
+    networks: [portal_db, portal_web]
+    depends_on:
+      portal-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 5
+      start_period: 10s
+  portal-frontend:
+    build: ./portal/frontend
+    environment:
+      PORTAL_API_PROXY_TARGET: http://portal-backend:8000
+    networks: [portal_web]
+    depends_on:
+      portal-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  local-edge:
+    image: caddy:2-alpine
+    ports:
+      - "127.0.0.1:8443:8443"
+    volumes:
+      - ./infra/local/Caddyfile:/etc/caddy/Caddyfile:ro
+      - local_tls_data:/data
+      - local_tls_config:/config
+    networks: [default, portal_web]
+    depends_on:
+      frontend:
+        condition: service_healthy
+      portal-frontend:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  accounts_data:
+  local_tls_data:
+  local_tls_config:
+networks:
+  default:
+  portal_web:
+  portal_db:
+    internal: true

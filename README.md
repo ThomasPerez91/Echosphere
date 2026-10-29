@@ -5,7 +5,11 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : domaine Colony/économie v0.1 et shell responsive (étape 5A), sans API gameplay ni partie jouable.**
+**État actuel : domaine Colony/économie v0.1 et shell Game intégrés ; socle Portal C01 sur PR #7,
+sans compte, API gameplay ni partie jouable.**
+
+Socle Portal séparé : https://portal.echosphere.localhost:8443 ; Game : https://game.echosphere.localhost:8443.
+Certificat local à approuver explicitement et recette : [Portal C01](docs/03-technical/portal-foundation.md).
 
 Lire [AGENTS.md](AGENTS.md), [context.md](context.md), [progress.md](progress.md), puis
 [la passation Work/Codex](docs/06-handoff/README.md) pour reprendre sans historique de chat.
@@ -73,6 +77,9 @@ pour un serveur public. Ne pas exposer Vite sur internet.
 | postgres | PostgreSQL 17 | Source de vérité et volume persistant local |
 | migrate | Même image backend | Alembic upgrade head, puis sortie 0 |
 | worker | Même code backend | Streams temporels multi-univers, sans port publié |
+| portal-postgres / portal-migrate | Accounts PostgreSQL 17 / Alembic indépendant | Historique p0000, aucune table de compte en C01 |
+| portal-backend / portal-frontend | FastAPI / React-Vite séparés | Sondes Accounts et écran de préparation |
+| local-edge | Caddy, HTTPS local | Origines Portal/Game :8443, CA Docker sans installation hôte |
 
 Le worker est un autre processus du même monolithe : événements SQL idempotents, production exacte
 et reprise après redémarrage. Les valeurs v0.1 sont dans game_data, mais aucune colonie/partie n’est injectée au démarrage.
@@ -142,11 +149,11 @@ Aucun seed/demo runtime : l’UI Colony réserve ses quatre sections et indique 
 
 ## Architecture cible et reprise durable
 
-**Décision validée, non implémentée** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md)
+**Décision validée, socle C01 partiel sur PR #7 et authentification future** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md)
 sépare Portal Control Plane (compte global/lobby, Accounts DB) et Game Data Plane (backend actuel,
 Game DB). Plusieurs parties par compte ; interface interne contrôlée, jamais SQL Portal→Game DB.
-Handoff court/unique puis GameSession autonome, gameplay direct à Game. Aucun Portal, login,
-protocole d’auth ou changement Compose n’est livré par cette documentation.
+Handoff court/unique puis GameSession autonome, gameplay direct à Game. Le lot documentaire 5B
+n’a livré ni Portal, login, protocole d’auth ni changement Compose ; C01 est décrit séparément.
 
 [Procédure locale et relais](docs/06-handoff/work-codex-handoff.md),
 [sources/statuts](docs/06-handoff/source-map.md) et [prochain lot](docs/05-project/roadmap.md) :
@@ -154,7 +161,8 @@ protocole d’auth ou changement Compose n’est livré par cette documentation.
 PR #5 fusionnée sur master 8214e0b ; recette locale effectuée le 2026-10-29, limites dans progress.
 Les [contrats 5B](docs/03-technical/identity-contracts.md) sont validés et consolidés, non implémentés.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1`. Contrats toujours non
-implémentés. Lot courant : 5C sur `work/step-5c-portal-account-lobby`, premier checkpoint documentaire
-avant cadrage et implémentation ; aucune API Colony 5D commencée.
+implémentés. Lot courant : 5C sur `work/step-5c-portal-account-lobby`, checkpoint/cadrage effectués
+puis socle C01 implémenté sur PR #7 ; aucune API Colony 5D commencée.
 Le [registre Q40–Q56](docs/05-project/open-questions.md) distingue décisions closes, détails techniques
-délégués et reports support/email/modes. Aucun nouveau code d’authentification ou changement Compose.
+délégués et reports support/email/modes. Aucun nouveau code d’authentification dans 5B. Sur PR #7, C01 ajoute le socle Portal et étend
+Compose ; comptes et sessions restent à développer. [Recette C01](docs/03-technical/portal-foundation.md).

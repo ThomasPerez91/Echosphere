@@ -107,9 +107,10 @@ son ingress et ses autorisations ; il n’est pas sûr par sa seule séparation 
 
 ## État réel et séquencement
 
-**Implémenté aujourd’hui** : un backend gameplay FastAPI, worker du même code, PostgreSQL Game,
-frontend React et service de migration ; aucun Portal, Accounts DB, compte, ticket ou GameSession.
-Le Compose actuel reste inchangé. Le futur environnement local pourra partager une machine et
+**État intégré par 5B** : un backend gameplay FastAPI, worker, PostgreSQL Game, frontend React et
+service de migration, sans Portal/auth. **Complément C01 sur PR #7** : socle Portal/Accounts et
+HTTPS local, sans compte, ticket ni GameSession ; [recette](../03-technical/portal-foundation.md).
+Le Compose est étendu au titre du lot 5C explicitement autorisé. Le futur environnement local pourra partager une machine et
 héberger Portal frontend/backend/Accounts PostgreSQL et Game frontend/backend/worker/Game PostgreSQL ;
 ceci reste une cible documentaire, pas une commande de lancement actuelle.
 

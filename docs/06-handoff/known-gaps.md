@@ -5,7 +5,9 @@
 Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progress](../../progress.md).
 [Contrats 5B](../03-technical/identity-contracts.md) validés et consolidés après arbitrage du bloc
 complet corrigé ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
-contrats toujours non implémentés. 5C est le lot courant : synchronisation documentaire puis cadrage.
+contrats d’auth toujours non implémentés. 5C est le lot courant : checkpoint/cadrage effectués,
+[socle C01](../03-technical/portal-foundation.md) implémenté sur PR #7, sans compte/session/handoff.
+HTTPS/routage/isolation de panne des bases testés, pas de confiance navigateur Windows/charge démontrée.
 [Q40–Q56](../05-project/open-questions.md) séparent clôtures, détails techniques délégués et reports.
 Restent ouverts : procédures support renforcé joueur/privilégié Q48 (aucun déblocage sans procédure
 approuvée), fournisseur et configuration production Q49, politiques des modes futurs Q55/Q19–Q29.
@@ -30,7 +32,7 @@ Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B identifié ; a
 | --- | --- |
 | Plateforme entière dans un backend / une DB définitifs | **Superseded partiellement** : ADR 0008 sépare Portal/Game ; monolithe modulaire gameplay maintenu, code actuel inchangé |
 | ADR 0002 indexé « implémentation future » | Historique bootstrap conservé comme tel ; scheduler livré depuis #3, index actuel corrigé |
-| game_data sans paramètres, frontend placeholder, Compose à trois services | État périmé remplacé : v0.1, shell et cinq services actuels ; aucun Portal ajouté |
+| game_data sans paramètres, frontend placeholder, Compose à trois services | État périmé remplacé : v0.1, shell et cinq services Game intégrés ; socle Portal ajouté depuis dans C01 sur PR #7 |
 | Neuf tables et migrations 0001–0003 seulement | 13 tables métier sur branche #5, plus alembic_version ; 0004 additive, aucun schéma modifié ici |
 | 5B = API/UI Colony directement | **Superseded** par 5B contrats identité/Portal-Game, 5C compte/lobby minimal selon cadrage, 5D API/UI sécurisées |
 | Toutes planètes supposées 12/2 | Aucun invariant global : référence initiale v0.1 seulement ; initialiseur actuel limité à cette référence |
@@ -93,3 +95,12 @@ Avis retournés : [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-
 Exposition effective et trajectoire de mise à jour à examiner dans un lot de maintenance explicite ;
 aucun exploit démontré ici, aucun npm audit fix ni changement de lockfile effectué.
 Un avertissement de dépréciation Starlette/httpx est également remonté sans échec des tests.
+
+## Limites propres au socle C01
+
+Dépendances frontend Portal indépendantes, npm audit initial 0 vulnérabilité ; cela ne corrige pas
+les avis du frontend Game ci-dessus. npm signale encore des dépréciations de développement, dont
+ESLint 9 et whatwg-encoding. L’avertissement Starlette/httpx reste présent. Aucun changement d’outil
+Game ni nouveau service production engagé. Récepteur email et fournisseur non livrés en C01.
+Les tests Chromium Portal interceptent les sondes ; le smoke HTTPS vérifie réellement CA/noms et
+pannes croisées. Pas de parcours authentifié réel tant que les tickets dépendants ne sont pas livrés.

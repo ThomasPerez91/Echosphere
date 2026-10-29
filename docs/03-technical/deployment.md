@@ -82,7 +82,8 @@ Sources : [ordre de démarrage Compose](https://docs.docker.com/compose/how-tos/
 
 **Décision validée, non implémentée** : Windows 11 + Ubuntu WSL2 + VS Code + Docker + Codex local,
 ChatGPT Desktop facultatif. Machine partagée permise au développement ; séparation opérationnelle
-possible en déploiement. Le Compose actuel n’est pas modifié et conserve ses cinq services Game.
+possible en déploiement. Au checkpoint 5B le Compose gardait cinq services Game ; C01 l’étend
+avec les services Portal et HTTPS local, détaillés plus bas.
 
 | Composant futur possible | Plan |
 | --- | --- |
@@ -98,3 +99,10 @@ Noms de services, routage/TLS, placement, pools et budgets futurs à spécifier 
 lancés aujourd’hui. CPU/RAM/scaling/bases/réseau doivent être isolables pour limiter l’impact des
 attaques Portal. Voir [ADR 0008](../adr/0008-control-plane-game-data-plane.md). Aucune recette WSL2
 réelle n’est revendiquée ici ; [reprise concrète](../06-handoff/work-codex-handoff.md).
+
+## Socle Portal C01 — sur PR #7
+
+Accounts DB et API/frontend Portal séparés, Alembic p0000 propre, origines HTTPS locales via Caddy.
+Les services et le volume Game sont conservés. Le lancement Compose inclut désormais ces services,
+sans compte, session ou API gameplay. Les descriptions précédentes des cinq services décrivent
+le socle Game ; la [recette Portal](portal-foundation.md) détaille certificats, commandes et limites.

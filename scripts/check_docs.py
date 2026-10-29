@@ -58,6 +58,7 @@ REQUIRED = {
             "ai-engine",
             "security",
             "identity-contracts",
+            "portal-foundation",
             "deployment",
         )
     ],
