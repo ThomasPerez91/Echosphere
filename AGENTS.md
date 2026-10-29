@@ -87,8 +87,9 @@ Compte global, plusieurs parties : User → UniverseMembership → Universe → 
 rôle/permissions. Ne pas réduire à Empire.owner_user_id ; empire partagé Q21 reste ouvert.
 Universe n’est ni User ni processus. Pas de compte global factice ou accès implicite pour une démo.
 Q16 a son cadrage 5B couvert ; détails délégués et reports Q48/Q49/Q55 au registre.
-5B documentaire terminé pour revue, 5C compte/lobby sur instruction distincte,
-5D API Colony sécurisée. Ne pas commencer ces systèmes au titre de la passation.
+5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats toujours non implémentés.
+Lot courant autorisé : 5C compte/lobby, checkpoint documentaire puis cadrage avant code substantiel.
+5D API Colony sécurisée reste hors lot. Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver
 

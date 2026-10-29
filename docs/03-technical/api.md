@@ -50,7 +50,7 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 [identity-contracts](identity-contracts.md) porte les autorités, opérations internes, handoff,
 sessions, erreurs et règles compte/MFA validés le 2026-10-29. Le [registre Q40–Q56](../05-project/open-questions.md)
 distingue contrats clos, détails techniques délégués et reports. Aucun endpoint livré ; les sondes
-restent les seules routes applicatives actuelles. 5B terminé documentairement pour revue de PR #6.
+restent les seules routes applicatives actuelles. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats toujours non implémentés.
 
 Portal expose les futurs services compte/lobby. Après ticket signé 60 s/unique lié au navigateur,
 GameSession opaque : accès direct Game, sans proxy ni consultation Portal par commande. Game vérifie
@@ -68,6 +68,7 @@ besoin explicite et allowlist minimale. CSRF, cookies host-only Secure/HttpOnly,
 POST de handoff et activité explicite classée côté serveur sont des obligations du contrat, pas
 des protections déjà présentes dans le runtime. Aucun secret localStorage.
 
-5C compte/lobby puis 5D API Colony/UI protégée nécessitent leur instruction distincte. Tests futurs
+5C compte/lobby est le lot courant autorisé ; cadrage avant code substantiel. 5D API Colony/UI
+protégée reste hors lot et nécessitera son instruction distincte. Tests futurs
 et prérequis opérationnels sont référencés dans la matrice du canonique ; aucun test d’auth réalisé
 par la rédaction. [ADR 0008](../adr/0008-control-plane-game-data-plane.md).

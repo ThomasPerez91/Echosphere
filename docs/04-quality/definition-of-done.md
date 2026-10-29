@@ -29,7 +29,8 @@ ADR 0008, sécurité, API, modèle, roadmap et reprise cohérents, sans proposit
 comme questions produit courantes. Corrections MFA/sessions configurables/CORS préservées.
 Diff documentaire et unique ajout REQUIRED de check_docs.py, sans implémentation 5C/5D.
 Check documentaire/liens, diff/confidentialité et CI de la tête publiée observée ; aucun test futur
-présenté comme passé. PR compréhensible pour revue finale, sans merge ni début de 5C.
+présenté comme passé. Sortie 5B atteinte et intégrée via PR #6 (`63bb7d1`) ; contrats toujours
+non implémentés. La réalisation de 5C relève de son lot autorisé et de ses validations propres.
 
 ## Étape 5A
 

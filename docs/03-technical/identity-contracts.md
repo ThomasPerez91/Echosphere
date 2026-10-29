@@ -8,8 +8,9 @@ par défaut. Cette synthèse conserve les décisions, sans transcript privé.
 contrat la précise. Les décisions closes, détails techniques délégués et reports sont distingués
 pour chaque Q40–Q56 dans le [registre](../05-project/open-questions.md).
 
-5B termine le cadrage documentaire. Aucune route, table, migration, dépendance, application Portal,
-MFA ou GameSession n’est livrée. 5C/5D restent des lots distincts ; aucune fusion autorisée.
+5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1` le 2026-10-29. Aucune route,
+table, migration, dépendance, application Portal, MFA ou GameSession n’est livrée par 5B. 5C est le
+lot courant autorisé ; premier checkpoint documentaire avant code. 5D reste distinct et non commencé.
 
 ## 1. Autorités et modèle logique validés — Q51/Q52/Q53
 
@@ -371,8 +372,10 @@ et matrice de tests. Les préciser et les justifier dans 5C/5D avant le code dé
 questionnaire par détail. Aucun changement produit, bypass ou service payant autorisé par cette
 latitude. Toute décision produit nouvelle reste à faire arbitrer, regroupée avec ses dépendances.
 
-5B est terminé comme lot documentaire de contrats, sous réserve de revue finale de PR #6 et de sa
-CI publiée. Aucune autorisation de merge, de déploiement ou de début de 5C.
+5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats toujours non implémentés.
+5C devient le lot courant sur une nouvelle branche issue de ce merge : synchronisation documentaire,
+puis cadrage présenté avant implémentation substantielle. Aucun début de 5D, déploiement ou nouvelle
+fusion autorisé par cette transition. Les décisions 5B ci-dessus restent inchangées.
 
 ## 10. Matrice d’acceptation future — aucun scénario exécuté par cette rédaction
 

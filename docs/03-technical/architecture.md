@@ -65,11 +65,11 @@ de la fréquence de lecture. Ruleset et vitesses par univers, jamais en singleto
 
 ## Prochain travail
 
-PR #5 fusionnée sur master 8214e0b. Les [contrats 5B](identity-contracts.md) sont validés et
-consolidés, non implémentés ; PR #6 destinée à la revue finale avant fusion sur autorisation.
-Le [registre Q40–Q56](../05-project/open-questions.md) distingue clôtures, détails techniques délégués
-et reports support/email/modes. Aucune nouvelle décision produit nécessaire à 5B identifiée.
-Prochaine action : revue finale, sans début de 5C. Après intégration et instruction distincte :
-5C fondation compte/lobby, puis 5D API Colony protégée.
+PR #5 fusionnée sur master 8214e0b, puis **5B documentaire terminé et intégré à master via PR #6**,
+merge `63bb7d1`. Les [contrats 5B](identity-contracts.md) sont validés et toujours non implémentés.
+Le [registre Q40–Q56](../05-project/open-questions.md) conserve clôtures, détails délégués et reports
+support/email/modes. Lot courant autorisé : 5C compte/lobby, nouvelle branche depuis ce merge,
+checkpoint documentaire puis cadrage présenté avant code substantiel. Aucun début de 5D API Colony,
+aucune nouvelle fusion sans instruction explicite.
 Voir [roadmap](../05-project/roadmap.md), [sécurité](security.md), [API](api.md),
 [modèle](data-model.md) et [temps](event-engine.md).

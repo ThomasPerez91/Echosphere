@@ -3,8 +3,10 @@
 **Statut : procédure commune validée ; recette initialement proposée dans la passation du 28/10.**
 Actualisation 29/10 : PR #5 fusionnée sur master 8214e0b ; recette locale WSL2 réalisée depuis,
 preuves/limites dans [progress](../../progress.md). Les exemples #5 ci-dessous sont conditionnels ou
-historiques. PR #6 porte désormais 5B documentaire terminé pour revue finale ; reprendre sa branche
-pour sa revue, sans nouveau lot/merge implicite. [Contrats](../03-technical/identity-contracts.md).
+historiques. PR #6 est désormais fusionnée : 5B documentaire terminé et intégré à master sur
+`63bb7d1`, contrats toujours non implémentés. Lot courant 5C sur nouvelle branche
+work/step-5c-portal-account-lobby issue de cette master, sans réutiliser la branche 5B. Premier
+checkpoint documentaire avant code ; aucune nouvelle fusion implicite. [Contrats](../03-technical/identity-contracts.md).
 Les agents partagent GitHub, pas leur mémoire ni nécessairement un disque, des processus ou secrets.
 La qualité attendue est identique dans les deux environnements.
 

@@ -116,7 +116,8 @@ ceci reste une cible documentaire, pas une commande de lancement actuelle.
 5A : domaine Colony. Puis 5B : architecture identité et contrats Portal/Game ; 5C : fondation minimale
 compte/lobby selon cadrage ; 5D : API Colony sécurisée et UI réelle. Pas de Portal complet ou
 multijoueur développé par anticipation. Q16 a son cadrage 5B clos ; réalisation et reports restent
-explicites au registre. 5B terminé documentairement, revue finale de PR #6 avant merge autorisé.
+explicites au registre. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
+contrats toujours non implémentés. 5C est le lot courant autorisé, sans début de 5D.
 
 ## Conséquences et critères futurs
 

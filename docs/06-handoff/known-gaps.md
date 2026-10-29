@@ -4,11 +4,12 @@
 
 Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progress](../../progress.md).
 [Contrats 5B](../03-technical/identity-contracts.md) validés et consolidés après arbitrage du bloc
-complet corrigé ; lot documentaire terminé pour revue finale de PR #6, sans implémentation.
+complet corrigé ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
+contrats toujours non implémentés. 5C est le lot courant : synchronisation documentaire puis cadrage.
 [Q40–Q56](../05-project/open-questions.md) séparent clôtures, détails techniques délégués et reports.
 Restent ouverts : procédures support renforcé joueur/privilégié Q48 (aucun déblocage sans procédure
 approuvée), fournisseur et configuration production Q49, politiques des modes futurs Q55/Q19–Q29.
-Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B identifié ; aucun début de 5C.
+Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B identifié ; aucun début de 5D.
 
 ## Accès incomplet aux sources
 

@@ -28,7 +28,7 @@ Toute nouvelle fonctionnalité doit préciser objectif, portée, statuts et test
 
 | ID | Étape | Travail cible | Sortie attendue |
 | --- | --- | --- | --- |
-| B15 | 5B | Contrats identité/membership/Portal-Game et dégradation | Contrats validés et consolidés, clôtures/délégation/reports au registre ; 5B documentaire terminé pour revue PR #6 |
+| B15 | 5B | Contrats identité/membership/Portal-Game et dégradation | Contrats validés et consolidés, clôtures/délégation/reports au registre ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) |
 | B16 | 5C | Fondation minimale Portal compte/lobby selon contrat | Isolation et accès aux parties, sans Portal complet ou multijoueur anticipé |
 | B17 | 5D | API Colony sécurisée et UI branchée aux données réelles | Même domaine 5A, autorisation/session/fog et résilience testées |
 

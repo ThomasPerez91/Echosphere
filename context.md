@@ -91,12 +91,15 @@ code métier, migration, game_data, dépendance, Docker ou test modifié. Si #5 
 que la mission porte dessus, reprendre cette branche. Après sa fusion, synchroniser master et
 partir sur une nouvelle branche work/... pour tout nouveau lot autorisé, sans recréer la branche #5.
 progress porte le checkpoint et les actions de reprise avant/après fusion.
-Le 2026-10-29, l’utilisateur autorise le prochain lot : préparation 5B sur
-work/step-5b-identity-contracts depuis master synchronisée, PR #6 brouillon non fusionnée.
-Les [contrats](docs/03-technical/identity-contracts.md) sont validés et consolidés : 5B documentaire
-terminé, PR #6 destinée à la revue finale avant toute fusion explicitement autorisée. Consulter
-progress et GitHub pour la tête publiée et sa CI réelle. Aucun compte/Portal/API livré.
-Prochaine action : revue finale de PR #6 ; après intégration et autorisation d’un lot distinct,
-5C fondation compte/lobby selon les contrats, puis 5D API Colony sécurisée/UI réelle. Aucun début de
-5C, Portal complet ou multijoueur implicite. [Roadmap](docs/05-project/roadmap.md),
-[Q01–Q56](docs/05-project/open-questions.md).
+PR #6 fusionnée sur instruction explicite le 2026-10-29 : master
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611. **5B documentaire terminé et intégré à master** ;
+contrats validés mais toujours non implémentés. Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ;
+reports Q48/Q49/Q55 conservés selon le registre, aucun arbitrage rouvert.
+
+Lot courant autorisé : **5C — Portal Account/Lobby foundation**, branche
+work/step-5c-portal-account-lobby créée depuis master fraîchement synchronisée en fast-forward.
+Premier travail : synchronisation documentaire seule, commit/push avant tout code. Ensuite :
+présenter découpage, tables/migrations Accounts, structure Portal et frontière 5C/5D avant code
+substantiel. Aucun compte/Portal/API ajouté à ce checkpoint. 5D exclu ; aucune nouvelle fusion
+sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
+[Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).

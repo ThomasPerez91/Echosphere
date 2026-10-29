@@ -39,8 +39,9 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
 - [Contrats 5B](03-technical/identity-contracts.md) : décisions validées et consolidées le 2026-10-29,
-  **non implémentées** ; lot documentaire terminé pour revue finale de PR #6. Le registre Q40–Q56
-  distingue clôtures, détails techniques délégués et reports support/email/modes. Aucun début de 5C.
+  **non implémentées** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
+  Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. Lot courant
+  5C : checkpoint documentaire puis cadrage avant implémentation substantielle ; 5D non commencé.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité

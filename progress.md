@@ -2,7 +2,45 @@
 
 Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
-## Lot courant — 5B : contrats identité / Portal-Game consolidés
+## Lot courant — 5C : Portal Account/Lobby foundation
+
+**Statut : premier checkpoint de synchronisation documentaire, avant tout code 5C.**
+5B documentaire terminé et intégré à master via PR #6 ; contrats validés mais toujours non implémentés.
+L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
+Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
+
+### Synchronisation après fusion de PR #6 — 2026-10-29
+
+GitHub réel : PR #6 était encore OPEN/brouillon sur 4b17c16494bc9949d3387ccbfb13a2359e74f59e,
+malgré la formulation initiale de la demande ; CI push 40924593354 et PR 40924600793 completed/success.
+Sur instruction explicite « Merge la PR6 », passage prêt pour revue puis fusion normale, tête attendue
+contrôlée. Merge réel : **63bb7d1c902e9c0fbae3497d4a36c107a80eb611**, parents 8214e0b et 4b17c16.
+Aucune branche supprimée. Fetch GitHub, bascule master, fast-forward vers origin/master et arbre propre
+vérifiés. Nouvelle branche **work/step-5c-portal-account-lobby** créée directement depuis ce merge ;
+branche 5B non réutilisée. CI master [40929141873](https://github.com/ThomasPerez91/Echosphere/actions/runs/40929141873)
+observée completed/success sur le merge avant publication du checkpoint.
+
+Premier travail de cette branche : références courantes README/context/progress, index docs,
+identity-contracts, Qxx, roadmap/backlog, passation/lacunes/décisions, architecture/API/sécurité,
+ADR 0008, AGENTS et DoD synchronisées avec l’intégration réelle. Les checkpoints antérieurs ci-dessous
+restent des relevés historiques, leurs formulations de revue/brouillon ne décrivent pas le lot courant.
+Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ; reports Q48/Q49/Q55 inchangés. Aucune décision
+5B modifiée, aucun compte/auth/Portal ajouté. Diff limité à la synchronisation documentaire.
+
+Validations locales exécutées : `python3 scripts/check_docs.py` réussi, 64 documents/chemins/liens ;
+`git diff --check` sans erreur. Q01–Q56 présentes exactement une fois ; toutes les lignes de décision
+Qxx strictement identiques au merge. Sections métier 1–8, matrice d’acceptation 10 et sources 11 de
+identity-contracts identiques au merge ; seules les mentions de statut/intégration changent.
+Diff des 18 fichiers Markdown relu : synchronisation documentaire uniquement, sans décision nouvelle.
+Tests backend/frontend, migrations et Compose non relancés pour ce diff documentaire ; aucune
+implémentation 5C ni preuve d’authentification testée à ce stade.
+
+Prochaine action après publication de ce premier commit : analyser la structure réelle, présenter
+sous-tickets 5C, tables/migrations Accounts, structure frontend/backend Portal, périmètre livré et
+frontière 5D, dépendances et arbitrages éventuels. Aucun développement substantiel avant présentation.
+Vérifier ensuite la tête distante et sa CI réelle ; résultats observés à consigner dans la PR du lot.
+
+## Historique du lot 5B — contrats identité / Portal-Game consolidés
 
 **Statut : 5B documentaire terminé, prêt pour revue finale de PR #6 sous réserve de la CI publiée.**
 Contrats validés et non implémentés ; aucun début de 5C et aucun merge autorisé.

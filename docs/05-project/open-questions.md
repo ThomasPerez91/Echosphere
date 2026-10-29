@@ -6,7 +6,8 @@ les moments limites pour décider avant de dépendre du choix.
 
 Lot 5B du 2026-10-29 : [contrats identité/Portal-Game](../03-technical/identity-contracts.md)
 validés par l’utilisateur, dont le bloc final en quatorze points avec corrections MFA, sessions
-configurables et CORS. Le cadrage 5B est terminé ; aucun mécanisme implémenté par cette clôture.
+configurables et CORS. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ;
+contrats toujours non implémentés. 5C devient le lot courant, sans modifier ces décisions.
 Le tableau Q40–Q56 distingue décisions closes, détails techniques délégués et sujets différés.
 
 | ID | Question ouverte | À traiter avant | Référence |
@@ -116,7 +117,8 @@ tableau ci-dessous ; aucune API gameplay ou identité globale factice ajoutée.
 **Provenance : validation utilisateur explicite pour PR #6**, arbitrages successifs puis bloc final
 complet, corrigé sur trois points. **Décisions validées, non implémentées.** Canonique :
 [identity-contracts](../03-technical/identity-contracts.md), qui précise [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
-La clôture de contrat ne signifie ni livraison, ni test fonctionnel, ni autorisation de 5C ou de merge.
+La clôture de contrat ne signifie ni livraison ni test fonctionnel. PR #6 est intégrée ; 5C a reçu
+son instruction distincte, avec checkpoint documentaire avant code. Aucun début de 5D ni nouvelle fusion.
 
 « Clos 5B » clôt l’arbitrage du contrat indiqué ; « délégué » est un travail technique autorisé pour
 le futur lot dépendant, pas une question produit à reposer. « Différé » reste ouvert avec son échéance.
@@ -160,7 +162,7 @@ Q16 a son cadrage identité/session/autorisation couvert par 5B ; sa réalisatio
 les politiques futures liées aux modes restant ouvertes dans leurs propres Qxx.
 Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B n’a été identifié à la consolidation.
 
-5B documentaire terminé pour revue finale de PR #6, vérifications et CI propres à la tête publiée.
-Pas de merge ni début de 5C. Q01–Q39 ne sont pas renumérotées ; leurs arbitrages gameplay restent
+5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats toujours non implémentés.
+5C est le lot courant autorisé ; aucune nouvelle décision ici. Q01–Q39 ne sont pas renumérotées ; leurs arbitrages gameplay restent
 inchangés, dont Q39 ouverte. Seul le cadrage identité/autorisation de Q16 est actualisé par 5B.
 Aucune nouvelle table de compte/membership.

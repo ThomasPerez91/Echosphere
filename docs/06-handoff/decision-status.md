@@ -4,9 +4,10 @@
 canonique, puis ce tableau et les Qxx concernés. « Implémenté » décrit le code de la branche, pas
 une validation produit ou une fusion. Statuts définis dans [docs/README](../README.md).
 Sources S1–S5 : [carte de provenance](source-map.md). Une proposition d’assistant seule n’est pas validée.
-Actualisation 2026-10-29 : PR #5 fusionnée sur 8214e0b ; PR #6 contient les contrats 5B validés
-et consolidés, non implémentés. 5B documentaire terminé pour revue finale. Clôtures, détails délégués
-et reports sont explicités dans le registre Q40–Q56 ; aucun début de 5C ni autorisation de merge.
+Actualisation 2026-10-29 : PR #5 fusionnée sur 8214e0b, puis **5B documentaire terminé et intégré
+à master via PR #6**, merge `63bb7d1`. Contrats validés et toujours non implémentés. Clôtures,
+détails délégués et reports Q40–Q56 inchangés. Lot courant 5C autorisé : checkpoint documentaire
+puis cadrage avant code substantiel ; aucun début de 5D ni nouvelle fusion autorisée.
 
 | Décision / élément | Statut | Justification | Canonique / ADR | Impact | Date/source |
 | --- | --- | --- | --- | --- | --- |
@@ -44,7 +45,7 @@ et reports sont explicités dans le registre Q40–Q56 ; aucun début de 5C ni a
 | Retour lobby, logout Game/appareil/tous appareils distincts | Décision validée, non implémentée | Progression conservée ; révocations durables ciblées et UI en attente fidèle | [Contrats 5B](../03-technical/identity-contracts.md) | Q45/Q54 clos 5B ; mécanismes et tests délégués | Arbitrages utilisateur explicites du 29/10/2026, PR #6 |
 | Intention Portal, accès effectif Game, mTLS/outbox/idempotence/révisions | Décision validée, non implémentée | Sérialisation commandes/révocation, réactivation sans anciennes sessions ; bindings/permissions explicites | [Contrats 5B](../03-technical/identity-contracts.md) | Q46/Q51–Q54 clos 5B ; Q21/modes non fermées | Bloc final du 29/10/2026, PR #6 |
 | Anti-abus compte/IP/opération et audit sécurité 90 j | Décision validée, non implémentée | Aucun CAPTCHA tiers obligatoire, pas de verrouillage permanent provoqué ; secrets exclus, anti-rejeu conservé séparément | [Contrats 5B](../03-technical/identity-contracts.md) | Q50 clos 5B ; seuils/tests/purge sûre délégués | Bloc final du 29/10/2026, PR #6 |
-| Détails techniques délégués ; fournisseur/domaines/support/modes différés | Décision validée | Paramètres/bibliothèques/schémas avant code dépendant ; pas de bypass ni service payant implicite | [Registre Q40–Q56](../05-project/open-questions.md) | Q48/Q49 reports ciblés, Q55 future ; 5B documentaire terminé pour revue | Bloc final du 29/10/2026, PR #6 |
+| Détails techniques délégués ; fournisseur/domaines/support/modes différés | Décision validée | Paramètres/bibliothèques/schémas avant code dépendant ; pas de bypass ni service payant implicite | [Registre Q40–Q56](../05-project/open-questions.md) | Q48/Q49 reports ciblés, Q55 future ; 5B documentaire terminé et intégré via PR #6 | Bloc final du 29/10/2026, PR #6 |
 | UX responsive et sept domaines globaux | Implémenté / Proposition visuelle | Mobile/clavier et états explicites | [UX](../02-ux-ui/information-architecture.md), ADR 0003 | Q15 reste ouverte ; Portal non livré | PR #4/#5, S1 |
 | Diplomatie/commerce avancés, alliances, espionnage | Futur / post-MVP | Ne pas inventer des mécaniques pour compléter le MVP | [Roadmap](../05-project/roadmap.md), Q18 | Relations IA minimales étape 13 | Docs initiales ; S1 préserve les questions |
 | master stable, PR, merge explicite | Décision validée | Référence commune Work/Codex | [AGENTS](../../AGENTS.md) | develop historique superseded | Instructions visibles S2, PR #3 |

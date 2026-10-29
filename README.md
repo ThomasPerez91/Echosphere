@@ -153,6 +153,8 @@ protocole d’auth ou changement Compose n’est livré par cette documentation.
 5B contrats identité/Portal-Game → 5C compte/lobby selon cadrage → 5D API Colony sécurisée/UI réelle.
 PR #5 fusionnée sur master 8214e0b ; recette locale effectuée le 2026-10-29, limites dans progress.
 Les [contrats 5B](docs/03-technical/identity-contracts.md) sont validés et consolidés, non implémentés.
-5B documentaire terminé pour revue finale de PR #6, non fusionnée ; aucun début de 5C.
+5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1`. Contrats toujours non
+implémentés. Lot courant : 5C sur `work/step-5c-portal-account-lobby`, premier checkpoint documentaire
+avant cadrage et implémentation ; aucune API Colony 5D commencée.
 Le [registre Q40–Q56](docs/05-project/open-questions.md) distingue décisions closes, détails techniques
 délégués et reports support/email/modes. Aucun nouveau code d’authentification ou changement Compose.
