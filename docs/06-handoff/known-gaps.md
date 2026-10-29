@@ -11,6 +11,8 @@ Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du re
 Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
 Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
 Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
+Q48 partiellement arbitrée : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme,
+step-up des comptes équipés sur actions sensibles. Facteur/récupération et mécanismes restent ouverts.
 
 ## Accès incomplet aux sources
 
@@ -57,7 +59,7 @@ Q01–Q39 conservées : protection offline et nouveau joueur, économie/entretie
 planètes, recherche, génération, colonisation, fog, flottes, combat, IA, victoire, modes, late join,
 modules de défense et remboursement saturé. Les parties restantes de Q40–Q44 et Q46–Q56 cadrent
 les mécanismes Portal/Game ; login, limites temporelles, activité et comportements de déconnexion sont précisés comme indiqué
-ci-dessus. Aucun cookie, format de ticket, stockage, rôle, MFA, fournisseur email, anti-bot ou crypto choisi.
+ci-dessus. Aucun cookie, format de ticket, stockage, rôle, facteur MFA, fournisseur email, anti-bot ou crypto choisi.
 
 L’autonomie d’une GameSession et la révocation d’un accès devront être conciliées : aucune promesse
 de révocation instantanée/refresh illimité pendant panne Portal. Un déploiement partagé ne prouve

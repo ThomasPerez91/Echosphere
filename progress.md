@@ -5,12 +5,33 @@ Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/R
 ## Lot courant — préparation 5B : contrats identité / Portal-Game
 
 **Statut : décisions utilisateur partielles Q40–Q44 intégrées ; mécanismes encore proposés,
-activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 partiellement validée, flux email sans MFA, échéance/remplacement et révocation globale validés (mécanismes ouverts), 5B non déclarée achevée.**
+activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 partiellement validée, flux email sans MFA, échéance/remplacement et révocation globale validés (mécanismes ouverts), périmètre MFA Q48 validé (facteur/récupération ouverts), 5B non déclarée achevée.**
 Après la mission de reprise en lecture seule, l’utilisateur a autorisé le prochain lot sur une
 nouvelle branche. Interprétation appliquée selon roadmap : cadrage 5B, sans implémentation 5C/5D.
 Environnement : Codex local, Linux WSL2. Aucune délégation ni identité d’agent précédent supposée.
 
-### Complément email : échéance, remplacement et sessions — 2026-10-29
+### Périmètre MFA Q48 — 2026-10-29
+
+Source : arbitrage explicite utilisateur pour PR #6. Q48 partiellement close, non implémentée :
+MFA facultative joueurs MVP via paramètres, exigence normale après activation ; obligatoire avant
+fonctions privilégiées plateforme/admin/opération, sans exemption interne ni assimilation aux
+rôles Empire. Step-up des comptes équipés avant email, désactivation/remplacement MFA et moyens de
+récupération ; logout tous appareils seulement éventuel. Sans MFA, Q40/Q49 inchangées. Identité,
+memberships/empires/univers/gameplay conservés. Facteur/nombre, secrets, récupération/codes,
+remplacement/réinitialisation et mécanismes précis step-up restent ouverts, aucune autre Q fermée.
+
+Reprise : fetch, branche work/step-5b-identity-contracts propre/synchronisée sur
+ce6353a8a4870103bd6d0f7fc696279c364b5d12 ; PR #6 OPEN/brouillon, master 8214e0b inchangée.
+CI de cette tête vérifiée : push 40917882587 et PR 40917891299, backend/frontend/compose-smoke verts.
+Fichiers : contrats, Qxx, context/progress, sécurité, roadmap, décisions et références
+API/ADR 0008/index/passation/lacunes. Critères futurs complétés pour périmètre MFA, refus privilégié
+et step-up ; aucun comportement futur exécuté/testé. Checks locaux : docs/liens, diff, périmètre
+Markdown et Q01–Q56 uniques, seule ligne Q48 modifiée. Suites backend/frontend/Compose et Ruff
+non relancées localement pour ce diff documentaire ; observer CI du nouveau commit après push,
+résultats consignés dans PR. Prochain arbitrage : facteur MFA et récupération Q48.
+Aucune implémentation, console admin ou MFA anticipée, aucun merge PR #6 ni passage à 5C.
+
+### Complément email : échéance, remplacement et sessions — 2026-10-29 (checkpoint antérieur à Q48)
 
 Source : arbitrage explicite utilisateur Q40/Q49 pour PR #6. Non implémenté : demande active unique
 par compte, maximum 1 h depuis création, échéance commune aux deux confirmations sans glissement.
@@ -30,7 +51,8 @@ non-mélange/concurrence, révocation globale/courante et panne sans extension ;
 mécanismes futurs exécuté. Checks locaux : docs/liens, diff, périmètre Markdown et Q01–Q56 uniques ;
 seules lignes Q40/Q49 modifiées. Suites backend/frontend/Compose et Ruff non relancées localement.
 Vérifier la CI propre du nouveau commit après publication ; résultats consignés dans PR après observation.
-Prochain arbitrage : Q48, périmètre MFA (MVP, comptes concernés, facteur et récupération).
+Prochain arbitrage à ce checkpoint : périmètre Q48, désormais partiellement validé ci-dessus ;
+facteur et récupération restent ouverts.
 Aucun merge de PR #6, implémentation ou démarrage de 5C.
 
 ### Changement d’email Q40/Q49 — 2026-10-29 (checkpoint avant complément)

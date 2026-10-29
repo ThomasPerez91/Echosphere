@@ -45,6 +45,8 @@ Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du re
 Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
 Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
 Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
+Q48 partiellement arbitrée : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme,
+step-up des comptes équipés sur actions sensibles. Facteur/récupération et mécanismes restent ouverts.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité

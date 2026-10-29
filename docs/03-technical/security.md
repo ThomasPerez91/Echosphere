@@ -105,6 +105,15 @@ adresse et notifications finales sans credential/token sensible. Révocation Gam
 jusqu’à acquittement, sans instantanéité distante ni reset des 8 h. Mécanismes et Q48/Q50/Q53/Q54
 ouverts. Canonique : section 6 des contrats.
 
+Q48 partiellement validée, non implémentée : MFA facultative pour joueurs standards MVP, activable
+via paramètres puis exigée selon contrat du compte. MFA obligatoire pour utiliser les fonctions
+privilégiées plateforme/administration/opération, sans exemption interne ; rôles Empire distincts.
+Pour comptes équipés : step-up avant email, désactivation/remplacement MFA et génération/remplacement
+des moyens de récupération ; logout tous appareils seulement candidat. Sans MFA, preuves Q40/Q49
+inchangées. Identité/memberships/empires/univers/gameplay conservés lors des changements MFA.
+Facteur, nombre, secrets, récupération/codes, remplacement/réinitialisation et mécanismes step-up
+restent ouverts ; aucune récupération indépendante ou console d’administration livrée.
+
 Q45 validée, non implémentée : retour lobby sans logout ; déconnexion Game d’une seule session ;
 logout Portal de la session courante et de toutes les GameSessions du compte sur cet appareil ;
 action distincte pour toutes les sessions du compte sur tous les appareils/univers. Conservation

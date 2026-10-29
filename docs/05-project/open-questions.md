@@ -124,7 +124,7 @@ Référence canonique : [ADR 0008](../adr/0008-control-plane-game-data-plane.md)
 
 Les lignes suivantes conservent les travaux restants. **Q40–Q44 partiellement closes** par les
 arbitrages du 2026-10-29 décrits après le tableau ; aucune de ces questions n’est entièrement close.
-Q45 est **close pour le comportement produit**, non implémentée. Q49 est **partiellement close** pour la récupération et le changement d’email ; les autres Q46–Q56 restent **Question ouverte**,
+Q45 est **close pour le comportement produit**, non implémentée. Q49 est **partiellement close** pour la récupération et le changement d’email ; Q48 est **partiellement close** pour le périmètre MFA MVP ; les autres Q46–Q56 restent **Question ouverte**,
 sans validation implicite de leurs mécanismes ; regroupement appareil Q41/Q43 toujours ouvert.
 
 | ID | Arbitrage restant | Dépendance / référence |
@@ -137,7 +137,7 @@ sans validation implicite de leurs mécanismes ; regroupement appareil Q41/Q43 t
 | Q45 | Close — comportement produit : retour lobby sans logout ; déconnexion Game limitée à sa session ; compte sur appareil courant ; action distincte tous appareils ; progression conservée, révocation persistée/rejouée et état en attente | Validé utilisateur 2026-10-29, non implémenté ; appareil Q41/Q43 et protocoles Q53/Q54 ouverts, [contrats](../03-technical/identity-contracts.md) |
 | Q46 | Auth service-to-service et exposition réseau de l’interface interne | 5B, aucun mTLS/signature/credential choisi |
 | Q47 | CSRF, origines, cookies et politique CORS liée au découpage | 5B/5C/5D, sécurité |
-| Q48 | MFA et récupération associée | Cadrage 5B, implémentation selon périmètre |
+| Q48 | Partiellement close : MFA facultative joueurs MVP, obligatoire pour privilèges plateforme sans exemption interne ; step-up des comptes équipés sur actions sensibles et identité/gameplay conservés. Restent facteur/nombre, stockage, récupération/codes, remplacement/réinitialisation et mécanismes précis de step-up | Cadrage 5B, [contrats](../03-technical/identity-contracts.md), aucune implémentation |
 | Q49 | Partiellement close : récupération 30 min/unique, invalidation des anciens liens, effets globaux du reset, notification email et non-énumération validés ; changement sans MFA avec double confirmation/pending, notifications et réauthentification validé ; demande unique 1 h, remplacement complet et révocation globale validés ; restent fournisseur/livraison et mécanismes | 5B/5C |
 | Q50 | Anti-bot/CAPTCHA, limites IP/compte et protections brute force | 5B/5C, pas de produit choisi |
 | Q51 | Modèle exact rôles/permissions et contexte empire | 5B, sans fermer Q21 |
@@ -243,8 +243,25 @@ nouvelle adresse, sans maintien automatique. Game injoignable : intention persis
 acquittement, aucune instantanéité promise, valid_until/8 h depuis confirmation Portal jamais relancés.
 Notifications aux deux adresses après succès sans credential/token sensible ; identité et états conservés.
 Q40/Q49 restent partiellement ouvertes pour fournisseur/livraison et mécanismes. Q48/Q50/Q53/Q54
-ne sont pas fermées par implication. Prochain arbitrage nécessaire : périmètre MFA Q48 (MVP,
-comptes concernés, facteur et récupération), sans l’implémenter ni commencer 5C.
+ne sont pas fermées par implication.
+
+### Q48 — place de la MFA validée le 2026-10-29, parties closes uniquement
+
+Source : arbitrage explicite utilisateur pour PR #6, non implémenté. MFA facultative pour les
+joueurs standards du MVP, activable depuis les paramètres ; aucune obligation d’enrôlement pour
+créer/utiliser un compte standard. Une fois activée, elle devient une exigence normale de sécurité
+pour ce compte selon le contrat à définir.
+MFA obligatoire pour tout compte avec privilèges d’administration/opération de plateforme : aucune
+fonction privilégiée utilisable sans configuration correcte, aucune exemption compte interne.
+Les simples rôles gameplay d’Empire ne sont pas concernés par cette obligation.
+Comptes équipés : step-up avant changement d’email, désactivation/remplacement MFA et génération/
+remplacement de moyens de récupération MFA. « Déconnecter tous les appareils » reste un candidat
+éventuel ; catalogue exact à préciser avec les API. Sans MFA, preuves Q40/Q49 toujours applicables.
+Activation/désactivation/remplacement ne changent ni global_user_id, ni memberships/empires/univers,
+ni état gameplay. Aucun code, facteur ou moyen de récupération livré.
+Restent ouverts : facteur, nombre autorisé, secrets, récupération en cas de perte, codes éventuels,
+remplacement/réinitialisation et mécanismes précis de step-up. Aucune autre Qxx fermée par implication.
+Prochain arbitrage nécessaire : facteur MFA et récupération Q48, puis détails associés ; pas de 5C.
 
 12 secteurs/2 slots orbitaux concernent seulement le départ de référence v0.1 ; distribution et
 capacités variables futures restent Q04/Q06. Q39 reste ouverte. Q01–Q39 ne sont ni supprimées,
