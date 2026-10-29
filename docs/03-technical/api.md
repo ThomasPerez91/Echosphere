@@ -50,7 +50,7 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 Les [contrats 5B](identity-contracts.md) distinguent les décisions utilisateur du 2026-10-29
 (login MVP, principes de récupération, limites Portal/Game/ticket et validité des droits)
 des objets, opérations internes, erreurs et échanges encore proposés. Aucune route livrée.
-Q40–Q44 sont partiellement closes, Q16/Q45–Q56 restent ouvertes ; aucune validation de protocole
+Q40–Q44 sont partiellement closes, Q45 close pour le comportement produit, Q16/Q46–Q56 restent ouvertes ; aucune validation de protocole
 ou de sécurité implémentée n’est déduite de ces arbitrages.
 
 Décisions validées dans [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : Portal expose

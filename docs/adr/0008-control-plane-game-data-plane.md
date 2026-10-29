@@ -7,9 +7,10 @@
 
 **Évolution 5B du 2026-10-29 :** l’utilisateur a depuis validé le login MVP et les limites
 temporelles décrites dans [identity-contracts](../03-technical/identity-contracts.md), parties de
-Q40–Q44 uniquement. Les passages ci-dessous indiquant des durées/login non choisis décrivent
+Q40–Q44, ainsi que le comportement de déconnexion Q45. Regroupement par appareil et protocoles
+restent ouverts. Les passages ci-dessous indiquant des durées/login non choisis décrivent
 la décision de plateforme du 28/10 ; les nouvelles décisions les précisent sans choisir les
-formats, la crypto, le stockage ou les mécanismes de Q45–Q56. Aucune implémentation ajoutée.
+formats, la crypto, le stockage ou les mécanismes de Q46–Q56. Aucune implémentation ajoutée.
 
 ## Contexte et décision
 

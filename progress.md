@@ -5,12 +5,37 @@ Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/R
 ## Lot courant — préparation 5B : contrats identité / Portal-Game
 
 **Statut : décisions utilisateur partielles Q40–Q44 intégrées ; mécanismes encore proposés,
-activité explicite Q41/Q43 validée ; Q45 à examiner, 5B non déclarée achevée.**
+activité explicite Q41/Q43 et comportement Q45 validés ; récupération Q40/Q49 à examiner, 5B non déclarée achevée.**
 Après la mission de reprise en lecture seule, l’utilisateur a autorisé le prochain lot sur une
 nouvelle branche. Interprétation appliquée selon roadmap : cadrage 5B, sans implémentation 5C/5D.
 Environnement : Codex local, Linux WSL2. Aucune délégation ni identité d’agent précédent supposée.
 
-### Complément activité Q41/Q43 — 2026-10-29
+### Déconnexions Q45 — 2026-10-29
+
+Source : validation explicite utilisateur pour PR #6. Comportement produit Q45 clos, non implémenté :
+retour lobby sans logout ; déconnexion Game d’une seule session ; compte sur appareil courant
+(PortalSession courante + toutes ses GameSessions du compte) ; tous appareils comme action distincte.
+Autres appareils préservés lors du logout normal ; memberships/empires/états/progression/actions
+acceptées conservés. Révocation globale persistée/rejouée jusqu’à acquittement, état UI en attente
+si service injoignable, borne valid_until/8 h inchangée. Aucune autre Qxx close par implication.
+Regroupement appareil sous Q41/Q43 ; protocoles sous Q53/Q54 et tickets en vol sous Q42/Q56 ouverts.
+Un epoch d’accès commun ne peut implémenter le logout d’un seul appareil : limite explicitée,
+sans adopter un nouveau modèle de stockage. Matrice d’acceptation future complétée, aucun test
+fonctionnel de ces mécanismes exécuté.
+
+Reprise : fetch, branche work/step-5b-identity-contracts propre et synchronisée sur d879f7e5002d91342f08819ff2bad69ee83ad7d0 ;
+PR #6 OPEN/brouillon, base master 8214e0b inchangée. CI de cette tête observée verte :
+push 40879933579 et PR 40879939979, backend/frontend/compose-smoke réussis.
+Fichiers : contrats, registre Qxx, context/progress, sécurité, API/architecture, ADR 0008, roadmap,
+README/index/passation/décisions/lacunes. Résumés périmés corrigés ; Markdown uniquement.
+Checks locaux : check documentaire, diff, Q01–Q56 et comparaison des statuts ; seules les décisions
+Q45 changent, aucune autre fermeture. Suites fonctionnelles backend/frontend/Compose et Ruff
+non relancées localement pour ce diff documentaire ; CI de la nouvelle tête à observer après push.
+Prochain arbitrage nécessaire : Q40/Q49, durée du jeton de récupération, réémission et effets sur
+sessions ; puis changement d’email et périmètre MFA Q48. Aucun choix implicite depuis Q45.
+Aucun merge de PR #6, passage à 5C ou implémentation ; résultats CI publiés dans la PR après observation.
+
+### Complément activité Q41/Q43 — 2026-10-29 (checkpoint antérieur à Q45)
 
 Source : arbitrage explicite utilisateur, synthétisé dans identity-contracts et Qxx. Seules les
 interactions explicites classées côté serveur réinitialisent l’inactivité ; toutes les catégories
@@ -28,10 +53,9 @@ mécanismes futurs exécuté. Vérifications locales : check documentaire, diff 
 aucune suite fonctionnelle backend/frontend/Compose ni Ruff relancée pour ce complément documentaire.
 Après publication, relire SHA distant et CI effective de cette nouvelle tête ; les résultats de
 5dbd918 ci-dessus ne prouvent pas la CI du présent commit.
-Prochaine décision à examiner : Q45 (déconnexion locale/globale et effets entre parties), sans
-adopter implicitement la proposition du contrat. 5C/5D restent hors de ce lot documentaire.
+Prochaine décision à ce checkpoint : Q45, depuis arbitrée dans le complément ci-dessus. 5C/5D restent hors de ce lot documentaire.
 
-### Arbitrages utilisateur intégrés — 2026-10-29, suite de PR #6
+### Arbitrages utilisateur intégrés — 2026-10-29, checkpoint antérieur à Q45
 
 Source : validation explicite utilisateur pour poursuivre PR #6, synthétisée dans le canonique
 identity-contracts.md et le registre Qxx, sans transcript brut. Aucune validation implicite

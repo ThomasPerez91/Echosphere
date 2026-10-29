@@ -39,7 +39,8 @@ releases identifiées plus tard. develop n'est plus une étape permanente ou obl
 Reprise locale vérifiée le 2026-10-29, puis préparation 5B autorisée sur
 work/step-5b-identity-contracts : [contrats](../03-technical/identity-contracts.md), avec décisions
 utilisateur partielles Q40–Q44 validées le 2026-10-29. Activité explicite classée côté serveur validée sous Q41/Q43.
-5B reste en cours : mécanismes encore ouverts, Q45–Q56 non fermées. Aucune implémentation Portal/session ou API Colony livrée. 5C puis 5D
+Q45 validée pour le comportement des déconnexions ; prochain arbitrage récupération Q40/Q49.
+5B reste en cours : mécanismes encore ouverts, Q46–Q56 non fermées. Aucune implémentation Portal/session ou API Colony livrée. 5C puis 5D
 dépendent des contrats acceptés et d’une autorisation de leur lot.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).

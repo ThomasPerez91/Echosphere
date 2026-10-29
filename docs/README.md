@@ -39,7 +39,7 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
 - [Contrats 5B](03-technical/identity-contracts.md) : décisions utilisateur partielles Q40–Q44
-  du 2026-10-29, non implémentées ; mécanismes encore proposés, Q16/Q45–Q56 ouvertes.
+  et comportement Q45 du 2026-10-29, non implémentés ; mécanismes encore proposés, Q16/Q46–Q56 ouvertes.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité

@@ -65,7 +65,7 @@ de la fréquence de lecture. Ruleset et vitesses par univers, jamais en singleto
 
 PR #5 fusionnée sur master 8214e0b. Le lot 5B autorisé le 2026-10-29 prépare les contrats
 identité/session/Portal-Game dans [identity-contracts](identity-contracts.md) : décisions utilisateur
-partielles Q40–Q44 sur login et limites temporelles, mécanismes encore proposés et non implémentés.
+partielles Q40–Q44 sur login et limites temporelles, comportement de déconnexion Q45 validé, mécanismes encore proposés et non implémentés.
 Les arbitrages nécessaires précèdent 5C fondation compte/lobby, puis 5D API Colony protégée.
 Voir [roadmap](../05-project/roadmap.md), [sécurité](security.md), [API](api.md),
 [modèle](data-model.md), [temps](event-engine.md) et [questions](../05-project/open-questions.md).

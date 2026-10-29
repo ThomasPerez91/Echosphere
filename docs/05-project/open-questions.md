@@ -7,7 +7,7 @@ les moments limites pour décider avant de dépendre du choix.
 Lot 5B du 2026-10-29 : [contrats identité/Portal-Game](../03-technical/identity-contracts.md),
 avec décisions utilisateur et mécanismes encore proposés explicitement distingués.
 Les parties de Q40–Q44 listées en fin de registre sont closes sur arbitrage utilisateur explicite
-pour PR #6 ; leurs autres parties restent ouvertes. Q16, Q21 et Q45–Q56 ne sont pas fermées.
+pour PR #6 ; leurs autres parties restent ouvertes. Q45 est close pour le comportement produit décrit plus bas. Q16, Q21 et Q46–Q56 restent ouvertes.
 
 | ID | Question ouverte | À traiter avant | Référence |
 | --- | --- | --- | --- |
@@ -124,7 +124,8 @@ Référence canonique : [ADR 0008](../adr/0008-control-plane-game-data-plane.md)
 
 Les lignes suivantes conservent les travaux restants. **Q40–Q44 partiellement closes** par les
 arbitrages du 2026-10-29 décrits après le tableau ; aucune de ces questions n’est entièrement close.
-Q45–Q56 restent **Question ouverte**, sans validation implicite de leurs mécanismes.
+Q45 est **close pour le comportement produit**, non implémentée. Q46–Q56 restent **Question ouverte**,
+sans validation implicite de leurs mécanismes ; regroupement appareil Q41/Q43 toujours ouvert.
 
 | ID | Arbitrage restant | Dépendance / référence |
 | --- | --- | --- |
@@ -133,7 +134,7 @@ Q45–Q56 restent **Question ouverte**, sans validation implicite de leurs méca
 | Q42 | Partiellement close : ticket 60 s/usage unique validé ; restent format/crypto, nonce/audience, liaison navigateur et consommation anti-rejeu | 5B, contrats et ADR 0008 |
 | Q43 | Partiellement close : 8 h absolues / 2 h d’inactivité et expiration anticipée par GameAccess validées, activité explicite classée côté serveur ; restent stockage et limites de sessions | 5B avant 5D, contrats |
 | Q44 | Partiellement close : plafond non glissant 8 h depuis confirmation Portal, refus à échéance et renouvellement avec Portal/confirmation/handoff validés ; restent protocoles et mécanismes de révocation/renouvellement | 5B, contrats |
-| Q45 | Logout global vs logout Game et effets sur les autres parties | 5B/5C, compte multi-parties |
+| Q45 | Close — comportement produit : retour lobby sans logout ; déconnexion Game limitée à sa session ; compte sur appareil courant ; action distincte tous appareils ; progression conservée, révocation persistée/rejouée et état en attente | Validé utilisateur 2026-10-29, non implémenté ; appareil Q41/Q43 et protocoles Q53/Q54 ouverts, [contrats](../03-technical/identity-contracts.md) |
 | Q46 | Auth service-to-service et exposition réseau de l’interface interne | 5B, aucun mTLS/signature/credential choisi |
 | Q47 | CSRF, origines, cookies et politique CORS liée au découpage | 5B/5C/5D, sécurité |
 | Q48 | MFA et récupération associée | Cadrage 5B, implémentation selon périmètre |
@@ -171,7 +172,7 @@ accepté pour les autres Qxx, ni livraison de code, ni autorisation de fusion ou
   échéance, nouvelles commandes refusées, univers/workers poursuivant leur progression. Un
   renouvellement nécessite Portal disponible et une nouvelle confirmation/handoff valide.
 
-Q45 (logout), Q46 (S2S), Q47 (cookies/CSRF/origines), Q48 (MFA), Q49 (fournisseur email et détails
+Q46 (S2S), Q47 (cookies/CSRF/origines), Q48 (MFA), Q49 (fournisseur email et détails
 de vérification/récupération), Q50 (anti-abus), Q51–Q53 (permissions/membership/synchronisation),
 Q54 (propagation de révocation), Q55 (modes) et Q56 (crypto/clés) restent ouvertes.
 La fenêtre validée sous Q44 ne ferme pas les mécanismes de Q54.
@@ -184,8 +185,25 @@ télémétrie et onglet ouvert ne comptent pas. Classification par type de requ�
 sans confiance dans un timestamp navigateur. Aucune prolongation des limites absolues ni de
 GameAccess.valid_until. Décision non implémentée ; les scénarios restent des critères futurs.
 
-Prochaine décision à examiner : Q45, portée des déconnexions Portal/Game/globale et effets sur
-les autres parties ; les propositions du contrat ne valent pas validation utilisateur.
+### Q45 — comportement produit validé le 2026-10-29, non implémenté
+
+Source : arbitrage explicite utilisateur pour PR #6. Q45 close, aucune autre Qxx close par implication.
+Retour lobby/quitter l’écran n’est pas une déconnexion : GameSession conservable dans ses limites.
+Déconnexion Game : seule la session concernée, univers et appareil/session courants ; ni autres
+GameSessions du même appareil, ni autres univers/appareils, ni session Portal invalidés.
+Déconnexion du compte sur cet appareil : PortalSession courante et toutes les GameSessions du
+même compte sur cet appareil invalidées ; autres appareils préservés, aucune partie silencieusement
+laissée connectée. « Déconnecter tous les appareils » est distinct et explicite : toutes les
+PortalSessions/GameSessions du compte, tous appareils et univers.
+Memberships, empires, états, progression des univers/workers et actions déjà acceptées conservés.
+Si Game est injoignable pendant la révocation globale : demande persistée/rejouée jusqu’à acquittement,
+UI terminée/en attente sur certains services ; aucune instantanéité distante prétendue. Sessions
+non atteintes toujours bornées par les échéances validées, dont valid_until et maximum 8 h depuis
+confirmation Portal. Regroupement technique par appareil sous Q41/Q43, protocoles sous Q53/Q54
+restent ouverts ; aucune acceptation implicite d’epoch, outbox ou stockage.
+
+Prochain arbitrage nécessaire : récupération Q40/Q49, durée exacte du jeton, réémission et effets
+sur les sessions ; puis changement d’email et MFA Q48. Q45 n’impose pas la politique de récupération.
 
 12 secteurs/2 slots orbitaux concernent seulement le départ de référence v0.1 ; distribution et
 capacités variables futures restent Q04/Q06. Q39 reste ouverte. Q01–Q39 ne sont ni supprimées,

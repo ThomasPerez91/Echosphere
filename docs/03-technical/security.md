@@ -84,10 +84,18 @@ jamais source de vérité gameplay. Game protège aussi son ingress, objets, uni
 Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver ; ne pas promettre une protection DDoS par le seul
 fait d’avoir deux applications sur une machine partagée.
 
+Q45 validée, non implémentée : retour lobby sans logout ; déconnexion Game d’une seule session ;
+logout Portal de la session courante et de toutes les GameSessions du compte sur cet appareil ;
+action distincte pour toutes les sessions du compte sur tous les appareils/univers. Conservation
+des memberships/empires/états et de la progression/actions acceptées. Révocation globale persistée,
+rejouée jusqu’à acquittement ; UI terminée/en attente, aucune instantanéité si Game injoignable.
+Regroupement appareil Q41/Q43 et protocoles Q53/Q54 restent ouverts. Un epoch commun à tous les
+appareils ne peut servir au logout d’un seul appareil sans violer sa portée validée.
+
 Q16 est **partiellement cadrée**. Seules les parties listées de Q40–Q44 sont closes ;
 cookies/stockage, CSRF, MFA, fournisseur email, anti-abus, format/crypto du ticket, protocoles de
 renouvellement/révocation/logout, S2S, rôles/membership/synchronisation et politiques de modes
-restent ouverts. Q45–Q56 ne sont pas fermées ; pas de JWT/OAuth/mTLS sélectionné.
+restent ouverts. Q46–Q56 ne sont pas fermées ; pas de JWT/OAuth/mTLS sélectionné.
 Autonomie d’une session pendant panne Portal ne signifie pas ignorer toute révocation indéfiniment :
 fenêtre de huit heures validée, mécanismes restant à définir et tester avant API interactive.
 Aucun compte fictif global.

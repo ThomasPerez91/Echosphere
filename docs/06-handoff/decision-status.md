@@ -5,7 +5,7 @@ canonique, puis ce tableau et les Qxx concernés. « Implémenté » décrit le 
 une validation produit ou une fusion. Statuts définis dans [docs/README](../README.md).
 Sources S1–S5 : [carte de provenance](source-map.md). Une proposition d’assistant seule n’est pas validée.
 Actualisation 2026-10-29 : PR #5 fusionnée sur 8214e0b ; PR #6 en cadrage 5B avec arbitrages
-utilisateur partiels Q40–Q44 acceptés, non implémentés. Aucun mécanisme Q45–Q56 fermé.
+utilisateur partiels Q40–Q44 et comportement Q45 acceptés, non implémentés. Aucun mécanisme Q46–Q56 fermé.
 
 | Décision / élément | Statut | Justification | Canonique / ADR | Impact | Date/source |
 | --- | --- | --- | --- | --- | --- |
@@ -35,6 +35,7 @@ utilisateur partiels Q40–Q44 acceptés, non implémentés. Aucun mécanisme Q4
 | Ticket court/unique puis GameSession autonome | Orientation validée, non implémentée ; durée 60 s/usage unique désormais validés | Pas de dépendance Portal par commande | [Contrats 5B](../03-technical/identity-contracts.md), ADR 0008 | Format/crypto/rejeu restent ouverts sous Q42/Q56 | S1, S5 partiel puis arbitrage utilisateur explicite du 29/10/2026 pour PR #6 |
 | Login MVP email/mot de passe, Argon2id, email vérifié avant premier handoff, récupération courte/unique, identité globale indépendante | Décision validée, non implémentée | OIDC supplémentaire futur facultatif, aucun fournisseur imposé | [Contrats 5B](../03-technical/identity-contracts.md) | Q40 partiellement close ; paramètres, email et MFA ouverts | Arbitrage utilisateur explicite du 29/10/2026 pour PR #6 |
 | Portal 7 j/72 h inactif, Game 8 h/2 h inactif, droits Game non glissants au plus 8 h depuis confirmation | Décision validée, non implémentée | Panne sans reset, révocation reçue immédiate, refus à valid_until, renouvellement via Portal/confirmation/handoff | [Contrats 5B](../03-technical/identity-contracts.md) | Parties de Q41/Q43/Q44 closes ; activité explicite seule, classée côté serveur, validée ; mécanismes ouverts | Arbitrage utilisateur explicite du 29/10/2026 pour PR #6 |
+| Retour lobby, déconnexion session Game, compte sur appareil, tous appareils | Décision validée, non implémentée | Portées distinctes ; progression conservée ; révocation globale persistée/rejouée, UI terminée/en attente | [Contrats 5B](../03-technical/identity-contracts.md) | Q45 close produit ; appareil Q41/Q43 et protocoles Q53/Q54 ouverts | Arbitrage utilisateur explicite du 29/10/2026 pour PR #6 |
 | Accès local versionné, ticket signé, sessions opaques, epoch et interface interne | Proposition, non implémentée | Préparer les mécanismes de 5B avec alternatives et scénarios | [Contrats 5B](../03-technical/identity-contracts.md) | Aucun mécanisme accepté par les seuls arbitrages temporels ; 5B en cours | 29/10/2026, préparation Codex local autorisée ; choix à valider |
 | UX responsive et sept domaines globaux | Implémenté / Proposition visuelle | Mobile/clavier et états explicites | [UX](../02-ux-ui/information-architecture.md), ADR 0003 | Q15 reste ouverte ; Portal non livré | PR #4/#5, S1 |
 | Diplomatie/commerce avancés, alliances, espionnage | Futur / post-MVP | Ne pas inventer des mécaniques pour compléter le MVP | [Roadmap](../05-project/roadmap.md), Q18 | Relations IA minimales étape 13 | Docs initiales ; S1 préserve les questions |

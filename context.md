@@ -60,7 +60,12 @@ Droits Game : maximum 8 h depuis confirmation Portal, sans glissement sur activi
 Révocation/suspension reçue immédiate ; à valid_until nouvelles commandes refusées, worker/univers
 continuent. Renouvellement avec Portal disponible et nouvelle confirmation/handoff valide ; aucun
 renouvellement autonome illimité, GameAccess pouvant expirer une session plus tôt.
-Seules ces parties de Q40–Q44 sont closes ; mécanismes restants, Q45–Q56 et Q16 restent ouverts.
+Ces parties de Q40–Q44 sont closes. Q45 validée : retour lobby sans logout ; déconnexion Game
+limitée à sa session ; déconnexion Portal sur appareil = PortalSession courante et toutes les
+GameSessions du compte sur cet appareil ; action distincte tous appareils = toutes les sessions.
+Memberships/empires/états et progression/actions acceptées conservés. Révocation globale non livrable :
+persistée/rejouée jusqu’à acquittement, UI en attente explicite, bornes temporelles inchangées.
+Appareil technique Q41/Q43 et mécanismes restants, Q46–Q56 et Q16 toujours ouverts.
 Ceci affine le backend unique historique ; aucun Portal, protocole ou Compose nouveau dans ce lot.
 [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), [architecture](docs/03-technical/architecture.md).
 
@@ -78,8 +83,8 @@ Le 2026-10-29, l’utilisateur autorise le prochain lot : préparation 5B sur
 work/step-5b-identity-contracts depuis master synchronisée, PR #6 brouillon non fusionnée.
 Les [contrats](docs/03-technical/identity-contracts.md) distinguent désormais les décisions
 utilisateur ci-dessus des mécanismes encore proposés ; aucun compte/Portal/API livré.
-Activité Q41/Q43 arbitrée ; prochaine décision à examiner : portée des déconnexions Q45.
-Les propositions de logout ne valent pas validation utilisateur.
+Activité Q41/Q43 et comportement Q45 arbitrés ; prochain arbitrage : récupération Q40/Q49
+(durée du jeton, réémission, effets sur sessions), puis changement d’email et MFA Q48.
 Le lot reste 5B ; sa rédaction ne le déclare pas terminé et 5C/5D restent des lots séparés.
 Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation
 compte/lobby selon cadrage, 5D API Colony sécurisée/UI réelle. Ne pas commencer Portal complet ou
