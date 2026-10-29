@@ -1,14 +1,14 @@
 # Architecture technique
 
 **Statuts : Game Backend implémenté jusqu’à 5A, intégré par PR #5 ; cible Portal/Game validée,
-socle Portal C01 implémenté sur PR #7, authentification future.** État d’intégration et CI dans [progress.md](../../progress.md).
+Portal C01/C02 implémenté sur PR #7, connexion/sessions futures.** État d’intégration et CI dans [progress.md](../../progress.md).
 
 ## Réalité du dépôt
 
 React/TypeScript/Vite ; Game Backend Python/FastAPI, SQLAlchemy/Alembic ; PostgreSQL autoritaire.
 Le Compose conserve frontend, backend, postgres, migrate et worker Game ; C01 ajoute
 portal-postgres/migrate/backend/frontend et local-edge, sans modifier le volume Game. API/worker sont deux
-processus du même monolithe gameplay, pas deux microservices. Socle Portal C01 ajouté séparément sur PR #7 ; comptes et accès Game encore absents.
+processus du même monolithe gameplay, pas deux microservices. Socle Portal C01 ajouté séparément sur PR #7 ; C02 ajoute comptes/vérification/email durable ; accès Game encore absent.
 Le frontend est un shell sans partie active, pas un lobby ni un client de gameplay interactif.
 
 | Zone actuelle | Responsabilité implémentée |
@@ -19,8 +19,8 @@ Le frontend est un shell sans partie active, pas un lobby ni un client de gamepl
 | game_data/rulesets/v0.1 | Paramètres validés strictement, balance provisoire, copie par univers |
 | backend/migrations | 0001–0004, migrations explicites avant API/worker |
 | frontend/src | Navigation responsive et sous-vues Colony en préparation, readiness via proxy |
-| portal/backend | Sondes Portal, configuration PORTAL_*, pool/metadata Accounts et Alembic p0000 indépendants |
-| portal/frontend | Écran de préparation Portal, readiness et retry, aucun formulaire de compte |
+| portal/backend | Sondes Portal, configuration PORTAL_*, pool/metadata Accounts et Alembic p0000/p0001 indépendants, comptes/Argon2id/vérification et worker email C02 |
+| portal/frontend | Readiness/retry et formulaires d’inscription/renvoi/confirmation, sans connexion |
 | infra/local/Caddyfile | Deux origines HTTPS locales, CA Docker sans installation sur l’hôte |
 
 Les domaines Game futurs restent modulaires : recherche, exploration/connaissance/rapports,
@@ -71,13 +71,16 @@ de la fréquence de lecture. Ruleset et vitesses par univers, jamais en singleto
 ## Prochain travail
 
 PR #5 fusionnée sur master 8214e0b, puis **5B documentaire terminé et intégré à master via PR #6**,
-merge `63bb7d1`. Les [contrats 5B](identity-contracts.md) sont validés et toujours non implémentés.
+merge `63bb7d1`. Les [contrats 5B](identity-contracts.md) sont validés, partiellement implémentés par C02 sur PR #7.
 Le [registre Q40–Q56](../05-project/open-questions.md) conserve clôtures, détails délégués et reports
 support/email/modes. Lot courant autorisé : 5C compte/lobby, nouvelle branche depuis ce merge,
-checkpoint documentaire et cadrage réalisés, socle C01 livré sur PR #7 ; C02 comptes suit.
+checkpoint documentaire et cadrage réalisés, socle C01 livré sur PR #7 ; C02 comptes/vérification livré ; C03 sessions suit.
 Aucun début de 5D API Colony,
 aucune nouvelle fusion sans instruction explicite.
 Voir [roadmap](../05-project/roadmap.md), [sécurité](security.md), [API](api.md),
 [modèle](data-model.md) et [temps](event-engine.md).
 
 [Socle Portal C01 et recette](portal-foundation.md) : implémenté sur PR #7, non intégré à master.
+
+[C02 comptes et livraison](portal-registration.md) : worker email propre à Portal, Mailpit local,
+clé de chiffrement dans volume privé ; aucun import ou credential Accounts dans Game.

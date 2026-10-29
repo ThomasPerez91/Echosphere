@@ -39,7 +39,7 @@ une autorisation. Les primitives génériques de stream exigent universe_id et v
 les adaptateurs internes de colonie ne sont pas des routes HTTP et n'authentifient pas un joueur.
 
 Account/User ↔ UniverseMembership ↔ éventuellement Empire ↔ rôle/permissions reste conceptuel ;
-aucun compte, membership ou owner_user_id n'est ajouté maintenant. controller_type human/ai n'est
+C02 crée le compte uniquement en Accounts DB ; aucun membership ou owner_user_id Game. controller_type human/ai n'est
 pas un droit d'accès. Règles gameplay futures par instance/ruleset ; aucune présence de navigateur
 nécessaire à la progression. Notifications/WebSockets futurs restent des projections, jamais autorité.
 [Modes](../01-game-design/game-modes.md) · [ADR 0006](../adr/0006-universe-game-instance.md).
@@ -106,12 +106,13 @@ lots. Aucun bypass ou service payant introduit par cette délégation.
 Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver. Deux applications sur le même hôte ne prouvent
 pas la résistance à une saturation réseau ou DDoS. Aucun WAF/Redis installé ou utilisé comme autorité
 gameplay. Les scénarios de refus, concurrence, reprise et panne sont des obligations de 5C/5D,
-non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats toujours non implémentés.
+non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02 sur PR #7.
 5C est le lot courant autorisé, sans début de 5D.
 
-## État livré en C01 — PR #7
+## État livré en C01/C02 — PR #7
 
 [Socle Portal](portal-foundation.md) : base/configuration/pool/réseaux séparés et HTTPS local avec
-CA Docker, sans installation hôte. Aucun compte, credential, session, CSRF métier ou mTLS S2S encore
-implémenté. CORS Portal refusé par défaut et sondes sans détails privés. Les contrôles d’authentification
-ci-dessus restent des obligations des prochains tickets, pas une protection déjà livrée.
+CA Docker, sans installation hôte. [C02](portal-registration.md) livre Argon2id, contrôle de
+mots de passe compromis par préfixe, preuves uniques 24 h, file email chiffrée, anti-abus transactionnel,
+Origin/JSON stricts et erreurs sans données d’entrée. Aucune connexion/session, MFA ou mTLS S2S. CORS Portal refusé par défaut et sondes sans détails privés. Les autres contrôles (sessions/MFA/handoff) restent des obligations des prochains tickets,
+pas des protections déjà livrées.

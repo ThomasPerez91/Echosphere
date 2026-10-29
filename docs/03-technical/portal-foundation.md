@@ -5,7 +5,10 @@
 [Plan 5C](../05-project/step-5c-plan.md) · [Contrats 5B](identity-contracts.md) ·
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
 
-## Périmètre livré
+Ce document décrit le socle C01. État courant : [C02](portal-registration.md) ajoute comptes,
+vérification et livraison email ; les exclusions de compte ci-dessous décrivent C01 historiquement.
+
+## Périmètre livré à C01
 
 Backend Portal FastAPI/Python 3.12 séparé dans portal/backend/portal_app, configuration PORTAL_*,
 engine/pool SQLAlchemy propres ; frontend Portal React/TypeScript/Vite dans portal/frontend.
@@ -27,7 +30,7 @@ sont en préparation ; readiness ne signifie pas compte connecté ou partie acti
 
 portal/backend/alembic.ini et migrations constituent une nouvelle chaîne dans Accounts DB.
 **p0000_portal_baseline** initialise uniquement portal_alembic_version : aucun schéma de compte
-anticipé. P0001 portera les entités C02 selon le cadrage ; aucune révision Game modifiée.
+anticipé. P0001 porte désormais les entités C02 décrites dans leur référence ; aucune révision Game modifiée.
 `alembic check` compare uniquement la metadata Accounts, indépendante et encore vide à C01.
 Migrations avant démarrage de l’API, jamais au démarrage de chaque processus applicatif.
 Roundtrip/downgrade uniquement sur base de test dédiée dont le nom finit par _test.
@@ -108,8 +111,8 @@ python3 scripts/smoke_compose.py
 Les deux smoke arrêtent/redémarrent temporairement des bases ; les lancer sur environnement local
 de recette. Le smoke Portal vérifie TLS avec la CA publique chargée en mémoire, noms de certificats,
 routage, réponses CORS, historiques distincts et panne/reprise Accounts puis Game. Pas de suppression
-de données/volumes. Il doit être exécuté avant C02 : son assertion « Accounts sans tables métier »
-sera alors adaptée au schéma réellement livré.
+de données/volumes. Son assertion de schéma vérifie désormais les six tables C02 et p0001, sans exiger une base vide
+ni créer un compte de démonstration.
 
 Backend Portal natif : mêmes commandes Ruff/pytest que Game, depuis portal/backend avec sa propre
 venv et requirements-dev.lock. Tests DB activés par RUN_DB_TESTS=1 et PORTAL_POSTGRES_* vers une
@@ -127,7 +130,7 @@ CI : jobs portal-backend (PostgreSQL test dédié) et portal-frontend ; compose-
 migrations Portal et smoke HTTPS croisé. Jobs Game conservés. Les résultats effectifs de la tête
 publiée sont à lire dans la PR, pas déduits de la présence du workflow.
 
-## Limites
+## Limites historiques de C01
 
 C01 n’est ni un Portal de production ni 5C terminé. Pas de compte, hash Argon2id, jeton email,
 session, CSRF métier, MFA, outbox, mTLS S2S, accès Game ou API Colony. Pas de catalogue/join public,

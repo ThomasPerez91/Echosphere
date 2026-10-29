@@ -4,11 +4,69 @@ Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Lot courant — 5C : Portal Account/Lobby foundation
 
-**Statut : C01 implémenté et testé sur PR #7 ; 5C en cours, C02 comptes à suivre.**
-5B documentaire terminé et intégré à master via PR #6 ; contrats validés mais toujours non implémentés.
+**Statut : C01/C02 implémentés et testés sur PR #7 ; 5C en cours, C03 sessions à suivre.**
+5B documentaire terminé et intégré à master via PR #6 ; contrats validés, premier sous-ensemble comptes/vérification C02 implémenté sur PR #7 seulement.
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
-Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C01 est décrit en premier.
+Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C02 est décrit en premier.
+
+### C02 — comptes et vérification email, 2026-10-29
+
+Instruction utilisateur « enchaine » après livraison de C01. Reprise GitHub : PR #7 OPEN/brouillon,
+branche/base/tête work/step-5c-portal-account-lobby / 63bb7d1c902e9c0fbae3497d4a36c107a80eb611 /
+79500f65728ef14a302b8e400f3f43e05792517f, arbre propre et branche synchronisée après fetch.
+CI C01 push 40935556492 et PR 40935563025 relues success, cinq jobs chacune. Pas d’agent délégué.
+
+Livré : [C02](docs/03-technical/portal-registration.md), comptes UUID stables/credentials Argon2id,
+inscription et vérification initiale 24 h unique, renvoi invalidant l’ancienne génération. Mot de
+passe requis à la confirmation/au renvoi contre la préinscription par un tiers. Réponses non
+énumérables, pas d’auto-login. Contrôle Pwned Passwords par préfixe HTTPS/padding, panne refusée 503.
+Migration Accounts p0001 additive (six tables) ; création credential/preuve/outbox/audit atomique,
+quota PostgreSQL distinct/concurrent, erreurs sans entrée privée, Origin/JSON stricts et corps borné.
+Outbox Fernet, clé privée persistante Docker hors Git, retry sans extension de validité, payload
+effacé après SMTP/annulation/expiration. Worker dédié + récepteur Mailpit isolé sans relais externe.
+UI du récepteur via local-edge sur loopback 8025 ; SMTP reste réseau interne sans port publié.
+Première tentative de publication directe du port Mailpit sur réseau interne inaccessible localement ;
+corrigée par ce proxy, puis vérifiée réellement. Volumes et données Game conservés.
+Formulaires Portal inscription/renvoi/confirmation, token de fragment retiré immédiatement de l’URL,
+secrets uniquement en mémoire, mobile/clavier. Aucune connexion/session/MFA/membership/handoff,
+fixture runtime, compte créé dans la base conservée ou API Colony. C03 est la suite ; 5D exclu.
+
+Choix techniques sous délégation 5B, sources primaires dans C02. Argon2id 64 MiB/3 passes/p1 : cinq
+calculs hash+verify successifs, médiane locale 160 ms dans l’image Python 3.12 (pas une mesure de
+charge production). Appel réel Pwned Passwords avec mot de passe jetable généré : réponse reçue,
+non compromis, aucune valeur privée imprimée. Aucun fournisseur email de production sélectionné.
+
+Validations locales exécutées :
+
+- Backend Portal : Ruff réussi et **36 tests réussis, aucun ignoré**, dont intégrations sur
+  echosphere_c02_test dédiée : upgrade/check/roundtrip, refus de downgrade peuplé, atomicité,
+  inscriptions/confirmations/renvois/quota concurrents, expiration exacte, SMTP TCP réel en panne
+  puis reprise, deux workers et effacement des payloads. Base de test supprimée après recette.
+  Passage initial sans opt-in : 16 réussis/17 ignorés avant les deux derniers tests ajoutés,
+  distinct de la suite complète. Warning Starlette/httpx connu, sans échec.
+- Frontend Portal : npm ci, ESLint, **8 tests** et build réussis. Chromium jetable Node 22/Debian :
+  **7 scénarios réussis**, quatre largeurs clavier/retry, same-site natif, formulaires inscription/
+  renvoi/confirmation 320 et 1440, fragment retiré et absence de stockage navigateur ; captures
+  320/1440 inspectées. API UI interceptée ; intégrations API/PostgreSQL/SMTP testées séparément.
+- Compose config/build/up --wait réussis ; Game et Accounts sans dérive Alembic ; deux smokes
+  réellement passés, TLS strict/noms/routage/CORS et pannes indépendantes avec reprise.
+  Aucun downgrade de base conservée, suppression de volume, modification hosts ou magasin CA.
+- Documentation : 67 documents requis/liens valides, diff sans whitespace ; tables Q01–Q56 et
+  sections de décisions 5B conservées, seulement statuts d’implémentation actualisés. Aucun code,
+  dépendance ou migration backend/frontend/game_data Game modifié. Secrets et artefacts exclus.
+
+Échecs intermédiaires corrigés : import bootstrap TypeScript manquant ; tri/format Ruff ; parsing
+Compose après insertion incorrecte ; premier pytest lancé sans installation de package dans une
+image Python brute (relancé via python -m pytest). Aucun de ces passages n’est présenté comme réussi.
+CI de la tête C02 à observer après commit/push ; workflow configuré ne vaut pas résultat exécuté.
+Résultat effectif/SHA publiés dans PR #7 après observation, sans boucle de commits de checkpoint.
+
+Limites : SMTP au moins une fois, doublon possible après acceptation avant commit ; pas de remise
+publique démontrée. Dépendance de contrôle de mots de passe externe, refus temporaire si indisponible.
+Procédures de clés/production et fournisseur Q49 futurs ; support Q48 et modes Q55 inchangés.
+Pas de recette navigateur hôte HTTPS, Windows/tactile/lecteur d’écran, charge ou DDoS attestée.
+WSL2/Docker fonctionnels pour ces commandes ; outils Python/Node exécutés en conteneurs jetables.
 
 ### C01 — socle Portal séparé, 2026-10-29
 

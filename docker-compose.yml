@@ -19,6 +19,11 @@ x-portal: &portal
     PORTAL_POSTGRES_USER: ${PORTAL_POSTGRES_USER:-echosphere_accounts}
     PORTAL_POSTGRES_PASSWORD: ${PORTAL_POSTGRES_PASSWORD:-accounts_development_only}
     TZ: UTC
+    PORTAL_MAIL_KEY_FILE: /run/portal-secrets/email.key
+    PORTAL_PUBLIC_ORIGIN: https://portal.echosphere.localhost:8443
+    PORTAL_TRUSTED_PROXY_HOST: local-edge
+  volumes:
+    - portal_secrets:/run/portal-secrets:ro
   networks: [portal_db]
 services:
   postgres:
@@ -98,6 +103,12 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  portal-secrets-init:
+    <<: *portal
+    command: ["python", "-m", "portal_app.core.init_secrets"]
+    volumes:
+      - portal_secrets:/run/portal-secrets
+    networks: [portal_db]
   portal-migrate:
     <<: *portal
     command: ["alembic", "upgrade", "head"]
@@ -109,6 +120,8 @@ services:
     networks: [portal_db, portal_web]
     depends_on:
       portal-migrate:
+        condition: service_completed_successfully
+      portal-secrets-init:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=5)"]
@@ -129,15 +142,45 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  portal-mailpit:
+    image: axllent/mailpit:latest
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: 500
+    volumes:
+      - portal_mail_data:/data
+    networks: [portal_mail]
+  portal-mail-worker:
+    <<: *portal
+    command: ["python", "-m", "portal_app.delivery.worker"]
+    environment:
+      PORTAL_POSTGRES_HOST: portal-postgres
+      PORTAL_POSTGRES_DB: ${PORTAL_POSTGRES_DB:-echosphere_accounts}
+      PORTAL_POSTGRES_USER: ${PORTAL_POSTGRES_USER:-echosphere_accounts}
+      PORTAL_POSTGRES_PASSWORD: ${PORTAL_POSTGRES_PASSWORD:-accounts_development_only}
+      PORTAL_MAIL_KEY_FILE: /run/portal-secrets/email.key
+      PORTAL_MAIL_TRANSPORT: smtp_local
+      PORTAL_MAIL_HOST: portal-mailpit
+      PORTAL_PUBLIC_ORIGIN: https://portal.echosphere.localhost:8443
+    networks: [portal_db, portal_mail]
+    depends_on:
+      portal-migrate:
+        condition: service_completed_successfully
+      portal-secrets-init:
+        condition: service_completed_successfully
+      portal-mailpit:
+        condition: service_started
+    restart: unless-stopped
   local-edge:
     image: caddy:2-alpine
     ports:
       - "127.0.0.1:8443:8443"
+      - "127.0.0.1:8025:8025"
     volumes:
       - ./infra/local/Caddyfile:/etc/caddy/Caddyfile:ro
       - local_tls_data:/data
       - local_tls_config:/config
-    networks: [default, portal_web]
+    networks: [default, portal_web, portal_mail]
     depends_on:
       frontend:
         condition: service_healthy
@@ -149,8 +192,12 @@ volumes:
   accounts_data:
   local_tls_data:
   local_tls_config:
+  portal_secrets:
+  portal_mail_data:
 networks:
   default:
   portal_web:
   portal_db:
+    internal: true
+  portal_mail:
     internal: true

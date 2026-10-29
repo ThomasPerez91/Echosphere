@@ -18,3 +18,8 @@ https://game.echosphere.localhost:8443 {
     tls internal
     reverse_proxy frontend:5173
 }
+
+# Local email receiver UI only; SMTP stays on the internal portal_mail network.
+http://127.0.0.1:8025 {
+    reverse_proxy portal-mailpit:8025
+}

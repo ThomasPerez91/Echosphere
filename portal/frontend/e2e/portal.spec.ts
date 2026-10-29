@@ -54,3 +54,38 @@ test('Portal and Game development hosts are same-site in Chromium', async ({ pag
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
   }
 });
+
+for (const width of [320, 1440]) {
+  test(`Registration and verification at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.route('**/api/ready', route => route.fulfill({ json: { status: 'ready', service: 'portal' } }));
+    const requests: string[] = [];
+    await page.route('**/api/accounts/**', async route => {
+      requests.push(route.request().postData() ?? '');
+      await route.fulfill({ status: route.request().url().endsWith('/verify') ? 200 : 202,
+        json: { status: route.request().url().endsWith('/verify') ? 'verified' : 'request_received' } });
+    });
+    await page.goto('/');
+    await page.getByLabel('Adresse email').fill('player@example.org');
+    await page.getByLabel('Mot de passe', { exact: true }).fill('Browser test phrase 2026 !');
+    await page.getByRole('button', { name: 'Créer le compte', exact: true }).click();
+    await expect(page.getByText('Demande reçue.', { exact: false })).toBeVisible();
+    await expect(page.getByLabel('Mot de passe', { exact: true })).toHaveValue('');
+    expect(JSON.parse(requests[0]).email).toBe('player@example.org');
+    await page.getByRole('button', { name: 'Déjà inscrit sans lien valide ?' }).click();
+    await page.getByLabel('Mot de passe', { exact: true }).fill('Browser test phrase 2026 !');
+    await page.getByRole('button', { name: 'Renvoyer le lien', exact: true }).click();
+    await expect(page.getByText('Demande reçue.', { exact: false })).toBeVisible();
+    const token = 'a'.repeat(43);
+    await page.goto(`/#verify-email=${token}`);
+    await expect(page.getByRole('heading', { name: 'Confirmer votre adresse', exact: true })).toBeVisible();
+    expect(new URL(page.url()).hash).toBe('');
+    await page.getByLabel('Mot de passe', { exact: true }).fill('Browser test phrase 2026 !');
+    await page.getByRole('button', { name: 'Confirmer mon adresse' }).click();
+    await expect(page.getByText('Votre adresse est confirmée.', { exact: false })).toBeVisible();
+    expect(JSON.parse(requests[2]).token).toBe(token);
+    expect(await page.evaluate(() => localStorage.length + sessionStorage.length)).toBe(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath('verification.png'), fullPage: true });
+  });
+}

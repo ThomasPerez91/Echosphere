@@ -5,8 +5,8 @@
 Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progress](../../progress.md).
 [Contrats 5B](../03-technical/identity-contracts.md) validés et consolidés après arbitrage du bloc
 complet corrigé ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
-contrats d’auth toujours non implémentés. 5C est le lot courant : checkpoint/cadrage effectués,
-[socle C01](../03-technical/portal-foundation.md) implémenté sur PR #7, sans compte/session/handoff.
+contrats d’auth partiellement implémentés sur PR #7 par C02. 5C est le lot courant : checkpoint/cadrage effectués,
+[socle C01](../03-technical/portal-foundation.md) et [C02](../03-technical/portal-registration.md) implémentés sur PR #7, sans connexion/session/handoff.
 HTTPS/routage/isolation de panne des bases testés, pas de confiance navigateur Windows/charge démontrée.
 [Q40–Q56](../05-project/open-questions.md) séparent clôtures, détails techniques délégués et reports.
 Restent ouverts : procédures support renforcé joueur/privilégié Q48 (aucun déblocage sans procédure
@@ -104,3 +104,13 @@ ESLint 9 et whatwg-encoding. L’avertissement Starlette/httpx reste présent. A
 Game ni nouveau service production engagé. Récepteur email et fournisseur non livrés en C01.
 Les tests Chromium Portal interceptent les sondes ; le smoke HTTPS vérifie réellement CA/noms et
 pannes croisées. Pas de parcours authentifié réel tant que les tickets dépendants ne sont pas livrés.
+
+## Limites C02
+
+Inscription/vérification locales seulement ; connexion/sessions, MFA et parcours sensibles à suivre.
+Contrôle de mots de passe compromis dépendant de Pwned Passwords : panne → refus temporaire 503.
+SMTP au moins une fois : doublon possible après acceptation avant commit, jamais double consommation
+de preuve. Mailpit local ne prouve pas la délivrabilité publique ; fournisseur Q49 inchangé.
+Clé persistante locale hors Git, procédures production de sauvegarde/rotation non livrées.
+UI Chromium avec API interceptée et SMTP/API PostgreSQL réels testés séparément ; pas de parcours
+complet navigateur hôte HTTPS, tactile ou lecteur d’écran attesté. Warning Starlette/httpx connu.

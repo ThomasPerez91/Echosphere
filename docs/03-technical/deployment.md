@@ -106,3 +106,10 @@ Accounts DB et API/frontend Portal séparés, Alembic p0000 propre, origines HTT
 Les services et le volume Game sont conservés. Le lancement Compose inclut désormais ces services,
 sans compte, session ou API gameplay. Les descriptions précédentes des cinq services décrivent
 le socle Game ; la [recette Portal](portal-foundation.md) détaille certificats, commandes et limites.
+
+## Extension C02 — développement local seulement
+
+[Comptes/vérification et livraison](portal-registration.md) ajoutent portal-secrets-init,
+portal-mail-worker et Mailpit (UI loopback 8025, SMTP réseau interne non publié), volumes portal_secrets
+et portal_mail_data. Ne pas perdre la clé des emails en attente ; aucune clé en Git.
+Migration Accounts p0001 additive ; aucun changement Game. Aucun fournisseur de production choisi.

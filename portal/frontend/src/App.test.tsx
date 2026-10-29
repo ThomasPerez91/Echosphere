@@ -4,11 +4,11 @@ import App from './App';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
-test('reports Portal readiness and provides no account or gameplay action', async () => {
+test('reports Portal readiness without a gameplay or login action', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: 'ready', service: 'portal' }) }));
   render(<App />);
   expect(await screen.findByText('Portal disponible')).toBeVisible();
-  expect(screen.queryByRole('button', { name: /connexion|inscription|jouer/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /connexion|jouer/i })).not.toBeInTheDocument();
 });
 
 test('rejects a Game response and recovers on explicit retry', async () => {

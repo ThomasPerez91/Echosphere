@@ -101,19 +101,20 @@ redimensionnement de planète. ResourceBalance et ColonyTimeline restent l’aut
 Aucune table DefenseNetwork/DefenseModule créée ; les futurs adaptateurs typés peuvent s’ajouter.
 Voir [ADR 0007](../adr/0007-colony-economy.md) et [règles v0.1](../01-game-design/colony-economy-v0.1.md).
 
-## Identité et bases cibles — décision validée, non implémentée
+## Identité et bases cibles — sous-ensemble C02 implémenté sur PR #7
 
 Les [contrats 5B validés](identity-contracts.md) distinguent Membership souhaitée côté Portal,
 accès effectif versionné et bindings d’Empire côté Game ; une participation par compte/univers.
-Ces objets restent non implémentés. C01 initialise seulement portal_alembic_version dans
-Accounts DB, sans table métier ; aucune migration de compte ou d’accès Game. Schémas/contraintes sont délégués à 5C/5D ;
+Les participations et accès restent non implémentés. C01 initialise portal_alembic_version ;
+[C02/p0001](portal-registration.md) ajoute users, password_credentials, account_tokens, email_outbox,
+abuse_counters et security_events dans Accounts DB seulement. Aucun accès Game créé. Schémas/contraintes sont délégués à 5C/5D ;
 Q51–Q54 closes pour leurs contrats 5B, Q21 partage d’Empire toujours ouverte.
 
 Compte global et plusieurs univers simultanés ; User → UniverseMembership → Universe →
 éventuellement Empire/rôle/permissions. Pas de réduction à Empire.owner_user_id, partage Q21 ouvert.
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) sépare Accounts DB et Game DB :
 
-| Base future | Données conceptuelles, aucune table créée ici |
+| Base future | Données cibles ; sous-ensemble C02 précisé ci-dessus |
 | --- | --- |
 | Accounts DB, propriétaire Portal | users, credentials/hashes, sessions Portal, MFA/récupération, informations globales membership/lobby |
 | Game DB, propriétaire Game | État gameplay existant et futures références minimales global_user_id/universe_id/membership ou access id/empire éventuel/role/status |
@@ -122,5 +123,4 @@ Aucun mot de passe/credential Accounts répliqué en Game DB, pas de FK inter-ba
 Portal n’écrit pas dans Game DB ; changements via interface interne Game authentifiée/idempotente.
 Portal porte l’intention ; Game l’application locale. Outbox, révisions/idempotence et révocations
 ciblées Q51–Q54 validées ; détails de stockage délégués, aucun SQL nouveau dans ce lot.
-Les FK composites d’univers actuelles restent inchangées. Pas de User/Membership/GameSession
-implémenté sous prétexte que le schéma conceptuel les mentionne.
+Les FK composites d’univers actuelles restent inchangées. User est implémenté par C02 ; Membership/GameSession restent futurs.

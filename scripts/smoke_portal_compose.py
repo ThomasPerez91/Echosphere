@@ -74,23 +74,40 @@ def main():
     assert json.loads(get(context, "portal.echosphere.localhost", "/api/ready")[1]) == {
         "status": "ready", "service": "portal"
     }
-    assert json.loads(get(context, "game.echosphere.localhost", "/api/ready")[1]) == {"status": "ready"}
+    assert json.loads(get(context, "game.echosphere.localhost", "/api/ready")[1]) == {
+        "status": "ready"
+    }
 
     # A real preflight through the Portal origin does not open credentialed CORS.
-    _, _, headers = get(context, "portal.echosphere.localhost", "/api/ready", method="OPTIONS", headers={
-        "Origin": "https://untrusted.invalid", "Access-Control-Request-Method": "GET",
-    })
+    _, _, headers = get(
+        context, "portal.echosphere.localhost", "/api/ready", method="OPTIONS", headers={
+            "Origin": "https://untrusted.invalid", "Access-Control-Request-Method": "GET",
+        },
+    )
     assert "access-control-allow-origin" not in {name.lower() for name in headers}
     assert "access-control-allow-credentials" not in {name.lower() for name in headers}
+
+    # Mailpit stays internal; only its UI is proxied on the explicit loopback host.
+    receiver = http.client.HTTPConnection("127.0.0.1", 8025, timeout=5)
+    try:
+        receiver.request("GET", "/api/v1/info")
+        response = receiver.getresponse()
+        assert response.status == 200
+        assert isinstance(json.loads(response.read()), dict)
+    finally:
+        receiver.close()
 
     identity = "SELECT current_database() || '/' || current_user"
     assert query("portal-postgres", identity) != query("postgres", identity)
     assert query("portal-postgres", "SELECT version_num FROM portal_alembic_version") == (
-        "p0000_portal_baseline"
+        "p0001_accounts_registration"
     )
     assert query("postgres", "SELECT version_num FROM alembic_version") == "0004_colony_economy"
     tables = "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
-    assert query("portal-postgres", tables).splitlines() == ["portal_alembic_version"]
+    assert set(query("portal-postgres", tables).splitlines()) == {
+        "portal_alembic_version", "users", "password_credentials", "account_tokens",
+        "email_outbox", "abuse_counters", "security_events",
+    }
     assert "portal_alembic_version" not in query("postgres", tables).splitlines()
 
     compose("stop", "portal-postgres")

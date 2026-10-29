@@ -1,6 +1,15 @@
+import { useEffect, useState } from 'react';
+import { consumeVerificationFragment } from './account/verification';
+import { AccountForms } from './account/AccountForms';
 import { useReadiness } from './useReadiness';
 
-export default function App() {
+export default function App({ verificationToken = null }: { verificationToken?: string | null }) {
+  const [token, setToken] = useState(verificationToken);
+  useEffect(() => {
+    const read = () => { const next = consumeVerificationFragment(); if (next) setToken(next); };
+    window.addEventListener('hashchange', read);
+    return () => window.removeEventListener('hashchange', read);
+  }, []);
   const { status, retry } = useReadiness();
   const message = { checking: 'Vérification du Portal', connected: 'Portal disponible', unavailable: 'Portal indisponible' }[status];
 
@@ -11,11 +20,7 @@ export default function App() {
       <p className="eyebrow">UN COMPTE, PLUSIEURS HORIZONS</p>
       <h1>Votre prochain univers<br />commence ici.</h1>
       <p className="intro">Le Portal réunira votre compte et vos parties. Le jeu continuera de progresser à son propre rythme.</p>
-      <section className="panel" aria-labelledby="foundation-title">
-        <p className="eyebrow">FONDATION EN COURS</p>
-        <h2 id="foundation-title">Comptes et lobby en préparation</h2>
-        <p>L’inscription, la connexion et l’accès aux parties ne sont pas encore disponibles.</p>
-      </section>
+      <AccountForms key={token ?? 'public'} verificationToken={token} />
       <section className="panel connection" aria-labelledby="connection-title">
         <div><h2 id="connection-title">Connexion au Portal</h2><p role="status" aria-live="polite">{message}</p></div>
         <button type="button" onClick={retry} disabled={status === 'checking'}>Vérifier à nouveau</button>

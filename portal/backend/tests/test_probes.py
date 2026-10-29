@@ -31,8 +31,12 @@ def test_readiness_and_failure_do_not_expose_connection_details(monkeypatch):
 
 def test_cross_origin_credentials_are_not_enabled():
     with TestClient(create_app()) as client:
-        response = client.options("/ready", headers={
-            "Origin": "https://untrusted.example", "Access-Control-Request-Method": "GET",
-        })
+        response = client.options(
+            "/ready",
+            headers={
+                "Origin": "https://untrusted.example",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
         assert "access-control-allow-origin" not in response.headers
         assert "access-control-allow-credentials" not in response.headers

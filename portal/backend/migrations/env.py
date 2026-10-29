@@ -1,11 +1,15 @@
 from alembic import context
 
+from portal_app.accounts import models as account_models  # noqa: F401
 from portal_app.core.config import Settings
 from portal_app.persistence.database import create_database_engine
 from portal_app.persistence.models import Base
 
-options = {"target_metadata": Base.metadata, "compare_type": True,
-           "version_table": "portal_alembic_version"}
+options = {
+    "target_metadata": Base.metadata,
+    "compare_type": True,
+    "version_table": "portal_alembic_version",
+}
 
 if context.is_offline_mode():
     context.configure(dialect_name="postgresql", literal_binds=True, **options)
