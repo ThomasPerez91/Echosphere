@@ -19,8 +19,10 @@ sur ce merge, jobs backend/frontend/compose-smoke verts. Dernière livraison con
 Work par #5 ; cette recette locale lui succède sans attribuer un nom non attesté à son auteur.
 
 Branche : work/step-5b-identity-contracts, créée depuis cette master sans empilement.
-Tête du lot : consulter la tête publiée de cette branche et sa CI ; aucun SHA auto-référentiel
-inventé dans ce document. Aucune fusion, suppression de branche, release ou déploiement autorisé.
+Premier commit publié : e3d2f8ec1dcb647a147dc9d885be4f06f9f46802,
+[PR #6](https://github.com/ThomasPerez91/Echosphere/pull/6) brouillon OPEN vers master.
+Le présent checkpoint documentaire suit ce commit ; consulter aussi sa propre CI publiée.
+Aucune fusion, suppression de branche, release ou déploiement autorisé.
 
 Fichiers : nouveau docs/03-technical/identity-contracts.md ; références API/sécurité/modèle/architecture,
 index docs/ADR/décisions, README/passation, roadmap/questions/known-gaps, context/progress et liste
@@ -34,6 +36,9 @@ interface interne idempotente avec révisions/outbox/réconciliation, handoff li
 consommation atomique, session opaque et contrôles locaux, concurrence avec révocation, logout,
 rotation de clés, isolation et matrice de scénarios futurs. Alternatives et sources OWASP/RFC
 publiques consignées. Aucun protocole, algorithme, fournisseur ni durée nouveau présenté comme accepté.
+Relecture : distinguer la révision de livraison de l’epoch d’invalidation des sessions pour qu’un
+renouvellement à droits inchangés ne déconnecte pas les sessions valides ; cookies par univers
+proposés pour les onglets multi-parties, limite de sessions/cleanup restant sous Q43.
 
 Arbitrage principal proposé : validité locale des droits bornée à 8 h, session Game 8 h absolues/
 2 h d’inactivité, ticket 60 s ; autonomie en panne Portal jusqu’aux limites, révocation appliquée
@@ -80,8 +85,11 @@ liste REQUIRED de check_docs.py vérifié. Ruff de scripts/check_docs.py passe d
 Python 3.12 avec dépendances de développement figées. Relecture du nouveau contrat, de ses statuts,
 de ses liens et du diff de confidentialité effectuée. Aucune suite fonctionnelle relancée pour
 ces changements documentaires ; les scénarios 5B sont des critères futurs non exécutés.
-Publication prévue en PR brouillon vers master, à conserver non fusionnée ; au présent checkpoint
-la CI de cette nouvelle tête n’a pas encore été exécutée. Relire son résultat après publication.
+Branche publiée, SHA distant e3d2f8e relu, PR #6 brouillon créée et non fusionnée.
+[CI push 40873175483](https://github.com/ThomasPerez91/Echosphere/actions/runs/40873175483)
+completed/success sur e3d2f8e, jobs backend/frontend/compose-smoke verts. Ces résultats ne prouvent
+aucune implémentation des contrats futurs. Le présent checkpoint et les précisions de relecture
+suivent cette tête ; leur CI propre reste à relire après publication, sans la présumer réussie.
 Prochaine action : revue de la proposition 5B, arbitrage des choix répertoriés puis transcription
 des décisions acceptées ; pas d’implémentation Portal/API Colony sur la seule présence du document.
 

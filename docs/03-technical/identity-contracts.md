@@ -33,14 +33,21 @@ Ces contrats de données ne sont pas des schémas SQL à créer maintenant.
 | --- | --- | --- |
 | User (Portal) | `global_user_id`, état du compte | Identité indépendante des parties |
 | UniverseMembership (Portal) | `membership_id`, `global_user_id`, `universe_id`, état souhaité, `access_revision` | Une participation par utilisateur/univers dans la fondation proposée |
-| GameAccess (Game) | mêmes références, état effectif, révision, `valid_until`, autorisations locales | Clé de participation stable ; références User/Universe non réassignables |
+| GameAccess (Game) | mêmes références, état effectif, `access_revision`, `session_epoch`, `valid_until`, autorisations locales | Clé de participation stable ; références User/Universe non réassignables |
 | EmpireBinding (Game) | participation, empire, permissions | Empire du même univers ; association distincte de la participation |
-| GameSession (Game) | empreinte du secret, utilisateur, univers, participation, révision et échéances | Une session est limitée à un univers et ne porte pas de droit auto-signé par le client |
+| GameSession (Game) | empreinte du secret, utilisateur, univers, participation, `session_epoch` et échéances | Une session est limitée à un univers et ne porte pas de droit auto-signé par le client |
 
 États d’accès proposés : `active`, `suspended`, `revoked`. Une réactivation explicite exige une
 nouvelle révision ; elle ne ressuscite jamais une ancienne session. Une expiration de `valid_until`
 refuse l’accès même si l’état enregistré est encore `active`. Les tombstones de révocation empêchent
 un ancien grant d’être rejoué comme première création. Politique de rétention à fixer avant purge.
+
+Deux compteurs proposés évitent de déconnecter tous les appareils à chaque renouvellement :
+`access_revision` ordonne chaque livraison ; `session_epoch` invalide les sessions lors d’une
+suspension, révocation, réactivation, modification de permissions/bindings ou logout global.
+Un simple renouvellement de validité, à identité/droits/état inchangés, conserve l’epoch.
+Game refuse tout recul d’epoch et tout changement de sécurité qui ne l’augmente pas. Une session
+compare son epoch à l’accès courant et utilise les permissions locales, jamais un ancien snapshot.
 
 Q21 reste ouverte : le modèle n’impose ni partage ni propriété humaine unique d’un Empire.
 La fondation peut limiter ses opérations publiques sans créer une contrainte globale irréversible.
@@ -51,7 +58,7 @@ Créer une partie ne donne pas automatiquement tous les droits sur ses entités.
 Chaque requête Game suit :
 
 1. Secret de session valide, non expiré, non révoqué ; lecture en Game DB.
-2. Correspondance utilisateur/participation/univers, accès `active`, révision courante et validité.
+2. Correspondance utilisateur/participation/univers, accès `active`, epoch courant et validité.
 3. Permission de l’opération et rattachement à l’Empire demandé.
 4. Entity appartenant à cet Empire et à cet univers ; projection filtrée selon la connaissance.
 5. Pour une mutation, revalidation des droits dans la transaction qui applique l’effet.
@@ -79,7 +86,8 @@ l’acquittement. Il ne devient pas une écriture SQL ni une route qui contourne
 Les règles privées/persistantes Q19–Q29/Q55 ne sont pas inventées pour rendre ce contrat exécutable.
 
 Enveloppe proposée : `contract_version`, `operation_id`, `operation_type`, `universe_id`,
-`membership_id` si concerné, `access_revision`, payload complet, `issued_at` et identifiant de trace.
+`membership_id` si concerné, `access_revision`, `session_epoch` pour un accès, payload complet,
+`issued_at` et identifiant de trace.
 La version initiale serait `1`. Champs inattendus, types incorrects et version inconnue sont refusés.
 Game calcule l’empreinte canonique du contenu ; il ne fait pas confiance à une empreinte client.
 
@@ -118,21 +126,21 @@ Déroulement proposé sur deux origines HTTPS distinctes du **même site**, tout
    par un lien client. Retour Portal et retour Game sont des destinations configurées en allowlist.
 2. Portal reçoit la demande, contrôle sa session et sa protection CSRF avant émission. Il vérifie
    compte actif, membership souhaitée active et révision déjà acquittée par Game. Le ticket lie
-   utilisateur, participation, univers, révision, audience Game et identifiant de handoff.
+   utilisateur, participation, univers, révision/epoch, audience Game et identifiant de handoff.
 3. Le retour transmet le ticket par POST vers l’échange Game, sans token en query/fragment,
    historique, localStorage, analytics ou logs. Réponses `Cache-Control: no-store` et politique
    de referrer restrictive ; aucune ressource tierce sur les pages de transfert.
 4. Game vérifie schéma, signature, émetteur, audience, type, dates, état de pré-authentification
    et cookie lié. Une allowlist serveur fixe les algorithmes ; `kid` ne déclenche aucune URL réseau
    choisie par le ticket. Le ticket ne suffit pas à créer des droits absents de Game DB.
-5. Sous transaction, Game verrouille l’accès local, vérifie état/révision/validité, consomme
+5. Sous transaction, Game verrouille l’accès local, vérifie état/révision/epoch/validité, consomme
    l’identifiant unique du ticket et l’état de handoff, puis crée la session. Un index unique sur
    émetteur/identifiant de ticket assure qu’un seul échange concurrent réussit.
 6. Game pose son cookie puis redirige vers une URL propre. Une réponse perdue après commit ne
    permet pas de réutiliser le ticket ; un nouveau parcours d’entrée est nécessaire.
 
 Claims proposés : `contract_version`, `iss`, `aud`, `sub` (global user id), `universe_id`,
-`membership_id`, `access_revision`, `handoff_id`, `jti`, `iat`, `exp`, type explicite de ticket.
+`membership_id`, `access_revision`, `session_epoch`, `handoff_id`, `jti`, `iat`, `exp`, type explicite de ticket.
 Ni email, ni credential, ni catalogue de permissions faisant autorité. Signature seule ne fournit
 ni usage unique ni liaison au navigateur : ces deux garanties exigent l’état local ci-dessus.
 
@@ -160,7 +168,8 @@ Les chiffres suivants sont des **propositions Echosphere**, pas des exigences OW
 | Renouvellement Game | Nouveau handoff avec Portal actif et droits confirmés | Aucun refresh autonome illimité pendant panne Portal |
 
 Une session expire au plus tôt de ses propres limites et de `GameAccess.valid_until`.
-Le renouvellement d’accès ne prolonge aucune ancienne session ; il autorise un nouveau handoff.
+Le renouvellement d’accès ne prolonge aucune ancienne session ; à epoch inchangé il la laisse
+valide jusqu’à ses propres limites et autorise un nouveau handoff.
 Portal calcule une échéance absolue dans le message, que Game borne à la politique acceptée ;
 un message ancien livré tard ne donne jamais huit heures supplémentaires à compter de sa réception.
 Une nouvelle session créée juste avant l’expiration d’accès ne gagne pas huit heures de droits.
@@ -169,6 +178,11 @@ Secrets de session proposés : aléatoires cryptographiques de 256 bits, seule l
 Cookies distincts Portal/Game, host-only, `Secure`, `HttpOnly`, `Path=/`, préfixe `__Host-`,
 `SameSite=Lax` explicite. Les cookies ne sont pas isolés par port : le futur développement local
 devra définir des hôtes distincts ou une politique dédiée, sans désactiver la sécurité production.
+Pour plusieurs univers simultanés sur une même origine Game, proposer un nom de cookie par univers
+(`__Host-GameSession-<universe_id>`) ; choisir un univers ne remplace pas la session des autres onglets.
+Game sélectionne le cookie du scope demandé puis vérifie le scope enregistré côté serveur.
+La limite de cookies/sessions simultanés et leur nettoyage restent à fixer sous Q43 avant 5C/5D ;
+elle ne doit pas devenir une limite implicite du nombre de memberships d’un compte.
 
 Chaque frontend appelle sa propre API de même origine ; pas de CORS credentialed global.
 Toutes les mutations à cookie vérifient Origin et jeton CSRF lié à la session, avec refus par défaut.
@@ -187,7 +201,7 @@ il n’est pas couvert par cette proposition. Une attaque XSS reste un risque ma
 | Game DB indisponible | Refus des accès/sessions et commandes ; aucun fallback cache permissif |
 
 Logout global conserve les memberships, mais invalide les anciennes sessions et tickets via une
-nouvelle révision de chaque accès. Une reconnexion peut ouvrir une nouvelle session si les droits
+nouvelle révision et un nouvel epoch de chaque accès. Une reconnexion peut ouvrir une nouvelle session si les droits
 restent actifs. Pour tous les accès déjà connus de Game, une confirmation en vol avant le logout
 ne peut produire une validité au-delà de sa propre échéance absolue. La borne choisie s’applique
 aux sessions échappant temporairement à la propagation. Suspension de compte utilise la même
@@ -245,6 +259,7 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Interface interne | Appel public, certificat invalide, service hors scope et header forgé refusés | 5C |
 | Livraison | Timeout après commit, doublons, messages désordonnés et même révision contradictoire sans double effet | 5C |
 | Session autonome | Portal coupé : lecture/mutation Game valide et échéance métier progressent ; aucun appel Accounts | 5D |
+| Renouvellement et multi-parties | Renouvellement sans déconnexion des sessions encore valides ; deux onglets d’univers différents sans écrasement de cookie | 5C/5D |
 | Révocation dégradée | Droit expiré refusé, grant retardé non prolongé, réactivation ne restaure pas les sessions | 5C/5D |
 | Logout | Logout local/global, propagation partielle et retour Portal explicitement testés | 5C/5D |
 | Clés | Rotation préchargée pendant panne Portal, clé inconnue refusée, procédure de compromission | 5C/5D |
