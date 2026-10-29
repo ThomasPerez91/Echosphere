@@ -59,7 +59,10 @@ Validations locales exécutées :
 Échecs intermédiaires corrigés : import bootstrap TypeScript manquant ; tri/format Ruff ; parsing
 Compose après insertion incorrecte ; premier pytest lancé sans installation de package dans une
 image Python brute (relancé via python -m pytest). Aucun de ces passages n’est présenté comme réussi.
-CI de la tête C02 à observer après commit/push ; workflow configuré ne vaut pas résultat exécuté.
+Première tête C02 d965ca9 : CI push 40941610709 et PR 40941616489 observées success, cinq jobs chacune
+et journaux relus (101/11/5 Game, 36/8/7 Portal, deux smokes). Le journal a révélé une tentative
+de contrôle de version Mailpit, bloquée par son réseau isolé : contrôle désactivé explicitement.
+CI de cette correction de configuration à observer après push ; workflow configuré ne vaut pas résultat exécuté.
 Résultat effectif/SHA publiés dans PR #7 après observation, sans boucle de commits de checkpoint.
 
 Limites : SMTP au moins une fois, doublon possible après acceptation avant commit ; pas de remise

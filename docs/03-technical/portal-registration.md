@@ -104,6 +104,7 @@ preuves de jetons conservées séparément, jamais supprimées par la purge de l
 
 Le transport C02 autorise seulement smtp_local ou disabled. Compose emploie **Mailpit**, récepteur
 de développement sans relais externe, réseau portal_mail interne ; SMTP non publié sur l’hôte.
+La recherche automatique de nouvelles versions est désactivée sur ce réseau isolé.
 Son interface contient les messages et leurs liens sensibles : http://127.0.0.1:8025, loopback seulement via local-edge (Host explicite 127.0.0.1).
 Mailpit reste uniquement sur le réseau interne ; aucun port direct Mailpit publié.
 Les messages de test sont gardés dans portal_mail_data (maximum 500) ; aucun fournisseur de production
