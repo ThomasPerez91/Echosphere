@@ -58,7 +58,14 @@ changent dans les tableaux du registre et qu’ils restent explicitement partiel
 Relecture des limites/formules/exemples, de la séparation validé/proposé et du diff de confidentialité.
 Périmètre Markdown uniquement vérifié. Aucune suite backend/frontend/Compose ou Ruff relancée
 localement pour ce changement documentaire ; aucun nouveau mécanisme de session testé.
-Publication sur la même PR #6 brouillon prévue ; sa CI propre reste à observer après push.
+Publication effectuée sur la même PR #6 brouillon, restée OPEN/non fusionnée :
+56e43a9bf5a9100e22ad3c4363095a45b0452db9, SHA distant relu ; master reste 8214e0b.
+CI de ces arbitrages : [push 40877809734](https://github.com/ThomasPerez91/Echosphere/actions/runs/40877809734)
+et [PR 40877818343](https://github.com/ThomasPerez91/Echosphere/actions/runs/40877818343),
+backend/frontend/compose-smoke tous réussis sur cette tête. Description de PR actualisée avec
+les décisions partielles et les mécanismes non validés. Ce checkpoint consigne ces résultats
+après leur observation ; vérifier également sa propre CI publiée. Aucune CI présentée comme
+preuve d’un mécanisme Portal/Game futur, aucun merge ni passage à 5C.
 
 ### Base et périmètre initiaux (historique de préparation)
 
