@@ -9,8 +9,8 @@ pour PR #6 ; seules ces parties de Q40–Q44 sont closes. Activité explicite va
 interne, clés, propagation et protections restent à arbitrer. Q46–Q56 demeurent ouvertes.
 Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
 Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
-Q49 reste partiellement ouverte (fournisseur/livraison, durées/cycle des confirmations, portée des sessions
-et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
+Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
+Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
 
 ## Accès incomplet aux sources
 

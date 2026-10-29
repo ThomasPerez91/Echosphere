@@ -41,7 +41,8 @@ work/step-5b-identity-contracts : [contrats](../03-technical/identity-contracts.
 utilisateur partielles Q40–Q44 validées le 2026-10-29. Activité explicite classée côté serveur validée sous Q41/Q43.
 Q45 validée pour les déconnexions ; récupération Q40/Q49 partiellement arbitrée (30 min, réémission,
 effets du reset), flux email sans MFA validé (double confirmation/pending et réauthentification).
-Prochain arbitrage : durées/cycle des confirmations email et portée des sessions, puis MFA Q48.
+Complément email validé : demande unique 1 h, remplacement complet, révocation globale après succès.
+Prochain arbitrage : périmètre MFA Q48 (MVP, comptes concernés, facteur et récupération).
 5B reste en cours : mécanismes encore ouverts, Q46–Q56 non fermées. Aucune implémentation Portal/session ou API Colony livrée. 5C puis 5D
 dépendent des contrats acceptés et d’une autorisation de leur lot.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :

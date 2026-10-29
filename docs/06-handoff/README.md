@@ -28,8 +28,8 @@ Préparation 5B autorisée le 2026-10-29 sur work/step-5b-identity-contracts :
 partiels Q40–Q44, comportement Q45 validé et mécanismes encore proposés. Q46–Q56 restent ouvertes ; PR #6 non fusionnée.
 Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
 Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
-Q49 reste partiellement ouverte (fournisseur/livraison, durées/cycle des confirmations, portée des sessions
-et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
+Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
+Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
 La recette locale et ses limites figurent dans [progress](../../progress.md).
 
 Ce dossier indexe les références canoniques ; il ne remplace ni game_data, ni les ADR, ni le registre

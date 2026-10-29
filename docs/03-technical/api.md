@@ -54,8 +54,8 @@ Q40–Q44 sont partiellement closes, Q45 close pour le comportement produit, Q16
 ou de sécurité implémentée n’est déduite de ces arbitrages.
 Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
 Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
-Q49 reste partiellement ouverte (fournisseur/livraison, durées/cycle des confirmations, portée des sessions
-et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
+Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
+Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
 
 Décisions validées dans [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : Portal expose
 futurs services de compte/lobby, Game porte les commandes autoritaires et leurs projections.

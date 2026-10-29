@@ -129,7 +129,7 @@ sans validation implicite de leurs mécanismes ; regroupement appareil Q41/Q43 t
 
 | ID | Arbitrage restant | Dépendance / référence |
 | --- | --- | --- |
-| Q40 | Partiellement close : login MVP, récupération 30 min/unique, réémission et effets du reset validés ; restent bibliothèque/paramètres Argon2id, mécanismes de récupération ; changement d’email sans MFA validé, durées/cycle des confirmations et portée des sessions à arbitrer | 5B/5C, [contrats](../03-technical/identity-contracts.md) |
+| Q40 | Partiellement close : login MVP, récupération 30 min/unique, réémission et effets du reset validés ; restent bibliothèque/paramètres Argon2id, mécanismes de récupération ; changement email sans MFA, demande unique 1 h/remplacement complet et révocation globale validés, mécanismes ouverts | 5B/5C, [contrats](../03-technical/identity-contracts.md) |
 | Q41 | Partiellement close : 7 j absolus / 72 h d’inactivité et activité explicite classée côté serveur validés ; restent cookies/stockage et rotation | 5B, contrats |
 | Q42 | Partiellement close : ticket 60 s/usage unique validé ; restent format/crypto, nonce/audience, liaison navigateur et consommation anti-rejeu | 5B, contrats et ADR 0008 |
 | Q43 | Partiellement close : 8 h absolues / 2 h d’inactivité et expiration anticipée par GameAccess validées, activité explicite classée côté serveur ; restent stockage et limites de sessions | 5B avant 5D, contrats |
@@ -138,7 +138,7 @@ sans validation implicite de leurs mécanismes ; regroupement appareil Q41/Q43 t
 | Q46 | Auth service-to-service et exposition réseau de l’interface interne | 5B, aucun mTLS/signature/credential choisi |
 | Q47 | CSRF, origines, cookies et politique CORS liée au découpage | 5B/5C/5D, sécurité |
 | Q48 | MFA et récupération associée | Cadrage 5B, implémentation selon périmètre |
-| Q49 | Partiellement close : récupération 30 min/unique, invalidation des anciens liens, effets globaux du reset, notification email et non-énumération validés ; changement sans MFA avec double confirmation/pending, notifications et réauthentification validé ; restent fournisseur/livraison, durées/cycle des confirmations, portée des sessions et mécanismes | 5B/5C |
+| Q49 | Partiellement close : récupération 30 min/unique, invalidation des anciens liens, effets globaux du reset, notification email et non-énumération validés ; changement sans MFA avec double confirmation/pending, notifications et réauthentification validé ; demande unique 1 h, remplacement complet et révocation globale validés ; restent fournisseur/livraison et mécanismes | 5B/5C |
 | Q50 | Anti-bot/CAPTCHA, limites IP/compte et protections brute force | 5B/5C, pas de produit choisi |
 | Q51 | Modèle exact rôles/permissions et contexte empire | 5B, sans fermer Q21 |
 | Q52 | Membership suspendu, reprise et droits lors d’un accès Game | 5B, compatible Q23/Q24 |
@@ -233,9 +233,18 @@ la confirmation ancienne, réauthentification selon contrat, MFA et confirmation
 ancienne adresse notifiée avec moyen de signaler une opération non reconnue ; politique exacte Q48
 ouverte. Aucun mécanisme de récupération indépendant/MFA/support n’est accepté ou implémenté ici.
 
-Prochain arbitrage nécessaire Q40/Q49 : durées des confirmations/demande pending, politique de
-réémission et portée exacte d’invalidation des sessions après changement réussi, cohérente avec
-Q45 et récupération sans en déduire les effets. Puis périmètre MFA Q48. Aucune autre Qxx fermée.
+**Complément utilisateur validé — 2026-10-29 :** demande unique active par compte, maximum 1 h
+absolue depuis création ; les deux confirmations partagent cette échéance sans délai glissant.
+À échéance toute la demande expire. Nouvelle demande : ancienne demande, deux liens et confirmations
+acquises immédiatement invalidés ; deux nouvelles confirmations requises, jamais de mélange de demandes.
+Succès après toutes validations : nouvelle adresse active ; toutes les sessions Portal/Game du compte
+révoquées, tous appareils/univers et session courante inclus ; nouvelle connexion normale avec la
+nouvelle adresse, sans maintien automatique. Game injoignable : intention persistée/rejouée jusqu’à
+acquittement, aucune instantanéité promise, valid_until/8 h depuis confirmation Portal jamais relancés.
+Notifications aux deux adresses après succès sans credential/token sensible ; identité et états conservés.
+Q40/Q49 restent partiellement ouvertes pour fournisseur/livraison et mécanismes. Q48/Q50/Q53/Q54
+ne sont pas fermées par implication. Prochain arbitrage nécessaire : périmètre MFA Q48 (MVP,
+comptes concernés, facteur et récupération), sans l’implémenter ni commencer 5C.
 
 12 secteurs/2 slots orbitaux concernent seulement le départ de référence v0.1 ; distribution et
 capacités variables futures restent Q04/Q06. Q39 reste ouverte. Q01–Q39 ne sont ni supprimées,

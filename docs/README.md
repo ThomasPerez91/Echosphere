@@ -43,8 +43,8 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
 
 Complément Q40/Q49 : récupération 30 min/unique, réémission et effets du reset validés ;
 Flux email sans MFA également validé : double confirmation/pending, notifications et réauthentification.
-Q49 reste partiellement ouverte (fournisseur/livraison, durées/cycle des confirmations, portée des sessions
-et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
+Demande email unique 1 h absolue, remplacement complet et révocation globale après succès validés.
+Q49 reste partiellement ouverte (fournisseur/livraison et mécanismes). Variante MFA sous Q48 non livrée ; sans accès ancien, pas de bypass mot de passe seul.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
