@@ -49,6 +49,8 @@ concerné tant qu’ils ne sont pas satisfaits. Aucun compte, session, Portal, M
 synchronisée. Premier checkpoint documentaire commit/push avant code ; ensuite cadrage présenté
 (sous-tickets, tables/migrations Accounts, structure Portal, frontières et dépendances) avant
 implémentation substantielle. Les décisions 5B ne sont pas rouvertes.
+[Cadrage 5C proposé](step-5c-plan.md) : sous-tickets, schémas Accounts et frontière 5D,
+présenté avant toute implémentation substantielle.
 5D reste distinct : API/UI Colony et preuves de résilience gameplay, sans accès permissif transitoire.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :

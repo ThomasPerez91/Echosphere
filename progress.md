@@ -35,10 +35,30 @@ Diff des 18 fichiers Markdown relu : synchronisation documentaire uniquement, sa
 Tests backend/frontend, migrations et Compose non relancés pour ce diff documentaire ; aucune
 implémentation 5C ni preuve d’authentification testée à ce stade.
 
-Prochaine action après publication de ce premier commit : analyser la structure réelle, présenter
-sous-tickets 5C, tables/migrations Accounts, structure frontend/backend Portal, périmètre livré et
-frontière 5D, dépendances et arbitrages éventuels. Aucun développement substantiel avant présentation.
-Vérifier ensuite la tête distante et sa CI réelle ; résultats observés à consigner dans la PR du lot.
+Premier checkpoint publié : **1c2749773c3bb3cf7eedf9a0f4013b9ce7c8f98a**, tête distante relue et
+arbre propre. CI [40929423582](https://github.com/ThomasPerez91/Echosphere/actions/runs/40929423582)
+observée completed/success sur cette tête, jobs backend/frontend/compose-smoke réussis.
+
+### Cadrage 5C présenté avant code substantiel — 2026-10-29
+
+Après publication du premier checkpoint, analyse du dépôt réel (configuration/persistance Game,
+migrations, services Colony, shell/Vite, Compose et dépendances). Nouveau
+[plan 5C](docs/05-project/step-5c-plan.md) : sous-tickets C00–C09, tables/migrations Accounts séparées,
+applications Portal backend/frontend, minimum d’accès Game nécessaire au handoff, frontière 5D et
+reports. Plan technique et périmètre proposés pour présentation, pas décision produit supplémentaire.
+C01 est le prochain incrément de code ; aucune implémentation substantielle dans ce checkpoint.
+
+Limite de périmètre explicitée : le domaine 5A ne crée pas une partie complète. Lobby fondé sur
+participations réelles, sans fixture/public join ; un bouton créant une partie jouable nécessiterait
+cadrage de démarrage dédié avant implémentation, sans inventer les questions de modes/progression.
+Reports Q48/Q49/Q55 inchangés. Les détails techniques restent délégués, pas de questionnaire par
+paramètre. Cadrage documenté séparément du premier commit de synchronisation demandé.
+
+Validation locale du cadrage exécutée : `python3 scripts/check_docs.py` réussi (65 documents et
+liens), `git diff --check` sans erreur ; Q01–Q56 et toutes leurs lignes strictement inchangées depuis
+le merge 5B, diff Markdown uniquement. Checks fonctionnels non relancés localement pour ces documents. Après publication, observer la CI de sa tête et consigner les résultats dans
+la PR du lot. Prochaine action : présentation du plan à l’utilisateur avant code substantiel ; aucun
+5D ni nouveau merge autorisé.
 
 ## Historique du lot 5B — contrats identité / Portal-Game consolidés
 
