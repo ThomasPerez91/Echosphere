@@ -3,9 +3,10 @@
 **Statut : questions/limites explicites au 2026-10-28.** Ce document n’invente pas les réponses.
 
 Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progress](../../progress.md).
-[Préparation 5B](../03-technical/identity-contracts.md) disponible au statut Proposition :
-fenêtre de révocation, durées, login, transport interne, clés et protections restent à arbitrer.
-La nouvelle proposition ne constitue pas une validation des mécanismes de l’ADR 0008.
+[Contrats 5B](../03-technical/identity-contracts.md) : login MVP, principes de récupération,
+limites de sessions/ticket et fenêtre non glissante de huit heures validés sur arbitrage utilisateur
+pour PR #6 ; seules ces parties de Q40–Q44 sont closes. Activité comptabilisée, stockage, transport
+interne, clés, propagation et protections restent à arbitrer. Q45–Q56 demeurent ouvertes.
 
 ## Accès incomplet aux sources
 
@@ -50,8 +51,9 @@ Les tests de concurrence/idempotence ne prouvent pas la sécurité d’une API d
 
 Q01–Q39 conservées : protection offline et nouveau joueur, économie/entretien/balance, taille des
 planètes, recherche, génération, colonisation, fog, flottes, combat, IA, victoire, modes, late join,
-modules de défense et remboursement saturé. Les Q40–Q56 cadrent les mécanismes Portal/Game sans
-choisir login, cookies, ticket, sessions, révocation, rôles, MFA, email, anti-bot ou crypto.
+modules de défense et remboursement saturé. Les parties restantes de Q40–Q44 et Q45–Q56 cadrent
+les mécanismes Portal/Game ; login et limites temporelles ont seuls été précisés comme indiqué
+ci-dessus. Aucun cookie, format de ticket, stockage, rôle, MFA, fournisseur email, anti-bot ou crypto choisi.
 
 L’autonomie d’une GameSession et la révocation d’un accès devront être conciliées : aucune promesse
 de révocation instantanée/refresh illimité pendant panne Portal. Un déploiement partagé ne prouve

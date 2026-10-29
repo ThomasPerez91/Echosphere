@@ -4,7 +4,8 @@
 canonique, puis ce tableau et les Qxx concernés. « Implémenté » décrit le code de la branche, pas
 une validation produit ou une fusion. Statuts définis dans [docs/README](../README.md).
 Sources S1–S5 : [carte de provenance](source-map.md). Une proposition d’assistant seule n’est pas validée.
-Actualisation 2026-10-29 : PR #5 fusionnée sur 8214e0b ; préparation du lot 5B autorisée.
+Actualisation 2026-10-29 : PR #5 fusionnée sur 8214e0b ; PR #6 en cadrage 5B avec arbitrages
+utilisateur partiels Q40–Q44 acceptés, non implémentés. Aucun mécanisme Q45–Q56 fermé.
 
 | Décision / élément | Statut | Justification | Canonique / ADR | Impact | Date/source |
 | --- | --- | --- | --- | --- | --- |
@@ -31,8 +32,10 @@ Actualisation 2026-10-29 : PR #5 fusionnée sur 8214e0b ; préparation du lot 5B
 | Compte global, plusieurs parties, Membership | Décision validée, non implémentée | Séparer compte et empire/partie | [Modèle](../03-technical/data-model.md), ADR 0008 | Empire partagé Q21 non fermé | S1, corroboration partielle S5 |
 | Portal/Game, Accounts DB/Game DB séparés | Décision validée, non implémentée | Exposition et disponibilité distinctes | [ADR 0008](../adr/0008-control-plane-game-data-plane.md) | Affine la frontière plateforme de 0001 | S1, 28/10/2026 |
 | Portal sans SQL Game, interface interne idempotente | Décision validée, non implémentée | Frontière de propriété et autorisation | [ADR 0008](../adr/0008-control-plane-game-data-plane.md) | Auth S2S et synchronisation ouvertes | S1 |
-| Ticket court/unique puis GameSession autonome | Orientation validée, non implémentée | Pas de dépendance Portal par commande | [ADR 0008](../adr/0008-control-plane-game-data-plane.md) | Format/TTL/refresh/révocation Q40–Q56 | S1, S5 partiel |
-| Accès local versionné, ticket signé, sessions opaques, révocation bornée et interface interne | Proposition, non implémentée | Préparer les arbitrages de 5B avec alternatives et scénarios | [Contrats proposés](../03-technical/identity-contracts.md) | Aucune Q fermée ; 5B non achevée par rédaction | 29/10/2026, préparation Codex local autorisée ; choix à valider |
+| Ticket court/unique puis GameSession autonome | Orientation validée, non implémentée ; durée 60 s/usage unique désormais validés | Pas de dépendance Portal par commande | [Contrats 5B](../03-technical/identity-contracts.md), ADR 0008 | Format/crypto/rejeu restent ouverts sous Q42/Q56 | S1, S5 partiel puis arbitrage utilisateur explicite du 29/10/2026 pour PR #6 |
+| Login MVP email/mot de passe, Argon2id, email vérifié avant premier handoff, récupération courte/unique, identité globale indépendante | Décision validée, non implémentée | OIDC supplémentaire futur facultatif, aucun fournisseur imposé | [Contrats 5B](../03-technical/identity-contracts.md) | Q40 partiellement close ; paramètres, email et MFA ouverts | Arbitrage utilisateur explicite du 29/10/2026 pour PR #6 |
+| Portal 7 j/72 h inactif, Game 8 h/2 h inactif, droits Game non glissants au plus 8 h depuis confirmation | Décision validée, non implémentée | Panne sans reset, révocation reçue immédiate, refus à valid_until, renouvellement via Portal/confirmation/handoff | [Contrats 5B](../03-technical/identity-contracts.md) | Parties de Q41/Q43/Q44 closes ; activité et mécanismes ouverts | Arbitrage utilisateur explicite du 29/10/2026 pour PR #6 |
+| Accès local versionné, ticket signé, sessions opaques, epoch et interface interne | Proposition, non implémentée | Préparer les mécanismes de 5B avec alternatives et scénarios | [Contrats 5B](../03-technical/identity-contracts.md) | Aucun mécanisme accepté par les seuls arbitrages temporels ; 5B en cours | 29/10/2026, préparation Codex local autorisée ; choix à valider |
 | UX responsive et sept domaines globaux | Implémenté / Proposition visuelle | Mobile/clavier et états explicites | [UX](../02-ux-ui/information-architecture.md), ADR 0003 | Q15 reste ouverte ; Portal non livré | PR #4/#5, S1 |
 | Diplomatie/commerce avancés, alliances, espionnage | Futur / post-MVP | Ne pas inventer des mécaniques pour compléter le MVP | [Roadmap](../05-project/roadmap.md), Q18 | Relations IA minimales étape 13 | Docs initiales ; S1 préserve les questions |
 | master stable, PR, merge explicite | Décision validée | Référence commune Work/Codex | [AGENTS](../../AGENTS.md) | develop historique superseded | Instructions visibles S2, PR #3 |

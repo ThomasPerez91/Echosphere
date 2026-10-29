@@ -47,15 +47,18 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 
 ## Contrats Portal/Game à définir en 5B — non implémentés
 
-La [préparation 5B](identity-contracts.md) propose désormais les objets, opérations internes,
-erreurs, échanges et scénarios de refus/reprise. Statut **Proposition**, sans route livrée ;
-les mécanismes et durées proposés restent à arbitrer et ne ferment pas Q16/Q40–Q56.
+Les [contrats 5B](identity-contracts.md) distinguent les décisions utilisateur du 2026-10-29
+(login MVP, principes de récupération, limites Portal/Game/ticket et validité des droits)
+des objets, opérations internes, erreurs et échanges encore proposés. Aucune route livrée.
+Q40–Q44 sont partiellement closes, Q16/Q45–Q56 restent ouvertes ; aucune validation de protocole
+ou de sécurité implémentée n’est déduite de ces arbitrages.
 
 Décisions validées dans [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : Portal expose
 futurs services de compte/lobby, Game porte les commandes autoritaires et leurs projections.
 Après handoff, GameSession autorise l’accès direct à Game sans proxy/consultation Portal par commande.
 Game vérifie session → accès/membership/univers → permissions/empire → propriété et visibilité.
-Aucune nouvelle URL, méthode de login, forme de token/cookie ou enveloppe d’erreur n’est fixée ici.
+Login MVP fixé dans le canonique : email/mot de passe ; aucune nouvelle URL, forme de token/cookie
+ou enveloppe d’erreur n’est fixée ici.
 
 Les opérations internes provision universe, grant/revoke access, join et association membership/empire
 passent exclusivement par Game, authentifiées service-to-service et idempotentes ; jamais par SQL

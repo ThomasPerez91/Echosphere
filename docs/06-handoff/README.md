@@ -24,7 +24,8 @@ Accounts DB/Game DB séparées, interface interne contrôlée et GameSession aut
 **Non implémenté** : Portal/auth/lobby, API gameplay et systèmes futurs du MVP.
 
 Préparation 5B autorisée le 2026-10-29 sur work/step-5b-identity-contracts :
-[contrats proposés](../03-technical/identity-contracts.md), non implémentés et non encore arbitrés.
+[contrats](../03-technical/identity-contracts.md), non implémentés, avec arbitrages utilisateur
+partiels Q40–Q44 et mécanismes encore proposés. Q45–Q56 restent ouvertes ; PR #6 non fusionnée.
 La recette locale et ses limites figurent dans [progress](../../progress.md).
 
 Ce dossier indexe les références canoniques ; il ne remplace ni game_data, ni les ADR, ni le registre

@@ -5,6 +5,12 @@
 - Affine [ADR 0001](0001-modular-monolith.md) et [ADR 0006](0006-universe-game-instance.md).
   Ne remplace ni ne renumérote [ADR 0007](0007-colony-economy.md).
 
+**Évolution 5B du 2026-10-29 :** l’utilisateur a depuis validé le login MVP et les limites
+temporelles décrites dans [identity-contracts](../03-technical/identity-contracts.md), parties de
+Q40–Q44 uniquement. Les passages ci-dessous indiquant des durées/login non choisis décrivent
+la décision de plateforme du 28/10 ; les nouvelles décisions les précisent sans choisir les
+formats, la crypto, le stockage ou les mécanismes de Q45–Q56. Aucune implémentation ajoutée.
+
 ## Contexte et décision
 
 Un compte Echosphere est global et peut participer à plusieurs parties simultanément. Parcours cible :

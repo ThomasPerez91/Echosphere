@@ -4,12 +4,63 @@ Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Lot courant — préparation 5B : contrats identité / Portal-Game
 
-**Statut : Proposition rédigée, arbitrages utilisateur en attente ; 5B non déclarée achevée.**
+**Statut : décisions utilisateur partielles Q40–Q44 intégrées ; mécanismes encore proposés,
+nouvel arbitrage sur l’activité nécessaire ; 5B non déclarée achevée.**
 Après la mission de reprise en lecture seule, l’utilisateur a autorisé le prochain lot sur une
 nouvelle branche. Interprétation appliquée selon roadmap : cadrage 5B, sans implémentation 5C/5D.
 Environnement : Codex local, Linux WSL2. Aucune délégation ni identité d’agent précédent supposée.
 
-### Base et périmètre
+### Arbitrages utilisateur intégrés — 2026-10-29, suite de PR #6
+
+Source : validation explicite utilisateur pour poursuivre PR #6, synthétisée dans le canonique
+identity-contracts.md et le registre Qxx, sans transcript brut. Aucune validation implicite
+du reste de la proposition et aucune autorisation de fusion.
+
+- Q40, parties closes : MVP email/mot de passe ; email vérifié avant premier handoff ; récupération
+  courte/unique ; Argon2id via bibliothèque maintenue ; global_user_id indépendant de l’email et de
+  la méthode. Google/OIDC supplémentaire futur facultatif. Bibliothèque/paramètres et récupération
+  détaillée restent ouverts ; fournisseur email et MFA dans leurs Q49/Q48 restent à arbitrer.
+- Q41, partie close : Portal 7 jours absolus et **72 heures** d’inactivité, remplaçant la proposition
+  initiale de 24 h. Activité sans prolongation du maximum absolu ; cookies/stockage/rotation ouverts.
+- Q42, parties closes : ticket de handoff 60 secondes et usage unique. Format, crypto, liaison
+  navigateur et mécanismes anti-rejeu toujours ouverts ; aucune durée de récupération déduite.
+- Q43, parties closes : Game 8 h absolues/2 h d’inactivité, GameAccess pouvant expirer plus tôt ;
+  absolu non prolongé par activité. Stockage, définition de l’activité et limites simultanées ouverts.
+- Q44, parties closes : droits au plus 8 h depuis dernière confirmation Portal, non glissants et
+  sans reset en panne ; révocation/suspension reçue immédiate ; nouvelles commandes refusées à
+  valid_until, univers/workers continuant. Renouvellement avec Portal disponible et nouvelle
+  confirmation/handoff valide ; aucune autonomie illimitée. Protocoles/synchronisation non choisis.
+
+Q40–Q44 restent partiellement ouvertes ; Q16/Q21/Q45–Q56 ne sont pas fermées. Les comptes,
+sessions et tickets ne sont toujours pas implémentés. La validation de la fenêtre ne vaut pas
+acceptation de mTLS, JWT, stockage opaque, cookies, epoch, outbox ou politique de logout.
+
+Poursuite documentaire : expressions des échéances et exemples de confirmation retardée/panne
+ajoutés, scénarios futurs de frontière et compte MVP précisés. Aucun test artificiel ou code ajouté.
+Prochain arbitrage nécessaire Q41/Q43 : quelles activités réinitialisent l’inactivité, notamment
+polling/rafraîchissements automatiques ? La continuation s’arrête avant de choisir cette politique.
+Les autres questions techniques restent listées pour la suite, pas repoussées implicitement à 5C.
+
+Fichiers de cette continuation : identity-contracts, open-questions, context/progress et références
+README/docs/index/architecture/API/sécurité/ADR 0008/roadmap/passation/known-gaps pour éviter des
+mentions périmées « durées/login encore proposés ». Diff Markdown uniquement, aucun changement de
+code, test, dépendance, migration, ruleset, Compose ou script.
+
+Vérification initiale de cette continuation : arbre propre, branche locale et distante à
+2d1efdabac4a5e6396b515f63fc02684869c8ac9 après fetch, PR #6 OPEN/draft sur la même tête vers
+master 8214e0b ; seule PR ouverte listée. CI de cette tête relue :
+[40873616329](https://github.com/ThomasPerez91/Echosphere/actions/runs/40873616329) et
+[40873623209](https://github.com/ThomasPerez91/Echosphere/actions/runs/40873623209), tous les jobs
+backend/frontend/compose-smoke réussis. Aucun merge, changement de branche ou travail concurrent.
+Checks de cette continuation exécutés : 64 documents/liens valides, git diff --check sans erreur,
+Q01–Q56 sans trou/doublon ; comparaison avec HEAD confirmant que seuls les libellés Q40–Q44
+changent dans les tableaux du registre et qu’ils restent explicitement partiellement clos.
+Relecture des limites/formules/exemples, de la séparation validé/proposé et du diff de confidentialité.
+Périmètre Markdown uniquement vérifié. Aucune suite backend/frontend/Compose ou Ruff relancée
+localement pour ce changement documentaire ; aucun nouveau mécanisme de session testé.
+Publication sur la même PR #6 brouillon prévue ; sa CI propre reste à observer après push.
+
+### Base et périmètre initiaux (historique de préparation)
 
 GitHub relu : PR #5 MERGED, tête acde9d358bfe724be61198cd60fd1e72c6e38459, base master,
 merge 8214e0bd30a00bf0336264a428e6975d307350ba. Fetch effectué ; master locale propre et identique
@@ -29,21 +80,22 @@ index docs/ADR/décisions, README/passation, roadmap/questions/known-gaps, conte
 des documents requis de scripts/check_docs.py. Aucun code métier, game_data, migration, dépendance,
 Compose, composant UI ou test fonctionnel modifié.
 
-### Résultat et statut des propositions
+### Préparation initiale et statut des propositions (avant les arbitrages ci-dessus)
 
 Contrats proposés : autorités Portal/Game, participation/accès local versionné/bindings d’Empire,
 interface interne idempotente avec révisions/outbox/réconciliation, handoff lié au navigateur,
 consommation atomique, session opaque et contrôles locaux, concurrence avec révocation, logout,
 rotation de clés, isolation et matrice de scénarios futurs. Alternatives et sources OWASP/RFC
-publiques consignées. Aucun protocole, algorithme, fournisseur ni durée nouveau présenté comme accepté.
+publiques consignées. À ce premier checkpoint, aucun protocole, algorithme, fournisseur ni durée
+nouveau n’était présenté comme accepté.
 Relecture : distinguer la révision de livraison de l’epoch d’invalidation des sessions pour qu’un
 renouvellement à droits inchangés ne déconnecte pas les sessions valides ; cookies par univers
 proposés pour les onglets multi-parties, limite de sessions/cleanup restant sous Q43.
 
-Arbitrage principal proposé : validité locale des droits bornée à 8 h, session Game 8 h absolues/
+Arbitrage principal alors proposé : validité locale des droits bornée à 8 h, session Game 8 h absolues/
 2 h d’inactivité, ticket 60 s ; autonomie en panne Portal jusqu’aux limites, révocation appliquée
-dès livraison mais non instantanée si liaison coupée. Ces valeurs sont des propositions à revoir,
-pas une fermeture de Q16/Q40–Q56. Q21 et les questions de modes restent ouvertes. 5C ne commence
+dès livraison mais non instantanée si liaison coupée. Ces valeurs étaient des propositions à revoir,
+depuis acceptées uniquement dans le périmètre décrit en tête. Q21 et les questions de modes restent ouvertes. 5C ne commence
 pas automatiquement après la rédaction ; recueillir les arbitrages nécessaires et leur provenance.
 
 ### Recette de reprise locale réalisée avant création de la branche
@@ -77,7 +129,7 @@ résilience Portal/Game réel (inexistant). Pile Compose laissée démarrée, vo
 `npm audit --json` : 3 dépendances affectées (1 modérée, 2 critiques) dans la chaîne de développement
 Vitest/@vitest/mocker/tinypool. Aucun correctif automatique effectué. Voir known-gaps pour les avis.
 
-### Validation du lot documentaire et prochaine action
+### Validation du premier checkpoint documentaire (historique)
 
 Checks du diff 5B exécutés : 64 documents/liens valides, git diff --check sans erreur,
 Q01–Q56 présentes exactement une fois dans les tableaux du registre ; périmètre Markdown et
@@ -90,8 +142,8 @@ Branche publiée, SHA distant e3d2f8e relu, PR #6 brouillon créée et non fusio
 completed/success sur e3d2f8e, jobs backend/frontend/compose-smoke verts. Ces résultats ne prouvent
 aucune implémentation des contrats futurs. Le présent checkpoint et les précisions de relecture
 suivent cette tête ; leur CI propre reste à relire après publication, sans la présumer réussie.
-Prochaine action : revue de la proposition 5B, arbitrage des choix répertoriés puis transcription
-des décisions acceptées ; pas d’implémentation Portal/API Colony sur la seule présence du document.
+Prochaine action à ce checkpoint : revue et arbitrage, désormais partiellement effectués comme
+consigné en tête ; pas d’implémentation Portal/API Colony sur la seule présence du document.
 
 ---
 

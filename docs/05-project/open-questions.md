@@ -4,10 +4,10 @@ Chaque Q reste ouverte jusqu'à un arbitrage explicite. Les propositions des doc
 Consigner date, raison, impact, document modifié et ADR si nécessaire. Les étapes indiquées sont
 les moments limites pour décider avant de dépendre du choix.
 
-Préparation du 2026-10-29 : [contrats identité/Portal-Game proposés](../03-technical/identity-contracts.md).
-La matrice finale couvre Q40–Q56 et distingue leurs dépendances 5C/5D. Toutes ces questions,
-ainsi que Q16 et Q21, gardent leur statut ouvert ; aucune durée, méthode ou politique nouvelle
-n’est acceptée par la seule autorisation de poursuivre le lot 5B.
+Lot 5B du 2026-10-29 : [contrats identité/Portal-Game](../03-technical/identity-contracts.md),
+avec décisions utilisateur et mécanismes encore proposés explicitement distingués.
+Les parties de Q40–Q44 listées en fin de registre sont closes sur arbitrage utilisateur explicite
+pour PR #6 ; leurs autres parties restent ouvertes. Q16, Q21 et Q45–Q56 ne sont pas fermées.
 
 | ID | Question ouverte | À traiter avant | Référence |
 | --- | --- | --- | --- |
@@ -122,15 +122,17 @@ GameSession autonome ; gameplay direct à Game sans dépendance Portal par comma
 ne doit pas interrompre univers/workers/sessions établies selon le contrat à définir.
 Référence canonique : [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
 
-Les lignes suivantes restent **Question ouverte**, aucun protocole ou chiffre n’est déduit :
+Les lignes suivantes conservent les travaux restants. **Q40–Q44 partiellement closes** par les
+arbitrages du 2026-10-29 décrits après le tableau ; aucune de ces questions n’est entièrement close.
+Q45–Q56 restent **Question ouverte**, sans validation implicite de leurs mécanismes.
 
 | ID | Arbitrage restant | Dépendance / référence |
 | --- | --- | --- |
-| Q40 | Méthode de login, credentials et récupération compte | 5B/5C, [sécurité](../03-technical/security.md) |
-| Q41 | Cookie/session Portal, durées et politique de stockage | 5B, sécurité |
-| Q42 | Format/expiration du ticket, nonce, audience, usage unique et résistance au rejeu | 5B, ADR 0008 |
-| Q43 | Durée, stockage et limites de GameSession | 5B avant 5D, ADR 0008 |
-| Q44 | Refresh, expiration et révocation en fonctionnement normal ou panne Portal | 5B, ADR 0008 |
+| Q40 | Partiellement close : login MVP et principes de récupération validés ; restent bibliothèque/paramètres Argon2id et politique détaillée de récupération | 5B/5C, [contrats](../03-technical/identity-contracts.md) |
+| Q41 | Partiellement close : 7 j absolus / 72 h d’inactivité validés ; restent activité, cookies/stockage et rotation | 5B, contrats |
+| Q42 | Partiellement close : ticket 60 s/usage unique validé ; restent format/crypto, nonce/audience, liaison navigateur et consommation anti-rejeu | 5B, contrats et ADR 0008 |
+| Q43 | Partiellement close : 8 h absolues / 2 h d’inactivité et expiration anticipée par GameAccess validées ; restent activité, stockage et limites de sessions | 5B avant 5D, contrats |
+| Q44 | Partiellement close : plafond non glissant 8 h depuis confirmation Portal, refus à échéance et renouvellement avec Portal/confirmation/handoff validés ; restent protocoles et mécanismes de révocation/renouvellement | 5B, contrats |
 | Q45 | Logout global vs logout Game et effets sur les autres parties | 5B/5C, compte multi-parties |
 | Q46 | Auth service-to-service et exposition réseau de l’interface interne | 5B, aucun mTLS/signature/credential choisi |
 | Q47 | CSRF, origines, cookies et politique CORS liée au découpage | 5B/5C/5D, sécurité |
@@ -143,6 +145,41 @@ Les lignes suivantes restent **Question ouverte**, aucun protocole ou chiffre n�
 | Q54 | Révocation pendant GameSession, propagation et limites en panne Portal | 5B, autonomie sans promesse d’instantanéité |
 | Q55 | Politique d’accès/sécurité des univers privés et persistants | 5B puis lots modes, Q19–Q29 préservées |
 | Q56 | Validation autonome du ticket, clés/rotation et dépendances de handoff en mode dégradé | 5B, format crypto non décidé |
+
+## Arbitrages explicites 5B — 2026-10-29, parties closes uniquement
+
+**Source/provenance : décision utilisateur explicite pour poursuivre PR #6**, synthétisée sans
+transcript privé. Statut **Décision validée, non implémentée**. Canonique :
+[identity-contracts](../03-technical/identity-contracts.md). Les décisions ne valent ni protocole
+accepté pour les autres Qxx, ni livraison de code, ni autorisation de fusion ou de passage à 5C.
+
+- Q40 : MVP email/mot de passe, adresse vérifiée avant premier handoff Game, récupération par
+  jeton court à usage unique, hash Argon2id via bibliothèque maintenue. global_user_id indépendant
+  de l’email et de la méthode de connexion. Google/OIDC futur comme méthode supplémentaire du même
+  compte, sans dépendance MVP. Bibliothèque, paramètres et récupération détaillée restent ouverts ;
+  aucune durée exacte de récupération déduite du ticket de handoff de 60 s.
+- Q41 : session Portal au plus 7 jours absolus et 72 heures d’inactivité ; l’activité ne prolonge
+  pas l’absolu. La proposition initiale de 24 h d’inactivité est remplacée par cet arbitrage.
+- Q42 : ticket de handoff au plus 60 secondes, usage unique. Format, crypto, nonce/audience,
+  liaison au navigateur et preuve de consommation unique restent à contractualiser.
+- Q43 : session Game au plus 8 heures absolues et 2 heures d’inactivité ; GameAccess peut la faire
+  expirer plus tôt. L’activité ne prolonge pas l’absolu. Stockage et limites simultanées restent ouverts.
+- Q44 : droits Game valides au plus 8 heures depuis leur dernière confirmation Portal, fenêtre
+  jamais glissante sur l’activité Game, sans reset au début d’une panne. Révocation/suspension reçue
+  appliquée immédiatement. Si Portal ou la liaison est indisponible, une nouvelle révocation peut
+  rester sans effet jusqu’à valid_until ; aucune autonomie de renouvellement illimitée. À cette
+  échéance, nouvelles commandes refusées, univers/workers poursuivant leur progression. Un
+  renouvellement nécessite Portal disponible et une nouvelle confirmation/handoff valide.
+
+Q45 (logout), Q46 (S2S), Q47 (cookies/CSRF/origines), Q48 (MFA), Q49 (fournisseur email et détails
+de vérification/récupération), Q50 (anti-abus), Q51–Q53 (permissions/membership/synchronisation),
+Q54 (propagation de révocation), Q55 (modes) et Q56 (crypto/clés) restent ouvertes.
+La fenêtre validée sous Q44 ne ferme pas les mécanismes de Q54.
+
+**Prochain arbitrage nécessaire, Q41/Q43 :** définir l’activité qui réinitialise l’inactivité,
+en particulier le traitement du polling et des requêtes automatiques. La durée seule ne tranche
+pas ce point ; aucune politique n’est implémentée ou promue en décision. Les scénarios de frontière
+et de panne ajoutés aux contrats sont des critères futurs, pas des tests exécutés.
 
 12 secteurs/2 slots orbitaux concernent seulement le départ de référence v0.1 ; distribution et
 capacités variables futures restent Q04/Q06. Q39 reste ouverte. Q01–Q39 ne sont ni supprimées,

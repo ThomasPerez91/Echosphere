@@ -50,7 +50,15 @@ Portal n’écrit jamais en SQL Game DB ; provision/grant/revoke/join via interf
 authentifiée et idempotente. Pas de credentials de compte en Game DB.
 Ticket court/unique puis GameSession autonome, commandes client directement à Game sans appel
 Portal par commande. Panne Portal peut empêcher nouvelles entrées, pas arrêter univers/workers ou
-sessions établies dans le contrat à définir. Mécanismes/durées/révocation restent Q40–Q56, Q16 partielle.
+sessions encore valides. Décisions 5B validées le 2026-10-29 : email/mot de passe MVP, Argon2id
+via bibliothèque maintenue, email vérifié avant premier handoff, récupération courte/unique et
+global_user_id indépendant de l’email/méthode ; OIDC supplémentaire futur facultatif.
+Portal : 7 j absolus/72 h d’inactivité ; Game : 8 h absolues/2 h d’inactivité ; ticket : 60 s/unique.
+Droits Game : maximum 8 h depuis confirmation Portal, sans glissement sur activité ni reset en panne.
+Révocation/suspension reçue immédiate ; à valid_until nouvelles commandes refusées, worker/univers
+continuent. Renouvellement avec Portal disponible et nouvelle confirmation/handoff valide ; aucun
+renouvellement autonome illimité, GameAccess pouvant expirer une session plus tôt.
+Seules ces parties de Q40–Q44 sont closes ; mécanismes restants, Q45–Q56 et Q16 restent ouverts.
 Ceci affine le backend unique historique ; aucun Portal, protocole ou Compose nouveau dans ce lot.
 [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), [architecture](docs/03-technical/architecture.md).
 
@@ -65,9 +73,11 @@ que la mission porte dessus, reprendre cette branche. Après sa fusion, synchron
 partir sur une nouvelle branche work/... pour tout nouveau lot autorisé, sans recréer la branche #5.
 progress porte le checkpoint et les actions de reprise avant/après fusion.
 Le 2026-10-29, l’utilisateur autorise le prochain lot : préparation 5B sur
-work/step-5b-identity-contracts depuis master synchronisée. Les [contrats proposés](docs/03-technical/identity-contracts.md)
-ne sont pas encore acceptés : aucune Q16/Q40–Q56 fermée, aucun compte/Portal/API livré.
-La préparation doit être revue avant implémentation dépendante ; 5C/5D restent des lots séparés.
+work/step-5b-identity-contracts depuis master synchronisée, PR #6 brouillon non fusionnée.
+Les [contrats](docs/03-technical/identity-contracts.md) distinguent désormais les décisions
+utilisateur ci-dessus des mécanismes encore proposés ; aucun compte/Portal/API livré.
+Prochain arbitrage nécessaire : activité réinitialisant l’inactivité (Q41/Q43), dont polling.
+Le lot reste 5B ; sa rédaction ne le déclare pas terminé et 5C/5D restent des lots séparés.
 Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation
 compte/lobby selon cadrage, 5D API Colony sécurisée/UI réelle. Ne pas commencer Portal complet ou
 multijoueur automatiquement. [Roadmap](docs/05-project/roadmap.md), [Q01–Q56](docs/05-project/open-questions.md).

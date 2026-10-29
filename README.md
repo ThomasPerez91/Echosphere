@@ -149,5 +149,6 @@ protocole d’auth ou changement Compose n’est livré par cette documentation.
 [sources/statuts](docs/06-handoff/source-map.md) et [prochain lot](docs/05-project/roadmap.md) :
 5B contrats identité/Portal-Game → 5C compte/lobby selon cadrage → 5D API Colony sécurisée/UI réelle.
 PR #5 fusionnée sur master 8214e0b ; recette locale effectuée le 2026-10-29, limites dans progress.
-La [préparation 5B](docs/03-technical/identity-contracts.md) propose les contrats identité/Portal-Game
-sur work/step-5b-identity-contracts. Ces propositions restent à arbitrer, sans nouveau code d’authentification.
+Les [contrats 5B](docs/03-technical/identity-contracts.md) sur work/step-5b-identity-contracts
+distinguent les arbitrages utilisateur partiels Q40–Q44 des mécanismes encore proposés.
+Aucun nouveau code d’authentification ; PR #6 brouillon non fusionnée, 5B toujours en cours.

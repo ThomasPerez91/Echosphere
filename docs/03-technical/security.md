@@ -58,9 +58,14 @@ appel des mêmes services humains/IA/headless. Pas de faux user global ou bypass
 
 ## Portal/Game — décisions validées, protections futures non implémentées
 
-[Préparation 5B](identity-contracts.md) : proposition datée du 2026-10-29 couvrant session locale,
-révocation bornée, handoff lié au navigateur, interface interne et contrôles futurs.
-Les durées, méthodes de login, crypto et protections proposées ne sont pas des décisions acceptées.
+[Contrats 5B](identity-contracts.md) : décisions utilisateur du 2026-10-29 sur le login MVP
+email/mot de passe avec Argon2id, email vérifié avant premier handoff, récupération courte/unique,
+identité globale indépendante des méthodes et limites temporelles. Portal : 7 j absolus/72 h
+d’inactivité ; Game : 8 h absolues/2 h d’inactivité ; ticket : 60 s/unique. Droits Game au plus 8 h
+depuis confirmation Portal, non glissants, sans reset en panne ; révocation/suspension reçue immédiate.
+Renouvellement avec Portal disponible et nouvelle confirmation/handoff valide, refus à valid_until.
+Ces décisions restent non implémentées ; mécanismes de session, crypto, interface interne et
+protections conservent leur statut Proposition/Question ouverte.
 
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : compte global multi-parties, deux backends
 isolables et deux bases distinctes/séparables. Portal gère credentials et sessions de compte ; Game
@@ -76,8 +81,10 @@ jamais source de vérité gameplay. Game protège aussi son ingress, objets, uni
 Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver ; ne pas promettre une protection DDoS par le seul
 fait d’avoir deux applications sur une machine partagée.
 
-Q16 est **partiellement cadrée** ; login/cookies/CSRF/MFA/email/anti-bot, ticket/GameSession,
-refresh/revocation/logout, authentification S2S, rôles/suspension/synchronisation et politiques
-privées/persistantes restent Q40–Q56. Pas de JWT/OAuth/mTLS sélectionné par cette documentation.
+Q16 est **partiellement cadrée**. Seules les parties listées de Q40–Q44 sont closes ; activité,
+cookies/stockage, CSRF, MFA, fournisseur email, anti-abus, format/crypto du ticket, protocoles de
+renouvellement/révocation/logout, S2S, rôles/membership/synchronisation et politiques de modes
+restent ouverts. Q45–Q56 ne sont pas fermées ; pas de JWT/OAuth/mTLS sélectionné.
 Autonomie d’une session pendant panne Portal ne signifie pas ignorer toute révocation indéfiniment :
-contrat et comportement dégradé à décider et tester avant API interactive. Aucun compte fictif global.
+fenêtre de huit heures validée, mécanismes restant à définir et tester avant API interactive.
+Aucun compte fictif global.

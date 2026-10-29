@@ -1,18 +1,38 @@
 # Identité et contrats Portal/Game — préparation 5B
 
-**Statut : Proposition de contrats, non implémentée, à arbitrer.** Date : 2026-10-29.
-L’utilisateur a autorisé la poursuite du prochain lot après la reprise de master intégrant #5.
-Cette autorisation ouvre le cadrage 5B ; elle ne valide pas les choix nouveaux ci-dessous.
-[ADR 0008](../adr/0008-control-plane-game-data-plane.md) reste la décision acceptée.
-[Q16/Q40–Q56](../05-project/open-questions.md) restent ouvertes. Aucune nouvelle ADR acceptée,
-route, table, dépendance, migration ou application Portal n’est livrée par ce document.
+**Statut : décisions utilisateur validées pour le compte et les limites temporelles ; mécanismes
+techniques encore proposés ; ensemble non implémenté.** Date : 2026-10-29.
+Source : arbitrage utilisateur explicite pour poursuivre PR #6, synthétisé ci-dessous.
+[ADR 0008](../adr/0008-control-plane-game-data-plane.md) reste la décision de plateforme acceptée.
+Seules les parties précisées de [Q40–Q44](../05-project/open-questions.md) sont closes ; ces Q restent
+partiellement ouvertes. Q16 et Q45–Q56 ne sont pas fermées par ces arbitrages.
+Aucune route, table, dépendance, migration ou application Portal n’est livrée par ce document.
+
+## Arbitrages validés — 2026-10-29
+
+Les lignes suivantes sont des **Décisions validées, non implémentées**. Les autres mécanismes
+de ce document gardent leur statut Proposition, notamment ticket signé, sessions opaques,
+cookies par univers, compteurs de révision/epoch, mTLS, outbox et synchronisation.
+
+| Partie close | Décision utilisateur | Reste ouvert |
+| --- | --- | --- |
+| Q40 — login et principes de récupération | MVP email/mot de passe, email vérifié avant premier handoff, récupération par jeton court/unique, hash Argon2id via bibliothèque maintenue ; global_user_id indépendant de l’email et de la méthode de login | Bibliothèque, paramètres Argon2id et politique détaillée de récupération, dont durée exacte et effets sur sessions |
+| Q41 — durées Portal | Maximum absolu 7 jours, inactivité maximum 72 h ; activité sans prolongation de l’absolu | Stockage/cookies, rotation et définition de l’activité |
+| Q42 — durée et unicité du ticket | 60 secondes, usage unique | Format/crypto, audience/nonce, liaison navigateur et mécanisme atomique de consommation |
+| Q43 — durées Game | Maximum absolu 8 h, inactivité maximum 2 h, expiration anticipée possible par GameAccess ; activité sans prolongation de l’absolu | Stockage, activité, rotation, limites de sessions simultanées et nettoyage |
+| Q44 — limites en panne et renouvellement | Droits au plus 8 h depuis confirmation Portal, non glissants ; révocation/suspension reçue appliquée immédiatement ; nouvelle confirmation/handoff valide avec Portal disponible pour renouveler | Protocole de renouvellement et synchronisation/propagation, concurrence avec révocation, logout Q45 |
+
+Google/OIDC pourra être ajouté plus tard comme méthode supplémentaire du même compte global,
+sans remplacement de l’identité et sans dépendance MVP. Fournisseur email, MFA et paramètres
+opérationnels restent ouverts dans leurs Qxx. Aucun détail de Q46–Q56 n’est accepté implicitement.
 
 ## 1. Périmètre et séparation des autorités
 
 Les exigences déjà validées sont : compte global multi-parties, Membership distincte d’Empire,
 deux backends/bases isolables, aucun SQL Portal→Game DB, interface interne authentifiée/idempotente,
 ticket court à usage unique, session Game autonome, gameplay direct et worker indépendant du Portal.
-Les sections suivantes proposent leur traduction ; noms, formats, durées et politiques sont à valider.
+Les sections suivantes proposent leur traduction technique ; seuls les choix listés dans les
+arbitrages ci-dessus sont validés. Les autres noms, formats et politiques restent à valider.
 
 | Propriétaire proposé | Données et responsabilités | Limite |
 | --- | --- | --- |
@@ -144,8 +164,10 @@ Claims proposés : `contract_version`, `iss`, `aud`, `sub` (global user id), `un
 Ni email, ni credential, ni catalogue de permissions faisant autorité. Signature seule ne fournit
 ni usage unique ni liaison au navigateur : ces deux garanties exigent l’état local ci-dessus.
 
-Valeurs proposées à arbitrer : ticket valide **60 secondes**, pré-authentification **5 minutes** ;
-refus dès `now >= exp`, contrôle de `iat` avec une tolérance d’horloge maximale de **5 secondes**.
+**Validé Q42 :** ticket valide au maximum **60 secondes**, utilisable une seule fois.
+La pré-authentification de **5 minutes** et la tolérance `iat` de **5 secondes** restent proposées.
+La règle de frontière est un refus dès `now >= exp` ; aucune tolérance technique ne doit prolonger
+les 60 secondes acceptées. Formats de dates et mécanismes de contrôle restent à contractualiser.
 Un autre univers, une mauvaise audience, une révision ancienne ou un cookie pré-auth absent sont
 refusés. Une session existante n’est jamais remplacée silencieusement par un ticket d’un autre
 utilisateur ; afficher un conflit et demander un parcours de changement de compte explicite.
@@ -156,23 +178,56 @@ de révocation des sessions concernées. Recouvrement de rotation et rétention 
 couvrent au minimum leur durée d’acceptation et la dérive retenue. Pas de secret de signature Portal
 en Game. La PKI S2S et les clés de ticket ont des usages distincts.
 
-## 5. Sessions, cookies et autonomie proposées
+## 5. Sessions et autonomie validées ; stockage/cookies proposés
 
-Les chiffres suivants sont des **propositions Echosphere**, pas des exigences OWASP.
+Les limites ci-dessous sont des **Décisions utilisateur validées le 2026-10-29**, non implémentées.
+Elles remplacent la proposition initiale Portal à 24 h d’inactivité par **72 h**.
+Le stockage opaque, les cookies et leur rotation restent des propositions techniques distinctes.
 
-| Paramètre | Proposition initiale | Conséquence |
+| Paramètre | Limite validée | Conséquence |
 | --- | --- | --- |
-| Session Portal | Secret opaque ; absolu 7 jours, inactivité 24 h | Réauthentification après limite, rotation au login et changement sensible |
-| Session Game | Secret opaque ; absolu 8 h, inactivité 2 h | Date serveur ; aucune extension de l’absolu par simple activité |
+| Session Portal | Absolu 7 jours, inactivité 72 h | L’activité ne prolonge pas le maximum absolu |
+| Session Game | Absolu 8 h, inactivité 2 h | L’activité ne prolonge pas le maximum absolu ; GameAccess peut expirer plus tôt |
 | Validité d’un accès Game confirmé | Au plus 8 h depuis sa confirmation Portal | Borne des droits périmés si une révocation ne peut plus être livrée |
-| Renouvellement Game | Nouveau handoff avec Portal actif et droits confirmés | Aucun refresh autonome illimité pendant panne Portal |
+| Renouvellement | Portal disponible et nouvelle confirmation/handoff valide | Aucun renouvellement autonome illimité par Game |
 
 Une session expire au plus tôt de ses propres limites et de `GameAccess.valid_until`.
-Le renouvellement d’accès ne prolonge aucune ancienne session ; à epoch inchangé il la laisse
-valide jusqu’à ses propres limites et autorise un nouveau handoff.
-Portal calcule une échéance absolue dans le message, que Game borne à la politique acceptée ;
-un message ancien livré tard ne donne jamais huit heures supplémentaires à compter de sa réception.
+La validité des droits n’est jamais glissante sur l’activité Game et ne repart pas à zéro au
+début d’une panne. Un message ancien livré tard ne donne jamais huit heures supplémentaires à
+compter de sa réception ; l’ancrage est la confirmation par Portal. Le protocole proposé transmet
+une échéance absolue que Game doit borner à cette confirmation, mais son format et sa validation
+restent ouverts sous Q44/Q53. Aucune prolongation d’ancienne session ne résulte d’une activité.
 Une nouvelle session créée juste avant l’expiration d’accès ne gagne pas huit heures de droits.
+
+Expression des limites validées (dates serveur UTC ; aucune implémentation ici) :
+
+```text
+portal_deadline = min(portal_created_at + 7 jours, portal_last_activity_at + 72 heures)
+access_valid_until <= portal_confirmed_at + 8 heures
+game_deadline = min(game_created_at + 8 heures, game_last_activity_at + 2 heures,
+                    access_valid_until)
+```
+
+À l’échéance, une nouvelle commande est refusée. Une révocation/suspension reçue peut refuser
+l’accès avant ces dates ; elle n’attend jamais l’expiration des huit heures. Les délais ne
+garantissent donc pas huit heures d’accès indépendamment des autres limites.
+La définition de `last_activity_at` reste un **arbitrage produit/sécurité nécessaire** sous Q41/Q43 :
+le polling, les tâches d’arrière-plan et les sondes doivent-ils compter ? Aucune réponse n’est
+déduite des durées validées. Le protocole exact de renouvellement reste à décider sous Q44.
+
+Exemples déduits des limites acceptées, **illustrations contractuelles sans tests exécutés** :
+
+| Situation (UTC) | Résultat exigé |
+| --- | --- |
+| Droits confirmés à 08:00, message reçu à 10:00 | valid_until au plus 16:00, jamais 18:00 |
+| Panne Portal à 15:00 pour ces droits | Limite toujours 16:00, jamais 23:00 |
+| Activité Game à 15:59 | N’étend ni valid_until, ni la limite absolue de session |
+| Session créée à 15:00, droits valides jusqu’à 16:00 | Nouvelles commandes refusées dès 16:00, même si la session absolue permettrait d’aller à 23:00 |
+| Suspension reçue avant 16:00 | Application immédiate ; le solde de validité ne permet pas de continuer |
+
+Proposition technique conservée : à epoch inchangé, un renouvellement d’accès ne modifie pas les
+échéances propres des sessions existantes et permet un nouveau handoff. L’epoch et les opérations
+correspondantes ne sont pas acceptés par la validation de la fenêtre de huit heures.
 
 Secrets de session proposés : aléatoires cryptographiques de 256 bits, seule leur empreinte en DB.
 Cookies distincts Portal/Game, host-only, `Secure`, `HttpOnly`, `Path=/`, préfixe `__Host-`,
@@ -190,34 +245,41 @@ L’échange de ticket a sa politique particulière : Origin Portal exact, état
 pré-auth Game lié. Un déploiement réellement cross-site exige une nouvelle recette cookies/handoff ;
 il n’est pas couvert par cette proposition. Une attaque XSS reste un risque malgré HttpOnly.
 
-| Situation | Comportement proposé |
+| Situation | Comportement et statut |
 | --- | --- |
-| Portal arrêté, Game/DB disponibles | Worker et gameplay des sessions encore valides continuent, sans appel Portal |
-| Session ou validité d’accès échue pendant panne Portal | Nouvelle commande refusée ; état du monde continue de progresser |
-| Révocation livrée | Game applique une nouvelle révision, invalide les sessions et refuse les nouveaux effets après commit |
-| Révocation non livrable | Ancien droit utilisable jusqu’à son échéance locale, au maximum 8 h depuis confirmation ; aucune révocation instantanée promise |
-| Logout Game | Révocation de la session locale concernée, sans arrêter le monde ou les autres univers |
-| Logout global | Révocation des sessions Portal, propagation d’invalidation vers Game avec accusés ; UI distingue terminé et en attente |
-| Game DB indisponible | Refus des accès/sessions et commandes ; aucun fallback cache permissif |
+| Portal arrêté, Game/DB disponibles | **Validé** : worker et sessions encore valides continuent dans leurs limites, sans appel Portal par commande |
+| Session ou validité d’accès échue pendant panne Portal | **Validé** : nouvelle commande refusée ; univers et workers continuent de progresser |
+| Révocation/suspension reçue | **Validé** : application immédiate, sans attendre l’échéance ; révision/epoch et sérialisation proposés en sections 2–3 |
+| Révocation non livrable | **Validé** : ancien droit utilisable jusqu’à son échéance locale, au maximum 8 h depuis confirmation, sans redémarrage de fenêtre lors de la panne |
+| Logout Game | **Proposé Q45** : révocation de la session locale concernée, sans arrêter le monde ou les autres univers |
+| Logout global | **Proposé Q45** : révocation des sessions Portal, propagation d’invalidation vers Game avec accusés ; UI distingue terminé et en attente |
+| Game DB indisponible | **Proposé** : refus des accès/sessions et commandes ; aucun fallback cache permissif |
 
-Logout global conserve les memberships, mais invalide les anciennes sessions et tickets via une
+La proposition de logout global conserve les memberships, mais invalide les anciennes sessions et tickets via une
 nouvelle révision et un nouvel epoch de chaque accès. Une reconnexion peut ouvrir une nouvelle session si les droits
 restent actifs. Pour tous les accès déjà connus de Game, une confirmation en vol avant le logout
 ne peut produire une validité au-delà de sa propre échéance absolue. La borne choisie s’applique
 aux sessions échappant temporairement à la propagation. Suspension de compte utilise la même
 livraison durable, avec suspension des accès, pas une simple suppression du cookie navigateur.
 
-**Arbitrage principal :** accepter une fenêtre de droits périmés bornée à huit heures pour conserver
-l’autonomie, ou réduire cette durée au prix d’une dépendance plus fréquente à Portal. L’isolation
-ne peut garantir simultanément autonomie illimitée et révocation distante instantanée.
+**Arbitrage clos sur la fenêtre :** l’utilisateur accepte le maximum de huit heures depuis la
+dernière confirmation Portal, y compris le risque de révocation non livrable pendant cette fenêtre.
+Cela ne clôt ni Q54 (protocole/propagation), ni Q52 (cycle de membership), ni Q45 (logout).
 
 ## 6. Compte et protections à cadrer avant 5C
 
-Proposition initiale Q40 : email/mot de passe avec hash Argon2id via bibliothèque maintenue,
-vérification email avant premier handoff, récupération à jeton court et usage unique. Alternative :
-fournisseur OIDC, qui évite de porter le stockage du mot de passe mais ajoute une dépendance externe.
-La sélection du login, de la bibliothèque, des paramètres, des durées de récupération et du
-fournisseur email n’est pas faite ; aucune inscription publique avant ce cadrage.
+**Validé Q40 :** MVP email/mot de passe, hash Argon2id via bibliothèque maintenue,
+vérification de l’adresse email obligatoire avant le premier handoff vers Game, récupération
+de compte par jeton court à usage unique. `global_user_id` est indépendant de l’email et de la
+méthode d’authentification : changer d’email ou ajouter une méthode ne crée pas une autre identité.
+Google/OIDC pourra être ajouté ultérieurement comme méthode supplémentaire du même compte,
+sans être requis pour le MVP et sans remplacer cette identité globale.
+
+Restent ouverts : bibliothèque et paramètres Argon2id, durée exacte et politique de récupération
+(réémission, invalidation et effets sur sessions), règles de changement d’email et d’association
+d’une méthode supplémentaire. Aucun mécanisme OIDC n’est ajouté à 5C par anticipation.
+Le fournisseur email et ses paramètres restent Q49 ; MFA et sa récupération restent Q48 ;
+les protections anti-abus et leurs seuils restent Q50. Aucune inscription publique livrée ici.
 
 Q48 : cadrer MFA et récupération avant exposition distante ; proposer son implémentation dans un
 lot explicite selon le mode d’exposition, sans prétendre qu’elle est livrée par 5C. Q50 : limites
@@ -258,6 +320,9 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 | Liaison navigateur | Ticket d’un attaquant injecté dans un autre navigateur refusé ; changement d’identité non silencieux | 5C/5D |
 | Interface interne | Appel public, certificat invalide, service hors scope et header forgé refusés | 5C |
 | Livraison | Timeout après commit, doublons, messages désordonnés et même révision contradictoire sans double effet | 5C |
+| Compte MVP | Email non vérifié refusé au premier handoff, récupération courte consommée une seule fois, identité globale indépendante des méthodes | 5C |
+| Limites validées | Portal : refus à 7 j ou 72 h d’inactivité ; Game : refus à 8 h, 2 h d’inactivité ou échéance d’accès antérieure ; ticket refusé à 60 s | 5C/5D |
+| Panne et dates | Confirmation retardée, panne commencée tard et activité Game ne déplacent pas valid_until ; suspension reçue avant échéance appliquée immédiatement | 5C/5D |
 | Session autonome | Portal coupé : lecture/mutation Game valide et échéance métier progressent ; aucun appel Accounts | 5D |
 | Renouvellement et multi-parties | Renouvellement sans déconnexion des sessions encore valides ; deux onglets d’univers différents sans écrasement de cookie | 5C/5D |
 | Révocation dégradée | Droit expiré refusé, grant retardé non prolongé, réactivation ne restaure pas les sessions | 5C/5D |
@@ -268,23 +333,27 @@ les limites de l’hôte/réseau commun. Aucun chiffre de charge ou garantie ant
 
 ## 9. Arbitrages et passage au lot suivant
 
-| Questions | Proposition ou travail restant | Condition de sortie |
+| Questions | État après arbitrage du 2026-10-29 | Travail restant |
 | --- | --- | --- |
-| Q40 | Email/mot de passe vs OIDC, récupération | Choix utilisateur puis contrat détaillé avant compte |
-| Q41 | Session Portal opaque et limites 7 j/24 h | Durées et stockage acceptés |
-| Q42/Q56 | Ticket signé, 60 s, liaison navigateur, clés locales | Format/algorithme/rotation et recette validés avant handoff |
-| Q43/Q44/Q54 | Session 8 h/2 h, validité de droits au plus 8 h, nouveau handoff | Fenêtre de révocation en panne explicitement acceptée |
+| Q40 | **Parties closes** : login MVP, Argon2id, email vérifié avant handoff, récupération courte/unique et identité indépendante | Bibliothèque/paramètres et protocole de récupération ; email Q49, MFA Q48 restent ouverts |
+| Q41 | **Partie close** : 7 j absolus / 72 h d’inactivité | Activité, stockage/cookies et rotation |
+| Q42 | **Parties closes** : 60 s et usage unique | Format, protection contre rejeu, audience, liaison navigateur et consommation |
+| Q43 | **Parties closes** : 8 h absolues / 2 h d’inactivité et limite anticipée par GameAccess | Activité, stockage, rotation et nombre de sessions |
+| Q44 | **Parties closes** : validité non glissante 8 h depuis confirmation, panne sans reset, refus à échéance, renouvellement via Portal et nouvelle confirmation/handoff | Protocole de renouvellement, concurrence et mécanismes de révocation |
 | Q45 | Logout local et propagation globale distincts | UX et limites de confirmation validées |
 | Q46 | mTLS interne recommandé, alternative credential TLS | Topologie et authentification opérables choisies |
 | Q47 | Deux origines même site, cookies host-only, CSRF | Hôtes local/production et parcours testables définis |
 | Q48/Q49/Q50 | MFA, email, anti-abus | Périmètre et contrôles minimaux avant exposition décidés |
 | Q51/Q52 | Accès local versionné et bindings explicites | Permissions, transitions et règles de réactivation acceptées |
 | Q53 | Intention Portal, application Game, outbox et révisions | Propriétaires, retry/réconciliation/rétention acceptés |
+| Q54 | Fenêtre de 8 h actée sous Q44 ; **question toujours ouverte** | Transport/propagation de révocation et application concurrente à contractualiser |
 | Q55 | Préserver les règles privées/persistantes ouvertes | Aucun join public ajouté avant règles du mode |
+| Q56 | Ticket signé et clés locales toujours proposés ; **question ouverte** | Format/algorithme/rotation et recette de validation autonome |
 
-La préparation de 5B est revue sur cette proposition ; 5B n’est pas déclarée achevée par sa seule
-rédaction. Les choix acceptés devront être transcrits avec provenance dans les canoniques/Qxx
-et une ADR dédiée si nécessaire. Les bibliothèques et paramètres cryptographiques se choisissent
+5B progresse avec les décisions ci-dessus, sans être déclarée achevée. Le prochain arbitrage
+nécessaire porte sur l’activité qui réinitialise les délais d’inactivité (Q41/Q43) ; la préparation
+s’arrête avant de choisir cette politique. Les autres propositions restent révisables, sans
+fermeture de Q46–Q56. Les bibliothèques et paramètres cryptographiques se choisissent
 avant l’implémentation dépendante, sans solution de démonstration permissive en attendant.
 5C reste un lot séparé, à autoriser après les arbitrages nécessaires ; 5D dépend du contrat de
 session/autorisation et des preuves de résilience. Les systèmes de modes et de gameplay futurs
