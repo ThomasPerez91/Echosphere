@@ -12,8 +12,8 @@ est affiné/superseded. Les détails produit ouverts restent dans [Qxx](../05-pr
 | [0004 — Persistance](0004-world-persistence.md) | Décision technique implémentée, portée historique 1–2 |
 | [0005 — Streams et temps](0005-colony-time-engine.md) | Décision technique implémentée/corrigée #3, generic EventStream |
 | [0006 — Instance Universe](0006-universe-game-instance.md) | Décision validée ; scope implémenté, modes/memberships futurs, identité précisée en 0008 |
-| [0007 — Colony et ruleset](0007-colony-economy.md) | Implémenté sur #5 ouverte, balance provisoire et Q39 ouverte ; non renuméroté |
-| [0008 — Portal/Game isolables](0008-control-plane-game-data-plane.md) | Décision validée le 2026-10-28, **cible non implémentée**, mécanismes Q40–Q56 ouverts |
+| [0007 — Colony et ruleset](0007-colony-economy.md) | Implémenté et intégré par #5, balance provisoire et Q39 ouverte ; non renuméroté |
+| [0008 — Portal/Game isolables](0008-control-plane-game-data-plane.md) | Décision validée le 2026-10-28, **cible non implémentée** ; contrats 5B validés le 29/10, détails délégués et reports Q48/Q49/Q55 explicites |
 
 Dates de transcription des ADR 0001–0008 : 2026-10-28 ; cela ne prétend pas dater exactement chaque
 conversation d’origine. [Index des décisions](../06-handoff/decision-status.md) et

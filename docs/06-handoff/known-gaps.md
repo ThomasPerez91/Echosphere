@@ -2,6 +2,14 @@
 
 **Statut : questions/limites explicites au 2026-10-28.** Ce document n’invente pas les réponses.
 
+Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progress](../../progress.md).
+[Contrats 5B](../03-technical/identity-contracts.md) validés et consolidés après arbitrage du bloc
+complet corrigé ; lot documentaire terminé pour revue finale de PR #6, sans implémentation.
+[Q40–Q56](../05-project/open-questions.md) séparent clôtures, détails techniques délégués et reports.
+Restent ouverts : procédures support renforcé joueur/privilégié Q48 (aucun déblocage sans procédure
+approuvée), fournisseur et configuration production Q49, politiques des modes futurs Q55/Q19–Q29.
+Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B identifié ; aucun début de 5C.
+
 ## Accès incomplet aux sources
 
 - Pas d’accès direct à toutes les conversations Space Game ou à un export intégral du projet.
@@ -27,7 +35,7 @@
 | Toutes planètes supposées 12/2 | Aucun invariant global : référence initiale v0.1 seulement ; initialiseur actuel limité à cette référence |
 | Niveaux I–V limitatifs | **Superseded** par niveaux continus ; chiffres après 5 toujours provisoires |
 | develop comme référence permanente, master pour releases | **Superseded** depuis #3 ; master intégration stable, pas de develop permanente |
-| Auth entièrement non cadrée | Architecture globale désormais validée ; mécanismes concrets restent ouverts en Q16/Q40–Q56 |
+| Auth entièrement non cadrée | Architecture et contrats 5B validés ; réalisation future, délégation et reports au registre Q40–Q56 |
 | Cascade d’annulation implicitement validée produit | Code présent ; proposition produit à confirmer sous Q01, distincte des 100/80 % demandés |
 
 Les descriptions historiques de PR fusionnées ne sont pas réécrites pour simuler leur état actuel.
@@ -45,13 +53,42 @@ Les tests de concurrence/idempotence ne prouvent pas la sécurité d’une API d
 
 Q01–Q39 conservées : protection offline et nouveau joueur, économie/entretien/balance, taille des
 planètes, recherche, génération, colonisation, fog, flottes, combat, IA, victoire, modes, late join,
-modules de défense et remboursement saturé. Les Q40–Q56 cadrent les mécanismes Portal/Game sans
-choisir login, cookies, ticket, sessions, révocation, rôles, MFA, email, anti-bot ou crypto.
+modules de défense et remboursement saturé. Leurs statuts antérieurs sont préservés.
+Contrats identité et sécurité 5B clos dans leur périmètre ; cookies protégés/sessions opaques,
+ticket signé local, mTLS, livraison/révocation idempotente et règles MFA validés. Détails techniques
+à préciser et tester dans les lots dépendants. Reports Q48/Q49/Q55 indiqués ci-dessus, sans fausse
+clôture de leurs procédures/fournisseur/règles futures.
 
-L’autonomie d’une GameSession et la révocation d’un accès devront être conciliées : aucune promesse
-de révocation instantanée/refresh illimité pendant panne Portal. Un déploiement partagé ne prouve
-pas l’isolation CPU/RAM/DB/réseau. Les protections Portal ne dispensent pas Game de se protéger.
+Limites d’application à vérifier en 5C/5D : rattachement d’un profil navigateur entre deux origines,
+comptage concurrent des caps configurables, révocations ciblées contre tickets en vol et messages
+retardés, preuve step-up par action, effets MFA sans global indu sur ajout de facteur/régénération volontaire des secours protégés,
+CORS refusé par défaut et recette de clés en panne Portal. Aucun mécanisme n’existe encore.
+Les contrats d’autonomie et révocation sont conciliés par la borne non glissante de huit heures,
+pas par une promesse de révocation distante instantanée ou de refresh illimité. Un déploiement partagé
+ne prouve pas l’isolation CPU/RAM/DB/réseau. Les protections Portal ne dispensent pas Game des siennes.
 
 Pas de recette réelle Windows 11/WSL2/Docker Desktop attestée dans cette passation. Pas de test
 lecteur d’écran/tactile, Safari/Firefox, charge massive ou simulation économique de plusieurs années.
 Les commandes de reprise sont une procédure, pas la preuve de leur exécution à domicile.
+
+## Constats de la reprise locale du 2026-10-29
+
+La mention précédente décrit la passation du 28/10 : depuis, Compose/Alembic/smoke, 101 tests backend,
+11 frontend et 5 Chromium ont été exécutés localement sous WSL2, avec les limites détaillées dans
+progress. Cela n’atteste toujours pas les parcours graphiques Windows ou une intégration Portal/Game.
+
+Deux adaptations de la procédure de tests Docker ont été nécessaires : le montage des seuls tests
+backend ne conserve pas le chemin relatif vers game_data utilisé par un test d’intégration ;
+monter l’arborescence complète en lecture seule résout ce cas. L’image frontend Alpine n’a pas apt-get
+pour les dépendances Playwright ; les E2E ont réussi dans un conteneur Debian jetable.
+Ces constats ne justifient aucune modification de code ou d’image dans le lot 5B documentaire.
+
+`npm audit` signale 3 dépendances de développement affectées : @vitest/mocker (modérée), tinypool
+et vitest (critiques selon le rapport npm, vitest héritant aussi de ses dépendances).
+Avis retournés : [GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9),
+[GHSA-qxg6-89mg-rqv8](https://github.com/advisories/GHSA-qxg6-89mg-rqv8),
+[GHSA-5gmw-xhrv-c9v3](https://github.com/advisories/GHSA-5gmw-xhrv-c9v3),
+[GHSA-85c8-ppgw-ccpr](https://github.com/advisories/GHSA-85c8-ppgw-ccpr).
+Exposition effective et trajectoire de mise à jour à examiner dans un lot de maintenance explicite ;
+aucun exploit démontré ici, aucun npm audit fix ni changement de lockfile effectué.
+Un avertissement de dépréciation Starlette/httpx est également remonté sans échec des tests.

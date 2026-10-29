@@ -43,7 +43,9 @@ minuterie fictifs. Défense indique un système futur sans bouton de constructio
 
 Landing publique → inscription/connexion → espace compte/lobby → liste des parties → créer/rejoindre
 → sélectionner Universe → Game UI. Un même compte peut revenir à sa liste et choisir une autre partie.
-Le parcours ne suppose pas un empire unique global ; choix des rôles/empire partagé restent Q21/Q51.
+Le parcours ne suppose pas un empire unique global ; empire partagé et rôles futurs restent Q21 ; fondation des permissions validée sous Q51.
 Les sessions Game autonomes et handoff relèvent de [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
 Pas de nouveau menu implémenté ici : sept domaines Game conservés, Défense reste dans Colony.
-Les UX de login, ticket expiré, logout et panne Portal attendent Q40–Q56, sans fausse route cliquable.
+Les contrats login, ticket expiré, logout et panne Portal sont validés dans
+[identity-contracts](../03-technical/identity-contracts.md). Écrans et recette restent futurs en 5C/5D,
+sans fausse route cliquable ; états terminés/en attente fidèles aux acquittements réels.

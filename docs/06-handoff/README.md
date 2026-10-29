@@ -16,11 +16,21 @@ consigné. Cette passation n’est pas un export complet des conversations du pr
 
 ## Ce qui est et n’est pas livré
 
-**Implémenté sur la branche de PR #5** : fondations, scheduler, shell, domaine Colony v0.1 interne.
-Au début de cette mission, master reste à l’étape 4 et PR #5 est ouverte ; vérifier GitHub réel
-avant d’agir. **Décisions validées, futures** : compte global, multi-parties, Portal/Game isolables,
+**Implémenté et intégré sur master par PR #5** : fondations, scheduler, shell, domaine Colony v0.1 interne.
+Fusion vérifiée le 2026-10-29 : master 8214e0b, CI verte. L’ancien checkpoint de passation
+décrivait #5 ouverte ; il reste historique. Vérifier GitHub réel avant d’agir.
+**Décisions validées, futures** : compte global, multi-parties, Portal/Game isolables,
 Accounts DB/Game DB séparées, interface interne contrôlée et GameSession autonome après handoff.
 **Non implémenté** : Portal/auth/lobby, API gameplay et systèmes futurs du MVP.
+
+5B autorisé puis consolidé le 2026-10-29 sur work/step-5b-identity-contracts :
+[contrats validés](../03-technical/identity-contracts.md), **non implémentés**, PR #6 non fusionnée.
+Lot documentaire terminé pour revue finale, sans début de 5C. Le
+[registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
+délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
+ajout de facteur/régénération volontaire des secours avec step-up existant ; plafonds 10/10 configurables et sans effet sur
+memberships ; APIs même origine et CORS credentials refusé par défaut. La recette locale, les checks
+documentaires et les CI réellement observées restent distingués dans [progress](../../progress.md).
 
 Ce dossier indexe les références canoniques ; il ne remplace ni game_data, ni les ADR, ni le registre
 Qxx. Les informations de provenance sont limitées à ce qui a réellement été accessible. Aucun

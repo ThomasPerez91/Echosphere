@@ -14,7 +14,7 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 3 | Moteur temporel | Production différée, événements persistants et reprise | Horloge injectée, idempotence, concurrence et rattrapage vérifiés |
 | 4 | Design system responsive | Navigation et composants des vrais écrans | Parcours mobile/clavier et états réseau validés |
 | 5A | Colony domain / economy / construction | Domaine interne, game_data v0.1, niveaux continus, stockage et file | Réservation, annulation, scheduler, concurrence et migrations validés sans API publique |
-| 5B | Identity architecture / Portal-Game contracts | Contrats identité, membership, ticket, GameSession, interface interne et isolation | Q16 partiellement cadrée, Q40–Q56 traitées selon dépendances ; aucune API gameplay sans contrat |
+| 5B | Identity architecture / Portal-Game contracts | Contrats validés, registre séparant clôtures/délégation/reports | Documentaire terminé pour revue finale PR #6 ; pas d’implémentation auth, CI publiée à vérifier |
 | 5C | Portal Account/Lobby foundation | Fondation minimale compte/lobby selon cadrage 5B | Comptes globaux et accès aux parties sécurisés ; pas de Portal complet/multijoueur anticipé |
 | 5D | Secure Colony API + interactive Colony UI | APIs protégées appelant les services 5A et UI réelle | Session/autorisation/fog/idempotence contrôlés et résilience Portal/Game testée |
 | 6 | Research | Recherche globale et programmation suivante | Prérequis et application unique à échéance |
@@ -35,8 +35,20 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 Statut exact dans [progress.md](../../progress.md). master est l'intégration stable ; nouvelles
 branches work/... depuis master et PR vers master, CI/revue puis merge sur autorisation. Tags et
 releases identifiées plus tard. develop n'est plus une étape permanente ou obligatoire.
-Étapes 0–4 intégrées sur master ; develop supprimée. Étape 5A sur
-work/step-5a-colony-domain, PR #5 vers master sans fusion. Passation documentaire sur la même PR ; 5B cadre identité et contrats Portal/Game avant 5C puis 5D.
+Étapes 0–4, 5A et passation intégrées sur master : PR #5 fusionnée le 2026-10-28, merge 8214e0b.
+Reprise locale vérifiée le 2026-10-29, puis lot 5B sur work/step-5b-identity-contracts :
+[contrats](../03-technical/identity-contracts.md) validés et consolidés après validation utilisateur du
+bloc complet corrigé. **5B documentaire terminé pour revue finale de PR #6**, sans fusion.
+[Q40–Q56](open-questions.md) distinguent contrats clos, détails techniques délégués aux lots dépendants
+et reports explicites : support renforcé Q48, fournisseur/configuration production Q49, modes Q55.
+Ces reports ne bloquent pas la clôture du cadrage ; ils bloquent leur fonctionnalité ou déploiement
+concerné tant qu’ils ne sont pas satisfaits. Aucun compte, session, Portal, MFA ou API Colony livré.
+
+Prochaine action : revue finale de PR #6 et CI propre à sa tête publiée ; merge uniquement sur
+instruction. 5C n’a pas commencé et nécessite un lot distinct autorisé après intégration de 5B.
+5C devra cadrer son incrément minimal et ses dépendances compte/MFA, sans interpréter la délégation
+technique comme une autorisation de développer un Portal complet. 5D porte les API/UI Colony et les
+preuves de résilience Game ; aucun accès interactif permissif entre les lots.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).
 

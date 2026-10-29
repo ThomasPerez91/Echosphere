@@ -1,6 +1,6 @@
 # Contexte stable — Echosphere
 
-**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-28.
+**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-29.
 Vérifier GitHub réel puis lire AGENTS → context → progress → [passation](docs/06-handoff/README.md).
 
 ## Produit validé, état distinct
@@ -16,7 +16,11 @@ Universe = frontière d’instance, ni User ni processus ; late join et protecti
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
 éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
 
-## Implémentation — checkpoint du 28/10/2026, pas partie jouable
+## Implémentation — 5A intégrée, pas partie jouable
+
+PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
+8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
+et suites 101 backend/11 frontend/5 Chromium effectuées ; périmètre et limites dans progress.
 
 Checkpoint du 28/10/2026 : 5A et la passation sont portées par PR #5, alors ouverte.
 Vérifier GitHub : après fusion de #5, considérer 5A/passation comme intégrées à master ; l’état
@@ -44,10 +48,37 @@ Deux backends indépendants et isolables, chacun monolithe modulaire : Portal Ac
 avec Accounts DB, Game gameplay existant avec Game DB. Bases/pools/CPU/RAM/scaling/réseau séparables.
 Portal n’écrit jamais en SQL Game DB ; provision/grant/revoke/join via interface interne contrôlée,
 authentifiée et idempotente. Pas de credentials de compte en Game DB.
-Ticket court/unique puis GameSession autonome, commandes client directement à Game sans appel
-Portal par commande. Panne Portal peut empêcher nouvelles entrées, pas arrêter univers/workers ou
-sessions établies dans le contrat à définir. Mécanismes/durées/révocation restent Q40–Q56, Q16 partielle.
-Ceci affine le backend unique historique ; aucun Portal, protocole ou Compose nouveau dans ce lot.
+Ticket signé asymétriquement court/unique (60 s), pré-auth navigateur 5 min puis GameSession opaque
+autonome ; client gameplay directement à Game sans appel Portal par commande. Interface privée mTLS,
+outbox Portal, état d’accès Game versionné et application idempotente. Portal possède l’intention,
+Game les droits effectifs. Aucun credential Accounts en Game DB.
+
+**5B validé et consolidé le 2026-10-29, non implémenté** :
+[contrats canoniques](docs/03-technical/identity-contracts.md),
+[statuts Q40–Q56](docs/05-project/open-questions.md).
+Email/mot de passe Argon2id MVP, identité indépendante, vérification email avant handoff ; récupération
+30 min/unique, changement d’email 1 h avec preuves liées, révocation globale après reset/changement
+sensible selon contrat. MFA TOTP/WebAuthn facultative joueurs ; WebAuthn obligatoire privilégiés,
+deux authentificateurs avant privilèges production. Step-up par action 5 min/unique ; dix secours
+≥128 bits, récupération limitée 15 min sans Game/admin ; perte totale bloquée sans procédure approuvée.
+
+Portal : 7 j absolus/72 h inactif ; Game : 8 h absolues/2 h inactif, au plus valid_until. Seules les
+interactions explicites classées serveur comptent, trafic automatique et timestamp client exclus.
+Droits Game : maximum 8 h depuis confirmation Portal, sans glissement ni reset en panne ; révocation
+reçue immédiate, refus à échéance, univers/workers et actions acceptées continuant. Renouvellement
+avec Portal disponible et nouvelle confirmation/handoff. Retour lobby sans logout ; portées de logout
+session Game, appareil ou compte entier distinctes, révocation distante persistée/rejouée et UI fidèle.
+
+Corrections finales : ajout de facteur ou régénération volontaire de secours avec step-up existant
+sans révocation globale imposée, toujours audités/notifiés ; autres effets MFA selon tableau canonique.
+Appareil = profil navigateur ; plafonds initiaux 10 appareils/compte et 10 univers Game actifs/appareil
+configurables, jamais limites de memberships. Chaque frontend utilise son API même origine ; CORS
+credentials refusé par défaut, exception uniquement sur besoin explicite et allowlist minimale.
+
+Détails techniques délégués aux lots dépendants, sans nouveau questionnaire par paramètre. Restent
+différés : procédure support joueur/privilégié Q48 (blocage sans procédure), fournisseur et configuration
+production Q49, règles des modes Q55/Q19–Q29 et partage Empire Q21. Aucun arbitrage supplémentaire
+nécessaire à 5B identifié. Architecture cadrée ne signifie pas sécurité implémentée/testée.
 [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), [architecture](docs/03-technical/architecture.md).
 
 ## Workflow et prochain travail
@@ -60,6 +91,12 @@ code métier, migration, game_data, dépendance, Docker ou test modifié. Si #5 
 que la mission porte dessus, reprendre cette branche. Après sa fusion, synchroniser master et
 partir sur une nouvelle branche work/... pour tout nouveau lot autorisé, sans recréer la branche #5.
 progress porte le checkpoint et les actions de reprise avant/après fusion.
-Après revue/intégration et nouveau lot autorisé : 5B contrats identité/Portal-Game, 5C fondation
-compte/lobby selon cadrage, 5D API Colony sécurisée/UI réelle. Ne pas commencer Portal complet ou
-multijoueur automatiquement. [Roadmap](docs/05-project/roadmap.md), [Q01–Q56](docs/05-project/open-questions.md).
+Le 2026-10-29, l’utilisateur autorise le prochain lot : préparation 5B sur
+work/step-5b-identity-contracts depuis master synchronisée, PR #6 brouillon non fusionnée.
+Les [contrats](docs/03-technical/identity-contracts.md) sont validés et consolidés : 5B documentaire
+terminé, PR #6 destinée à la revue finale avant toute fusion explicitement autorisée. Consulter
+progress et GitHub pour la tête publiée et sa CI réelle. Aucun compte/Portal/API livré.
+Prochaine action : revue finale de PR #6 ; après intégration et autorisation d’un lot distinct,
+5C fondation compte/lobby selon les contrats, puis 5D API Colony sécurisée/UI réelle. Aucun début de
+5C, Portal complet ou multijoueur implicite. [Roadmap](docs/05-project/roadmap.md),
+[Q01–Q56](docs/05-project/open-questions.md).

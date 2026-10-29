@@ -16,9 +16,10 @@ Les erreurs de readiness sont génériques ; les conteneurs applicatifs utilisen
 
 ## Avant un accès distant
 
-Définir auth et politique de session, contrôle d'accès objet, TLS, protections CSRF selon le mode
-d'authentification, limites de requêtes, stockage des secrets, sauvegardes et restauration.
-CORS restreint si des origins distincts sont nécessaires ; le proxy local évite ce besoin au bootstrap.
+Implémenter et tester les [contrats 5B](identity-contracts.md) : identité/session, contrôles objet,
+TLS/CSRF, limites et stockage des secrets ; compléter sauvegardes/restauration avant production.
+Chaque frontend appelle son API même origine. CORS credentials refusé par défaut ; aucune origine
+cross-origin sans besoin explicite et allowlist minimale.
 La publication du serveur Vite sur internet n'est pas un déploiement supporté.
 
 ## Revue continue
@@ -56,24 +57,53 @@ propriété avant consultation puis sous le lock et dédupliquent les clés. Ces
 ne sont pas un substitut à une session HTTP. La future API 5D vérifiera identité/membership/permissions avant
 appel des mêmes services humains/IA/headless. Pas de faux user global ou bypass de Q16.
 
-## Portal/Game — décisions validées, protections futures non implémentées
+## Portal/Game — contrats 5B validés, protections futures non implémentées
 
-[ADR 0008](../adr/0008-control-plane-game-data-plane.md) : compte global multi-parties, deux backends
-isolables et deux bases distinctes/séparables. Portal gère credentials et sessions de compte ; Game
-ne possède que l’identité minimale et les autorisations de partie nécessaires, jamais les credentials.
-Aucun accès SQL direct Portal→Game DB ; interface Game interne authentifiée et idempotente.
-Les requêtes gameplay passent directement à Game avec sa session propre après ticket court/unique.
-La validation Game doit rester locale au plan Game, sans contacter Portal/Auth à chaque commande.
+[Canonique identité](identity-contracts.md) et [ADR 0008](../adr/0008-control-plane-game-data-plane.md) :
+Accounts DB/Portal et Game DB/Game isolables. Aucun credential Accounts en Game DB, aucun SQL direct
+Portal→Game. Interface interne privée mTLS avec autorisation ; outbox, effets idempotents et révisions
+pour livraisons, renouvellements et révocations. Game contrôle localement ses droits sans appel Portal
+par commande. Les choix ne valent ni implémentation ni preuve de sécurité production.
 
-Portal est exposé aux bots/brute force/scraping/spam/DDoS applicatif ; protections futures possibles :
-CDN/WAF, rate limiting IP/compte, anti-bot/challenge/CAPTCHA si nécessaire, email verification et
-Redis temporaire. Aucun outil/protocole/fournisseur n’est choisi ou installé ici. Redis/WAF ne sont
-jamais source de vérité gameplay. Game protège aussi son ingress, objets, univers et fog.
-Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver ; ne pas promettre une protection DDoS par le seul
-fait d’avoir deux applications sur une machine partagée.
+Contrats clos pour 5B selon le [registre Q40–Q56](../05-project/open-questions.md) :
 
-Q16 est **partiellement cadrée** ; login/cookies/CSRF/MFA/email/anti-bot, ticket/GameSession,
-refresh/revocation/logout, authentification S2S, rôles/suspension/synchronisation et politiques
-privées/persistantes restent Q40–Q56. Pas de JWT/OAuth/mTLS sélectionné par cette documentation.
-Autonomie d’une session pendant panne Portal ne signifie pas ignorer toute révocation indéfiniment :
-contrat et comportement dégradé à décider et tester avant API interactive. Aucun compte fictif global.
+- Email/mot de passe Argon2id, 15–128 caractères, refus des mots de passe courants/compromis sans
+  transmission brute ; vérification initiale 24 h/unique avant tout handoff.
+- Portal 7 j absolus/72 h inactif ; Game 8 h absolues/2 h inactif ; activité explicite classée
+  serveur seulement. Accès Game au plus 8 h depuis confirmation Portal, jamais glissant ni relancé
+  par panne ; reçu révoqué immédiatement, expiré refusé ; workers et univers continuent.
+- Ticket signé asymétriquement 60 s/unique, pré-auth navigateur 5 min, consommation atomique ;
+  clés prédistribuées, clé inconnue refusée localement, aucun secret URL/log/localStorage.
+- Sessions opaques serveur, cookies Secure/HttpOnly/host-only, rotation à transition auth ; APIs
+  même origine, CSRF, CORS credentials refusé par défaut ; exceptions explicites minimales seulement.
+- Appareil = profil navigateur ; caps initiaux configurables 10 appareils/compte et 10 univers
+  Game actifs/appareil ; jamais plafonds de memberships. Une GameSession compte/appareil/univers.
+- Logout Game seul, compte sur appareil ou compte entier distincts ; révocations persistées/rejouées
+  jusqu’à acquittement, UI en attente fidèle, aucune fenêtre de huit heures redémarrée.
+- Reset 30 min/unique/dernier lien, changement volontaire du mot de passe et changement d’email
+  réussi : révocation globale et connexion normale sans auto-login ; notifications sans credential.
+  Email pending, demande unique 1 h et preuves non mélangeables ; liens invalidés entre flux selon
+  canonique. Mot de passe seul ne contourne ni ancienne adresse inaccessible ni MFA.
+- MFA facultative joueurs ; TOTP actif unique/cinq WebAuthn nommables ; WebAuthn privilégié requis,
+  deux authentificateurs avant privilèges production. Step-up par action 5 min/unique lié session et
+  paramètres ; catalogue inclut logout tous appareils, déconnexion ordinaire possible sans step-up.
+- Révocation globale après activation/désactivation MFA, réduction/remplacement de protection ou
+  récupération/reset MFA. **Aucune révocation globale imposée** après ajout d’authentificateur ou
+  régénération volontaire de secours avec step-up via facteur déjà enregistré ; audit/notification.
+- Dix secours ≥128 bits, uniques/affichés à génération seulement, stockage non réversible ;
+  récupération 15 min sans Game/admin, facteur rétabli puis connexion normale et nouveaux secours.
+  Perte totale bloquée sans procédure renforcée approuvée, jamais email/mot de passe seuls.
+- Anti-abus compte/IP/opération, ralentissement progressif et quotas email/inscription, réponses
+  non énumérables ; aucun verrouillage permanent provoqué par tiers, CAPTCHA tiers non obligatoire.
+- Audit sécurité 90 jours avec accès restreint, aucun secret ; protection anti-rejeu conservée
+  séparément. Secrets TOTP chiffrés avec clés séparées, WebAuthn sans secret privé côté serveur.
+
+Détails techniques délégués : bibliothèques/paramètres mesurés, schémas, crypto, RP, verrous, retry,
+rotation et tests. Fournisseur email/domaines/configuration avant production ; procédures support
+joueur/privilégié différées, comptes bloqués sans procédure ; règles privées/persistantes dans leurs
+lots. Aucun bypass ou service payant introduit par cette délégation.
+
+Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver. Deux applications sur le même hôte ne prouvent
+pas la résistance à une saturation réseau ou DDoS. Aucun WAF/Redis installé ou utilisé comme autorité
+gameplay. Les scénarios de refus, concurrence, reprise et panne sont des obligations de 5C/5D,
+non des tests déjà exécutés. 5B documentaire terminé pour revue finale ; aucun début de 5C.

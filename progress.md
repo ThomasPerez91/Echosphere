@@ -1,8 +1,378 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-10-28. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
-## Dernier lot — passation documentaire Work / Codex
+## Lot courant — 5B : contrats identité / Portal-Game consolidés
+
+**Statut : 5B documentaire terminé, prêt pour revue finale de PR #6 sous réserve de la CI publiée.**
+Contrats validés et non implémentés ; aucun début de 5C et aucun merge autorisé.
+
+### Consolidation finale du bloc 5B — 2026-10-29
+
+Objectif : intégrer la validation utilisateur de l’ensemble des quatorze points, avec trois corrections,
+puis revue de cohérence de toute PR #6. Provenance : arbitrage utilisateur explicite, synthétisé dans
+le canonique sans conversation brute. Environnement Codex local/WSL2, aucune délégation à des agents.
+
+Reprise vérifiée : branche work/step-5b-identity-contracts propre et synchronisée depuis
+10499b6f60f241a5fecc2cfd56c19ff7da548708 ; master/origin master inchangées sur
+8214e0bd30a00bf0336264a428e6975d307350ba. PR #6 OPEN/brouillon vers master, non fusionnée ;
+CI de départ push 40920709168 et PR 40920717330 completed/success sur 10499b6, trois jobs verts.
+Fetch initial refusé par sandbox (.git en lecture seule), puis réussi avec autorisation ; aucun défaut
+Git/WSL2 démontré. Aucun travail concurrent ni divergence distante détecté.
+
+Résultat : canonique identity-contracts réécrit pour séparer décisions closes, détails techniques
+explicitement délégués et reports. Registre Q40–Q56 consolidé sans renumérotation ni fermeture des
+questions gameplay Q01–Q39 ; Q16 actualisée uniquement pour le cadrage identité/autorisation couvert.
+Corrections prioritaires : pas de global systématique pour ajout MFA/régénération volontaire des
+secours avec step-up existant ; caps 10 appareils/10 univers actifs configurables sans limite de
+memberships ; APIs même origine et CORS credentials refusé par défaut, exceptions explicites minimales.
+MFA/step-up/secours, compte/email, appareil, handoff/clés, S2S, synchronisation/révocation, permissions,
+anti-abus et audit désormais cadrés. Aucun arbitrage produit supplémentaire inventé.
+
+Décisions fermées dans le périmètre 5B : Q40–Q47, Q50–Q54 et Q56. Q48 : contrat MVP clos mais procédures
+support renforcé joueur/privilégié différées, aucun déblocage sans approbation. Q49 : flux clos mais
+fournisseur/domaines/configuration de production différés. Q55 : règles des modes futurs explicitement
+différées ; Q19–Q29/Q21 préservées. Détails techniques délégués à 5C/5D avant code dépendant ; aucun
+nouveau questionnaire par bibliothèque/paramètre, aucun bypass ou service payant implicite.
+
+Fichiers : 22 Markdown de consolidation : identity-contracts, registre Qxx, ADR 0008/index, sécurité,
+API, modèle, architecture, roadmap/backlog, UX, DoD, index docs/décisions/provenance, README/AGENTS/
+context/progress et passation/lacunes. Revue de PR entière
+contre master, pas seulement du dernier diff. Anciennes mentions ouvertes/proposées remplacées
+pour décisions validées ; checkpoints historiques ci-dessous conservés et identifiés comme tels.
+Aucun code métier, test, migration, game_data, dépendance ou Compose modifié par cette consolidation.
+Le script check_docs.py déjà changé au début de PR #6 reste limité à son document requis ajouté.
+
+Validation locale exécutée : `python3 scripts/check_docs.py` réussi (64 fichiers, chemins requis et
+liens locaux), `git diff --check` sans erreur. Vérification ponctuelle du registre : Q01–Q56 exactement
+une fois ; lignes Q01–Q39 identiques à la tête de reprise sauf cadrage Q16 ; toutes Q40–Q56 séparent
+clôture/délégation/report. Consolidation Markdown seulement ; PR complète = 22 Markdown + unique ajout
+REQUIRED identity-contracts de check_docs.py. Diff complet contre master relu, confidentialité et
+renvois/statuts obsolètes contrôlés ; aucune revue ou discussion inline existante sur GitHub.
+Après commit/push, relire SHA distant et observer sa propre CI ; résultats exacts à consigner dans
+la description de PR #6 après exécution, sans nouvelle boucle de commits de checkpoint.
+Aucun test fonctionnel Portal/MFA/GameSession exécuté,
+ces mécanismes étant absents. Suites fonctionnelles locales et Docker non relancés pour le diff
+documentaire ; les résultats de reprise antérieure restent historiques et distincts.
+
+Prochaine action : revue finale de PR #6 ; fusion uniquement sur instruction. 5C n’a pas commencé.
+Après intégration et lot distinct autorisé : cadrer l’incrément compte/lobby 5C, appliquer les détails
+techniques délégués et prérequis de son périmètre ; 5D pour l’accès Colony interactif et résilience.
+
+## Historique des checkpoints 5B — superseded pour les statuts ouverts
+
+Les sections suivantes conservent l’état et les preuves à leur date. Les formulations « prochain
+arbitrage », « proposition » ou « question ouverte » décrivent ces checkpoints, pas le contrat final
+ci-dessus. Les décisions actuelles et reports font foi dans identity-contracts et le registre Qxx.
+
+### Facteurs et récupération MFA Q48 — 2026-10-29
+
+Source : arbitrage explicite utilisateur pour PR #6. Non implémenté : TOTP/WebAuthn MVP, joueur
+choisit l’un ou les deux ; un seul secret TOTP actif, remplacement sans accumulation ; jusqu’à
+5 credentials WebAuthn nommables. Privilèges plateforme : WebAuthn obligatoire et preuve WebAuthn
+sur opérations sensibles, TOTP complémentaire seulement ; prévoir deux WebAuthn en production.
+Secours : autre facteur enregistré et codes uniques, générés à activation, régénération invalidant
+anciens ; robustes, vérification sans secret exploitable stocké en clair, jamais journalisés.
+Perte totale : support renforcé à définir, aucun bypass email/mot de passe. Secours privilégié :
+état de récupération sans droits admin, WebAuthn réenregistré + procédure privilégiée requis.
+Changements audités et step-up via facteur disponible, identité/gameplay conservés. Q48 reste
+partiellement ouverte : crypto/RP, stockage TOTP, format/nombre des codes, support final, effets
+sur sessions et step-up détaillé. Aucune autre Q fermée ni mécanisme implémenté.
+
+Reprise : fetch, work/step-5b-identity-contracts propre/synchronisée sur
+830f3e41e04daa2a8723707bd9f79555438b1c1f ; PR #6 OPEN/brouillon, master 8214e0b inchangée.
+CI de cette tête vérifiée : push 40918608285 et PR 40918613929, backend/frontend/compose-smoke verts.
+Fichiers : contrats, Qxx, context/progress, sécurité, roadmap, décisions, références API/ADR/index/
+passation/lacunes. Critères futurs : limites en concurrence, secours uniques/régénération, refus
+privilégié et audit. Aucun comportement futur testé. Checks locaux : docs/liens, diff, Markdown,
+Q01–Q56 uniques et seule ligne Q48 modifiée. Suites backend/frontend/Compose et Ruff non relancées
+localement ; observer nouvelle CI après publication et consigner résultats dans PR.
+Prochain arbitrage : effets des changements/récupérations MFA sur sessions et fraîcheur/portée
+step-up ; support final reste à spécifier sans bypass. Aucun merge ni démarrage de 5C.
+
+### Périmètre MFA Q48 — 2026-10-29 (checkpoint antérieur aux facteurs)
+
+Source : arbitrage explicite utilisateur pour PR #6. Q48 partiellement close, non implémentée :
+MFA facultative joueurs MVP via paramètres, exigence normale après activation ; obligatoire avant
+fonctions privilégiées plateforme/admin/opération, sans exemption interne ni assimilation aux
+rôles Empire. Step-up des comptes équipés avant email, désactivation/remplacement MFA et moyens de
+récupération ; logout tous appareils seulement éventuel. Sans MFA, Q40/Q49 inchangées. Identité,
+memberships/empires/univers/gameplay conservés. Facteur/nombre, secrets, récupération/codes,
+remplacement/réinitialisation et mécanismes précis step-up restent ouverts, aucune autre Q fermée.
+
+Reprise : fetch, branche work/step-5b-identity-contracts propre/synchronisée sur
+ce6353a8a4870103bd6d0f7fc696279c364b5d12 ; PR #6 OPEN/brouillon, master 8214e0b inchangée.
+CI de cette tête vérifiée : push 40917882587 et PR 40917891299, backend/frontend/compose-smoke verts.
+Fichiers : contrats, Qxx, context/progress, sécurité, roadmap, décisions et références
+API/ADR 0008/index/passation/lacunes. Critères futurs complétés pour périmètre MFA, refus privilégié
+et step-up ; aucun comportement futur exécuté/testé. Checks locaux : docs/liens, diff, périmètre
+Markdown et Q01–Q56 uniques, seule ligne Q48 modifiée. Suites backend/frontend/Compose et Ruff
+non relancées localement pour ce diff documentaire ; observer CI du nouveau commit après push,
+résultats consignés dans PR. Prochain arbitrage à ce checkpoint : facteurs/récupération,
+depuis partiellement validés ci-dessus.
+Aucune implémentation, console admin ou MFA anticipée, aucun merge PR #6 ni passage à 5C.
+
+### Complément email : échéance, remplacement et sessions — 2026-10-29 (checkpoint antérieur à Q48)
+
+Source : arbitrage explicite utilisateur Q40/Q49 pour PR #6. Non implémenté : demande active unique
+par compte, maximum 1 h depuis création, échéance commune aux deux confirmations sans glissement.
+Nouvelle demande invalide ancienne/liens/confirmations ; deux nouvelles preuves requises sans mélange.
+Succès après toutes validations : adresse active, global_user_id et gameplay conservés ; toutes
+sessions Portal/Game révoquées, courante incluse, tous appareils/univers ; connexion normale avec
+nouvelle adresse. Notifications aux deux adresses sans credential/token sensible. Game injoignable :
+intention persistée/rejouée jusqu’à acquittement, aucune instantanéité prétendue ni reset des 8 h.
+Q40/Q49 partiellement ouvertes, mécanismes/fournisseur non choisis ; Q48/Q50/Q53/Q54 non fermées.
+
+Reprise : fetch, work/step-5b-identity-contracts propre/synchronisée sur
+a4cb854307cb022bfd907f59ea57c8709cca4835 ; PR #6 OPEN/brouillon, master 8214e0b inchangée.
+CI de cette tête observée verte : push 40897245953 et PR 40897261938, backend/frontend/compose-smoke.
+Fichiers : contrats, Qxx, context/progress, sécurité, roadmap, décisions et références
+API/ADR 0008/index/passation/lacunes. Critères futurs complétés pour échéance commune, remplacement,
+non-mélange/concurrence, révocation globale/courante et panne sans extension ; aucun test de ces
+mécanismes futurs exécuté. Checks locaux : docs/liens, diff, périmètre Markdown et Q01–Q56 uniques ;
+seules lignes Q40/Q49 modifiées. Suites backend/frontend/Compose et Ruff non relancées localement.
+Vérifier la CI propre du nouveau commit après publication ; résultats consignés dans PR après observation.
+Prochain arbitrage à ce checkpoint : périmètre Q48, désormais partiellement validé ci-dessus ;
+facteur et récupération restent ouverts.
+Aucun merge de PR #6, implémentation ou démarrage de 5C.
+
+### Changement d’email Q40/Q49 — 2026-10-29 (checkpoint avant complément)
+
+Source : arbitrage explicite utilisateur pour PR #6, synthèse unique des deux réponses identiques.
+Non implémenté : session Portal valide, mot de passe actuel ressaisi, confirmations ancienne et
+nouvelle adresses ; nouvelle pending jusqu’aux deux confirmations et validation effective. Succès :
+notifications aux deux adresses, nouvelle authentification, global_user_id et états de jeu conservés.
+Ancienne adresse inaccessible : blocage sans récupération indépendante déjà établie et disponible,
+pas de bypass mot de passe seul. Variante MFA conditionnelle à Q48 validée/implémentée, politique
+exacte ouverte ; aucun MFA/code de secours/support inventé. Durées/cycle des confirmations et
+portée exacte d’invalidation des sessions toujours ouvertes ; aucune autre Qxx fermée par implication.
+
+Reprise : fetch, branche work/step-5b-identity-contracts propre/synchronisée sur
+38a2b6ac4f79fb66dc165a843c95c8761eb83b17, PR #6 OPEN/brouillon, master 8214e0b inchangée.
+CI de cette tête vérifiée : push 40896112238 et PR 40896122379, backend/frontend/compose-smoke verts.
+Fichiers : contrats, Qxx, context/progress, sécurité, roadmap, index des décisions et références
+API/ADR 0008/index/passation/lacunes. Critères futurs : pas de bascule avec une seule confirmation,
+refus sans preuve indépendante, notifications/réauthentification et identité conservée.
+Checks locaux : documentation/liens, diff, Q01–Q56 uniques, seules lignes Q40/Q49 modifiées ;
+Markdown uniquement. Aucune suite backend/frontend/Compose ou Ruff relancée localement ; aucun
+comportement futur testé. Après publication vérifier SHA et CI propres, résultats consignés dans PR.
+Prochain arbitrage à ce checkpoint : durées/cycle et sessions, désormais validés dans le complément
+ci-dessus ; Q48 reste ouverte. Aucun merge de PR #6, démarrage de 5C ou implémentation.
+
+### Récupération Q40/Q49 — 2026-10-29 (checkpoint antérieur au changement d’email)
+
+Source : arbitrage explicite utilisateur pour PR #6, synthétisé sans transcript. Décision validée,
+non implémentée : jeton 30 min maximum depuis émission, unique, expiration serveur ; réémission
+invalide tous les anciens liens. Reset réussi : invalidation de toutes les PortalSessions et jetons
+de récupération, demande de révocation de toutes les GameSessions tous appareils/univers ; nouvelle
+connexion normale sans auto-login, notification email sans mot de passe. Réponse de demande non
+énumérable ; memberships/empires/états conservés. Si Game injoignable, révocation persistée/rejouée
+jusqu’à acquittement, aucune instantanéité promise, valid_until/8 h jamais relancés au reset.
+Seules ces parties Q40/Q49 sont closes ; Q48/Q50/Q53/Q54 restent ouvertes.
+
+Reprise vérifiée : fetch, arbre propre, branche work/step-5b-identity-contracts synchronisée sur
+cbf088c5c22974ce0c548fe4faeb2e1b9eec5533 ; PR #6 OPEN/brouillon, master 8214e0b inchangée.
+CI de cette tête observée verte : push 40892359042 et PR 40892370513, backend/frontend/compose-smoke.
+Fichiers : contrats, Qxx, context/progress, sécurité, roadmap, index des décisions et références
+passation/index/API/ADR 0008. Critères futurs ajoutés : frontière 30 min, réémission/consommation
+concurrentes, reset global et panne sans extension. Aucun mécanisme futur testé ou implémenté.
+Checks locaux : documentation/liens, diff et périmètre Markdown, Q01–Q56 sans trou/doublon et seules
+lignes Q40/Q49 modifiées. Suites fonctionnelles backend/frontend/Compose et Ruff non relancées
+localement pour ce diff documentaire. Relire SHA distant/CI de la nouvelle tête après push ;
+les résultats du commit précédent ne valent pas ceux du nouveau. Résultats publiés dans PR après observation.
+Prochain arbitrage à ce checkpoint : changement d’email, depuis partiellement validé ci-dessus ;
+durées/cycle et portée des sessions restent ouverts, puis MFA Q48. Aucun merge ni démarrage de 5C.
+
+### Déconnexions Q45 — 2026-10-29 (checkpoint antérieur à la récupération)
+
+Source : validation explicite utilisateur pour PR #6. Comportement produit Q45 clos, non implémenté :
+retour lobby sans logout ; déconnexion Game d’une seule session ; compte sur appareil courant
+(PortalSession courante + toutes ses GameSessions du compte) ; tous appareils comme action distincte.
+Autres appareils préservés lors du logout normal ; memberships/empires/états/progression/actions
+acceptées conservés. Révocation globale persistée/rejouée jusqu’à acquittement, état UI en attente
+si service injoignable, borne valid_until/8 h inchangée. Aucune autre Qxx close par implication.
+Regroupement appareil sous Q41/Q43 ; protocoles sous Q53/Q54 et tickets en vol sous Q42/Q56 ouverts.
+Un epoch d’accès commun ne peut implémenter le logout d’un seul appareil : limite explicitée,
+sans adopter un nouveau modèle de stockage. Matrice d’acceptation future complétée, aucun test
+fonctionnel de ces mécanismes exécuté.
+
+Reprise : fetch, branche work/step-5b-identity-contracts propre et synchronisée sur d879f7e5002d91342f08819ff2bad69ee83ad7d0 ;
+PR #6 OPEN/brouillon, base master 8214e0b inchangée. CI de cette tête observée verte :
+push 40879933579 et PR 40879939979, backend/frontend/compose-smoke réussis.
+Fichiers : contrats, registre Qxx, context/progress, sécurité, API/architecture, ADR 0008, roadmap,
+README/index/passation/décisions/lacunes. Résumés périmés corrigés ; Markdown uniquement.
+Checks locaux : check documentaire, diff, Q01–Q56 et comparaison des statuts ; seules les décisions
+Q45 changent, aucune autre fermeture. Suites fonctionnelles backend/frontend/Compose et Ruff
+non relancées localement pour ce diff documentaire ; CI de la nouvelle tête à observer après push.
+Prochain arbitrage à ce checkpoint : récupération Q40/Q49, depuis validée dans le complément
+ci-dessus ; changement d’email et MFA restent ouverts.
+Aucun merge de PR #6, passage à 5C ou implémentation ; résultats CI publiés dans la PR après observation.
+
+### Complément activité Q41/Q43 — 2026-10-29 (checkpoint antérieur à Q45)
+
+Source : arbitrage explicite utilisateur, synthétisé dans identity-contracts et Qxx. Seules les
+interactions explicites classées côté serveur réinitialisent l’inactivité ; toutes les catégories
+automatiques citées dans le contrat sont exclues. Heure serveur, aucun timestamp client autoritaire ;
+aucune modification des maxima absolus ou de valid_until. Q41/Q43 restent partiellement ouvertes,
+Q45–Q56 inchangées. Aucune implémentation ni fusion autorisée.
+
+Reprise : fetch effectué, arbre propre, tête locale/distante 5dbd9184509ca6323279365944dea9567207cd17,
+PR #6 OPEN/brouillon, base master 8214e0b inchangée. CI de cette tête vérifiée : push 40878132584
+et PR 40878144213, backend/frontend/compose-smoke réussis.
+Fichiers : identity-contracts, open-questions, context, progress, sécurité, roadmap et index des décisions.
+Scénarios futurs complétés : catégories automatiques sans effet, interactions explicites, timestamp
+client falsifié, échéance contrôlée avant réinitialisation et maxima inchangés. Aucun test de ces
+mécanismes futurs exécuté. Vérifications locales : check documentaire, diff et périmètre Markdown ;
+aucune suite fonctionnelle backend/frontend/Compose ni Ruff relancée pour ce complément documentaire.
+Après publication, relire SHA distant et CI effective de cette nouvelle tête ; les résultats de
+5dbd918 ci-dessus ne prouvent pas la CI du présent commit.
+Prochaine décision à ce checkpoint : Q45, depuis arbitrée dans le complément ci-dessus. 5C/5D restent hors de ce lot documentaire.
+
+### Arbitrages utilisateur intégrés — 2026-10-29, checkpoint antérieur à Q45
+
+Source : validation explicite utilisateur pour poursuivre PR #6, synthétisée dans le canonique
+identity-contracts.md et le registre Qxx, sans transcript brut. Aucune validation implicite
+du reste de la proposition et aucune autorisation de fusion.
+
+- Q40, parties closes : MVP email/mot de passe ; email vérifié avant premier handoff ; récupération
+  courte/unique ; Argon2id via bibliothèque maintenue ; global_user_id indépendant de l’email et de
+  la méthode. Google/OIDC supplémentaire futur facultatif. Bibliothèque/paramètres et récupération
+  détaillée restent ouverts ; fournisseur email et MFA dans leurs Q49/Q48 restent à arbitrer.
+- Q41, partie close : Portal 7 jours absolus et **72 heures** d’inactivité, remplaçant la proposition
+  initiale de 24 h. Activité sans prolongation du maximum absolu ; cookies/stockage/rotation ouverts.
+- Q42, parties closes : ticket de handoff 60 secondes et usage unique. Format, crypto, liaison
+  navigateur et mécanismes anti-rejeu toujours ouverts ; aucune durée de récupération déduite.
+- Q43, parties closes : Game 8 h absolues/2 h d’inactivité, GameAccess pouvant expirer plus tôt ;
+  absolu non prolongé par activité. Stockage et limites simultanées ouverts ; activité arbitrée dans le complément ci-dessus.
+- Q44, parties closes : droits au plus 8 h depuis dernière confirmation Portal, non glissants et
+  sans reset en panne ; révocation/suspension reçue immédiate ; nouvelles commandes refusées à
+  valid_until, univers/workers continuant. Renouvellement avec Portal disponible et nouvelle
+  confirmation/handoff valide ; aucune autonomie illimitée. Protocoles/synchronisation non choisis.
+
+Q40–Q44 restent partiellement ouvertes ; Q16/Q21/Q45–Q56 ne sont pas fermées. Les comptes,
+sessions et tickets ne sont toujours pas implémentés. La validation de la fenêtre ne vaut pas
+acceptation de mTLS, JWT, stockage opaque, cookies, epoch, outbox ou politique de logout.
+
+Poursuite documentaire : expressions des échéances et exemples de confirmation retardée/panne
+ajoutés, scénarios futurs de frontière et compte MVP précisés. Aucun test artificiel ou code ajouté.
+À ce checkpoint antérieur, l’activité Q41/Q43 restait à arbitrer ; le complément ci-dessus
+consigne désormais sa validation explicite.
+Les autres questions techniques restent listées pour la suite, pas repoussées implicitement à 5C.
+
+Fichiers de cette continuation : identity-contracts, open-questions, context/progress et références
+README/docs/index/architecture/API/sécurité/ADR 0008/roadmap/passation/known-gaps pour éviter des
+mentions périmées « durées/login encore proposés ». Diff Markdown uniquement, aucun changement de
+code, test, dépendance, migration, ruleset, Compose ou script.
+
+Vérification initiale de cette continuation : arbre propre, branche locale et distante à
+2d1efdabac4a5e6396b515f63fc02684869c8ac9 après fetch, PR #6 OPEN/draft sur la même tête vers
+master 8214e0b ; seule PR ouverte listée. CI de cette tête relue :
+[40873616329](https://github.com/ThomasPerez91/Echosphere/actions/runs/40873616329) et
+[40873623209](https://github.com/ThomasPerez91/Echosphere/actions/runs/40873623209), tous les jobs
+backend/frontend/compose-smoke réussis. Aucun merge, changement de branche ou travail concurrent.
+Checks de cette continuation exécutés : 64 documents/liens valides, git diff --check sans erreur,
+Q01–Q56 sans trou/doublon ; comparaison avec HEAD confirmant que seuls les libellés Q40–Q44
+changent dans les tableaux du registre et qu’ils restent explicitement partiellement clos.
+Relecture des limites/formules/exemples, de la séparation validé/proposé et du diff de confidentialité.
+Périmètre Markdown uniquement vérifié. Aucune suite backend/frontend/Compose ou Ruff relancée
+localement pour ce changement documentaire ; aucun nouveau mécanisme de session testé.
+Publication effectuée sur la même PR #6 brouillon, restée OPEN/non fusionnée :
+56e43a9bf5a9100e22ad3c4363095a45b0452db9, SHA distant relu ; master reste 8214e0b.
+CI de ces arbitrages : [push 40877809734](https://github.com/ThomasPerez91/Echosphere/actions/runs/40877809734)
+et [PR 40877818343](https://github.com/ThomasPerez91/Echosphere/actions/runs/40877818343),
+backend/frontend/compose-smoke tous réussis sur cette tête. Description de PR actualisée avec
+les décisions partielles et les mécanismes non validés. Ce checkpoint consigne ces résultats
+après leur observation ; vérifier également sa propre CI publiée. Aucune CI présentée comme
+preuve d’un mécanisme Portal/Game futur, aucun merge ni passage à 5C.
+
+### Base et périmètre initiaux (historique de préparation)
+
+GitHub relu : PR #5 MERGED, tête acde9d358bfe724be61198cd60fd1e72c6e38459, base master,
+merge 8214e0bd30a00bf0336264a428e6975d307350ba. Fetch effectué ; master locale propre et identique
+à origin/master. Aucune PR ouverte au contrôle, aucune develop. CI master
+[40765430216](https://github.com/ThomasPerez91/Echosphere/actions/runs/40765430216) completed/success
+sur ce merge, jobs backend/frontend/compose-smoke verts. Dernière livraison consignée : passation
+Work par #5 ; cette recette locale lui succède sans attribuer un nom non attesté à son auteur.
+
+Branche : work/step-5b-identity-contracts, créée depuis cette master sans empilement.
+Premier commit publié : e3d2f8ec1dcb647a147dc9d885be4f06f9f46802,
+[PR #6](https://github.com/ThomasPerez91/Echosphere/pull/6) brouillon OPEN vers master.
+Le présent checkpoint documentaire suit ce commit ; consulter aussi sa propre CI publiée.
+Aucune fusion, suppression de branche, release ou déploiement autorisé.
+
+Fichiers : nouveau docs/03-technical/identity-contracts.md ; références API/sécurité/modèle/architecture,
+index docs/ADR/décisions, README/passation, roadmap/questions/known-gaps, context/progress et liste
+des documents requis de scripts/check_docs.py. Aucun code métier, game_data, migration, dépendance,
+Compose, composant UI ou test fonctionnel modifié.
+
+### Préparation initiale et statut des propositions (avant les arbitrages ci-dessus)
+
+Contrats proposés : autorités Portal/Game, participation/accès local versionné/bindings d’Empire,
+interface interne idempotente avec révisions/outbox/réconciliation, handoff lié au navigateur,
+consommation atomique, session opaque et contrôles locaux, concurrence avec révocation, logout,
+rotation de clés, isolation et matrice de scénarios futurs. Alternatives et sources OWASP/RFC
+publiques consignées. À ce premier checkpoint, aucun protocole, algorithme, fournisseur ni durée
+nouveau n’était présenté comme accepté.
+Relecture : distinguer la révision de livraison de l’epoch d’invalidation des sessions pour qu’un
+renouvellement à droits inchangés ne déconnecte pas les sessions valides ; cookies par univers
+proposés pour les onglets multi-parties, limite de sessions/cleanup restant sous Q43.
+
+Arbitrage principal alors proposé : validité locale des droits bornée à 8 h, session Game 8 h absolues/
+2 h d’inactivité, ticket 60 s ; autonomie en panne Portal jusqu’aux limites, révocation appliquée
+dès livraison mais non instantanée si liaison coupée. Ces valeurs étaient des propositions à revoir,
+depuis acceptées uniquement dans le périmètre décrit en tête. Q21 et les questions de modes restent ouvertes. 5C ne commence
+pas automatiquement après la rédaction ; recueillir les arbitrages nécessaires et leur provenance.
+
+### Recette de reprise locale réalisée avant création de la branche
+
+Cette recette appartient à la mission de reprise du 2026-10-29, sur master 8214e0b inchangée ;
+elle ne valide aucun mécanisme futur de 5B et n’a pas été relancée pour le diff documentaire.
+
+- `python3 scripts/check_docs.py` : 63 documents/liens valides.
+- `docker compose ps -a` : postgres/backend/frontend healthy, worker running, migrate Exited (0).
+- `docker compose exec backend alembic check` : aucune dérive ; current = 0004_colony_economy head.
+- `python3 scripts/smoke_compose.py` : succès, frontend/proxy/sondes et panne/reprise PostgreSQL.
+- Backend dans un conteneur Python 3.12 : premier passage 42 réussis/59 ignorés sans RUN_DB_TESTS.
+  Passage complet avec base dédiée echosphere_codex_20261029_test : initialement 100 réussis/1 échec
+  de chemin game_data, puis 101 réussis après montage de l’arborescence complète en lecture seule.
+  La base dédiée a été supprimée ensuite ; aucune suite de downgrade sur la base de jeu.
+  Ruff backend/scripts passe. Avertissement Starlette/httpx déprécié observé.
+- Frontend conteneur Node 22 : npm ci, lint, 11 tests et build réussis. Les empreintes des fichiers
+  App, test, CSS, ColonyView, scénario E2E et package-lock de l’image concordaient avec le dépôt.
+- Playwright : installation impossible dans Alpine (apt-get absent), puis 5 scénarios Chromium
+  réussis dans un conteneur Debian Node 22 jetable, copie de sources montées en lecture seule.
+  Largeurs 320/390/768/1440 et navigation clavier/retry. Aucun test navigateur Windows attesté.
+- Chargement du ruleset dans l’image worker : v0.1. Diff et état Git propres à la fin de la recette.
+
+Limites environnement : noyau 6.18.54.1-microsoft-standard-WSL2, Compose v5.6.1, Python hôte 3.14.4,
+pas de Node/npm hôte ni backend/.venv. Les tests ont utilisé les versions Docker prévues, sans
+installer les outils sur l’hôte. Les premiers accès fetch/socket Docker/localhost ont été refusés
+par le bac à sable puis ont réussi avec autorisation ; aucun défaut WSL2 démontré par ces refus.
+Pas de recette graphique Windows, tactile, lecteur d’écran, Safari/Firefox, charge massive ou
+résilience Portal/Game réel (inexistant). Pile Compose laissée démarrée, volume de jeu conservé.
+
+`npm audit --json` : 3 dépendances affectées (1 modérée, 2 critiques) dans la chaîne de développement
+Vitest/@vitest/mocker/tinypool. Aucun correctif automatique effectué. Voir known-gaps pour les avis.
+
+### Validation du premier checkpoint documentaire (historique)
+
+Checks du diff 5B exécutés : 64 documents/liens valides, git diff --check sans erreur,
+Q01–Q56 présentes exactement une fois dans les tableaux du registre ; périmètre Markdown et
+liste REQUIRED de check_docs.py vérifié. Ruff de scripts/check_docs.py passe dans le conteneur
+Python 3.12 avec dépendances de développement figées. Relecture du nouveau contrat, de ses statuts,
+de ses liens et du diff de confidentialité effectuée. Aucune suite fonctionnelle relancée pour
+ces changements documentaires ; les scénarios 5B sont des critères futurs non exécutés.
+Branche publiée, SHA distant e3d2f8e relu, PR #6 brouillon créée et non fusionnée.
+[CI push 40873175483](https://github.com/ThomasPerez91/Echosphere/actions/runs/40873175483)
+completed/success sur e3d2f8e, jobs backend/frontend/compose-smoke verts. Ces résultats ne prouvent
+aucune implémentation des contrats futurs. Le présent checkpoint et les précisions de relecture
+suivent cette tête ; leur CI propre reste à relire après publication, sans la présumer réussie.
+Prochaine action à ce checkpoint : revue et arbitrage, désormais partiellement effectués comme
+consigné en tête ; pas d’implémentation Portal/API Colony sur la seule présence du document.
+
+---
+
+## Lot précédent — passation documentaire Work / Codex (historique)
 
 **Périmètre : documents uniquement**, plus liste des documents requis dans scripts/check_docs.py.
 Aucun service, gameplay, migration/SQL, game_data, dépendance, Compose/Docker ou test fonctionnel changé.

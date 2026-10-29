@@ -19,6 +19,16 @@ qu’aucun document n’existe ailleurs. Les textes joints visibles sont des ins
 automatique du projet. Aucun résultat de recherche sans rapport avec Echosphere n’est transféré.
 Les sources privées sont résumées sans URL privée, identifiant de conversation ou transcript brut.
 
+## Complément de provenance 5B — 2026-10-29
+
+Arbitrages utilisateur explicites dans la session de travail de PR #6 : contrats successifs puis
+validation du bloc complet en quatorze points avec corrections MFA, plafonds configurables et CORS.
+Synthèse canonique dans [identity-contracts](../03-technical/identity-contracts.md), statuts détaillés
+au registre Q40–Q56. Le bloc validé donne aussi délégation des détails techniques et reports explicites ;
+aucune validation déduite de la seule proposition de l’assistant. Aucun transcript brut ajouté.
+État réel de PR #6, SHA/CI observés et checks locaux dans progress et la description de PR.
+Les sources S1–S5 ci-dessus restent le relevé historique de passation du 28/10.
+
 ## Références canoniques par zone
 
 | Zone | Référence à modifier en premier | Statut / provenance |
@@ -33,7 +43,7 @@ Les sources privées sont résumées sans URL privée, identifiant de conversati
 | Défense et renseignement | [Défense planétaire](../01-game-design/planetary-defense.md), [fog](../01-game-design/fog-of-war.md), [combat](../01-game-design/combat.md) | Orientation validée, systèmes futurs ; brief 5A/S1, PR #5 |
 | Relations/diplomatie/commerce | [IA produit](../01-game-design/artificial-intelligence.md), [backlog](../05-project/backlog.md), [Q18](../05-project/open-questions.md) | Relations minimales futures ; avancé post-MVP, mécanismes ouverts |
 | Architecture actuelle et temps | [Architecture](../03-technical/architecture.md), [temps](../03-technical/event-engine.md), [ADR 0001–0007](../adr/README.md) | Implémenté selon code et PR #1–5 ; provenance initiale de certains choix seulement GitHub |
-| Portal/Game, comptes et sessions | [ADR 0008](../adr/0008-control-plane-game-data-plane.md), [sécurité](../03-technical/security.md), [modèle](../03-technical/data-model.md), [API](../03-technical/api.md) | Décision validée, cible non implémentée ; explicitement S1, corroboration partielle S5 |
+| Portal/Game, comptes et sessions | [Contrats 5B](../03-technical/identity-contracts.md), [ADR 0008](../adr/0008-control-plane-game-data-plane.md), [sécurité](../03-technical/security.md), [modèle](../03-technical/data-model.md), [API](../03-technical/api.md) | Décision validée, cible non implémentée ; S1/S5 puis arbitrages explicites 5B du 29/10 |
 | UX | [Architecture de l’information](../02-ux-ui/information-architecture.md), [design system](../02-ux-ui/design-system.md), [mobile](../02-ux-ui/mobile.md) | Shell implémenté #4/#5 ; choix visuels encore proposés, parcours Portal futur S1 |
 | Questions, séquence et vérification | [Questions](../05-project/open-questions.md), [roadmap](../05-project/roadmap.md), [tests](../04-quality/testing-strategy.md) | Registres canoniques ; S1 et GitHub |
 | Passation et checkpoint | [AGENTS](../../AGENTS.md), [context](../../context.md), [progress](../../progress.md), [procédure](work-codex-handoff.md) | Procédure commune ; S1, état réel S3/S4 |
