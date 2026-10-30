@@ -9,7 +9,7 @@ propriété, univers et visibilité avant tout effet.
 
 ## Protections locales conservées depuis l’étape 0
 
-Pas de gestion d'utilisateurs, paiement ou administration. Ports frontend/backend liés à 127.0.0.1,
+À l’étape 0, pas de gestion d’utilisateurs ; C02/C03 ajoutent comptes/sessions Portal. Paiement et administration absents. Ports frontend/backend liés à 127.0.0.1,
 aucun port PostgreSQL publié. L'exemple .env contient seulement des valeurs publiques de développement ;
 .env est ignoré. Ne pas réutiliser ces valeurs en production. Aucun secret dans un `VITE_*`.
 Les erreurs de readiness sont génériques ; les conteneurs applicatifs utilisent un utilisateur non-root.
@@ -39,7 +39,7 @@ une autorisation. Les primitives génériques de stream exigent universe_id et v
 les adaptateurs internes de colonie ne sont pas des routes HTTP et n'authentifient pas un joueur.
 
 Account/User ↔ UniverseMembership ↔ éventuellement Empire ↔ rôle/permissions reste conceptuel ;
-aucun compte, membership ou owner_user_id n'est ajouté maintenant. controller_type human/ai n'est
+C02 crée le compte uniquement en Accounts DB ; aucun membership ou owner_user_id Game. controller_type human/ai n'est
 pas un droit d'accès. Règles gameplay futures par instance/ruleset ; aucune présence de navigateur
 nécessaire à la progression. Notifications/WebSockets futurs restent des projections, jamais autorité.
 [Modes](../01-game-design/game-modes.md) · [ADR 0006](../adr/0006-universe-game-instance.md).
@@ -106,4 +106,56 @@ lots. Aucun bypass ou service payant introduit par cette délégation.
 Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver. Deux applications sur le même hôte ne prouvent
 pas la résistance à une saturation réseau ou DDoS. Aucun WAF/Redis installé ou utilisé comme autorité
 gameplay. Les scénarios de refus, concurrence, reprise et panne sont des obligations de 5C/5D,
-non des tests déjà exécutés. 5B documentaire terminé pour revue finale ; aucun début de 5C.
+non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C06 sur PR #7.
+5C est le lot courant autorisé, sans début de 5D.
+
+## État livré en C01–C03 — PR #7
+
+[Socle Portal](portal-foundation.md) : base/configuration/pool/réseaux séparés et HTTPS local avec
+CA Docker, sans installation hôte. [C02](portal-registration.md) livre Argon2id, contrôle de
+mots de passe compromis par préfixe, preuves uniques 24 h, file email chiffrée, anti-abus transactionnel,
+Origin/JSON stricts et erreurs sans données d’entrée. [C03](portal-sessions.md) ajoute sessions opaques/cookies host-only protégés, CSRF,
+activité explicite serveur et déconnexion avec intention durable. MFA ajoutée par C05 ; mTLS privé ajouté par C06. CORS Portal refusé par défaut et sondes sans détails privés. Handoff/GameSession ajoutés par [C07](game-handoff.md) ; raffinements C08 et recette C09 restent nécessaires,
+pas des protections déjà livrées.
+
+## Extension C04 sur PR #7
+
+[Opérations sensibles sans MFA](portal-account-security.md) : step-up par action cinq minutes/unique,
+reset trente minutes, double confirmation email une heure et logout global. Migration Accounts p0003
+additive, notifications chiffrées et intentions de révocation Game pending. MFA/privilèges refusés
+sans preuve suffisante ; [C05](portal-mfa.md) fournit maintenant les facteurs et leur intégration.
+Aucune livraison Game ou API Colony ajoutée.
+
+## Extension C05 sur PR #7
+
+[MFA Portal](portal-mfa.md) : TOTP unique, cinq WebAuthn nommables, dix secours uniques et récupération
+limitée quinze minutes ; preuve par action cinq minutes, garde-fous privilégiés WebAuthn, aucune
+restauration support inventée. Migration Accounts p0004_mfa, clé TOTP séparée, cooldown progressif,
+audit et notifications. Ajout de facteur/régénération volontaire protégés conservent les sessions ;
+activation, réduction/remplacement/désactivation et récupération révoquent globalement. Intentions
+Game pending à ce checkpoint C05 ; [C06](portal-game-control.md) livre depuis leur transport et
+acquittement. Aucun secret Accounts ou SQL Portal dans Game, aucune API Colony.
+
+## Extension C06 sur PR #7
+
+[Lobby et contrôle privé](portal-game-control.md) : références/memberships/outbox Accounts p0005,
+droits/bindings/ledger/epochs Game 0005. Listener mTLS distinct de l’API publique, certificat client
+épinglé depuis TLS, aucune identité de header ; destinations configurées, pas de SQL Portal→Game.
+Snapshots complets/révisions monotones, retry d’opération stable sans nouvelle date, acquittement
+validé et réconciliation. Révocations compte/appareil diffusées à chaque cible configurée, sources
+acknowledged seulement après tous les acquittements. Sessions Game ajoutées par [C07](game-handoff.md), aucune API Colony.
+Lobby limité à son compte, pending/applied/expiration datés, aucun univers de démo ou join public ;
+GET sans activité ni renouvellement, refresh volontaire classé serveur. Recette réelle sur deux bases
+temporaires *_test et refus TLS/headers, séparée du Chromium à API interceptée ; résultats dans progress.
+
+
+## Complément C07 sur PR #7
+
+[Handoff et sessions Game](game-handoff.md) : ticket signé Ed25519 local, pré-auth navigateur,
+échange POST atomique et cookie par univers ; contexte minimal et logout, aucun endpoint Colony.
+Game additive 0006_game_sessions, Accounts p0005_control inchangée. Rotation/production et
+nettoyage à recetter en C09 ; commandes sécurisées réservées à 5D.
+
+
+Compléments actuels sur PR #7 : [C08 parcours et shell](portal-game-ui.md),
+[C09 recette et opérations](portal-operations.md). Aucun début de 5D ni exposition production.

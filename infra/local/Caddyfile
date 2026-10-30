@@ -1,0 +1,30 @@
+{
+    admin off
+    auto_https disable_redirects
+    skip_install_trust
+}
+
+https://portal.echosphere.localhost:8443 {
+    tls internal
+    handle_path /api/* {
+        reverse_proxy portal-backend:8000
+    }
+    handle {
+        reverse_proxy portal-frontend:5173
+    }
+}
+
+https://game.echosphere.localhost:8443 {
+    tls internal
+    handle_path /api/* {
+        reverse_proxy backend:8000
+    }
+    handle {
+        reverse_proxy frontend:5173
+    }
+}
+
+# Local email receiver UI only; SMTP stays on the internal portal_mail network.
+http://127.0.0.1:8025 {
+    reverse_proxy portal-mailpit:8025
+}

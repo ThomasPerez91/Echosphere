@@ -11,3 +11,9 @@ dist/
 coverage/
 *.tsbuildinfo
 *.egg-info/
+
+# Autorités/certificats locaux exportés et artefacts de tests Portal.
+.local/
+**/test-results/
+**/playwright-report/
+.vitest/

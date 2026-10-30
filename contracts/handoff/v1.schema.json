@@ -1,0 +1,85 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "access_epoch": {
+      "title": "Access Epoch",
+      "type": "integer"
+    },
+    "account_epoch": {
+      "title": "Account Epoch",
+      "type": "integer"
+    },
+    "aud": {
+      "title": "Aud",
+      "type": "string"
+    },
+    "device_epoch": {
+      "title": "Device Epoch",
+      "type": "integer"
+    },
+    "device_id": {
+      "format": "uuid",
+      "title": "Device Id",
+      "type": "string"
+    },
+    "exp": {
+      "title": "Exp",
+      "type": "integer"
+    },
+    "iat": {
+      "title": "Iat",
+      "type": "integer"
+    },
+    "iss": {
+      "title": "Iss",
+      "type": "string"
+    },
+    "jti": {
+      "format": "uuid",
+      "title": "Jti",
+      "type": "string"
+    },
+    "membership_id": {
+      "format": "uuid",
+      "title": "Membership Id",
+      "type": "string"
+    },
+    "pre_auth_id": {
+      "format": "uuid",
+      "title": "Pre Auth Id",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "sub": {
+      "format": "uuid",
+      "title": "Sub",
+      "type": "string"
+    },
+    "universe_id": {
+      "format": "uuid",
+      "title": "Universe Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "iss",
+    "aud",
+    "sub",
+    "jti",
+    "universe_id",
+    "membership_id",
+    "device_id",
+    "pre_auth_id",
+    "iat",
+    "exp",
+    "revision",
+    "access_epoch",
+    "account_epoch",
+    "device_epoch"
+  ],
+  "title": "Claims",
+  "type": "object"
+}

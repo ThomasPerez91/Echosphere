@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { GameAccess } from './components/GameAccess';
+import { useGameSession } from './hooks/useGameSession';
 import { ColonyView } from './components/ColonyView';
 import { Badge, Button, EmptyState, Panel } from './components/ui';
 import { useReadiness } from './hooks/useReadiness';
@@ -24,8 +26,14 @@ export default function App() {
   const moreButton = useRef<HTMLButtonElement>(null);
   const previousRoute = useRef(route);
   const { status, retry } = useReadiness();
-  const [destination, colonyView = 'overview'] = route.split('/');
-  const section = sections.find(item => item.id === destination && (item.id === 'colony' || !route.includes('/')));
+  const segments = route.split('/');
+  const universe = segments[0] === 'universe' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(segments[1] ?? '') ? segments[1] : null;
+  const localRoute = universe ? segments.slice(2).join('/') || 'empire' : route;
+  const access = useGameSession(universe);
+  const href = (section: string) => universe ? `#universe/${universe}/${section}` : `#${section}`;
+  const navigation = () => { if (universe && access.phase === 'active' && !access.busy) void access.refresh(); };
+  const [destination, colonyView = 'overview'] = localRoute.split('/');
+  const section = sections.find(item => item.id === destination && (item.id === 'colony' || !localRoute.includes('/')));
 
   useEffect(() => {
     const navigate = () => { setRoute(currentRoute()); setMoreOpen(false); };
@@ -47,19 +55,19 @@ export default function App() {
       event.preventDefault(); document.getElementById('main-content')?.focus();
     }}>Aller au contenu</a>
     <aside className="sidebar">
-      <a className="brand" href="#empire" aria-label="Echosphere — Empire"><span className="brand-symbol" aria-hidden="true">◈</span> Echosphere<span className="brand-dot">.</span></a>
+      <a className="brand" href={href('empire')} aria-label="Echosphere — Empire"><span className="brand-symbol" aria-hidden="true">◈</span> Echosphere<span className="brand-dot">.</span></a>
       <p className="sidebar-caption">CENTRE DE COMMANDEMENT</p>
       <nav aria-label="Navigation principale" className={moreOpen ? 'navigation is-expanded' : 'navigation'}
         onKeyDown={event => {
           if (event.key === 'Escape' && moreOpen) { setMoreOpen(false); moreButton.current?.focus(); }
         }}>
-        {sections.slice(0, 4).map(item => <a key={item.id} href={`#${item.id}`}
+        {sections.slice(0, 4).map(item => <a key={item.id} href={href(item.id)} onClick={navigation}
           className="nav-link"
           aria-current={destination === item.id ? 'page' : undefined}>
           <span className="nav-symbol" aria-hidden="true">{item.symbol}</span><span>{item.label}</span>
         </a>)}
         <div id="more-sections" className="more-sections">
-          {sections.slice(4).map(item => <a key={item.id} href={`#${item.id}`} className="nav-link secondary-link"
+          {sections.slice(4).map(item => <a key={item.id} href={href(item.id)} onClick={navigation} className="nav-link secondary-link"
             aria-current={destination === item.id ? 'page' : undefined}>
             <span className="nav-symbol" aria-hidden="true">{item.symbol}</span><span>{item.label}</span>
           </a>)}
@@ -73,7 +81,7 @@ export default function App() {
     </aside>
 
     <div className="workspace">
-      <header className="topbar"><div><span className="eyebrow">ESPACE DE JEU</span><p>Aucun univers sélectionné</p></div>
+      <header className="topbar"><div><span className="eyebrow">ESPACE DE JEU</span><p>{universe ? access.session?.universe_name ?? 'Vérification de la partie' : 'Aucun univers sélectionné'}</p></div>
         <div className={`network network--${status}`} role="status"><span className="status-dot" aria-hidden="true" />{statusText}</div>
       </header>
       <main id="main-content" tabIndex={-1}>
@@ -81,12 +89,13 @@ export default function App() {
           <h1 ref={heading} tabIndex={-1}>{section?.title ?? 'Page introuvable'}</h1>
           <p>{section?.description ?? 'Cette destination n’existe pas. Retrouvez les sections dans la navigation.'}</p>
         </div>
-        {!section ? <a className="button" href="#empire">Revenir à l’Empire</a> : destination === 'empire' ? <>
+        {universe && <GameAccess access={access} />}
+        {universe && access.phase !== 'active' ? null : !section ? <a className="button" href={href('empire')}>Revenir à l’Empire</a> : destination === 'empire' ? <>
           <section className="hero" aria-labelledby="hero-title">
             <div className="hero-copy"><Badge tone="accent">Les fondations sont en place</Badge>
               <h2 id="hero-title">Préparez la suite<br />de votre histoire.</h2>
               <p>L’interface prend forme. La création d’un univers et les premières actions de colonie arriveront aux prochaines étapes.</p>
-              <a className="button button--primary" href="#colony">Découvrir l’espace Colonie <span aria-hidden="true">↗</span></a>
+              <a className="button button--primary" href={href('colony')}>Découvrir l’espace Colonie <span aria-hidden="true">↗</span></a>
             </div><div className="orbital-art" aria-hidden="true"><div className="orbit" /><div className="planet" /><span className="orbital-caption">ECHOSPHERE / NOUVEL HORIZON</span></div>
           </section>
           <section className="resources" aria-label="Ressources de l’empire">
@@ -95,14 +104,14 @@ export default function App() {
               <div><h2>{name}</h2><p>Stocks non disponibles</p></div><span className="resource-value" aria-hidden="true">—</span>
             </div>)}
           </section>
-          <div className="overview-grid"><Panel title="Prochaines échéances"><EmptyState title="Aucune partie active">Les constructions et missions apparaîtront ici lorsqu’une partie pourra être créée.</EmptyState></Panel>
+          <div className="overview-grid"><Panel title="Prochaines échéances"><EmptyState title={universe ? "Aucune donnée de jeu disponible" : "Aucune partie active"}>Les constructions et missions apparaîtront ici lorsque leurs services seront disponibles.</EmptyState></Panel>
             <Panel title="État de la connexion" className="connection-panel"><Badge tone={status === 'connected' ? 'accent' : status === 'unavailable' ? 'warning' : 'neutral'}>{statusText}</Badge>
               <p>Cette vérification indique si les services sont joignables. Elle ne confirme pas qu’une partie est active.</p>
               <Button disabled={status === 'checking'} onClick={retry}>{status === 'checking' ? 'Vérification…' : 'Vérifier la connexion'}</Button>
             </Panel></div>
-        </> : destination === 'colony' ? <ColonyView view={colonyView} /> : <section className="panel destination-panel"><Badge>À venir</Badge>
+        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} /> : <section className="panel destination-panel"><Badge>À venir</Badge>
           <EmptyState title={`${section.label} : espace en préparation`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
-          <a className="text-link" href="#empire">← Retour à l’Empire</a>
+          <a className="text-link" href={href('empire')}>← Retour à l’Empire</a>
         </section>}
         <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>Interface en préparation · Aucun gameplay jouable</span></footer>
       </main>

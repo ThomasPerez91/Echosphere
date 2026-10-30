@@ -1,13 +1,14 @@
 # Architecture technique
 
 **Statuts : Game Backend implémenté jusqu’à 5A, intégré par PR #5 ; cible Portal/Game validée,
-non implémentée.** État d’intégration et CI dans [progress.md](../../progress.md).
+Portal C01–C08 implémenté sur PR #7, handoff/GameSession C07 livrés.** État d’intégration et CI dans [progress.md](../../progress.md).
 
 ## Réalité du dépôt
 
 React/TypeScript/Vite ; Game Backend Python/FastAPI, SQLAlchemy/Alembic ; PostgreSQL autoritaire.
-Le Compose actuel comprend frontend, backend, postgres, migrate et worker. API/worker sont deux
-processus du même monolithe gameplay, pas deux microservices. Aucun Portal ou Accounts DB présent.
+Le Compose conserve frontend, backend, postgres, migrate et worker Game ; C01 ajoute
+portal-postgres/migrate/backend/frontend et local-edge, sans modifier le volume Game. API/worker sont deux
+processus du même monolithe gameplay, pas deux microservices. Socle Portal C01 ajouté séparément sur PR #7 ; C02 ajoute comptes/vérification/email durable ; accès Game encore absent.
 Le frontend est un shell sans partie active, pas un lobby ni un client de gameplay interactif.
 
 | Zone actuelle | Responsabilité implémentée |
@@ -18,6 +19,9 @@ Le frontend est un shell sans partie active, pas un lobby ni un client de gamepl
 | game_data/rulesets/v0.1 | Paramètres validés strictement, balance provisoire, copie par univers |
 | backend/migrations | 0001–0004, migrations explicites avant API/worker |
 | frontend/src | Navigation responsive et sous-vues Colony en préparation, readiness via proxy |
+| portal/backend | Sondes Portal, configuration PORTAL_*, pool/metadata Accounts et Alembic p0000–p0005 indépendants, comptes/vérification/email et sessions/CSRF/opérations sensibles/MFA Portal |
+| portal/frontend | Readiness/retry et formulaires d’inscription/renvoi/confirmation, avec sessions/CSRF C03 |
+| infra/local/Caddyfile | Deux origines HTTPS locales, CA Docker sans installation sur l’hôte |
 
 Les domaines Game futurs restent modulaires : recherche, exploration/connaissance/rapports,
 flottes/combat, relations et IA. Ils partagent les transactions Game pertinentes. Humains, IA et
@@ -48,7 +52,8 @@ Le Game Backend ne conserve pas les mots de passe/credentials Accounts.
 
 **Historique remplacé en partie** : l’ADR 0001 prévoyait initialement un backend unique pour toute
 la plateforme. ADR 0008 affine cette frontière ; le monolithe modulaire gameplay est conservé.
-Il ne s’agit pas d’une autorisation de créer 10–20 microservices ni de modifier Docker maintenant.
+Il ne s’agit pas d’une autorisation de créer 10–20 microservices. L’extension Compose C01 découle
+du lot explicitement autorisé, sans interface interne mTLS ou nouvelle API gameplay anticipée.
 
 ## Invariants d’instance et temps
 
@@ -65,11 +70,17 @@ de la fréquence de lecture. Ruleset et vitesses par univers, jamais en singleto
 
 ## Prochain travail
 
-PR #5 fusionnée sur master 8214e0b. Les [contrats 5B](identity-contracts.md) sont validés et
-consolidés, non implémentés ; PR #6 destinée à la revue finale avant fusion sur autorisation.
-Le [registre Q40–Q56](../05-project/open-questions.md) distingue clôtures, détails techniques délégués
-et reports support/email/modes. Aucune nouvelle décision produit nécessaire à 5B identifiée.
-Prochaine action : revue finale, sans début de 5C. Après intégration et instruction distincte :
-5C fondation compte/lobby, puis 5D API Colony protégée.
+PR #5 fusionnée sur master 8214e0b, puis **5B documentaire terminé et intégré à master via PR #6**,
+merge `63bb7d1`. Les [contrats 5B](identity-contracts.md) sont validés, partiellement implémentés par C02–C06 sur PR #7.
+Le [registre Q40–Q56](../05-project/open-questions.md) conserve clôtures, détails délégués et reports
+support/email/modes. Lot courant autorisé : 5C compte/lobby, nouvelle branche depuis ce merge,
+checkpoint documentaire et cadrage réalisés, socle C01 livré sur PR #7 ; C02 comptes/vérification livré ; C03 sessions livré ; C04 opérations sensibles, C05 MFA et C06 lobby/mTLS livrés ; C07 livré ; C08 livré, C09 recette de clôture.
+Aucun début de 5D API Colony,
+aucune nouvelle fusion sans instruction explicite.
 Voir [roadmap](../05-project/roadmap.md), [sécurité](security.md), [API](api.md),
 [modèle](data-model.md) et [temps](event-engine.md).
+
+[Socle Portal C01 et recette](portal-foundation.md) : implémenté sur PR #7, non intégré à master.
+
+[C02 comptes et livraison](portal-registration.md) : worker email propre à Portal, Mailpit local,
+clé de chiffrement dans volume privé ; aucun import ou credential Accounts dans Game.

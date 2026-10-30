@@ -1,6 +1,6 @@
 # Contexte stable — Echosphere
 
-**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-29.
+**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-30.
 Vérifier GitHub réel puis lire AGENTS → context → progress → [passation](docs/06-handoff/README.md).
 
 ## Produit validé, état distinct
@@ -16,7 +16,7 @@ Universe = frontière d’instance, ni User ni processus ; late join et protecti
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
 éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
 
-## Implémentation — 5A intégrée, pas partie jouable
+## Implémentation — Game 5A intégré, Portal C01–C08 sur PR #7
 
 PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
 8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
@@ -26,7 +26,18 @@ Checkpoint du 28/10/2026 : 5A et la passation sont portées par PR #5, alors ouv
 Vérifier GitHub : après fusion de #5, considérer 5A/passation comme intégrées à master ; l’état
 GitHub réel prévaut sur ce checkpoint. Fondations et shell 0–4 intégrés dans master 54f928e au départ ;
 source fonctionnelle 58e8f7c, checkpoint 5be00da vert (101 backend, 11 frontend, 5 Chromium, Compose).
-Aucun compte, Portal/auth, membership, lobby, API gameplay ou multijoueur implémenté.
+Sur master après 5B : aucun compte, authentification, membership, lobby fonctionnel ou API gameplay.
+**Sur la branche PR #7, non intégré à master : C01** ajoute le socle Portal backend/frontend,
+Accounts DB/metadata/pool/Alembic p0000 séparés et HTTPS local portal.echosphere.localhost/game.echosphere.localhost:8443.
+C02 ajoute inscription/Argon2id/vérification email/outbox durable et formulaires, migration p0001.
+[Recette C02](docs/03-technical/portal-registration.md). C03 ajoute connexion/sessions/profils Portal, CSRF et intentions de logout persistées.
+[Recette C03](docs/03-technical/portal-sessions.md). [C04](docs/03-technical/portal-account-security.md) ajoute step-up, reset/changements sensibles sans MFA
+et logout global. [C05](docs/03-technical/portal-mfa.md) ajoute TOTP/WebAuthn, dix secours, récupération
+limitée et preuves MFA des opérations sensibles ; garde-fous privilégiés WebAuthn, sans console admin.
+[C06](docs/03-technical/portal-game-control.md) ajoute memberships/lobby, outbox et listener privé
+mTLS Game : droits effectifs, révisions/epochs et acquittements des révocations compte/appareil.
+[C07](docs/03-technical/game-handoff.md) ajoute le handoff et les sessions Game, sans API Colony. [Recette C01](docs/03-technical/portal-foundation.md).
+Routage/TLS, mTLS privé et livraison réelle sur bases temporaires testés ; aucune protection de charge prétendue.
 Game : FastAPI/SQLAlchemy/Alembic/PostgreSQL + worker, React/TypeScript/Vite ; UTC, autorité serveur.
 EventStream/ScheduledEvent génériques ; ColonyTimeline/ResourceBalance pour économie exacte.
 Migration 0004 ajoute les quatre tables économiques sans modifier les anciennes révisions.
@@ -53,7 +64,7 @@ autonome ; client gameplay directement à Game sans appel Portal par commande. I
 outbox Portal, état d’accès Game versionné et application idempotente. Portal possède l’intention,
 Game les droits effectifs. Aucun credential Accounts en Game DB.
 
-**5B validé et consolidé le 2026-10-29, non implémenté** :
+**5B validé et consolidé le 2026-10-29, partiellement implémenté par C02–C08 sur PR #7** :
 [contrats canoniques](docs/03-technical/identity-contracts.md),
 [statuts Q40–Q56](docs/05-project/open-questions.md).
 Email/mot de passe Argon2id MVP, identité indépendante, vérification email avant handoff ; récupération
@@ -84,19 +95,20 @@ nécessaire à 5B identifié. Architecture cadrée ne signifie pas sécurité im
 ## Workflow et prochain travail
 
 master stable, work/... → PR master → CI/revue → merge explicitement autorisé. Pas de develop
-permanente, force push, branche empilée ou release implicite. Work/Codex publient leur checkpoint
-pour l’autre environnement ; [procédure commune](docs/06-handoff/work-codex-handoff.md).
-La passation était limitée aux documents sur la branche existante #5, sans nouvelle PR, merge,
-code métier, migration, game_data, dépendance, Docker ou test modifié. Si #5 est encore ouverte et
-que la mission porte dessus, reprendre cette branche. Après sa fusion, synchroniser master et
-partir sur une nouvelle branche work/... pour tout nouveau lot autorisé, sans recréer la branche #5.
-progress porte le checkpoint et les actions de reprise avant/après fusion.
-Le 2026-10-29, l’utilisateur autorise le prochain lot : préparation 5B sur
-work/step-5b-identity-contracts depuis master synchronisée, PR #6 brouillon non fusionnée.
-Les [contrats](docs/03-technical/identity-contracts.md) sont validés et consolidés : 5B documentaire
-terminé, PR #6 destinée à la revue finale avant toute fusion explicitement autorisée. Consulter
-progress et GitHub pour la tête publiée et sa CI réelle. Aucun compte/Portal/API livré.
-Prochaine action : revue finale de PR #6 ; après intégration et autorisation d’un lot distinct,
-5C fondation compte/lobby selon les contrats, puis 5D API Colony sécurisée/UI réelle. Aucun début de
-5C, Portal complet ou multijoueur implicite. [Roadmap](docs/05-project/roadmap.md),
-[Q01–Q56](docs/05-project/open-questions.md).
+permanente, force push, branche empilée ou release implicite. ChatGPT Work (GitHub), Codex local et
+Claude Code local (WSL2) suivent les mêmes règles/DoD, sans mémoire partagée : checkpoint « Reprise
+rapide » de progress, revue croisée dans les PR, un seul écrivain par répertoire/branche et worktrees
+pour le parallélisme ; [protocole commun](docs/06-handoff/work-codex-handoff.md), validé le 2026-10-30.
+La passation documentaire de la branche #5 est historique depuis la fusion de #5 ; tout nouveau lot
+autorisé part de master synchronisée sur une nouvelle branche work/....
+PR #6 fusionnée sur instruction explicite le 2026-10-29 : master
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611. **5B documentaire terminé et intégré à master** ;
+contrats validés, sous-ensembles C02–C08 implémentés sur PR #7 seulement. Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ;
+reports Q48/Q49/Q55 conservés selon le registre, aucun arbitrage rouvert.
+
+Lot courant autorisé : **5C — Portal Account/Lobby foundation**, branche
+work/step-5c-portal-account-lobby créée depuis master fraîchement synchronisée en fast-forward.
+Premier checkpoint documentaire 1c27497 et cadrage 8122cf7 publiés avant code. L’utilisateur a ensuite
+autorisé « alors go » : C01–C08 implémentés et testés sur PR #7, recette de clôture C09 réalisée puis revue/validations finales par Claude Code le 2026-10-30 : 5C prêt pour revue finale, non fusionné (CI du SHA final consignée dans PR #7). 5D exclu ; aucune nouvelle fusion
+sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
+[Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).

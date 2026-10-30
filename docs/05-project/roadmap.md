@@ -14,8 +14,8 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 3 | Moteur temporel | Production différée, événements persistants et reprise | Horloge injectée, idempotence, concurrence et rattrapage vérifiés |
 | 4 | Design system responsive | Navigation et composants des vrais écrans | Parcours mobile/clavier et états réseau validés |
 | 5A | Colony domain / economy / construction | Domaine interne, game_data v0.1, niveaux continus, stockage et file | Réservation, annulation, scheduler, concurrence et migrations validés sans API publique |
-| 5B | Identity architecture / Portal-Game contracts | Contrats validés, registre séparant clôtures/délégation/reports | Documentaire terminé pour revue finale PR #6 ; pas d’implémentation auth, CI publiée à vérifier |
-| 5C | Portal Account/Lobby foundation | Fondation minimale compte/lobby selon cadrage 5B | Comptes globaux et accès aux parties sécurisés ; pas de Portal complet/multijoueur anticipé |
+| 5B | Identity architecture / Portal-Game contracts | Contrats validés, registre séparant clôtures/délégation/reports | Documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C08 sur PR #7, handoff/GameSession C07 livrés sur PR #7 |
+| 5C | Portal Account/Lobby foundation — lot courant | Fondation minimale compte/lobby selon cadrage 5B | Comptes globaux et accès aux parties sécurisés ; pas de Portal complet/multijoueur anticipé |
 | 5D | Secure Colony API + interactive Colony UI | APIs protégées appelant les services 5A et UI réelle | Session/autorisation/fog/idempotence contrôlés et résilience Portal/Game testée |
 | 6 | Research | Recherche globale et programmation suivante | Prérequis et application unique à échéance |
 | 7 | Galaxy + Exploration | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
@@ -38,17 +38,28 @@ releases identifiées plus tard. develop n'est plus une étape permanente ou obl
 Étapes 0–4, 5A et passation intégrées sur master : PR #5 fusionnée le 2026-10-28, merge 8214e0b.
 Reprise locale vérifiée le 2026-10-29, puis lot 5B sur work/step-5b-identity-contracts :
 [contrats](../03-technical/identity-contracts.md) validés et consolidés après validation utilisateur du
-bloc complet corrigé. **5B documentaire terminé pour revue finale de PR #6**, sans fusion.
+bloc complet corrigé. **5B documentaire terminé et intégré à master via PR #6**, merge
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611 le 2026-10-29. Contrats partiellement implémentés par C02–C08 sur PR #7, handoff/GameSession C07 livrés sur PR #7.
 [Q40–Q56](open-questions.md) distinguent contrats clos, détails techniques délégués aux lots dépendants
 et reports explicites : support renforcé Q48, fournisseur/configuration production Q49, modes Q55.
 Ces reports ne bloquent pas la clôture du cadrage ; ils bloquent leur fonctionnalité ou déploiement
-concerné tant qu’ils ne sont pas satisfaits. Aucun compte, session, Portal, MFA ou API Colony livré.
+concerné tant qu’ils ne sont pas satisfaits. Aucun compte, session, Portal, MFA ou API Colony livré
+par le lot documentaire 5B ; le socle C01 est décrit ci-dessous.
 
-Prochaine action : revue finale de PR #6 et CI propre à sa tête publiée ; merge uniquement sur
-instruction. 5C n’a pas commencé et nécessite un lot distinct autorisé après intégration de 5B.
-5C devra cadrer son incrément minimal et ses dépendances compte/MFA, sans interpréter la délégation
-technique comme une autorisation de développer un Portal complet. 5D porte les API/UI Colony et les
-preuves de résilience Game ; aucun accès interactif permissif entre les lots.
+**Lot courant autorisé : 5C**, branche work/step-5c-portal-account-lobby créée depuis cette master
+synchronisée. Premier checkpoint documentaire commit/push avant code ; ensuite cadrage présenté
+(sous-tickets, tables/migrations Accounts, structure Portal, frontières et dépendances) avant
+implémentation substantielle. Les décisions 5B ne sont pas rouvertes.
+[Cadrage 5C proposé](step-5c-plan.md) : sous-tickets, schémas Accounts et frontière 5D,
+présenté avant toute implémentation substantielle. Depuis, instruction de démarrer C01 :
+[socle Portal C01](../03-technical/portal-foundation.md) implémenté sur PR #7, non intégré à master.
+Accounts DB/Alembic, backend/frontend et HTTPS local testés. [C02](../03-technical/portal-registration.md)
+ajoute inscription/Argon2id/vérification email et livraison locale durable, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md) et intentions de logout persistées.
+handoff/GameSession C07 livrés sur PR #7. [C04](../03-technical/portal-account-security.md) livre les opérations sensibles,
+[C05](../03-technical/portal-mfa.md) ajoute MFA/secours/récupération et leur intégration. [C06](../03-technical/portal-game-control.md) livre lobby, outbox et contrôle mTLS.
+C08 livré ; recette de clôture C09 réalisée : 5C prêt pour revue finale de PR #7, fusion sur instruction seulement.
+5D reste distinct : API/UI Colony et preuves de résilience gameplay, sans accès permissif transitoire.
+Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).
 

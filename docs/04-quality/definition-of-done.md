@@ -12,6 +12,14 @@
 - Documentation et ADR actualisés si le comportement ou une décision structurelle change.
 - Aucun secret, logs sensibles, code généré inutile ou dépendance non justifiée.
 - PR compréhensible : comportement final, validation réelle et limites ; pas de merge automatique.
+- Même DoD pour ChatGPT Work, Codex et Claude Code ; bloc « Reprise rapide » de progress à jour.
+
+## Revue croisée
+
+Quand une revue est demandée : SHA relu noté, anomalies prouvées et classées publiées dans la PR,
+réponses confirmée/contestée/hors lot, corrections suivies des tests relancés et de la CI du nouveau
+SHA, puis validation du relecteur sur ce SHA. Aucune Bloquante/Majeure ouverte sans arbitrage
+utilisateur. Procédure : [protocole de collaboration](../06-handoff/work-codex-handoff.md).
 
 ## Passation documentaire historique PR #5
 
@@ -21,6 +29,22 @@ index des décisions, ADR 0008, Q01–Q39 préservées/Q40–Q56 ouvertes, lectu
 point de reprise cohérents. Check liens/index et diff autorisé ; CI réelle de tête observée.
 PR mise à jour et laissée non fusionnée. WSL2/protection DDoS non revendiqués comme testés.
 
+## Étape 5C — comptes/lobby et accès
+
+Comptes/MFA/sessions, opérations sensibles et outboxes testés sur Accounts dédiés ; séparation
+Game/Accounts effective, contrôles mTLS et idempotence prouvés. Ticket signé court/unique, pré-auth
+et sessions Game locales bornées, activité explicite et révocations sans résurrection ; jeux de
+clés en recouvrement/retrait testés. Parcours UI réels, mobile/clavier, erreurs/expiration, aucun
+secret navigateur ni fausse partie ; statuts pending/acknowledged véridiques.
+
+Deux chaînes Alembic sans dérive et ancien historique immuable ; suites des deux backends et
+frontends, quatre smokes et CI du SHA publié effectivement observés. Recette Portal arrêté avec
+session Game utilisable et worker en progrès, révocation persistée livrée après reprise ; restauration
+des deux DB dans des bases de test isolées. Clôture locale pour revue ≠ feu vert production : reports
+Q48/Q49/Q55, charge/restauration opérationnelle/rotation des secrets restent explicites. Pas d’API
+Colony 5D ni de merge/déploiement sans instruction distincte. Preuves dans progress/PR ; aucune
+revue indépendante simulée par l’auteur du lot.
+
 ## Étape 5B — contrats documentaires
 
 Décisions validées et provenance dans identity-contracts ; Q40–Q56 distinguent contrats clos,
@@ -29,7 +53,8 @@ ADR 0008, sécurité, API, modèle, roadmap et reprise cohérents, sans proposit
 comme questions produit courantes. Corrections MFA/sessions configurables/CORS préservées.
 Diff documentaire et unique ajout REQUIRED de check_docs.py, sans implémentation 5C/5D.
 Check documentaire/liens, diff/confidentialité et CI de la tête publiée observée ; aucun test futur
-présenté comme passé. PR compréhensible pour revue finale, sans merge ni début de 5C.
+présenté comme passé. Sortie 5B atteinte et intégrée via PR #6 (`63bb7d1`) ; contrats toujours
+non implémentés. La réalisation de 5C relève de son lot autorisé et de ses validations propres.
 
 ## Étape 5A
 

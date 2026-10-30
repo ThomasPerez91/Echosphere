@@ -8,3 +8,5 @@ frontend
 deliverables
 .env
 upload
+.local
+portal

@@ -38,6 +38,14 @@ def test_migrations_roundtrip_and_no_model_drift(database_engine, migration_conf
     command.upgrade(migration_config, "head")
     command.check(migration_config)
     assert set(inspect(database_engine).get_table_names()) == {
+        "game_pre_auths",
+        "game_consumed_tickets",
+        "game_sessions",
+        "game_accesses",
+        "game_devices",
+        "game_principals",
+        "empire_bindings",
+        "control_operations",
         "universe_economies",
         "colony_economies",
         "colony_infrastructures",

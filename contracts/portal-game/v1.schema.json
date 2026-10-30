@@ -1,0 +1,243 @@
+{
+  "$defs": {
+    "Access": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "set_universe_access",
+          "title": "Kind",
+          "type": "string"
+        },
+        "membership_id": {
+          "format": "uuid",
+          "title": "Membership Id",
+          "type": "string"
+        },
+        "global_user_id": {
+          "format": "uuid",
+          "title": "Global User Id",
+          "type": "string"
+        },
+        "universe_id": {
+          "format": "uuid",
+          "title": "Universe Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "access_epoch": {
+          "minimum": 1,
+          "title": "Access Epoch",
+          "type": "integer"
+        },
+        "account_epoch": {
+          "minimum": 0,
+          "title": "Account Epoch",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "suspended",
+            "revoked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "portal_confirmed_at": {
+          "format": "date-time",
+          "title": "Portal Confirmed At",
+          "type": "string"
+        },
+        "valid_until": {
+          "format": "date-time",
+          "title": "Valid Until",
+          "type": "string"
+        },
+        "bindings": {
+          "items": {
+            "$ref": "#/$defs/Binding"
+          },
+          "maxItems": 100,
+          "title": "Bindings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "membership_id",
+        "global_user_id",
+        "universe_id",
+        "revision",
+        "access_epoch",
+        "account_epoch",
+        "status",
+        "portal_confirmed_at",
+        "valid_until",
+        "bindings"
+      ],
+      "title": "Access",
+      "type": "object"
+    },
+    "Binding": {
+      "additionalProperties": false,
+      "properties": {
+        "empire_id": {
+          "format": "uuid",
+          "title": "Empire Id",
+          "type": "string"
+        },
+        "permissions": {
+          "items": {
+            "enum": [
+              "colony.read",
+              "colony.construct",
+              "colony.cancel"
+            ],
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Permissions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "empire_id",
+        "permissions"
+      ],
+      "title": "Binding",
+      "type": "object"
+    },
+    "Provision": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "provision_universe",
+          "title": "Kind",
+          "type": "string"
+        },
+        "universe_id": {
+          "format": "uuid",
+          "title": "Universe Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "seed": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Seed",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "universe_id",
+        "name",
+        "seed"
+      ],
+      "title": "Provision",
+      "type": "object"
+    },
+    "Revoke": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "revoke_sessions",
+          "title": "Kind",
+          "type": "string"
+        },
+        "global_user_id": {
+          "format": "uuid",
+          "title": "Global User Id",
+          "type": "string"
+        },
+        "scope": {
+          "enum": [
+            "account",
+            "device"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "epoch": {
+          "minimum": 1,
+          "title": "Epoch",
+          "type": "integer"
+        },
+        "device_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device Id"
+        }
+      },
+      "required": [
+        "kind",
+        "global_user_id",
+        "scope",
+        "epoch"
+      ],
+      "title": "Revoke",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "maximum": 1,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "operation_id": {
+      "format": "uuid",
+      "title": "Operation Id",
+      "type": "string"
+    },
+    "message": {
+      "discriminator": {
+        "mapping": {
+          "provision_universe": "#/$defs/Provision",
+          "revoke_sessions": "#/$defs/Revoke",
+          "set_universe_access": "#/$defs/Access"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Provision"
+        },
+        {
+          "$ref": "#/$defs/Access"
+        },
+        {
+          "$ref": "#/$defs/Revoke"
+        }
+      ],
+      "title": "Message"
+    }
+  },
+  "required": [
+    "version",
+    "operation_id",
+    "message"
+  ],
+  "title": "Operation",
+  "type": "object"
+}

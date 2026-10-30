@@ -1,8 +1,8 @@
 # Passation Space Game / Echosphere
 
-**Statut : documentation durable, mission du 2026-10-28.** GitHub est la source de vérité partagée
-pour Work et Codex local ; un historique de chat n’est pas nécessaire pour reprendre le périmètre
-consigné. Cette passation n’est pas un export complet des conversations du projet.
+**Statut : documentation durable, mission du 2026-10-28, protocole multi-agents du 2026-10-30.**
+GitHub est la source de vérité partagée pour ChatGPT Work, Codex local et Claude Code local ; un
+historique de chat n’est pas nécessaire pour reprendre le périmètre consigné. Cette passation n’est pas un export complet des conversations du projet.
 
 ## Reprise en sept lectures
 
@@ -12,7 +12,8 @@ consigné. Cette passation n’est pas un export complet des conversations du pr
 4. [Carte des sources](source-map.md) et [index des décisions](decision-status.md).
 5. [Roadmap](../05-project/roadmap.md) et [questions ouvertes](../05-project/open-questions.md).
 6. [Vision](../00-product-vision.md), références métier du prochain lot et [ADR](../adr/README.md).
-7. [Procédure Work/Codex](work-codex-handoff.md), [audit #5](pr-5-audit.md), [lacunes/risques](known-gaps.md).
+7. [Protocole de collaboration et revue croisée](work-codex-handoff.md), [audit #5](pr-5-audit.md),
+   [lacunes/risques](known-gaps.md).
 
 ## Ce qui est et n’est pas livré
 
@@ -21,11 +22,22 @@ Fusion vérifiée le 2026-10-29 : master 8214e0b, CI verte. L’ancien checkpoin
 décrivait #5 ouverte ; il reste historique. Vérifier GitHub réel avant d’agir.
 **Décisions validées, futures** : compte global, multi-parties, Portal/Game isolables,
 Accounts DB/Game DB séparées, interface interne contrôlée et GameSession autonome après handoff.
-**Non implémenté** : Portal/auth/lobby, API gameplay et systèmes futurs du MVP.
+**Sur PR #7, non intégré** : [socle Portal C01](../03-technical/portal-foundation.md), backend/frontend,
+Accounts DB et HTTPS local ; [C02](../03-technical/portal-registration.md) ajoute inscription,
+Argon2id, vérification et email durable local. [C03](../03-technical/portal-sessions.md) ajoute connexion/sessions Portal, CSRF et intentions de logout.
+[C04](../03-technical/portal-account-security.md) ajoute opérations sensibles sans MFA, step-up et logout global.
+[C05](../03-technical/portal-mfa.md) ajoute MFA TOTP/WebAuthn, secours et récupération limitée.
+[C06](../03-technical/portal-game-control.md) ajoute lobby, outbox et contrôle mTLS, droits effectifs
+et marqueurs de révocation acquittés par Game.
+[C08](../03-technical/portal-game-ui.md) intègre le contexte au shell et les parcours ;
+[C09](../03-technical/portal-operations.md) porte la recette de panne/reprise et de clôture.
+**Non implémenté** : API gameplay et systèmes futurs du MVP. 5B reste seulement partiellement implémenté.
 
 5B autorisé puis consolidé le 2026-10-29 sur work/step-5b-identity-contracts :
-[contrats validés](../03-technical/identity-contracts.md), **non implémentés**, PR #6 non fusionnée.
-Lot documentaire terminé pour revue finale, sans début de 5C. Le
+[contrats validés](../03-technical/identity-contracts.md), **partiellement implémentés par C02–C08 sur PR #7 seulement**.
+5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1` le 2026-10-29.
+5C devient le lot courant sur work/step-5c-portal-account-lobby depuis ce merge : premier checkpoint
+documentaire et cadrage réalisés, puis C01–C08 autorisés et implémentés ; C08 livré, recette C09 réalisée, 5C prêt pour revue finale ; aucun début de 5D. Le
 [registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
 délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
 ajout de facteur/régénération volontaire des secours avec step-up existant ; plafonds 10/10 configurables et sans effet sur

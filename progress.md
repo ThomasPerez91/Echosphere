@@ -1,8 +1,742 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-10-29. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-10-30. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
-## Lot courant — 5B : contrats identité / Portal-Game consolidés
+## Reprise rapide
+
+Bloc réécrit par chaque agent qui publie ; format et règles dans le
+[protocole de collaboration](docs/06-handoff/work-codex-handoff.md).
+
+| Champ | État |
+| --- | --- |
+| Branche / PR / base | work/step-5c-portal-account-lobby · PR #7 OPEN brouillon · base master 63bb7d1 |
+| Tête et CI | Tête = commit Claude portant ce bloc (SHA/CI consignés dans PR #7 après observation). Checkpoint Codex C08/C09 237c97c : CI push 41116382297 / PR 41116392662 success |
+| Dernier agent | Claude Code local (WSL2), seul écrivain après arrêt de Codex demandé par l’utilisateur ; C08/C09 développés par Codex local |
+| Travail réalisé | Revue C08/C09 depuis 35067f8, une anomalie mineure R1 corrigée (reçu affiché après login), validations frontend finales, trois smokes et recette C09 relancés sur le contenu final |
+| Décisions | 5B et Q01–Q56 inchangés ; [C08](docs/03-technical/portal-game-ui.md), [C09](docs/03-technical/portal-operations.md) ; aucune nouvelle décision produit |
+| Fichiers modifiés | Ce commit : portal/frontend AccountAccess.tsx (+ test), statuts AGENTS/context/progress/roadmap/plan 5C/docs README/passation/C08/C09. Aucune migration, dépendance, game_data, Compose ou backend modifié |
+| Tests réellement exécutés | Claude : Game frontend 16 unitaires/build/5 Chromium sur 237c97c ; Portal frontend 30 unitaires/build/14 Chromium après R1 ; lint 0 erreur ; Alembic check deux plans ; smokes Game, Portal, mTLS et handoff C09 réussis ; check_docs. Backend 150 Game/119 Portal : exécutés par Codex sur 237c97c (backend inchangé depuis), non relancés localement par Claude |
+| Anomalies / corrections restantes | R1 corrigée ; aucune Bloquante/Majeure démontrée. Remarques : 2 avertissements ESLint react-hooks préexistants, revue croisée de R1 par Codex non faite. Q48/Q49/Q55 et limites production inchangées |
+| Prochaines tâches | Revue finale utilisateur de PR #7 (sortie de brouillon et fusion sur instruction seulement) ; 5D exclu tant que non autorisé |
+
+
+## Lot courant — 5C : Portal Account/Lobby foundation
+
+**Statut : C01–C09 réalisés ; revue et validations finales Claude effectuées, 5C prêt pour revue finale de PR #7 (non fusionnée).**
+5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/MFA/lobby/contrôle privé/handoff C02–C07 implémentés sur PR #7 seulement.
+L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
+Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
+Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C07 est décrit en premier.
+
+### Revue et validations finales Claude — C08/C09, 2026-10-30
+
+Agent : Claude Code local (WSL2), écrivain unique après arrêt de Codex. État vérifié avant écriture :
+PR #7 OPEN/brouillon, base master 63bb7d1, tête locale = distante 237c97c1e0dc1e39dc78cfd1c292591eb429b2f3,
+arbre propre, aucun worktree ni fichier non commité ; CI 237c97c push 41116382297/PR 41116392662 success.
+
+Revue du diff 35067f8..237c97c (56 fichiers) : reçus chiffrés 15 min sans pouvoir d’authentification,
+cookies `__Host-` sans Set-Cookie tardif effaçant une connexion plus récente, POST JSON corps vide/CSRF/
+origine, pages de transfert à nonce CSP, timers passifs relisant le serveur, générations/abort contre
+les réponses tardives et StrictMode. **R1 (Mineure, confirmée et corrigée)** : après un login normal, le
+serveur efface le reçu mais l’UI conservait l’ancien statut « en attente » (onLogin sans remontage de
+RevocationStatus), contrairement au canonique C08. Test de reproduction ajouté, en échec avant la
+correction et réussi après. Aucune autre anomalie démontrée ; remarques non bloquantes : avertissements
+ESLint react-hooks (compteur de génération, dépendance Lobby) et capture pleine page 320 où la barre
+mobile fixe recouvre un bouton (artefact de capture, pas de défaut d’UI démontré). L’absence d’autre
+anomalie détectée n’est pas une garantie ; aucune revue croisée Codex de R1.
+
+Validations réellement exécutées par Claude (conteneurs node:22-bookworm, copies hors dépôt) :
+Game frontend sur 237c97c lint 0 erreur, 16 tests, build, 5 Chromium ; Portal frontend sur 237c97c
+29 tests/build/14 Chromium, puis après R1 lint 0 erreur, 30 tests, build, 14 Chromium. Pile reconstruite
+depuis l’arbre final (volumes conservés) : Alembic Game 0006_game_sessions et Accounts p0005_control sans
+dérive ; smoke_compose, smoke_portal_compose, smoke_control_compose et smoke_handoff_compose réussis
+(code 0), recette C09 complète incluse. Pile conservée de nouveau running/healthy. Suites backend non
+relancées par Claude : backend inchangé depuis les 150 Game/119 Portal de Codex sur 237c97c ; la CI du
+SHA final les réexécute. Bases echosphere_c08_* conservées par Codex non supprimées (pas d’instruction).
+
+Conclusion : 5C est terminé côté implémentation et recette locale, **prêt pour revue finale** dès que la
+CI du SHA final est observée verte (consignée dans PR #7). Ni fusion, ni sortie de brouillon, ni 5D sans
+instruction ; production, Q48/Q49/Q55 et charge hostile restent hors clôture.
+
+### Relais explicite Codex → Claude — C08/C09, 2026-10-30
+
+Utilisateur : enchaîner C08/C09, puis demande de stopper pour préserver les crédits et transmettre
+à Claude. Arrêt du développement ; vérification Portal déjà lancée terminée (119 réussites).
+Checkpoint publié pour protéger le travail, **pas une déclaration de clôture 5C**. Aucun merge,
+5D, nouvelle branche, reset/clean/stash/force-push ou suppression de données conservées.
+
+Reprise initiale propre/synchronisée sur 35067f8, documentation Claude préservée. C08 : handoff
+POST automatique avec CSP nonce et secours manuel, entrée dans le shell React scoped par univers,
+contexte réel/échéances, JSON même origine/CSRF, erreurs HTML lisibles et actions explicites. Timers
+passifs lisant le serveur sans renouvellement ; Portal bootstrap distingue panne/absence de session,
+courses StrictMode/annulation corrigées. Reçu de déconnexion chiffré purpose/scope/source/15 min,
+clé receipt.key séparée et cookie HttpOnly ; aucune autorité de connexion. GET statut sans identité,
+acknowledged uniquement après tous les acquittements C06. Ancien reçu effacé à la connexion/autres
+opérations sensibles pour éviter un faux suivi ; UI réinitialisée. Cookies de session déjà révoqués
+non effacés par une réponse tardive, remplaçables par une authentification normale, sans résurrection.
+Pas de nouvelle table, dépendance, migration, règle produit, mécanique ou fixture runtime.
+
+C09 : nouvelle recette dans scripts/smoke_handoff_compose.py et handoff_browser.mjs : projet Compose
+aléatoire sans ports hôtes, bases *_test et volumes propres ; arrêt Portal API et contrôle, Game
+encore accessible, construction test acceptée puis terminée par le worker réel (c09_game_fixture.py
+strictement gardé par nom DB test). Reprise API puis logout avec livraison arrêtée, état pending ;
+reprise worker de contrôle, receipt acknowledged, ancienne GameSession refusée. pg_dump/pg_restore
+réalisés pour chaque DB vers echosphere_restore_test et têtes Alembic vérifiées ; DB restaurées jamais
+servies comme applications. Projet temporaire supprimé. Production/support/modes restent différés.
+
+Validations réellement obtenues (journaux /tmp, non versionnés) :
+
+- /tmp/echosphere-c09-game.log : **150 passed**, 1 warning Starlette/httpx ; clés en recouvrement puis
+  retrait local testé. /tmp/echosphere-c09-portal-checked.log : **119 passed**, même warning.
+- /tmp/echosphere-c09-game-ui.log : npm ci/lint, **16 tests**, build et **5 Chromium** réussis.
+  /tmp/echosphere-c09-portal-final-ui.log : npm ci/lint, **29 tests**, build réussis ;
+  /tmp/echosphere-c09-portal-ui.log : **14 Chromium** réussis. Les derniers ajustements de nettoyage
+  de reçu/MFA nécessitent relecture et vérification frontend finale ; ne pas les présumer exécutés.
+- /tmp/echosphere-c09-browser-final.log : recette HTTPS C09 complète réussie à 320/1440, panne réelle,
+  progression worker, révocation retardée/acquittée et restore. Captures dans
+  /tmp/echosphere-handoff-artifacts ; à inspecter pour la revue finale. Aucun test Windows matériel,
+  Safari/Firefox, lecteur d’écran ni charge hostile revendiqué.
+- Compose build/up --wait et Alembic check des deux plans réussis ; Game 0006_game_sessions,
+  Accounts p0005_control. **Les trois autres smokes Game/Portal/mTLS n’ont pas encore été relancés
+  sur C08/C09**, contrairement à la recette handoff étendue. Attendre fin des suites avant les smokes
+  qui coupent PG : incident de chevauchement déjà documenté en C07.
+- 76 documents/liens et diff valides. Sections 1–8 5B et 56 lignes Qxx comparées inchangées.
+
+Corrections de tests/recette : attente du bootstrap au login ; identité de requête courante pour
+ignorer le rejet StrictMode ancien ; les mocks doivent distinguer le GET de statut et les POST CSRF.
+Le test de reçu altère un octet chiffré, pas seulement le padding Base64. Les anciennes assertions
+« aucun Set-Cookie après reset » distinguent désormais suppression du reçu et émission interdite
+d’un cookie de login. Les sondes de panne doivent utiliser Chromium, ses règles DNS ne s’appliquant
+pas au client Node APIRequestContext. Diagnostics expurgés des headers Cookie/Authorization.
+
+Reste concret pour Claude :
+
+1. Vérifier ce SHA, PR #7/base/CI et arbre local ; lire AGENTS/context/progress puis canoniques C08/C09.
+2. Relire le diff complet depuis 35067f8, notamment reçus/cookies tardifs, bootstrap StrictMode,
+   timer de session, JSON natif et protocole du test C09. Aucun relecteur indépendant encore attesté.
+3. Finir la cohérence des statuts : quelques docs disent C08 livré/C09 clôture tandis que context
+   et progress doivent rester « en cours » tant que CI finale non observée. Ne pas annoncer production prête.
+4. Lint final + suites frontend finales, puis checks nécessaires selon les résultats ; tests backend
+   déjà passés ci-dessus. Ne pas lancer panne PG pendant une suite. Exécuter les trois autres smokes,
+   éventuellement revalider la recette finale après toute correction runtime.
+5. Vérifier services/volumes et nettoyer seulement les DB de suites dédiées echosphere_c08_game_test
+   et echosphere_c08_accounts_test après usage (elles sont conservées pour le relais).
+6. Commit/push des corrections ciblées, observer la CI du SHA final, actualiser PR #7 et progress.
+   Conclure si 5C est terminé/prêt pour revue finale avant merge ; aucune fusion, aucun début de 5D.
+
+### Protocole de sécurité multi-agents et relais — documentaire, 2026-10-30
+
+Instruction utilisateur « Reprend » puis protocole de sécurité et de relais sur épuisement des crédits.
+Agent : Claude Code local (WSL2). État vérifié avant écriture : PR #7 OPEN/brouillon, tête locale =
+distante 49799e4b42b2831720764ea57a6c3b7aa3495bf5 (C07 Codex), arbre propre, aucun fichier modifié
+hors commits, CI 49799e4 push/PR success. Rien à préserver hors Git ; aucune réécriture de fichier
+entier, éditions ciblées seulement.
+
+Ajouts : priorité Codex/Work principaux et Claude en relais ou revue indépendante, sans effet sur
+permissions/validation ; contrôles obligatoires avant écriture et commandes destructives interdites ;
+reprise depuis l’état réellement accessible (disque Codex, GitHub pour Work), inventaire fait/reste,
+suspension sur divergence/conflit avec résolution préservant les deux versions ; relecteur sans
+modification directe sans nouvelle autorisation ; checkpoints intermédiaires sans secret ni
+temporaire, non assimilables à validation/fusion ; relais concret Codex → Claude Code → Work.
+[AGENTS](AGENTS.md) résume, le [protocole](docs/06-handoff/work-codex-handoff.md) détaille ; CLAUDE.md
+inchangé. Validations : check_docs.py et git diff --check ; aucun test fonctionnel (aucun code).
+
+### C07 — handoff et sessions Game, 2026-10-30
+
+Instruction utilisateur : intégrer d’abord le brief visuel, puis poursuivre C07. Reprise GitHub réelle :
+PR #7 OPEN/brouillon, tête 7a00c7ba656a22aca67e47f758b1d99ebfa54b5e, base master 63bb7d1 ; fetch/ff-only
+sans divergence, CI C06 push 41098495003 et PR 41098504081 success. Dossier visuel préexistant non
+suivi, six PNG et README vide ; images inspectées et octets conservés dans 2286c35 (guide/AGENTS/index).
+
+Pendant le démarrage C07, des modifications Claude Code ont été observées dans le même répertoire.
+Écritures suspendues ; utilisateur confirme explicitement que Codex peut reprendre seul. Aucun reset,
+stash ou écrasement : documentation Claude conservée/publiée séparément dans 97e8ccc, avec provenance.
+Même branche work/step-5c-portal-account-lobby ; aucune nouvelle branche, fusion ni 5D.
+
+[Canonique C07](docs/03-technical/game-handoff.md) et contracts/handoff/v1.schema.json : Ed25519 via
+PyJWT 2.15.1, clés publiques locales prédistribuées et type/algorithme/origines/claims stricts. Ticket
+60 s maximum, sans credential/permission client ; pré-auth 5 min liée au cookie et univers ; POST de
+navigation, CSRF et email vérifié, aucun ticket URL/localStorage/log. Secrets de signature 0600 en
+volume Portal propre, Game public seul, distincts de mTLS et MFA/mail. Hôtes de cookies distincts
+exigés même si ports différents. Anciennes dépendances figées conservées, ajout JWT/crypto Game.
+
+Migration Game additive 0006_game_sessions (pré-auth, jti consommés, sessions, FK composite de scope
+renforcée sur GameAccess) ; Accounts p0005_control inchangée. Historique publié immuable ; downgrade
+peuplé refusé. Vérification locale puis principal verrouillé, contrôle générations/état/dates et
+consommation atomique. Courses avec révocation, quotas et rejeu contrôlés ; réponse perdue impose un
+nouveau parcours. Réentrée d’une session active : rotation opaque sans repousser absolu/borne d’accès.
+Ancien cookie d’un autre compte encore valide refusé ; déjà révoqué par Portal, il ne bloque pas le
+nouveau compte légitime. Aucune connexion ou credential Accounts dans Game, pas de dépendance Portal
+par lecture Game ; futurs appels 5D devront garder locked et EventStream dans la même transaction.
+
+Game 8 h absolues/2 h inactif et accès capturé à l’entrée ; lectures automatiques sans effet,
+action explicite serveur/CSRF seule actualisant l’inactivité. Cookie host-only/HttpOnly/Secure par
+univers. Cap initial configurable dix univers/appareil, comptage sérialisé sans éviction/membership
+cap. Révocations C06 compte/appareil/membership appliquées aux vraies sessions ; logout Game ciblé
+conserve Portal/autres univers/appareils et interdit les cérémonies déjà en vol de ce slot.
+
+Lobby relié au circuit, participation active/acquittée/vérifiée seulement ; renouvellement explicite
+inchangé dans l’outbox, entrée pending jusqu’au receipt, jamais renouvellement en GET ou réactivation
+implicite. Vue Game native minimale avec nom d’univers, échéances, actualisation explicite, retour
+lobby et logout ; aucun stock/file/Empire factice. Palette et focus cohérents avec le shell ; adaptation
+complète du shell React et simplification du parcours restent C08.
+
+Validations réellement exécutées :
+
+- Ruff backend/scripts/Portal, **148 tests Game et 118 Portal** complets sur echosphere_c07_game_test
+  et echosphere_c07_accounts_test ; aucun ignoré. Schémas, signatures/clés/origines/type/scopes/cookie,
+  consommation concurrente unique, expirations exactes, générations, logout ciblé, quotas concurrents,
+  rollback, FK inter-comptes, requêtes automatiques/explicites et cookies déjà révoqués. Historiques,
+  roundtrips/Alembic check et refus de downgrade peuplé ; warning Starlette/httpx connu.
+- Portal frontend : npm ci/lint, **25 tests**, build et **14 Chromium** réussis. Lien d’entrée et
+  confirmation explicite/pending testés ; captures Game inspectées à 320/1440, sans débordement.
+- Compose config/build/up --wait ; Alembic Game 0006_game_sessions et Accounts p0005_control sans
+  dérive. Smokes Game, Portal HTTPS/CORS/pannes croisées, privé mTLS/outbox/replay/révocations réussis.
+  Nouvelle recette Chromium **HTTPS réel à 320 et 1440, sans API interceptée** : compte fixture
+  uniquement en DB *_test du projet temporaire, provision/grant via worker mTLS, POST entre origines,
+  cookies isolés, absence ticket URL, GET sans activité, actualisation explicite sans repousser absolu,
+  retour lobby, logout Game conservant Portal et nouvelle entrée. Aucun port hôte ni CA/hosts modifiés.
+  Projet/volumes temporaires supprimés par la recette, données courantes préservées.
+  Recette finale relancée après les derniers ajustements de contexte/refus CSRF et réussie.
+  Caddy conservé redémarré pour charger son fichier modifié ; TLS/routage des deux origines et
+  refus 401 de la nouvelle API Game sans session vérifiés. Deux DB de suites supprimées après succès ;
+  bases conservées contrôlées : users=0 et game_principals=0, aucune fixture runtime.
+- **74 documents/liens**, diff propre ; comparaison binaire des six PNG, Q01–Q56 et sections 1–8 de
+  5B inchangées. Aucun domaine Colony/simulation, game_data, frontend Game ou migration ancienne modifié.
+
+Corrections de recette consignées : contexte Docker ignorait portal dans le premier build des outils
+(corrigé par contexte Portal), PYTHONPATH absent au premier lancement (collecte impossible, non succès).
+Le shell C06 ne chargeait pas ses cibles FK en processus autonome : import explicite et test séparé.
+Le vrai navigateur a montré Origin null sous no-referrer au POST de transfert : strict-origin adopté
+sur ces seules pages, sans accepter null ni ouvrir CORS ; CSP Game autorise ses lectures same-origin.
+Un smoke de panne PG a été lancé trop tôt pendant une suite Portal : 3 échecs/11 erreurs de connexion
+à l’arrêt du serveur, non retenus comme succès ; DB dédiée recréée après la panne et suite complète
+relancée avec 118 réussites. Relecture des logs CI de 061fd17 : le test SQL inter-comptes rencontrait
+l’unicité du slot avant la FK visée. Le test a été renforcé pour libérer le slot concurrent et exiger
+le nom exact de la FK ; scénario ciblé réellement réussi sur une troisième DB *_test supprimée ensuite.
+Aucun code runtime modifié par cette précision de test. Aucun défaut WSL2 démontré par ces erreurs de commande/ordonnancement.
+
+Limites : vue C07 minimale hors intégration React complète, erreurs/expiration/parcours/suivi après
+logout à affiner C08 ; production/rotation/nettoyage/backups/recette de charge à C09 et lots prévus.
+Pas de commande Colony ni preuve de gameplay sous panne Portal (5D), support/MFA totale, modes ou
+Empire partagé ajoutés. Pas de Safari/Firefox, appareil physique, lecteur d’écran ni charge hostile
+attestés. Q48/Q49/Q55 conservées. C07 livré ; C08/C09 nécessaires avant clôture 5C, PR #7 brouillon,
+aucun merge autorisé. CI propre au commit à observer après publication et consigner dans la PR.
+
+### Collaboration multi-agents — documentaire, 2026-10-30
+
+Instruction utilisateur : valider les quatre corrections de l’analyse du 30/10 et formaliser la
+collaboration ChatGPT Work / Codex / Claude Code, sur la branche de PR #7, sans nouvelle branche ni
+fusion. Agent : Claude Code local (WSL2). GitHub relu avant modification : PR #7 OPEN/brouillon, tête
+locale/distante 7a00c7ba656a22aca67e47f758b1d99ebfa54b5e, base master 63bb7d1, arbre propre.
+
+**CI de C06 observée sur 7a00c7b** : push 41098495003 et pull_request 41098504081 completed/success,
+jobs backend, frontend, portal-backend, portal-frontend et compose-smoke. Cette CI vaut pour 7a00c7b
+seulement ; le commit documentaire suivant a sa propre CI, consignée dans PR #7 après observation.
+
+Livré, documents seulement : [protocole commun](docs/06-handoff/work-codex-handoff.md) (rôles et
+environnements, reprise, checkpoint « Reprise rapide », revue croisée avec criticités/contestation/
+revalidation, branches et worktrees, démarrage local avec Portal et smokes, vérifications Game+Portal) ;
+CLAUDE.md important AGENTS.md sans duplication ; AGENTS généralisé aux trois agents, consignes PR #5
+ramenées à l’historique ; renvois README/CONTRIBUTING/docs/DoD/index des décisions. Aucun code, test,
+migration, dépendance, game_data ou configuration Docker modifié ; docs/visual-reference/ non suivi,
+étranger à ce lot, laissé hors commit. Suite inchangée : C07, C08, C09 puis clôture de 5C.
+
+Reprise Codex : modifications documentaires apparues pendant le démarrage C07 ; écritures suspendues,
+puis utilisateur confirme que Codex peut reprendre seul. Modifications Claude préservées, check_docs
+et diff relus par Codex ; publication documentaire séparée. C07 local en cours et non validé à ce
+checkpoint, aucun code C07 inclus dans ce commit. Le dossier visuel a entre-temps été intégré par
+Codex dans 2286c35 ; la mention « non suivi » ci-dessus décrit le début du travail Claude.
+
+### Références visuelles — checkpoint documentaire avant C07, 2026-10-30
+
+Instruction utilisateur jointe : intégrer les six PNG déjà présents sous docs/visual-reference,
+sans modifier les images, puis poursuivre C07. GitHub relu : PR #7 OPEN/brouillon, tête 7a00c7b,
+base master 63bb7d1 ; fetch/ff-only sans changement. CI push 41098495003 et PR 41098504081 success.
+Seul ajout local préexistant : dossier visuel non suivi, dont le README était vide ; conservé et intégré.
+
+README visuel créé : direction cible, mapping des six écrans, principes, ordre d’autorité et usage
+agents/responsive ; section opérationnelle AGENTS et lien dans docs/README. Images inspectées,
+PNG 1672×941 toutes présentes, noms attendus, octets conservés. Écarts explicités : population,
+stabilité, piles de défenses, capacités/chiffres, catalogue, accélération et navigation illustratifs
+ne remplacent ni règles produit, ni game_data, ni UX canonique. Aucun code/CSS/contrat/Qxx changé.
+
+Validation réellement exécutée : python3 scripts/check_docs.py (72 documents et liens),
+git diff --check ; chemins des six PNG vérifiés et empreintes conservées. Aucun test fonctionnel
+relancé pour ce seul checkpoint documentaire. Branche existante conservée, aucune fusion.
+Suite autorisée : cadrage technique puis implémentation C07 selon 5B, sans 5D.
+
+### C06 — lobby et contrôle privé Portal→Game, 2026-10-30
+
+Instruction utilisateur « Continue » après C05. GitHub réel relu : PR #7 OPEN/brouillon, tête locale/
+distante 348d0a0cb23d7ef6ef789bd0ed051d64569a972c, master/base
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611. Fetch/ff-only déjà synchronisés, arbre propre, branche
+work/step-5c-portal-account-lobby conservée. CI C05 push 41071464090 et PR 41071472286 success
+observées ; dernier travail publié Codex local C05, aucune autre tête ou modification concurrente.
+Pas d’agent délégué, nouvelle branche, merge ou 5D. Périmètre C06 présenté avant code substantiel.
+
+[Canonique C06](docs/03-technical/portal-game-control.md), schéma versionné contracts/portal-game/v1 :
+références/memberships/outbox Portal, droits/bindings/ledger/epochs Game, aucune connexion SQL
+Portal→Game. Migration Accounts p0005_control (trois tables), Game 0005_game_access (cinq tables),
+révisions précédentes immuables et downgrade peuplé refusé. Aucun domaine Colony/simulation,
+game_data ou frontend Game modifié ; aucune API gameplay ni GameSession anticipée.
+
+Processus privé du même monolithe Game : game-control, TLS 9443 sans port hôte ; l’API publique
+ne monte pas /internal. mTLS obligatoire puis empreinte du certificat réellement vérifié extraite
+par l’adaptateur H11 Uvicorn et épinglée au service portal-control. Aucun header/forwarded scheme
+ne prouve l’identité ; autorisation avant lookup de résultat. PKI dev séparée, CA clés privées
+réservées à init, feuilles Game/Portal dans volumes propres RO ; aucune clé client Portal dans Game.
+PORTAL_CONTROL_TARGETS explicite, vérification CA/nom DNS, pas de redirect/fallback HTTP. Nouveau
+worker Portal/pool/réseau propre, aucun besoin des clés email/TOTP. CPU/charge hostile non attestés.
+
+Intention + snapshot complet + livraison dans transaction Accounts ; effet + déduplication + résultat
+immuable dans transaction Game. Révision inférieure ignorée, identique contradictoire refusée ;
+état/bindings modifiés exigent access_epoch supérieur, renouvellement inchangé ne révoque pas.
+Portal_confirmed_at/valid_until originaux conservés lors de retries/réconciliation ; huit heures
+non glissantes, confirmation future refusée, ancien grant ne ressuscite pas un accès suspendu.
+Game valide les Empires/scopes/FK et permissions explicites ; aucun owner, rôle ou droit par défaut.
+
+Timeout après commit : receipt de même opération récupérable ; aucun nouvel identifiant ou date sur
+retry. Acquittement validé/atomique, reçu ancien ne rabaisse pas la projection. Réconciliation
+inférieur/absent relivre le même état ; supérieur/contradictoire reste pending pour investigation,
+aucune intention Portal adoptée depuis Game. Sources C03–C05 durablement matérialisées par cible,
+revocation acknowledged seulement après tous les acquittements ; compte/appareil indépendants.
+Une source déjà matérialisée mais non acquittée ne bloque pas les sources suivantes. Tombstones/
+ledger distincts de l’audit 90 jours. Branchement aux véritables sessions et portée session : C07.
+
+Lobby : seulement ses participations, état vide réel, pending/applied/expiration/statuts et dates,
+aucune entrée disponible avant handoff. GET sans activité/renouvellement, refresh volontaire classé
+serveur. Message après logout prudent, acquittements consultables au lobby connecté ; suivi anonyme
+complet à C07/C08. Orchestration technique via shell Accounts pour opérateur déjà autorisé, UUID et
+bindings explicites ; aucune route publique create/join, génération jouable ou fixture runtime.
+
+Validations réellement exécutées :
+
+- Ruff backend/scripts/Portal, format des ajouts ; **112 tests Game** (101 antérieurs + 11 C06) et
+  **105 tests Portal** (93 antérieurs + 12 outbox/lobby), aucun ignoré, bases dédiées
+  echosphere_c06_game_test/echosphere_c06_accounts_test. Concurrence, ordre, scopes/FK, replay/conflict,
+  durée, rollback, fan-out sans famine/abandon sur retrait de cible, receipt invalide/perdu, réconciliation et lecture sans activité.
+  Roundtrips/absence de dérive et downgrade peuplé refusé ; warning Starlette/httpx connu.
+- Frontend Portal npm ci/lint, **24 tests**, build et **14 Chromium** réussis ; état vide/pending/
+  acquitté, erreur privée masquée, refresh clavier 320/1440, nom long sans débordement, captures
+  inspectées. API interceptée distincte du transport réel ; parcours C01–C05 préservés.
+- Connexion mTLS réelle du worker vers listener réussie. Recette control dédiée : deux bases *_test,
+  réseau/listener/volume temporaires ; client Portal n’utilisant que sa DB et le HTTP Game. Clients
+  sans certificat/mauvaise CA/certificat non épinglé même CA, nom DNS erroné/header forgé refusés ;
+  contrat/corps refusés, provisionnement/accès réel, acquittement perdu et récupéré, ancien grant sans
+  résurrection, révocations et réconciliation. Ressources temporaires supprimées, volumes conservés.
+- Docs : 71 références/liens, Q01–Q56 et décisions 5B sections 1–8 inchangées. ADR 0008 : statut de
+  réalisation partielle actualisé, aucune décision modifiée. Secrets/périmètre et diff relus.
+
+Recette finale Compose config/build/up --wait et trois smokes réussis : Game, Portal HTTPS/CORS/
+pannes croisées, contrôle mTLS/livraison sur bases temporaires. Accounts p0005_control et Game
+0005_game_access sans dérive ; migrations/init Exited(0), bases/APIs/frontends/Mailpit healthy et
+workers/listener running. Volumes et confiance CA/hosts hôte préservés ; bases conservées sans
+fixture de compte/univers ajoutée. Les deux bases de suites sont supprimées après validations.
+Tête C06 : commit portant ce checkpoint ; SHA publié et CI exacte à consigner dans PR #7 après
+observation, aucune CI configurée présentée comme exécutée. Environnement Docker/WSL2 fonctionnel
+pour ces recettes, aucun parcours Windows graphique revendiqué.
+Interruption puis reprise sur instruction « Reprend » : la revue automatique a échoué sur limite
+d’usage, sans rejet de sécurité. Aucun contournement ; contrôle repris après rétablissement. Les
+105 tests Portal déjà lancés ont été relus comme réussis, puis recette finale du worker relancée.
+Échecs intermédiaires corrigés : Compose refusait network_mode et networks simultanés pour init
+(réseau interne conservé), format/imports Ruff, header de certificat brut avec retours ligne invalide
+pour le test HTTP forgé (valeur synthétique non secrète), erreurs de sous-processus désormais expurgées
+pour ne pas imprimer environnement/arguments. Aucun échec présenté comme recette réussie.
+
+Limites : feuilles PKI dev 30 jours sans renouvellement silencieux, rotation et configuration
+production/C09/Q49 à préparer ; adaptateur H11 lié à Uvicorn figé. Pas de handoff/GameSession,
+commande Colony, parcours complet navigateur HTTPS→partie, charge hostile, perte physique de DB ou
+restauration sauvegarde testés. Q48 support, Q49 email/configuration et Q55 modes inchangés. Suite
+**C07 handoff sécurisé et GameSessions**, puis C08/C09. 5C non terminé, PR #7 reste brouillon ;
+aucune fusion ni implémentation 5D.
+
+### C05 — MFA TOTP/WebAuthn et récupération limitée, 2026-10-30
+
+Instruction utilisateur « Vasy enchaine » après C04. GitHub réel relu avant modification : PR #7
+OPEN/brouillon, tête locale/distante de45031169b09774c75028239e522cee3bcea68b, master
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611. Arbre propre, fetch et ff-only déjà synchronisés.
+CI C04 push 41061047172 et PR 41061054401 completed/success, cinq jobs chacun observés. Dernier
+travail publié : Codex local C04 ; aucune autre tête publiée ni agent concurrent identifié. Même
+branche work/step-5c-portal-account-lobby ; aucune fusion, nouvelle branche ou implémentation 5D.
+
+[Canonique C05](docs/03-technical/portal-mfa.md) : MFA joueur facultative, TOTP unique/cinq WebAuthn
+nommables, vrais facteurs requis au login et step-up par action. PyOTP 2.10, py_webauthn 2.8 et
+@simplewebauthn/browser 14 ; aucune crypto de vérification maison. TOTP 160 bits/six chiffres/30 s,
+±1 pas et dernier pas consommé sous verrou User ; WebAuthn challenge 256 bits/cinq minutes, RP/origine
+exacts, UV obligatoire, compte/session/action/paramètres/epoch liés, clés publiques/compteur seulement.
+Secrets TOTP chiffrés avec clé MFA distincte de la clé email, fichiers privés hors Git et DB.
+Dix secours aléatoires 160 bits, empreintes seules, affichage à génération en mémoire, jamais logs
+ou stockage navigateur. Régénération invalide tout l’ancien jeu.
+
+Effets 5B préservés : activation/réduction/remplacement/désactivation/récupération révoquent globalement ;
+ajout d’un facteur et régénération volontaire avec facteur existant conservent sessions et epoch.
+Audit/notices pour toutes ces modifications ; les notices sans secret n’annoncent pas de déconnexion
+obligatoire pour ces deux opérations. Facteurs/preuves/secours/génération/intention Game/notices
+atomiques sous verrou User ; refus ou erreur ne laisse pas d’effet partiel.
+
+Récupération : mot de passe + secours unique + pré-auth/CSRF, cookie opaque distinct limité 15 min,
+aucune PortalSession ni autorité compte/Game/admin. Facteurs perdus invalidés dès entrée ; MFA reste
+exigée. Restauration du facteur, nouveau jeu de secours et connexion normale obligatoire. Perte
+totale bloquée sans procédure approuvée. Privilèges : WebAuthn obligatoire (deux en production),
+TOTP insuffisant ; récupération doit réenrôler WebAuthn et conserve un verrou privilégié persistant,
+sans endpoint de levée ni procédure support inventée. Aucun privilège attribué par une API publique.
+
+Intégration C04 : step-up avec facteur existant et assurance recontrôlée, email MFA avec preuve forte
+remplaçant celle de l’ancienne adresse, nouvelle adresse toujours à confirmer en une heure commune ;
+reset mot de passe autorisé sans retirer les facteurs, aucune reconnexion/MFA bypassée. Cooldown
+progressif persistant 100→1000 ms configurable en plus des quotas compte/IP/opération ; refus avant
+échéance sans délai repoussé, pas de verrou permanent. Échecs connus audités sans preuve privée,
+audit 90 jours distinct des compteurs et générations anti-rejeu. Worker efface les seeds provisoires
+expirés et purge challenges/capacités/cooldowns expirés ; notifications email locales seulement.
+
+Migration additive Accounts p0004_mfa : six tables facteurs/secours/challenges/récupération/cooldown,
+assurance sur step-up/demande email et verrou de récupération privilégiée User. Révisions publiées
+p0000–p0003 immuables, aucun backend/frontend/game_data Game modifié. Migration et downgrade vide
+testés uniquement sur Accounts echosphere_c05_test, créée puis supprimée après la recette ; aucun downgrade/volume supprimé sur données à garder.
+
+Validations locales réellement exécutées sur C05 :
+
+- Ruff Portal et backend/scripts, format vérifié ; **93 tests backend Portal réussis, aucun ignoré**,
+  PostgreSQL dédiée RUN_DB_TESTS=1. Dix-huit scénarios MFA : signatures réelles/RP/origine/UV/rejeu,
+  TOTP et secours concurrents, scopes/action/expiration, plafonds, transaction interrompue, récupération
+  sans autorité normale, privilèges bloqués, email avec MFA, notices/cooldown/purge et activité serveur.
+  Warning Starlette/httpx connu ; aucun vérificateur cryptographique simulé.
+- npm ci/lint, **21 tests frontend**, build TypeScript/Vite et **12 Chromium** réussis. Bibliothèque
+  WebAuthn réelle avec authentificateur virtuel et API interceptée : enrôlement puis connexion à
+  320 px, aucune donnée privée en stockage navigateur. Captures inspectées ; autres parcours
+  préservés, clavier/same-site et absence de débordement. Métadonnées inchangées du lockfile npm
+  préservées, npm ci vérifié après nettoyage de ce diff.
+- Compose config/build/up --wait, Accounts **p0004_mfa** et Game **0004** sans dérive ; init des
+  deux clés privées sans écrasement de l’existante. Bases/APIs/frontends/Mailpit healthy, workers
+  running, migrations/init Exited(0). Smokes Game et Portal/TLS réellement réussis, avec reprise
+  après pannes des bases ; volumes préservés, aucun changement de confiance CA/hosts hôte.
+- **70 documents/liens**, git diff --check et revue de confidentialité/périmètre. Lignes Q01–Q56,
+  décisions sections 1–8 identity-contracts, ADR et code/données Game comparés inchangés à de45031.
+  Base conservée vérifiée sans User ; aucun compte de démonstration ni donnée runtime ajoutée.
+
+Tête C05 : commit portant ce checkpoint ; SHA publié et CI exacte à consigner dans PR #7 après
+observation. La configuration du workflow ne vaut pas résultat exécuté. Limites :
+pas de parcours complet navigateur HTTPS → vraie API → authentificateur matériel, de test téléphone
+physique/Safari/Firefox/lecteur d’écran, de charge hostile ou délivrabilité publique attestés ; C09
+reste nécessaire. Outils exécutés en conteneurs Docker depuis WSL2 ; Python/Node hôtes non utilisés.
+Aucun blocage WSL2/Docker restant ; le refus DNS du réseau interne était attendu par son isolation.
+
+Les suites intermédiaires 85, puis 90/91, 92 et 93 tests sont
+distinguées des vérifications finales. Échecs intermédiaires corrigés : cooldown absent des horloges
+de tests anciens, collecte Docker sans module local, dépendances tentées sur réseau Accounts interne
+sans DNS externe (installation déplacée dans une image préparée avant isolation), quota horaire
+atteint par le scénario d’enrôlement massif (quota élevé seulement dans ce test de plafond), imports/
+longueurs Ruff et mocks d’interface consommés par la nouvelle lecture MFA. Aucun échec présenté réussi.
+
+Suite : **C06 memberships/lobby et interface interne privée mTLS**, puis C07 handoff/sessions Game.
+Intentions Game toujours pending : aucun transport/acquittement ni nouvelle fenêtre de huit heures.
+Q48 support, Q49 fournisseur/configuration production et Q55 modes restent différés. 5C non terminé,
+PR #7 reste en brouillon ; 5D non commencé et aucune fusion autorisée.
+
+### C04 — opérations sensibles sans MFA, 2026-10-30
+
+Instruction utilisateur « enchaine » après C03. État réel relu avant modification : PR #7 OPEN/
+brouillon, tête locale/distante d752f8e429f6a9a6deede04baf67d6eb020380f8, base master
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611. Arbre propre, fetch et merge ff-only déjà synchronisés ;
+CI C03 push 41057087993 et PR 41057096982 success observées. Même branche
+work/step-5c-portal-account-lobby, aucun agent délégué ou autre tête publiée détecté, aucune fusion.
+
+[Canonique C04](docs/03-technical/portal-account-security.md) : step-up mot de passe actuel par
+session/action/paramètres, cinq minutes absolues et usage unique. Liaison HMAC avec le secret de
+session, aucun mot de passe ou checksum non salé en DB. Changement volontaire, reset 30 min/dernier
+jeton unique, changement email deux confirmations liées/une heure commune et déconnexion globale.
+Toutes PortalSessions révoquées y compris courante après succès sensible, step-ups invalidés,
+intention Game globale/epoch monotone et notifications sans secrets persistées dans la transaction.
+Reset/changement mot de passe annule l’email pending ; email changé invalide anciens resets et
+vérifications. Identité globale conservée, aucune connexion automatique ou restauration d’email.
+La demande email reste pending jusqu’aux deux preuves ; session à l’origine encore valide requise.
+
+Migration Accounts additive p0003 : step_up_grants/password_reset_requests/email_change_requests/
+account_revocations/security_email_outbox, génération globale et guards de politique User. Flags
+MFA/privilégié n’accordent aucun privilège : login/password-only et mutations refusés si actifs,
+demande reset générique sans lien ; preuves réelles C05 obligatoires avant ces variantes. Aucun
+MFA/administrateur fictif, support inventé ou nouvelle décision produit. Consommateur Game C06/C07
+absent : révocations pending, UI fidèle sans promesse distante instantanée ni nouveau délai huit heures.
+Le login relit génération/adresse/credential après lock, refus d’une connexion ancienne en vol.
+
+Worker local : seconde file de sécurité chiffrée Fernet, destinataire/IDs/type/token vérifiés,
+retry sans extension et effacement après SMTP/annulation/expiration, alternance des files sans
+starvation. Notifications à l’ancienne/nouvelle adresse avec lien non secret de parcours sécurité,
+pas de credential/token sensible. Mailpit local seulement ; fournisseur/production Q49 inchangés.
+UI : récupération, fragments retirés immédiatement, nouvelle saisie/confirmation du mot de passe,
+paramètres sensibles, deux confirmations email, logout global et nouvelle connexion explicite.
+Réponses privées invalides non affichées, aucun secret en stockage navigateur. Aucune fixture runtime.
+
+Validations locales réellement exécutées (images Python 3.12 / Node 22) :
+
+- Ruff backend/scripts réussi et **75 tests backend Portal réussis, aucun ignoré**, base dédiée
+  echosphere_c04_test créée/supprimée. Scopes de preuves, exacts 5/30/60 min, deux resets/confirmations
+  concurrents, réémission et invalidations croisées, unicité d’adresse sans fusion, rollback complet
+  si notification échoue, garde MFA/privilèges, logout global vs login en vol, SMTP retry/expiry/
+  payload effacé et deux workers ; suites C02/C03 conservées.
+- Migrations/check/roundtrip et refus de downgrade peuplé sur cette base uniquement. P0003 générée
+  depuis le schéma dédié p0002 puis relue/complétée (checks/guard). Aucun downgrade de base conservée,
+  révision publiée p0000–p0002 ni migration Game modifiée. Pas de nouvelle dépendance.
+- Frontend : npm ci, lint sans warning nouveau, **18 tests**, build et **11 Chromium** réussis.
+  Récupération/double confirmation 320/1440, login/refresh/logout et anciennes recettes conservés,
+  clavier et absence de débordement/stockage navigateur ; captures inspectées. API UI interceptée,
+  distincte des intégrations API/PostgreSQL et du SMTP TCP réel couvert dans la suite conservée.
+- Compose config/build/up --wait, Alembic check Accounts p0003 et Game 0004 sans dérive ; deux
+  smokes réellement réussis avec TLS strict, CORS/refus, cookie/challenge, pannes indépendantes et
+  reprise. Volumes préservés, aucune confiance CA/hosts modifiée. Base Accounts conservée sans User.
+- **69 documents**/liens valides, git diff --check et confidentialité/périmètre relus. Lignes Q01–Q56,
+  sections de décisions 1–8 identity-contracts et ADR 0008 comparés inchangés à d752f8e ; aucun
+  backend/frontend/game_data Game modifié. Statuts d’implémentation seulement actualisés.
+
+Échecs intermédiaires corrigés : collecte pytest avec deux noms de fichier identiques (nouveau
+fichier renommé), imports/variable/format Ruff, droits du fichier migration généré root dans Docker
+rétablis sur ce seul fichier, warning Fast Refresh résolu par extraction du helper, débordement
+select/form à 320 px détecté par Chromium puis corrigé et recette complète relancée. Les passages
+en échec ne sont pas présentés comme réussis. La première suite complète 73 backend a précédé
+les deux derniers cas ajoutés, puis le passage final 75 a réussi.
+
+CI de cette tête à observer après commit/push, puis résultat/SHA exacts à consigner dans PR #7 ;
+la configuration du workflow inchangée ne vaut pas preuve exécutée. Suite : **C05 MFA TOTP/WebAuthn,
+secours/récupération et preuves renforcées**, selon les contrats validés. C04 est livré sans MFA ;
+aucune route MFA utilisable sans preuve. Livraison Game C06/C07 et recette complète C09 restent futures.
+Limites : pas de navigateur hôte HTTPS complet, Windows/tactile/lecteur d’écran, charge/DDoS ou
+remise email publique attestés. Plancher anti-énumération 150 ms, pas de temps constant garanti en
+charge. Intention Game pending, support Q48/configuration Q49/modes Q55 conservés. Outils en Docker
+WSL2 utilisables pour ces commandes ; pas de nouvelle branche, merge, déploiement ou début de 5D.
+
+### C03 — connexion, appareils et sessions Portal, 2026-10-30
+
+Instruction utilisateur « On poursuit » après C02. GitHub réel vérifié avant modification : PR #7
+OPEN/brouillon, tête locale/distante 2025490b2e51f62519125bf2c859ebfc4cc9c3ba, base master
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611. Fetch et merge ff-only : déjà synchronisée, arbre propre.
+CI C02 push 40942091538 et PR 40942099627 success observées. Dernier lot attesté : Codex local C02 ;
+aucune autre tête publiée ni agent délégué. Même branche work/step-5c-portal-account-lobby, pas de merge.
+
+Livré : [C03 canonique](docs/03-technical/portal-sessions.md), modules Portal sessions/API, migration
+Accounts p0002 additive (browser_profiles, account_devices, portal_sessions, login_challenges,
+logout_requests), login/challenge, cookies __Host- Secure/HttpOnly/host-only/SameSite Strict,
+CSRF lié au secret/challenge, rotation sans report de l’absolu. Sessions Portal sept jours absolus /
+72 h inactives, vérification avant activité, aucune résurrection. GET/bootstrap/readiness/flags client
+ne comptent pas ; action explicite de navigation/actualisation dédiée avec CSRF. Profil navigateur
+opaque, cap initial dix appareils configurable, comptage concurrent sous verrou User et aucune
+éviction silencieuse. Même profil/onglets partagent la session ; cookies effacés ne révoquent pas
+l’ancien état serveur. Quotas login/bootstrap persistants et distincts des demandes email.
+
+Déconnexion ciblée : Portal révoqué + intention Game appareil/compte/session/epoch atomique. FK
+composites et génération monotone ; répétition sans nouvelle génération ni cible étrangère. Aucun
+transport/acquittement Game encore implémenté : état pending/UI fidèle, consommateur et tests
+inter-plans C06/C07 futurs. Pas de logout tous appareils sans step-up futur, aucun reset/changement
+email/MFA/membership/handoff/commande Colony dans C03. Les comptes non vérifiés peuvent accéder à
+ce Portal minimal, jamais à Game (aucun handoff disponible). Aucune identité/partie runtime fictive.
+
+Frontend : connexion, erreurs/cap avec action possible, connexions actives, actualisation volontaire
+et fermeture ciblée. CSRF uniquement en mémoire, aucun stockage navigateur. Rotation dans un autre
+onglet : relecture de la preuve sans rejouer l’action refusée ; réponse automatique tardive antérieure
+à la connexion ignorée. Présence d’un onglet ou bootstrap automatique sans maintien de session.
+Documentation/indexs/AGENTS/context/roadmap/passation et smoke TLS mis à jour ; contrats de décisions
+5B et lignes Q01–Q56 inchangés, seuls statuts d’implémentation actualisés. Aucun code/dépendance ou
+migration Game modifié ; p0000/p0001 Portal et ADR 0008 inchangés. Pas de nouvelle dépendance.
+
+Tests locaux réellement exécutés dans les images Python 3.12/Node 22 :
+
+- Backend : Ruff réussi ; **53 tests réussis, aucun ignoré** sur echosphere_c03_test dédiée,
+  dont échéances exactes/rotation/non-activité, challenge concurrent unique, cap concurrent sans
+  éviction, périmètres, FK de compte/session, génération monotone et rollback session/intention.
+  Upgrade/check/roundtrip et downgrade peuplé refusé. Base jetable recréée lors de l’affinage de la
+  migration encore non publiée, puis supprimée après recette ; aucune base conservée downgradée.
+  Warning Starlette/httpx connu, sans échec.
+- Frontend : npm ci, lint, **14 tests**, build et **9 scénarios Chromium** réussis : parcours C02
+  préservés, login/refresh explicite/logout 320/1440, quatre largeurs clavier/retry et same-site natif.
+  Captures inspectées ; UI à API interceptée distincte des tests HTTP/API/PostgreSQL.
+- Compose initialement arrêté hors workers, remis en marche par up --build --wait ; volumes et
+  données préservés. Deux bases/APIs/frontends/Mailpit healthy, workers running, migrate et
+  secrets-init Exited(0). Alembic check Portal p0002 et Game 0004 sans dérive.
+- smoke_compose.py et smoke_portal_compose.py réussis : TLS strict/noms, routage, CORS et pannes
+  croisées/reprises. Extension C03 vérifie challenge/cookie sous TLS et refus sans session/mauvaise
+  origine ; aucun compte créé, seulement des challenges anonymes expirables. Base Accounts
+  conservée vérifiée à zéro User. Aucun changement hosts ou magasin de confiance hôte.
+- 68 documents requis/liens valides, git diff --check sans erreur ; Qxx et décisions 5B comparées à
+  2025490, aucun fichier Game ou migration Portal déjà publiée modifié. Secrets/artefacts exclus.
+
+Échecs intermédiaires corrigés : format/tri/longueur Ruff et option Testing Library non typée dans
+un test frontend (tests alors verts, build TypeScript en échec ; nouveau build réussi ensuite).
+Aucune suite en échec n’est présentée comme passée. Source CI configurée inchangée, résultats de
+la nouvelle tête à observer après commit/push puis consigner dans PR #7 avec son SHA effectif.
+
+Limites : pas de recette complète navigateur hôte HTTPS, Windows/tactile/lecteur d’écran ou charge
+attestée. Smokes TLS réels et scénarios UI interceptés sont séparés. Logout Game reste pending jusqu’à
+C06/C07, aucune révocation distante annoncée instantanée ; procédures/fournisseur production Q49,
+support Q48 et modes Q55 inchangés. WSL2/Docker utilisables pour les commandes exécutées, outils en
+conteneurs jetables. Suite : **C04 opérations sensibles/step-up**, itérative avec C05 MFA selon le
+plan ; aucune route sensible utilisable sans ses preuves. 5D exclu, PR #7 reste en brouillon.
+
+### C02 — comptes et vérification email, 2026-10-29
+
+Instruction utilisateur « enchaine » après livraison de C01. Reprise GitHub : PR #7 OPEN/brouillon,
+branche/base/tête work/step-5c-portal-account-lobby / 63bb7d1c902e9c0fbae3497d4a36c107a80eb611 /
+79500f65728ef14a302b8e400f3f43e05792517f, arbre propre et branche synchronisée après fetch.
+CI C01 push 40935556492 et PR 40935563025 relues success, cinq jobs chacune. Pas d’agent délégué.
+
+Livré : [C02](docs/03-technical/portal-registration.md), comptes UUID stables/credentials Argon2id,
+inscription et vérification initiale 24 h unique, renvoi invalidant l’ancienne génération. Mot de
+passe requis à la confirmation/au renvoi contre la préinscription par un tiers. Réponses non
+énumérables, pas d’auto-login. Contrôle Pwned Passwords par préfixe HTTPS/padding, panne refusée 503.
+Migration Accounts p0001 additive (six tables) ; création credential/preuve/outbox/audit atomique,
+quota PostgreSQL distinct/concurrent, erreurs sans entrée privée, Origin/JSON stricts et corps borné.
+Outbox Fernet, clé privée persistante Docker hors Git, retry sans extension de validité, payload
+effacé après SMTP/annulation/expiration. Worker dédié + récepteur Mailpit isolé sans relais externe.
+UI du récepteur via local-edge sur loopback 8025 ; SMTP reste réseau interne sans port publié.
+Première tentative de publication directe du port Mailpit sur réseau interne inaccessible localement ;
+corrigée par ce proxy, puis vérifiée réellement. Volumes et données Game conservés.
+Formulaires Portal inscription/renvoi/confirmation, token de fragment retiré immédiatement de l’URL,
+secrets uniquement en mémoire, mobile/clavier. Aucune connexion/session/MFA/membership/handoff,
+fixture runtime, compte créé dans la base conservée ou API Colony. C03 est la suite ; 5D exclu.
+
+Choix techniques sous délégation 5B, sources primaires dans C02. Argon2id 64 MiB/3 passes/p1 : cinq
+calculs hash+verify successifs, médiane locale 160 ms dans l’image Python 3.12 (pas une mesure de
+charge production). Appel réel Pwned Passwords avec mot de passe jetable généré : réponse reçue,
+non compromis, aucune valeur privée imprimée. Aucun fournisseur email de production sélectionné.
+
+Validations locales exécutées :
+
+- Backend Portal : Ruff réussi et **36 tests réussis, aucun ignoré**, dont intégrations sur
+  echosphere_c02_test dédiée : upgrade/check/roundtrip, refus de downgrade peuplé, atomicité,
+  inscriptions/confirmations/renvois/quota concurrents, expiration exacte, SMTP TCP réel en panne
+  puis reprise, deux workers et effacement des payloads. Base de test supprimée après recette.
+  Passage initial sans opt-in : 16 réussis/17 ignorés avant les deux derniers tests ajoutés,
+  distinct de la suite complète. Warning Starlette/httpx connu, sans échec.
+- Frontend Portal : npm ci, ESLint, **8 tests** et build réussis. Chromium jetable Node 22/Debian :
+  **7 scénarios réussis**, quatre largeurs clavier/retry, same-site natif, formulaires inscription/
+  renvoi/confirmation 320 et 1440, fragment retiré et absence de stockage navigateur ; captures
+  320/1440 inspectées. API UI interceptée ; intégrations API/PostgreSQL/SMTP testées séparément.
+- Compose config/build/up --wait réussis ; Game et Accounts sans dérive Alembic ; deux smokes
+  réellement passés, TLS strict/noms/routage/CORS et pannes indépendantes avec reprise.
+  Aucun downgrade de base conservée, suppression de volume, modification hosts ou magasin CA.
+- Documentation : 67 documents requis/liens valides, diff sans whitespace ; tables Q01–Q56 et
+  sections de décisions 5B conservées, seulement statuts d’implémentation actualisés. Aucun code,
+  dépendance ou migration backend/frontend/game_data Game modifié. Secrets et artefacts exclus.
+
+Échecs intermédiaires corrigés : import bootstrap TypeScript manquant ; tri/format Ruff ; parsing
+Compose après insertion incorrecte ; premier pytest lancé sans installation de package dans une
+image Python brute (relancé via python -m pytest). Aucun de ces passages n’est présenté comme réussi.
+Première tête C02 d965ca9 : CI push 40941610709 et PR 40941616489 observées success, cinq jobs chacune
+et journaux relus (101/11/5 Game, 36/8/7 Portal, deux smokes). Le journal a révélé une tentative
+de contrôle de version Mailpit, bloquée par son réseau isolé : contrôle désactivé explicitement.
+CI de cette correction de configuration à observer après push ; workflow configuré ne vaut pas résultat exécuté.
+Résultat effectif/SHA publiés dans PR #7 après observation, sans boucle de commits de checkpoint.
+
+Limites : SMTP au moins une fois, doublon possible après acceptation avant commit ; pas de remise
+publique démontrée. Dépendance de contrôle de mots de passe externe, refus temporaire si indisponible.
+Procédures de clés/production et fournisseur Q49 futurs ; support Q48 et modes Q55 inchangés.
+Pas de recette navigateur hôte HTTPS, Windows/tactile/lecteur d’écran, charge ou DDoS attestée.
+WSL2/Docker fonctionnels pour ces commandes ; outils Python/Node exécutés en conteneurs jetables.
+
+### C01 — socle Portal séparé, 2026-10-29
+
+Instruction utilisateur « alors go » après présentation du plan et confirmation qu’aucun arbitrage
+ne bloque C01. Reprise : PR #7 OPEN/brouillon, tête/base 8122cf77d3fb00a8cd5d4c0fa332f42d9d1a2253 /
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611 ; fetch, branche synchronisée/propre. CI push 40930143792
+et PR 40930208556 observées success. Aucun agent délégué ni travail concurrent détecté.
+
+Livré sur work/step-5c-portal-account-lobby, pas sur master : portal/backend (FastAPI, config PORTAL_*,
+engine/pool/metadata indépendants, sondes sans détails privés), Accounts PostgreSQL/rôle/secret/volume/
+réseau propres, migration p0000_portal_baseline initialisant uniquement portal_alembic_version.
+portal/frontend : écran de préparation responsive, readiness propre au Portal et retry explicite.
+Compose garde les cinq services Game et ajoute portal-postgres/migrate/backend/frontend/local-edge.
+Caddy : deux origines HTTPS locales, CA dans volumes Docker, admin et installation de confiance hôte
+désactivées. Aucun compte, User, session, Argon2id, MFA, outbox, mTLS S2S ou API Colony ajouté.
+Aucun changement game_data/migrations/services métier ou lockfile Game ; contrats et Qxx inchangés.
+
+Tests locaux réellement exécutés dans les versions Docker prévues, sans Python/Node installés hôte :
+
+- Backend Portal : Ruff portal_app/migrations/tests et scripts réussi ; premier pytest sans opt-in
+  8 réussis/1 intégration ignorée ; passage complet 9 réussis/aucun ignoré sur base dédiée
+  echosphere_c01_<identifiant>_test créée puis supprimée, aucun downgrade de la base conservée.
+  Upgrade répété/check/downgrade/base/upgrade et timezone UTC vérifiés. Un warning Starlette/httpx.
+- Frontend Portal : npm ci, ESLint, 4 tests et build réussis. Lock autonome, Vitest 4.1.12/Vite 7.3.7 ;
+  npm audit initial 0 vulnérabilité. Génération du lock avec npm 12 après échec interne npm 10
+  « edgesOut » ; consommation ultérieure par npm ci de Node 22 réussie, aucun outil installé hôte.
+- Chromium Debian jetable : 5 scénarios réussis, dont 320/390/768/1440 clavier/focus/retry et absence de
+  débordement et classement same-site des hôtes sur serveur local réel. Les hôtes définitifs
+  portal.echosphere.localhost et game.echosphere.localhost ont un parent commun, conforme à 5B.
+  Captures 320/1440 inspectées. Sondes interceptées pour les tests UI ; pas de recette
+  graphique Windows, tactile ou lecteur d’écran. Captures hors Git.
+- docker compose config --quiet et up --build --wait réussis ; bases/APIs/frontends healthy,
+  worker Game running et migrations Game/Portal Exited(0). Caddy observé v2.11.7.
+- smoke_portal_compose.py réussi : TLS strict avec CA publique en mémoire/noms vérifiés, deux
+  origines/routage et CORS refusé, historiques séparés, panne Accounts sans panne Game puis inverse,
+  reprises. smoke_compose.py Game réussi. Alembic check Portal et Game sans dérive, Game reste 0004.
+  Volumes de données conservés, aucune CA installée dans Windows/WSL2.
+
+CI étendue : jobs portal-backend/portal-frontend et smoke HTTPS ; jobs Game préservés. Documentation
+opérationnelle [portal-foundation](docs/03-technical/portal-foundation.md), références et état courant
+actualisés. Le code CI est une recette, pas encore une CI passée sur la nouvelle tête à ce checkpoint.
+Checks finaux exécutés : 66 documents/chemins/liens valides, git diff --check sans erreur ; registre
+Q01–Q56 et identity-contracts intégralement identiques à 8122cf7. Diff/périmètre/confidentialité relus,
+aucun backend/frontend/game_data Game modifié, aucune clé/certificat/artefact privé staged.
+Après publication, observer SHA/CI
+propres et consigner leurs résultats exacts dans PR #7, sans nouvelle boucle de commits de checkpoint.
+
+Limites : socle local, aucune auth implémentée ; UI Chromium HTTP et smoke TLS réel vérifiés séparément.
+Pas de recette HTTPS navigateur hôte ni résilience de commandes Game futures, charge ou isolation
+CPU/RAM. Dépréciations dev ESLint/whatwg-encoding et Starlette conservées sans échec ; avis Game
+historiques inchangés. C01 ne ferme aucune Qxx supplémentaire. Prochain ticket : C02 comptes,
+Argon2id/vérification email et livraison durable, selon 5B, sans choix de fournisseur production imposé.
+5D non commencé ; PR #7 à actualiser et laisser non fusionnée.
+
+### Synchronisation après fusion de PR #6 — 2026-10-29
+
+GitHub réel : PR #6 était encore OPEN/brouillon sur 4b17c16494bc9949d3387ccbfb13a2359e74f59e,
+malgré la formulation initiale de la demande ; CI push 40924593354 et PR 40924600793 completed/success.
+Sur instruction explicite « Merge la PR6 », passage prêt pour revue puis fusion normale, tête attendue
+contrôlée. Merge réel : **63bb7d1c902e9c0fbae3497d4a36c107a80eb611**, parents 8214e0b et 4b17c16.
+Aucune branche supprimée. Fetch GitHub, bascule master, fast-forward vers origin/master et arbre propre
+vérifiés. Nouvelle branche **work/step-5c-portal-account-lobby** créée directement depuis ce merge ;
+branche 5B non réutilisée. CI master [40929141873](https://github.com/ThomasPerez91/Echosphere/actions/runs/40929141873)
+observée completed/success sur le merge avant publication du checkpoint.
+
+Premier travail de cette branche : références courantes README/context/progress, index docs,
+identity-contracts, Qxx, roadmap/backlog, passation/lacunes/décisions, architecture/API/sécurité,
+ADR 0008, AGENTS et DoD synchronisées avec l’intégration réelle. Les checkpoints antérieurs ci-dessous
+restent des relevés historiques, leurs formulations de revue/brouillon ne décrivent pas le lot courant.
+Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ; reports Q48/Q49/Q55 inchangés. Aucune décision
+5B modifiée, aucun compte/auth/Portal ajouté. Diff limité à la synchronisation documentaire.
+
+Validations locales exécutées : `python3 scripts/check_docs.py` réussi, 64 documents/chemins/liens ;
+`git diff --check` sans erreur. Q01–Q56 présentes exactement une fois ; toutes les lignes de décision
+Qxx strictement identiques au merge. Sections métier 1–8, matrice d’acceptation 10 et sources 11 de
+identity-contracts identiques au merge ; seules les mentions de statut/intégration changent.
+Diff des 18 fichiers Markdown relu : synchronisation documentaire uniquement, sans décision nouvelle.
+Tests backend/frontend, migrations et Compose non relancés pour ce diff documentaire ; aucune
+implémentation 5C ni preuve d’authentification testée à ce stade.
+
+Premier checkpoint publié : **1c2749773c3bb3cf7eedf9a0f4013b9ce7c8f98a**, tête distante relue et
+arbre propre. CI [40929423582](https://github.com/ThomasPerez91/Echosphere/actions/runs/40929423582)
+observée completed/success sur cette tête, jobs backend/frontend/compose-smoke réussis.
+
+### Cadrage 5C présenté avant code substantiel — 2026-10-29
+
+Après publication du premier checkpoint, analyse du dépôt réel (configuration/persistance Game,
+migrations, services Colony, shell/Vite, Compose et dépendances). Nouveau
+[plan 5C](docs/05-project/step-5c-plan.md) : sous-tickets C00–C09, tables/migrations Accounts séparées,
+applications Portal backend/frontend, minimum d’accès Game nécessaire au handoff, frontière 5D et
+reports. Plan technique et périmètre proposés pour présentation, pas décision produit supplémentaire.
+C01 est le prochain incrément de code ; aucune implémentation substantielle dans ce checkpoint.
+
+Limite de périmètre explicitée : le domaine 5A ne crée pas une partie complète. Lobby fondé sur
+participations réelles, sans fixture/public join ; un bouton créant une partie jouable nécessiterait
+cadrage de démarrage dédié avant implémentation, sans inventer les questions de modes/progression.
+Reports Q48/Q49/Q55 inchangés. Les détails techniques restent délégués, pas de questionnaire par
+paramètre. Cadrage documenté séparément du premier commit de synchronisation demandé.
+
+Validation locale du cadrage exécutée : `python3 scripts/check_docs.py` réussi (65 documents et
+liens), `git diff --check` sans erreur ; Q01–Q56 et toutes leurs lignes strictement inchangées depuis
+le merge 5B, diff Markdown uniquement. Checks fonctionnels non relancés localement pour ces documents. Après publication, observer la CI de sa tête et consigner les résultats dans
+la PR du lot. Prochaine action : présentation du plan à l’utilisateur avant code substantiel ; aucun
+5D ni nouveau merge autorisé.
+
+## Historique du lot 5B — contrats identité / Portal-Game consolidés
 
 **Statut : 5B documentaire terminé, prêt pour revue finale de PR #6 sous réserve de la CI publiée.**
 Contrats validés et non implémentés ; aucun début de 5C et aucun merge autorisé.

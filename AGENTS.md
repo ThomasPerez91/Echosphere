@@ -1,8 +1,10 @@
 # Procédure commune des agents — Echosphere
 
-**Statut : règle de travail Work / Codex local.** GitHub est la source commune du code, décisions,
-architecture et progression. Ne jamais supposer que la mémoire du chat suffit. Lire les statuts de
-[docs/README](docs/README.md) ; une proposition d’assistant ne vaut pas validation utilisateur.
+**Statut : règle de travail commune à ChatGPT Work (GitHub), Codex local et Claude Code local
+(Ubuntu WSL2/VS Code).** Ce fichier est la référence des instructions d’agent ; CLAUDE.md l’importe
+sans le dupliquer. GitHub est la source commune du code, décisions, architecture et progression.
+Aucune mémoire conversationnelle partagée : le contexte passe par documents versionnés, commits et PR.
+Lire les statuts de [docs/README](docs/README.md) ; une proposition d’assistant ne vaut pas validation utilisateur.
 
 ## Début de chaque session
 
@@ -12,8 +14,9 @@ architecture et progression. Ne jamais supposer que la mémoire du chat suffit. 
 3. Lire AGENTS.md → [context.md](context.md) → [progress.md](progress.md).
 4. Lire [passation](docs/06-handoff/README.md), [roadmap](docs/05-project/roadmap.md),
    [questions](docs/05-project/open-questions.md), documents métier et ADR du lot.
-5. Identifier le dernier travail publié Work ou Codex, sa CI et ses limites. Ne pas démarrer deux
-   modifications concurrentes sur la même branche ni inventer l’identité de l’agent précédent.
+5. Identifier le dernier travail publié (Work, Codex ou Claude Code), sa CI, ses limites et tout
+   travail local non commité. Ne pas démarrer deux modifications concurrentes sur la même branche
+   ni inventer l’identité de l’agent précédent.
 6. Définir le périmètre autorisé : une documentation future n’autorise pas son implémentation.
 
 ## Fin de chaque session
@@ -26,32 +29,56 @@ architecture et progression. Ne jamais supposer que la mémoire du chat suffit. 
    ouvrir/actualiser la PR selon le lot. Relire SHA distant et CI effective après publication.
 5. Aucune fusion/tag/release/déploiement ou suppression de branche sans instruction propre.
 
-Même DoD dans Work et Codex. Pas de résultat CI configuré présenté comme exécuté ; pas de WSL2
-annoncé testé sans recette réelle attestée. Procédure concrète :
-[Work ↔ Codex](docs/06-handoff/work-codex-handoff.md), [DoD](docs/04-quality/definition-of-done.md).
+Même DoD, mêmes spécifications et mêmes règles pour les trois agents. Pas de résultat CI configuré
+présenté comme exécuté ; pas de WSL2 annoncé testé sans recette réelle attestée. Procédure concrète :
+[protocole de collaboration](docs/06-handoff/work-codex-handoff.md), [DoD](docs/04-quality/definition-of-done.md).
 
-## Mission documentaire historique et reprise Git
+## Collaboration, revue croisée et Git
 
 master = intégration stable ; work/... → PR master → CI/revue → merge sur autorisation explicite.
 Le workflow historique develop/release est superseded, aucune develop permanente. Pour un nouveau
 lot après intégration de sa fondation : master synchronisée puis branche courte, sans empilement.
 
-Checkpoint du 28/10/2026 : la passation documentaire a été portée par
-**work/step-5a-colony-domain / PR #5**, ouverte et non fusionnée au départ sur 5be00da.
-L’état GitHub réel prévaut toujours sur les consignes contextuelles d’un ancien checkpoint.
+- Checkpoint principal : bloc « Reprise rapide » en tête de [progress](progress.md) (branche, tête/CI,
+  dernier agent si connu, travail, décisions, fichiers, tests réellement exécutés, anomalies,
+  prochaines tâches). Pas de fichier de suivi parallèle ; références durables dans les docs métier.
+- Revue croisée possible dans les deux sens (Codex ↔ Claude Code), ChatGPT Work pouvant relire ou
+  reprendre depuis GitHub : relecteur d’abord en lecture seule sur un SHA noté, anomalies prouvées
+  (fichier:ligne, spécification, commande/sortie) et classées Bloquante/Majeure/Mineure/Remarque,
+  publiées dans la PR. Le développeur confirme ou conteste avec preuve, corrige, relance les tests ;
+  le relecteur valide le nouveau SHA. Absence d’anomalie ≠ garantie ; validation ≠ autorisation de merge.
+- Un seul agent écrit dans un répertoire de travail et sur une branche à la fois ; jamais deux agents
+  sur les mêmes fichiers du même répertoire. Parallélisme par branches et git worktrees distincts.
+- Aucun test déclaré réussi sans exécution réelle ou vérification de sa CI sur le SHA concerné.
 
-- Si PR #5 est encore ouverte et que la mission porte dessus, reprendre sa branche existante ;
-  ne pas créer de nouvelle branche ni PR #6 pour ce lot, ni merger sans autorisation explicite.
-- Si PR #5 est fusionnée, cette consigne est historique : ne pas reprendre sa branche pour un
-  nouveau lot. Tout nouveau lot autorisé repart de master synchronisée sur une nouvelle branche
-  courte work/..., selon son périmètre. Ne pas recréer la branche de PR #5.
+### Priorité, protection du travail et relais
 
-Le périmètre de la passation était **documents uniquement**, plus scripts/check_docs.py si nécessaire
-aux nouveaux documents. Services, gameplay, migrations/SQL, game_data (même son README), dépendances,
-Compose/Docker et tests fonctionnels étaient exclus. Toute anomalie de code observée dans cette
-mission va dans [audit](docs/06-handoff/pr-5-audit.md)/[risques](docs/06-handoff/known-gaps.md), sans
-correctif dans ce lot. Une nouvelle instruction et progress déterminent le prochain lot ; aucun
-force-push ou suppression de branche implicite.
+- Codex et ChatGPT Work sont les agents principaux de développement ; Claude Code reprend sur
+  épuisement de crédits/limites, indisponibilité ou demande de revue indépendante. Cette priorité
+  ne change ni les permissions Git ni les règles de validation.
+- Avant toute écriture : `git status`, branche, SHA, diffs indexés/non indexés et fichiers nouveaux
+  examinés ; travail à préserver identifié ; absence d’autre agent écrivant dans le même répertoire
+  vérifiée (en cas de doute, demander à l’utilisateur). Une consigne n’est pas une protection
+  technique : isoler les tâches parallèles par git worktrees.
+- Interdits sans autorisation explicite : `git reset --hard`, `git clean -fd`, `git push --force`,
+  écrasement d’un fichier modifié par un autre agent, remplacement silencieux d’un fichier entier
+  contenant des modifications à préserver, et équivalents destructifs (restore/checkout de fichiers,
+  stash drop/clear, branch -D, worktree remove --force).
+- Reprise : partir du dernier état réellement accessible (disque local pour Codex, commits publiés pour
+  Work), préserver l’incomplet, établir fait/reste à faire, ne pas recommencer à l’aveugle. Divergence,
+  conflit ou travail non enregistré : suspendre l’opération et proposer une résolution gardant les
+  deux versions ; aucun pull/rebase/merge/checkout ne perd silencieusement du travail local.
+- Relecteur en lecture seule : il ne modifie pas les fichiers de l’autre agent sans nouvelle
+  autorisation ; corrections acceptées appliquées de façon contrôlée puis vérifiées par diff et tests.
+- Checkpoints intermédiaires poussés sur la branche du lot pour permettre la reprise, sans secret ni
+  fichier temporaire ; un checkpoint publié n’est ni validation fonctionnelle ni autorisation de fusion.
+  Procédure détaillée : [protocole](docs/06-handoff/work-codex-handoff.md#protection-du-travail-existant).
+
+Historique : la passation du 28/10/2026 (documents seulement, branche de PR #5) est close ; PR #5 et
+#6 sont fusionnées et leurs consignes de reprise ne s’appliquent plus. Anomalies de code observées
+hors lot : [audit](docs/06-handoff/pr-5-audit.md)/[risques](docs/06-handoff/known-gaps.md).
+Une nouvelle instruction et progress déterminent le prochain lot ; aucun force-push ou suppression de
+branche implicite.
 
 ## Produit et données
 
@@ -67,6 +94,14 @@ identifiable par infrastructure, upgrade sans nouvelle place, capacités variabl
 Niveaux continus ; 1–5 seulement early game, pas de plafond 5. Paramètres/facteurs/arrondis dans
 game_data validé et versionné ; valeurs de balance provisoires, jamais copiées en constantes métier.
 
+## Références visuelles
+
+Avant tout travail UI substantiel, lire [le guide visuel](docs/visual-reference/README.md), consulter
+`design-system.png` comme ancre générale et l’écran de référence du domaine concerné. Préserver
+la cohérence avec les composants/styles React existants : une nouvelle UI doit rester reconnaissable
+comme Echosphere, sans dérive graphique progressive non décidée. Le contenu métier des mockups
+n’est jamais une décision validée ; documentation canonique et ADR priment en cas de contradiction.
+
 ## Architecture actuelle et cible
 
 Actuel : backend Game FastAPI modulaire, worker du même code, PostgreSQL, SQLAlchemy/Alembic,
@@ -81,14 +116,24 @@ idempotente. Le client gameplay appelle Game directement ; pas de dépendance Po
 Ticket signé court/unique puis GameSession opaque autonome : contrats 5B validés dans
 [identity-contracts](docs/03-technical/identity-contracts.md), détails techniques délégués à 5C/5D.
 Aucun credential Accounts en Game DB. Portal indisponible ne doit pas arrêter univers/worker ou
-sessions Game établies dans les limites du contrat 5B validé. Aucun Portal/auth/DB supplémentaire implémenté ici.
+sessions Game établies dans les limites du contrat 5B validé. Socle C01 sur PR #7 : Portal FastAPI,
+Accounts PostgreSQL/Alembic et frontend séparés, HTTPS local. C02 ajoute inscription/Argon2id/vérification email et outbox locale durable ;
+C03 ajoute connexion, profils/sessions Portal, CSRF et intentions de logout durables.
+C04 ajoute opérations sensibles sans MFA, step-up et révocations globales persistées.
+C05 ajoute MFA TOTP/WebAuthn, secours/récupération limitée et preuves renforcées C04 ;
+C06 ajoute lobby, outbox et interface privée mTLS, droits effectifs et révocations compte/appareil.
+C07 livre le [handoff/GameSession](docs/03-technical/game-handoff.md) ; [recette C06](docs/03-technical/portal-game-control.md). [Recette C05](docs/03-technical/portal-mfa.md).
+[Recette C04](docs/03-technical/portal-account-security.md). [Recette C03](docs/03-technical/portal-sessions.md). [Recette C02](docs/03-technical/portal-registration.md).
+[Recette C01](docs/03-technical/portal-foundation.md).
 
 Compte global, plusieurs parties : User → UniverseMembership → Universe → éventuellement Empire/
 rôle/permissions. Ne pas réduire à Empire.owner_user_id ; empire partagé Q21 reste ouvert.
 Universe n’est ni User ni processus. Pas de compte global factice ou accès implicite pour une démo.
 Q16 a son cadrage 5B couvert ; détails délégués et reports Q48/Q49/Q55 au registre.
-5B documentaire terminé pour revue, 5C compte/lobby sur instruction distincte,
-5D API Colony sécurisée. Ne pas commencer ces systèmes au titre de la passation.
+5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats seulement partiellement implémentés sur PR #7 par C02–C08.
+Lot courant autorisé : 5C compte/lobby. Checkpoint et cadrage effectués ; C01 implémenté sur PR #7,
+C02/C03 comptes/vérification/sessions, C04 opérations sensibles et C05 MFA implémentés ; C06 lobby/S2S implémenté ; C07 handoff/GameSession est implémenté ; C08 livré et recette de clôture C09 réalisée : 5C prêt pour revue finale de PR #7, non fusionné. Migrations Accounts séparées, pas de SQL Portal→Game.
+5D API Colony sécurisée reste hors lot. Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver
 

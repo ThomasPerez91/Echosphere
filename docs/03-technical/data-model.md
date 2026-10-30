@@ -1,6 +1,6 @@
 # Modèle de données conceptuel
 
-**Statut : Implémenté jusqu’au domaine Colony 5A sur PR #5 ; identité et autres domaines futurs.**
+**Statut : Colony 5A intégré ; identité C02–C07 implémentée sur PR #7 ; autres domaines futurs.**
 
 
 | Concept | Responsabilité et relations proposées |
@@ -101,18 +101,20 @@ redimensionnement de planète. ResourceBalance et ColonyTimeline restent l’aut
 Aucune table DefenseNetwork/DefenseModule créée ; les futurs adaptateurs typés peuvent s’ajouter.
 Voir [ADR 0007](../adr/0007-colony-economy.md) et [règles v0.1](../01-game-design/colony-economy-v0.1.md).
 
-## Identité et bases cibles — décision validée, non implémentée
+## Identité et bases cibles — sous-ensemble C02 implémenté sur PR #7
 
 Les [contrats 5B validés](identity-contracts.md) distinguent Membership souhaitée côté Portal,
 accès effectif versionné et bindings d’Empire côté Game ; une participation par compte/univers.
-Ces objets restent non implémentés, sans migration. Schémas/contraintes sont délégués à 5C/5D ;
+Les participations et accès restent non implémentés. C01 initialise portal_alembic_version ;
+[C02/p0001](portal-registration.md) ajoute users, password_credentials, account_tokens, email_outbox,
+abuse_counters et security_events dans Accounts DB seulement. Aucun accès Game créé. Schémas/contraintes sont délégués à 5C/5D ;
 Q51–Q54 closes pour leurs contrats 5B, Q21 partage d’Empire toujours ouverte.
 
 Compte global et plusieurs univers simultanés ; User → UniverseMembership → Universe →
 éventuellement Empire/rôle/permissions. Pas de réduction à Empire.owner_user_id, partage Q21 ouvert.
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) sépare Accounts DB et Game DB :
 
-| Base future | Données conceptuelles, aucune table créée ici |
+| Base future | Données cibles ; sous-ensemble C02 précisé ci-dessus |
 | --- | --- |
 | Accounts DB, propriétaire Portal | users, credentials/hashes, sessions Portal, MFA/récupération, informations globales membership/lobby |
 | Game DB, propriétaire Game | État gameplay existant et futures références minimales global_user_id/universe_id/membership ou access id/empire éventuel/role/status |
@@ -121,5 +123,52 @@ Aucun mot de passe/credential Accounts répliqué en Game DB, pas de FK inter-ba
 Portal n’écrit pas dans Game DB ; changements via interface interne Game authentifiée/idempotente.
 Portal porte l’intention ; Game l’application locale. Outbox, révisions/idempotence et révocations
 ciblées Q51–Q54 validées ; détails de stockage délégués, aucun SQL nouveau dans ce lot.
-Les FK composites d’univers actuelles restent inchangées. Pas de User/Membership/GameSession
-implémenté sous prétexte que le schéma conceptuel les mentionne.
+Les FK composites d’univers actuelles restent inchangées. User est implémenté par C02 ; Membership/GameSession restent futurs.
+
+## Extension C03 sur PR #7
+
+[Sessions Portal/CSRF](portal-sessions.md) : migration Accounts additive p0002, cinq tables
+profils/appareils/sessions/challenges/intentions de logout. Aucun schéma Game modifié. Les intentions
+de déconnexion sont persistées mais leur livraison/acquittement distant reste à C06/C07.
+
+## Extension C04 sur PR #7
+
+[Opérations sensibles sans MFA](portal-account-security.md) : step-up par action cinq minutes/unique,
+reset trente minutes, double confirmation email une heure et logout global. Migration Accounts p0003
+additive, notifications chiffrées et intentions de révocation Game pending. MFA/privilèges refusés
+sans preuve suffisante ; [C05](portal-mfa.md) fournit maintenant les facteurs et leur intégration.
+Aucune livraison Game ou API Colony ajoutée.
+
+## Extension C05 sur PR #7
+
+[MFA Portal](portal-mfa.md) : TOTP unique, cinq WebAuthn nommables, dix secours uniques et récupération
+limitée quinze minutes ; preuve par action cinq minutes, garde-fous privilégiés WebAuthn, aucune
+restauration support inventée. Migration Accounts p0004_mfa, clé TOTP séparée, cooldown progressif,
+audit et notifications. Ajout de facteur/régénération volontaire protégés conservent les sessions ;
+activation, réduction/remplacement/désactivation et récupération révoquent globalement. Intentions
+Game pending à ce checkpoint C05 ; [C06](portal-game-control.md) livre depuis leur transport et
+acquittement. Aucun secret Accounts ou SQL Portal dans Game, aucune API Colony.
+
+## Extension C06 sur PR #7
+
+[Lobby et contrôle privé](portal-game-control.md) : références/memberships/outbox Accounts p0005,
+droits/bindings/ledger/epochs Game 0005. Listener mTLS distinct de l’API publique, certificat client
+épinglé depuis TLS, aucune identité de header ; destinations configurées, pas de SQL Portal→Game.
+Snapshots complets/révisions monotones, retry d’opération stable sans nouvelle date, acquittement
+validé et réconciliation. Révocations compte/appareil diffusées à chaque cible configurée, sources
+acknowledged seulement après tous les acquittements. Sessions Game ajoutées par [C07](game-handoff.md), aucune API Colony.
+Lobby limité à son compte, pending/applied/expiration datés, aucun univers de démo ou join public ;
+GET sans activité ni renouvellement, refresh volontaire classé serveur. Recette réelle sur deux bases
+temporaires *_test et refus TLS/headers, séparée du Chromium à API interceptée ; résultats dans progress.
+
+
+## Complément C07 sur PR #7
+
+[Handoff et sessions Game](game-handoff.md) : ticket signé Ed25519 local, pré-auth navigateur,
+échange POST atomique et cookie par univers ; contexte minimal et logout, aucun endpoint Colony.
+Game additive 0006_game_sessions, Accounts p0005_control inchangée. Rotation/production et
+nettoyage à recetter en C09 ; commandes sécurisées réservées à 5D.
+
+
+Compléments actuels sur PR #7 : [C08 parcours et shell](portal-game-ui.md),
+[C09 recette et opérations](portal-operations.md). Aucun début de 5D ni exposition production.

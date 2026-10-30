@@ -1,108 +1,299 @@
-# Reprise et relais Work ↔ Codex local
+# Protocole de collaboration — ChatGPT Work, Codex et Claude Code
 
-**Statut : procédure commune validée ; recette initialement proposée dans la passation du 28/10.**
-Actualisation 29/10 : PR #5 fusionnée sur master 8214e0b ; recette locale WSL2 réalisée depuis,
-preuves/limites dans [progress](../../progress.md). Les exemples #5 ci-dessous sont conditionnels ou
-historiques. PR #6 porte désormais 5B documentaire terminé pour revue finale ; reprendre sa branche
-pour sa revue, sans nouveau lot/merge implicite. [Contrats](../03-technical/identity-contracts.md).
-Les agents partagent GitHub, pas leur mémoire ni nécessairement un disque, des processus ou secrets.
-La qualité attendue est identique dans les deux environnements.
+**Statut : règle de travail validée par l’utilisateur le 2026-10-30, complétée le même jour par le
+protocole de sécurité (priorité, protection du travail, relais sur épuisement des crédits).** Remplace la procédure à deux
+agents Work ↔ Codex du 28/10 (exemples PR #5 désormais historiques). Le nom du fichier est conservé
+pour les liens existants. Consignes de base : [AGENTS](../../AGENTS.md) ; checkpoint courant :
+[progress](../../progress.md) ; recette : [Definition of Done](../04-quality/definition-of-done.md).
 
-## Prendre le relais sans perdre le travail
+## Agents et environnements
 
-1. Lire GitHub réel : PR, base/head/SHA, branches, CI et éventuels commentaires de revue. La présence
-   d’une branche locale ne prouve ni publication ni merge. Exemple CLI si gh est disponible :
-   `gh pr view 5 --repo ThomasPerez91/Echosphere --json state,baseRefName,headRefName,headRefOid,mergeable,statusCheckRollup`.
-   Sinon consulter la PR sur GitHub ou via la connexion Work ; ne pas demander de token dans le chat.
-2. Avant synchronisation, `git status --short --branch` puis `git fetch origin`. Travail non committé,
-   tête divergente ou modification de l’autre environnement : préserver et examiner le diff ; ne
-   pas reset/force-push/stash automatique ou démarrer deux modifications concurrentes du même lot.
-3. PR #5 encore ouverte et mission sur cette branche : reprendre la branche existante, **pas de PR #6**.
-   Pour un clone neuf de la PR :
+| Agent | Environnement | Capacités habituelles | Limite à consigner |
+| --- | --- | --- | --- |
+| ChatGPT Work | GitHub (connecteur) | Lire PR/diff/commits/CI, commenter, publier des commits documentaires ou de code sur une branche | Pas de Docker ni de shell local attesté : ses validations sont la CI observée, jamais des « tests locaux » |
+| Codex local | Ubuntu WSL2 + VS Code, filesystem Linux (~/projects) | Git, Docker Compose, tests natifs ou en conteneur, gh | Recette graphique Windows non attestée sauf preuve |
+| Claude Code local | Même WSL2/VS Code, même machine que Codex possible | Idem Codex ; lit AGENTS.md via [CLAUDE.md](../../CLAUDE.md) | Même disque que Codex : voir règles de travail parallèle |
 
-```bash
-git clone --branch work/step-5a-colony-domain https://github.com/ThomasPerez91/Echosphere.git
-cd Echosphere
-git status --short --branch
-git fetch origin
-git pull --ff-only origin work/step-5a-colony-domain
-```
+**Priorité** : Codex et ChatGPT Work sont les outils principaux de développement. Claude Code prend
+le relais lorsque leurs crédits ou limites d’utilisation sont atteints, lorsqu’ils sont indisponibles,
+ou sur demande de revue indépendante. La priorité désigne qui travaille ; elle ne modifie jamais les
+permissions Git, le périmètre autorisé ni les règles de validation.
 
-4. Lire AGENTS → context → progress → docs/06-handoff/README → roadmap → open-questions → docs du lot.
-   Identifier le dernier commit publié et ce qu’il a réellement vérifié, quel que soit l’agent.
-5. Après fusion future de #5, un **nouveau lot autorisé** repart de master synchronisée sur une
-   branche work/... dédiée. Aucun merge, suppression de branche ou changement de base implicite.
+Les trois agents appliquent les mêmes règles de développement, spécifications, invariants et DoD.
+Aucun agent ne partage la mémoire conversationnelle d’un autre : le contexte passe **uniquement** par
+les documents versionnés, les commits, les PR (description, commentaires, revues) et la CI GitHub.
+Une décision prise en conversation n’existe pour les autres qu’après transcription synthétisée,
+avec statut et provenance, dans sa référence canonique. Ne pas inventer l’identité d’un agent.
 
-## Démarrage frais après fusion future de PR #5
+## Prendre le relais
 
-Cible : Windows 11 → Ubuntu WSL2 → VS Code → Docker Desktop avec intégration de la distribution →
-Codex local ; ChatGPT Desktop éventuellement. Utiliser le filesystem Linux de WSL2, par exemple
-~/projects. Préparer Git, Docker/Compose v2 et les ports 5173/8000 ; aucune installation Python/Node
-hôte n’est nécessaire au lancement Compose. Le projet ne fournit pas d’installeur de ces outils.
+1. **État GitHub réel** : PR, base/head/SHA, branches, CI et commentaires de revue non résolus.
+   Une branche locale ne prouve ni publication ni merge.
 
 ```bash
-git clone https://github.com/ThomasPerez91/Echosphere.git
-cd Echosphere
-cp .env.example .env
-docker compose up --build -d --wait --wait-timeout 180
-docker compose ps
+gh pr list --repo ThomasPerez91/Echosphere --state open
+gh pr view <n> --repo ThomasPerez91/Echosphere \
+  --json state,isDraft,baseRefName,headRefName,headRefOid,statusCheckRollup
+gh run list --repo ThomasPerez91/Echosphere --commit <sha>
 ```
 
-Ces commandes sur master ne donnent 5A/passation **qu’après leur fusion effective**. Avant cela,
-utiliser la branche #5 ci-dessus. Ne pas écraser un .env existant lors d’un relais. Les identifiants
-de développement sont publics, ne pas les réutiliser pour une exposition distante.
+2. **État local** (Codex/Claude) : `git status --short --branch`, `git fetch origin`, puis
+   `git pull --ff-only` sur la branche du lot. Travail non committé, divergence ou worktree d’un autre
+   agent : préserver et examiner ; jamais de reset, stash automatique, force-push ou suppression.
+3. **Lecture** : AGENTS → context → progress (bloc « Reprise rapide » d’abord) → passation →
+   roadmap → open-questions → documents métier et ADR du lot.
+4. **Périmètre** : la dernière instruction utilisateur consignée dans progress fait foi. Une
+   documentation future, une PR ouverte ou un audit n’autorisent ni implémentation ni fusion.
 
-Ouvrir http://localhost:5173, /health et /ready sur http://localhost:8000, documentation locale
-http://localhost:8000/docs. Attendu : shell sans partie active, « Services disponibles » si ready ;
-postgres/backend/frontend healthy, worker running et migrate exited(0) avec `docker compose ps -a`.
-Aucun univers, stock ou bâtiment n’est injecté automatiquement. Pas de Portal/Accounts DB dans Compose.
+## Checkpoint de reprise
 
-```bash
-python3 scripts/check_docs.py
-docker compose exec backend alembic check
-python3 scripts/smoke_compose.py
-docker compose down
-```
+progress.md est le checkpoint principal ; les documents métier restent les références durables.
+Pas de fichier de suivi supplémentaire : les anomalies de revue vivent dans la PR, leur synthèse dans
+progress. Le bloc **Reprise rapide** en tête de progress est réécrit par chaque agent qui publie :
 
-Le smoke arrête/redémarre temporairement PostgreSQL pour tester panne/reprise ; l’exécuter sur
-l’environnement local de test. `down` conserve le volume ; `down -v` détruit les données et ne fait
-pas partie du relais normal. Migrations/diagnostic : [déploiement](../03-technical/deployment.md).
+| Champ | Contenu attendu |
+| --- | --- |
+| Branche / PR / base | Nom, numéro, SHA de base |
+| Tête et CI | SHA publié ; runs CI observés (id, event, conclusion) ou « non observée » |
+| Dernier agent | ChatGPT Work, Codex local ou Claude Code local, si connu ; sinon « inconnu » |
+| Travail réalisé | Ticket/lot et résultat en une ou deux lignes |
+| Décisions | Liens vers les références canoniques modifiées, statut ; aucune décision inventée |
+| Fichiers modifiés | Zones ou fichiers principaux du dernier incrément |
+| Tests réellement exécutés | Commandes et résultats ; checks non exécutés listés comme tels |
+| Anomalies / corrections restantes | Constats de revue ouverts (lien PR), risques, Qxx touchées |
+| Prochaines tâches | Prochaine action autorisée, puis séquence prévue |
 
-## Vérifications identiques Work / Codex
+Le SHA d’un commit ne peut pas figurer dans ce même commit : noter « tête = commit portant ce
+checkpoint », puis consigner SHA et CI dans un commentaire de PR ou au checkpoint suivant.
 
-```bash
-python3.12 -m venv backend/.venv
-backend/.venv/bin/pip install -r backend/requirements-dev.lock
-backend/.venv/bin/pip install --no-deps -e backend
-(cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q)
-(cd frontend && npm ci && npm run lint && npm test && npm run build)
-(cd frontend && npx playwright install chromium && npm run test:e2e)
-python3 scripts/check_docs.py
-```
+## Revue croisée
 
-Cette exécution backend native ignore les intégrations sans RUN_DB_TESTS=1. Pour les activer,
-exporter les variables POSTGRES_* vers une **base dédiée dont le nom finit par _test**, puis lancer
-`RUN_DB_TESTS=1 .venv/bin/pytest -q` depuis backend. Ne pas pointer la suite de migrations vers les
-données de partie : elle effectue des downgrades. La CI réalise cela avec PostgreSQL 17 jetable.
-Des commandes de test Docker existent au [README](../../README.md) et dans la
-[stratégie](../04-quality/testing-strategy.md). Aucun test ignoré n’est déclaré réussi.
+Cycles possibles, sur la même branche de PR :
 
-Mission documentaire seule : check docs, liens/index et diff de périmètre suffisent en local ; la CI
-existante reste à observer. Ne pas modifier code/tests/Compose pour faciliter la passation. Si Work
-ne dispose pas de Docker, consigner cette limite et utiliser les résultats GitHub sans les appeler
-« tests locaux ». Pour une modification fonctionnelle future, appliquer toute la DoD concernée.
+- Codex développe → Claude Code audite → Codex corrige → Claude Code valide.
+- Claude Code développe → Codex audite → Claude Code corrige → Codex valide.
+- ChatGPT Work peut tenir l’un ou l’autre rôle depuis GitHub, ou reprendre le travail de l’un ou de
+  l’autre, dans les limites de ses capacités.
 
-## Work → Codex, puis Codex → Work
+### Règles du relecteur
 
-| Avant de céder la main | Work vers local | Local vers Work |
+1. Commence en **lecture seule** : aucun commit, push, modification de fichier ni commentaire
+   « approuvé » avant d’avoir terminé l’examen. Il note le SHA exact relu et comprend les
+   modifications existantes avant de proposer une correction. Il ne modifie pas directement les
+   fichiers du développeur (Claude auditant Codex comme l’inverse) sans nouvelle autorisation de
+   l’utilisateur ; s’il est autorisé, il applique la correction de façon contrôlée, puis la vérifie
+   par diff et tests.
+2. Examine le diff Git (`git diff <base>...<sha>`), le code, les tests, les migrations et les
+   spécifications canoniques du lot (contrats, ADR, DoD), plus la CI de ce SHA.
+3. Chaque anomalie est **justifiée par des éléments vérifiables** : fichier:ligne au SHA relu,
+   référence de spécification, commande et sortie, scénario d’échec concret. Une intuition sans
+   preuve est notée « question », pas « anomalie ».
+4. Chaque anomalie reçoit une criticité :
+
+| Criticité | Exemples | Effet |
 | --- | --- | --- |
-| Écrire le checkpoint | progress : objectif, fichiers, décisions/statuts, tests/limites, questions, prochaine action | Même contenu et mêmes références canoniques |
-| Publier | Commits cohérents puis push/connexion GitHub ; mettre à jour la PR existante | Commit/push de la branche, PR existante ou nouvelle seulement selon le lot |
-| Vérifier | Relire SHA distant et CI de cette tête | Même vérification, pas seulement le succès de git push |
-| Reprendre | Codex fetch/pull --ff-only de la branche puis relit les docs | Work vérifie GitHub puis lit la nouvelle tête et les docs |
+| Bloquante | Faille de sécurité, perte/corruption de données, violation d’un invariant ou contrat validé, migration destructive, CI rouge | Pas de validation tant que non corrigée ou réfutée |
+| Majeure | Comportement incorrect, cas de concurrence/reprise non couvert, test manquant sur un risque réel, écart de spécification | Correction attendue dans le lot |
+| Mineure | Lisibilité, nommage, documentation imprécise, test fragile | Correction ou report justifié |
+| Remarque | Suggestion, question, piste hors lot | Aucune obligation ; hors lot → known-gaps ou Qxx |
 
-Le dernier checkpoint durable est le commit publié dont la CI est identifiée dans progress, pas
-la dernière réponse du chat. Nommer l’environnement de travail si connu ; ne pas inventer le nom
-de l’autre agent. Autorisations limitées au lot ; publier une PR n’autorise pas à la fusionner.
-Confidentialité : aucune conversation brute, .env, credential, identifiant privé ou donnée personnelle
-à committer. Une nouvelle décision utilisateur est synthétisée et qualifiée, jamais collée en bloc.
+5. Rapport publié dans la PR (revue ou commentaire), avec SHA relu, tests réellement exécutés par le
+   relecteur ou CI vérifiée, liste numérotée des anomalies (R1, R2…) et criticité. Le relecteur
+   précise ce qu’il n’a pas examiné. **L’absence d’anomalie détectée n’est pas une garantie de qualité.**
+
+### Règles du développeur
+
+1. Reproduit ou vérifie chaque anomalie, puis répond par numéro : **confirmée**, **contestée**
+   (avec preuve contraire : test, spécification, trace) ou **hors lot** (renvoyée en known-gaps/Qxx).
+   Un constat erroné ou non démontré peut être contesté ; l’utilisateur arbitre un désaccord persistant.
+2. Corrige les anomalies confirmées dans des commits identifiables (`fix(review): R2 …`), sans
+   élargir le périmètre.
+3. **Relance les tests concernés** après correction, puis la suite complète du lot selon la DoD ;
+   publie et vérifie la CI du nouveau SHA.
+
+### Validation
+
+Le relecteur relit le nouveau SHA (diff depuis le SHA audité), vérifie chaque correction et chaque
+contestation, puis conclut : validé, validé avec réserves listées, ou nouvelles anomalies. Une
+validation n’est pas une autorisation de fusion : la fusion reste une instruction utilisateur.
+
+**Règle commune** : aucun agent ne déclare un test réussi sans l’avoir réellement exécuté ou sans
+avoir vérifié son exécution dans la CI du SHA concerné. Une CI configurée n’est pas une CI exécutée ;
+un test ignoré (RUN_DB_TESTS absent, par exemple) n’est pas réussi.
+
+## Travail parallèle, branches et worktrees
+
+- **Un seul agent écrit dans un répertoire de travail donné à un instant donné.** Deux agents ne
+  modifient jamais simultanément les mêmes fichiers dans le même répertoire.
+- **Un seul agent écrit sur une branche à la fois.** Le rôle d’écriture se transmet par un commit
+  publié et un commentaire de PR ; le suivant fait fetch/ff-only avant d’écrire.
+- Lots parallèles : une branche courte `work/...` par lot depuis master synchronisée, chacune dans
+  son propre worktree, sans branche empilée ni fichiers partagés modifiés en concurrence.
+- Relecture pendant que le développeur travaille : worktree détaché sur le SHA publié.
+
+```bash
+# Relecture isolée d’un SHA publié (lecture seule)
+git fetch origin
+git worktree add --detach ../Echosphere-review <sha>
+# Lot parallèle autorisé, nouvelle branche depuis master
+git worktree add -b work/<lot> ../Echosphere-<lot> origin/master
+git worktree list
+# Fin : uniquement si le worktree est propre et son travail publié
+git worktree remove ../Echosphere-review
+```
+
+Un worktree ne contient pas le `.env` non versionné : en créer un depuis `.env.example`, sans copier
+de secret réel. Compose dérive le nom de projet du dossier : un autre worktree a donc ses propres
+volumes (bases vides), mais les ports hôtes (8443, 5173, 8000, 8025) sont fixes — une seule pile
+Compose à la fois. Ne jamais lancer `down -v` sur la pile d’un autre agent.
+
+## Protection du travail existant
+
+Une instruction textuelle n’empêche pas techniquement un écrasement : les worktrees ci-dessus sont la
+protection d’isolation, et les contrôles suivants sont obligatoires avant **toute** modification.
+
+```bash
+git status --short --branch          # branche, avance/retard, fichiers modifiés et non suivis
+git rev-parse HEAD origin/<branche>  # SHA local et publié
+git diff --stat; git diff --cached --stat
+git diff; git diff --cached          # lire réellement les changements existants
+git ls-files --others --exclude-standard
+git worktree list
+find . -path ./.git -prune -o -path '*/node_modules' -prune -o -type f -mmin -15 -print
+ps -eo pid,etime,cmd | grep -Ei 'codex|claude' | grep -v grep
+```
+
+- Tout changement non commité ou fichier nouveau est **le travail de quelqu’un** : l’identifier
+  (agent, lot, progress) et le préserver. Fichiers récents ou processus d’agent actif dans ce
+  répertoire : ne rien écrire, demander à l’utilisateur qui est l’écrivain courant.
+- Éditer par remplacements ciblés ; ne réécrire un fichier entier que s’il n’a aucune modification
+  préexistante à préserver, ou après les avoir relues et intégrées.
+- Interdits sans autorisation explicite de l’utilisateur : `git reset --hard`, `git clean -fd`
+  (et variantes `-x`), `git push --force`/`--force-with-lease`, `git checkout -- <f>`/`git restore`
+  sur un travail d’autrui, `git switch --discard-changes`, `git stash drop`/`clear`, `git branch -D`,
+  `git worktree remove --force`, `docker compose down -v` sur des données à garder, et tout écrasement
+  d’un fichier modifié par un autre agent.
+
+## Reprise sur indisponibilité d’un agent
+
+Cas typique : crédits ou limites de Codex ou de Work atteints au milieu d’un ticket.
+
+1. **Dernier état réellement accessible** : pour Codex local, le disque (commits locaux non poussés,
+   changements indexés/non indexés, fichiers nouveaux, worktrees) **et** GitHub ; pour Work distant,
+   uniquement les commits effectivement publiés sur GitHub et les commentaires de PR. Ce que l’agent
+   « allait faire » sans trace versionnée n’existe pas.
+2. **Préserver avant d’agir** : si du travail non commité doit survivre à une opération risquée,
+   et si l’utilisateur l’autorise, en faire un checkpoint (commit `wip(<ticket>): …` sur la branche
+   du lot), ou à défaut une copie hors dépôt non versionnée :
+   `git diff --binary HEAD > ../echosphere-preserve-<date>.patch` plus la liste des fichiers non suivis.
+3. **Établir fait / reste à faire** : comparer diff, tests présents, progress, PR et document canonique
+   du ticket ; consigner l’inventaire dans progress avant de continuer. Ne pas recommencer à l’aveugle
+   une fonctionnalité partiellement implémentée ; compléter et corriger l’existant.
+4. **Continuer** avec les mêmes exigences : tests, DoD, checkpoint, CI observée.
+
+### Divergence, conflit ou travail non enregistré
+
+Synchroniser seulement par `git fetch` puis `git pull --ff-only`. Si l’avance rapide échoue, si un
+conflit apparaît ou si un switch/pull refuse à cause de changements locaux : **suspendre l’opération**,
+ne rien forcer, et proposer à l’utilisateur une résolution qui garde les deux versions, par exemple
+branche locale de sauvegarde (`git branch backup/<agent>-<date>` sur la tête locale, non poussée sans
+accord), comparaison `git log --left-right --oneline HEAD...origin/<branche>`, puis intégration
+explicite choisie par l’utilisateur. Aucun pull, rebase, merge ou checkout ne doit faire perdre
+silencieusement du travail local.
+
+## Checkpoints intermédiaires et synchronisation GitHub
+
+- Toute livraison suffisamment stable est commitée et poussée sur la branche du lot ; un ticket long
+  produit des checkpoints intermédiaires (commits cohérents, progress à jour) pour qu’un autre agent
+  puisse reprendre si les crédits de l’auteur s’épuisent.
+- Jamais de secret, `.env`, clé, dump, log privé, fichier temporaire, artefact de build ou patch de
+  sauvegarde dans un commit : relire `git diff --cached --stat` avant chaque commit, indexer par
+  chemins explicites plutôt que `git add -A` quand d’autres changements existent.
+- Un checkpoint publié n’est **ni une validation fonctionnelle ni une autorisation de fusion** ; un
+  commit `wip` est signalé comme tel dans progress et dans la PR.
+
+## Relais concret Codex → Claude Code → ChatGPT Work
+
+1. **Codex s’interrompt** (crédits épuisés) : s’il le peut, il commite/pousse un checkpoint et met à
+   jour le bloc Reprise rapide ; sinon son travail reste sur disque.
+2. **L’utilisateur désigne Claude Code** comme écrivain courant. Claude vérifie que Codex n’écrit plus
+   (fichiers récents, processus, confirmation utilisateur), puis applique « Protection du travail
+   existant » et « Reprise sur indisponibilité » : GitHub, disque, diffs, inventaire fait/reste.
+3. **Claude poursuit** le même ticket sur la même branche, avec les mêmes tests et la même DoD, en
+   publiant des checkpoints ; bloc Reprise rapide : « Dernier agent : Claude Code local », travail
+   repris de Codex et ce qui reste.
+4. **Claude cède la main** : arbre propre, tout poussé, CI du SHA observée et consignée dans la PR.
+5. **ChatGPT Work reprend depuis GitHub** : lit PR, SHA, CI et progress ; ne voit pas le disque local,
+   donc tout ce qui n’est pas poussé lui est inaccessible. Il poursuit, relit ou commente selon
+   l’instruction, et ses validations se limitent à la CI observée.
+6. **Retour à Codex** : fetch puis `pull --ff-only` ; en cas de divergence, suspension et résolution
+   préservant les deux versions comme ci-dessus.
+
+À chaque transition, un seul écrivain ; une revue indépendante se fait en lecture seule, de
+préférence dans un worktree détaché sur le SHA publié.
+
+## Démarrage local frais (Codex / Claude Code)
+
+Cible : Windows 11 → Ubuntu WSL2 → VS Code → Docker Desktop avec intégration WSL2. Pas d’installation
+Python/Node hôte nécessaire pour Compose. master ne contient pas le Portal tant que PR #7 n’est pas
+fusionnée : choisir la branche de la PR à tester.
+
+```bash
+git clone https://github.com/ThomasPerez91/Echosphere.git && cd Echosphere
+git switch work/step-5c-portal-account-lobby   # ou master, selon le lot
+cp .env.example .env                           # jamais sur un .env existant
+docker compose config --quiet
+docker compose up --build -d --wait --wait-timeout 180
+docker compose ps -a
+docker compose exec -T backend alembic check
+docker compose exec -T portal-backend alembic check
+python3 scripts/smoke_compose.py
+python3 scripts/smoke_portal_compose.py
+python3 scripts/smoke_control_compose.py
+python3 scripts/smoke_handoff_compose.py
+docker compose down                            # conserve les volumes
+```
+
+Attendu : bases, APIs, frontends et Mailpit healthy ; workers et listener running ; migrations/init
+Exited(0). Portal https://portal.echosphere.localhost:8443, Game https://game.echosphere.localhost:8443
+(CA locale à approuver explicitement, résolution .localhost selon l’environnement), diagnostic Game
+http://localhost:5173 et :8000. Détails : [recette C01](../03-technical/portal-foundation.md),
+[C02](../03-technical/portal-registration.md), [C06](../03-technical/portal-game-control.md),
+[déploiement](../03-technical/deployment.md). Les smokes arrêtent temporairement des bases : environnement
+local de test seulement. `down -v` détruit les données et ne fait pas partie d’un relais.
+
+## Vérifications identiques
+
+```bash
+python3 scripts/check_docs.py
+# venv Python 3.12 par backend : pip install -r requirements-dev.lock puis pip install --no-deps -e .
+(cd backend && .venv/bin/ruff check . && .venv/bin/pytest -q)
+(cd portal/backend && .venv/bin/ruff check . && .venv/bin/pytest -q)
+# Frontends ; npx playwright install chromium avant le premier test:e2e
+(cd frontend && npm ci && npm run lint && npm test && npm run build && npm run test:e2e)
+(cd portal/frontend && npm ci && npm run lint && npm test && npm run build && npm run test:e2e)
+```
+
+Intégrations PostgreSQL : `RUN_DB_TESTS=1` vers une base dédiée dont le nom finit par `_test`,
+jamais les données à conserver (les suites de migration font des downgrades). Variantes en conteneur :
+[README](../../README.md) et [stratégie de tests](../04-quality/testing-strategy.md). La CI GitHub
+exécute ces jobs et les smokes Compose ; son résultat se lit sur le SHA, pas dans le workflow.
+Mission documentaire : check docs, liens et diff de périmètre ; CI existante observée après push.
+
+## Publier avant de céder la main
+
+1. Mettre à jour progress (bloc Reprise rapide + entrée datée) et les références canoniques.
+2. Relire diff, périmètre et confidentialité ; commits cohérents, push sur la branche du lot ;
+   pas de nouvelle PR si la PR du lot existe.
+3. Relire SHA distant et CI effective ; consigner le résultat dans la PR.
+4. Aucune fusion, tag, release, déploiement, modification de master ou suppression de branche sans
+   instruction explicite de l’utilisateur.
+
+Confidentialité : aucune conversation brute, .env, credential, clé, identifiant privé ou donnée
+personnelle dans Git, les PR ou les commentaires de revue.
+
+## Historique
+
+Avant le 2026-10-30, la procédure ne couvrait que Work ↔ Codex et prenait la PR #5 comme exemple
+(reprise de work/step-5a-colony-domain avant sa fusion). PR #5 et PR #6 sont fusionnées ; ces
+consignes sont historiques et ne doivent plus guider une reprise.

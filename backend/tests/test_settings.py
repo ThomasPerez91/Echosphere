@@ -23,3 +23,11 @@ def test_invalid_environment_is_rejected_without_printing_its_value(monkeypatch)
     with pytest.raises(ValidationError) as error:
         Settings()
     assert "sensitive-invalid-value" not in str(error.value)
+
+
+def test_game_and_portal_cookies_cannot_share_a_host_even_on_distinct_ports():
+    with pytest.raises(ValidationError):
+        Settings(
+            game_public_origin="https://same.example:8443",
+            portal_public_origin="https://same.example:9443",
+        )

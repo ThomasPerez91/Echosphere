@@ -42,8 +42,9 @@ La [Definition of Done](docs/04-quality/definition-of-done.md) fait foi pour la 
 
 ## Travail entre environnements
 
-Suivre [AGENTS](AGENTS.md) et [Work ↔ Codex](docs/06-handoff/work-codex-handoff.md) : état distant
-avant action, lecture du checkpoint, synchronisation ff-only sans perte, mêmes vérifications, commit/
+Suivre [AGENTS](AGENTS.md) et le [protocole Work/Codex/Claude Code](docs/06-handoff/work-codex-handoff.md) :
+état distant avant action, lecture du checkpoint, synchronisation ff-only sans perte, mêmes
+vérifications, revue croisée documentée dans la PR, un seul écrivain par répertoire/branche, commit/
 push puis SHA/CI relus. Une décision est synthétisée avec statut/provenance dans sa référence canonique,
 pas exportée comme conversation privée. Les [limites des sources](docs/06-handoff/source-map.md)
 et questions non résolues restent visibles. La cible Portal/Game n’est pas une implémentation.

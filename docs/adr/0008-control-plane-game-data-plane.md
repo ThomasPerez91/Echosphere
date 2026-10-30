@@ -1,6 +1,6 @@
 # ADR 0008 — Portal Control Plane / Game Data Plane
 
-- **Statut : Décision validée, architecture cible non implémentée.**
+- **Statut : Décision validée ; réalisation partielle C01–C08 sur PR #7, non intégrée à master.**
 - Date : 2026-10-28 ; source : instruction explicite de la mission de passation.
 - Affine [ADR 0001](0001-modular-monolith.md) et [ADR 0006](0006-universe-game-instance.md).
   Ne remplace ni ne renumérote [ADR 0007](0007-colony-economy.md).
@@ -12,7 +12,9 @@ outbox/idempotence/révisions, révocations ciblées et règles compte/MFA. Bloc
 corrections MFA sans global systématique, plafonds de sessions configurables et CORS refusé par défaut.
 Le [registre Q40–Q56](../05-project/open-questions.md) distingue clôtures 5B, détails délégués et reports
 support/email/modes. L’ADR garde sa provenance du 28/10, sans laisser ses anciens points ouverts
-contredire le complément validé. Aucune implémentation ajoutée.
+contredire le complément validé. Aucune implémentation ajoutée par ce complément documentaire.
+[C06](../03-technical/portal-game-control.md) matérialise désormais lobby/interface mTLS et droits ;
+[C07](../03-technical/game-handoff.md) matérialise handoff/GameSession. Les décisions de cet ADR restent inchangées.
 
 ## Contexte et décision
 
@@ -64,7 +66,7 @@ délégués à 5C/5D, avec recette avant utilisation.
 
 ## Handoff et autonomie de GameSession
 
-**Contrat validé, non implémenté ; détails dans le canonique 5B** :
+**Contrat validé ; implémentation C07 sur PR #7, détails dans le canonique 5B** :
 
 1. L’utilisateur authentifié au Portal sélectionne un Universe auquel il peut accéder.
 2. Le Portal émet un ticket très court, à usage unique, destiné au Game Backend.
@@ -107,16 +109,18 @@ son ingress et ses autorisations ; il n’est pas sûr par sa seule séparation 
 
 ## État réel et séquencement
 
-**Implémenté aujourd’hui** : un backend gameplay FastAPI, worker du même code, PostgreSQL Game,
-frontend React et service de migration ; aucun Portal, Accounts DB, compte, ticket ou GameSession.
-Le Compose actuel reste inchangé. Le futur environnement local pourra partager une machine et
+**État intégré par 5B** : un backend gameplay FastAPI, worker, PostgreSQL Game, frontend React et
+service de migration, sans Portal/auth. **Complément C01 sur PR #7** : socle Portal/Accounts et
+HTTPS local, sans compte, ticket ni GameSession ; [recette](../03-technical/portal-foundation.md).
+Le Compose est étendu au titre du lot 5C explicitement autorisé. Le futur environnement local pourra partager une machine et
 héberger Portal frontend/backend/Accounts PostgreSQL et Game frontend/backend/worker/Game PostgreSQL ;
 ceci reste une cible documentaire, pas une commande de lancement actuelle.
 
 5A : domaine Colony. Puis 5B : architecture identité et contrats Portal/Game ; 5C : fondation minimale
 compte/lobby selon cadrage ; 5D : API Colony sécurisée et UI réelle. Pas de Portal complet ou
 multijoueur développé par anticipation. Q16 a son cadrage 5B clos ; réalisation et reports restent
-explicites au registre. 5B terminé documentairement, revue finale de PR #6 avant merge autorisé.
+explicites au registre. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
+contrats implémentés partiellement depuis par C02–C08 sur PR #7. 5C est le lot courant autorisé, sans début de 5D.
 
 ## Conséquences et critères futurs
 
