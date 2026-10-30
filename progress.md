@@ -21,8 +21,30 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 
 ## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
 
-**Statut : D00 réalisé ; D01 en cours.** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
+**Statut : D00–D04 réalisés ; D05 UI en cours.** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
 en bout sur une seule branche/PR, sans merge, sans étape 6. Environnement : Claude Code local/WSL2.
+
+### D01–D04 — API Colony autorisée, commandes et concurrence, 2026-10-30
+
+[Canonique](docs/03-technical/colony-api-ui.md). Service 5A refactoré sans changement de règle :
+codes publics stables sur ColonyError (messages inchangés), `plan_order`/`colony_state`,
+`cancellation_plan`/`refund_fits`, `effective_duration_us` partagés par commandes et projection.
+`app/colony/projection.py` (lecture, montants micro-unités en chaînes) et `app/colony/api.py` :
+liste, détail, construction, annulation sous `/game/{univers}/colonies`. Chaîne GameSession →
+GameAccess → EmpireBinding → colonie dans une transaction, verrou principal puis stream, commandes
+classées activité explicite, clé idempotente préfixée par participation. Horloge injectable
+`app.state.clock` (SystemClock par défaut) partagée avec l’accès C07. Aucune migration, dépendance,
+game_data ni Compose modifiés.
+
+Tests réellement exécutés : `backend/tests/integration/test_colony_api.py` **28 passed** ; suite Game
+complète **177 passed** puis 178 avec la course d’amélioration (echosphere_5d_game_test dédiée) ;
+Ruff app/tests. Projection, non-fuite (autre compte/univers/Empire, inconnu, sans lecture), cookie
+d’un autre univers, lecture seule ≠ construction, construction sans annulation, réservation unique,
+replay/conflit de clé, espace de clés par participation, enveloppe stricte (origine/CSRF/type/extra/
+booléen/query/clé), file pleine, secteur/contiguïté, unicité, ressources insuffisantes, achèvement
+par worker puis action suivante, rattrapage paresseux sans worker, 100/80, Q39 atomique, ordre
+achevé non annulable, doubles clics/dernier slot/amélioration/annulations concurrents, sessions
+expirées/suspendues/révoquées, saturation avant dépense.
 
 ### D00 — synchronisation post-merge, 2026-10-30
 

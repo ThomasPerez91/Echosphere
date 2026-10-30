@@ -3,7 +3,6 @@
 import ipaddress
 import secrets
 import socket
-from datetime import UTC, datetime
 from html import escape
 from urllib.parse import parse_qs
 from uuid import UUID
@@ -40,7 +39,8 @@ def peer(request):
 
 
 def service(request):
-    return GameSessions(request.app.state.session_factory, request.app.state.settings)
+    state = request.app.state
+    return GameSessions(state.session_factory, state.settings, state.clock.now)
 
 
 def origin(request, expected):
@@ -186,7 +186,7 @@ def session_response(payload, request):
         {
             **payload,
             "portal_url": request.app.state.settings.portal_public_origin,
-            "server_time": datetime.now(UTC).isoformat(),
+            "server_time": request.app.state.clock.now().isoformat(),
         },
         headers=HEADERS,
     )

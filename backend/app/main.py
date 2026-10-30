@@ -11,8 +11,10 @@ from app.access.http import GameBodyLimit, navigation_error
 from app.access.http import router as access_router
 from app.access.service import AccessError
 from app.api.probes import router
+from app.colony.api import router as colony_router
 from app.core.config import Settings
 from app.persistence.database import create_database_engine, create_session_factory
+from app.simulation.clock import SystemClock
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -28,6 +30,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     application = FastAPI(title="Echosphere", version="0.0.1", lifespan=lifespan)
     application.state.settings = configuration
+    # Injectable time source shared by sessions and Colony commands; system UTC by default.
+    application.state.clock = SystemClock()
     application.add_middleware(GameBodyLimit)
 
     @application.exception_handler(AccessError)
@@ -66,6 +70,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     application.include_router(access_router)
+    application.include_router(colony_router)
     application.state.database_engine = engine
     application.state.session_factory = create_session_factory(engine)
     application.include_router(router)
