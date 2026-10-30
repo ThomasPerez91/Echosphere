@@ -1,5 +1,18 @@
 # Lacunes, contradictions et risques à reprendre
 
+## Complément courant — 31/10/2026
+
+Q39 et cascade Q01 validées par l’utilisateur : ancien refus de stockage remplacé dans PR #8
+par crédit plafonné et perte définitive annoncée. Les mentions ouvertes/refus des audits historiques
+ci-dessous décrivent leur ancien SHA. Q08, Q17, Q19–Q38 et Q55 clos côté produit dans le
+[registre](../05-project/open-questions.md) ; fog/modes/défense/partage restent futurs.
+Budgets performance non démontrés. Q02 protection offline générale, balance, support Q48 et
+configuration production Q49 restent distincts. Aucun changement de ruleset ou migration.
+
+Environnement Work de ce complément : Docker/socket et serveur PostgreSQL indisponibles ; suites
+SQL/Alembic et smokes réels exécutés par la CI de la tête publiée, pas revendiqués localement.
+Validation locale : suites sans DB, frontend et Chromium ; détail et résultats dans progress/PR.
+
 **Statut : questions/limites explicites au 2026-10-28.** Ce document n’invente pas les réponses.
 
 Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progress](../../progress.md).

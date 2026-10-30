@@ -10,7 +10,7 @@ export type Order = {
   id: string; sequence: number; status: 'active' | 'queued'; infrastructure_type: string; sector_index: number;
   target_level: number; cost: Amounts; base_duration_us: string; applied_bonus_bps: number | null;
   started_at: string | null; due_at: string | null;
-  cancel: { available: boolean; reason: string | null; refund: Amounts; also_cancels: string[] };
+  cancel: { available: boolean; reason: string | null; refund: Amounts; recoverable: Amounts; lost: Amounts; also_cancels: string[] };
 };
 export type Option = {
   action: 'build' | 'upgrade'; infrastructure_type: string; sector_index: number | null; target_level: number;
@@ -31,8 +31,12 @@ export class ApiError extends Error {
 }
 
 const micro = (value: unknown) => typeof value === 'string' && /^\d{1,19}$/.test(value);
-const amounts = (value: unknown) => !!value && typeof value === 'object'
-  && ['alloys', 'flux', 'data'].every(key => micro((value as Record<string, unknown>)[key]));
+const amounts = (value: unknown, aggregate = false) => !!value && typeof value === 'object'
+  && ['alloys', 'flux', 'data'].every(key => {
+    const amount = (value as Record<string, unknown>)[key];
+    // Transient sums across the three orders can exceed a single persisted BIGINT.
+    return aggregate ? typeof amount === 'string' && /^\d{1,20}$/.test(amount) : micro(amount);
+  });
 const date = (value: unknown) => typeof value === 'string' && Number.isFinite(Date.parse(value));
 
 export function validProjection(value: unknown, colony?: string): value is Projection {
@@ -42,7 +46,10 @@ export function validProjection(value: unknown, colony?: string): value is Proje
     && (!colony || p.colony.id === colony) && Array.isArray(p.resources) && p.resources.length === 3
     && p.resources.every(r => micro(r.stock) && micro(r.rate_per_hour) && (r.capacity === null || micro(r.capacity)))
     && Array.isArray(p.infrastructures) && p.infrastructures.every(i => Number.isInteger(i.level) && amounts(i.production_per_hour))
-    && Array.isArray(p.queue) && p.queue.every(o => typeof o.id === 'string' && amounts(o.cost) && amounts(o.cancel?.refund)
+    && Array.isArray(p.queue) && p.queue.every(o => typeof o.id === 'string' && amounts(o.cost) && amounts(o.cancel?.refund, true)
+      && typeof o.cancel.available === 'boolean' && (o.cancel.reason === null || typeof o.cancel.reason === 'string')
+      && amounts(o.cancel.recoverable) && amounts(o.cancel.lost, true) && Array.isArray(o.cancel.also_cancels)
+      && o.cancel.also_cancels.every(id => typeof id === 'string' && p.queue.some(row => row.id === id))
       && (o.due_at === null || date(o.due_at)) && (o.started_at === null || date(o.started_at)))
     && Array.isArray(p.options) && p.options.every(o => amounts(o.cost) && micro(o.base_duration_us))
     && !!p.sectors && Array.isArray(p.sectors.free_indices) && Number.isInteger(p.queue_limit);

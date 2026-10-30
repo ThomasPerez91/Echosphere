@@ -108,10 +108,10 @@ accès effectif versionné et bindings d’Empire côté Game ; une participatio
 Les participations et accès restent non implémentés. C01 initialise portal_alembic_version ;
 [C02/p0001](portal-registration.md) ajoute users, password_credentials, account_tokens, email_outbox,
 abuse_counters et security_events dans Accounts DB seulement. Aucun accès Game créé. Schémas/contraintes sont délégués à 5C/5D ;
-Q51–Q54 closes pour leurs contrats 5B, Q21 partage d’Empire toujours ouverte.
+Q51–Q54 closes pour leurs contrats 5B, Q21 partage d’Empire validé le 31/10/2026, parcours produit futur.
 
 Compte global et plusieurs univers simultanés ; User → UniverseMembership → Universe →
-éventuellement Empire/rôle/permissions. Pas de réduction à Empire.owner_user_id, partage Q21 ouvert.
+éventuellement Empire/rôle/permissions. Pas de réduction à Empire.owner_user_id, partage Q21 validé, sans owner unique.
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md) sépare Accounts DB et Game DB :
 
 | Base future | Données cibles ; sous-ensemble C02 précisé ci-dessus |

@@ -1,37 +1,28 @@
 # Brouillard de guerre
 
-**Statut : Orientation validée pour connaissance limitée et quatre états ; transitions futures ouvertes.**
+**Statut : décision produit Q08 close le 31/10/2026 ; fog non implémenté en 5D.**
+Provenance : arbitrage utilisateur explicite de finalisation de PR #8.
 
-
-| État conceptuel | Sens de travail, à préciser en Q08 |
+| État canonique | Sens validé |
 | --- | --- |
-| UNKNOWN | Aucune information exploitable |
-| DETECTED | Existence détectée, détail non acquis |
-| MAPPED | Informations cartographiées, potentiellement anciennes |
-| MONITORED | Observation actualisée selon capteurs et règles à définir |
+| UNKNOWN | Aucune connaissance, aucune fuite client |
+| DETECTED | Existence et position approximative connues |
+| MAPPED | Structure du système connue durablement |
+| MONITORED | Information dynamique actuellement actualisée |
 
-Ces états n'impliquent pas un contrat de visibilité déjà figé. UNKNOWN ne justifie pas d'envoyer
-toutes les données au client avec un masque CSS. Les relations entre détection, carte et surveillance
-ne sont pas nécessairement un simple compteur monotone.
+Perte de surveillance : **MONITORED → MAPPED**. Les découvertes structurelles ne sont pas oubliées.
+Les informations dynamiques vieillissent avec `last_seen_at` ; afficher leur date, pas un état
+actuel inventé. Aucun partage automatique du fog entre joueurs, même si une alliance future existe.
+UNKNOWN interdit de transmettre les données puis de les masquer en CSS. Cartes, rapports, API et
+journaux doivent utiliser la même autorisation de connaissance côté serveur.
 
-## Information et temps
-
-Associer une information connue à sa source et à sa date d'observation. Distinguer caractéristiques
-stables et présence de flotte potentiellement périmée. La perte de surveillance et la dégradation
-d'information restent Q08.
-
-Les IA reçoivent la même projection de connaissance que les humains. Les futurs endpoints,
-rapports, journaux accessibles et cartes devront chacun être contrôlés contre les fuites.
-
-
-## Références
-
-- [Vision](../00-product-vision.md) · [Questions ouvertes](../05-project/open-questions.md)
-- [Boucle](core-loop.md) · [Équilibrage](balance-philosophy.md)
-- [Temps serveur](../03-technical/event-engine.md)
+Les IA auront la même projection de connaissance que les humains. Seuils numériques de capteurs,
+fiabilité et cadence d’observation restent des paramètres des futurs systèmes ; cette décision
+n’implémente ni capteurs, ni exploration, ni espionnage.
 
 ## Défenses et renseignement futurs
 
-La [défense planétaire](planetary-defense.md) sera révélée progressivement : force estimée, puis
-installations probables/détectées, puis modules, intégrité et énergie estimée selon connaissance.
-Pas d’omniscience, de capteur ou d’espionnage implémenté à l’étape 5A ; seuils/fiabilité restent ouverts.
+Q37 rattache le renseignement défensif à ces états, avec données datées et vieillissantes.
+Q36 conditionne le ciblage fin au renseignement ; aucun détail omniscient de module par défaut.
+Voir [défense](planetary-defense.md), [exploration](exploration.md), [temps serveur](../03-technical/event-engine.md)
+et [registre](../05-project/open-questions.md).

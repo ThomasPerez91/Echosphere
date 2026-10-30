@@ -37,4 +37,4 @@ absence de double résolution, résultat explicable, égalité des règles humai
 
 Voir [Défense planétaire](planetary-defense.md) : réseau limité de modules persistants, dommages et
 réparations envisagés, coût surface/orbite et consommation future de Flux. Pas de piles de canons
-jetables. Ciblage, pertes, défense/flotte et intégrité restent Q30–Q38 ; aucun moteur actif en 5A.
+jetables. Principes Q30–Q38 validés le 31/10/2026 dans la référence défense ; valeurs et moteur restent futurs.

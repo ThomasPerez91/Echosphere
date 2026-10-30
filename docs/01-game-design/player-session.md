@@ -1,6 +1,6 @@
 # Sessions courtes et longues
 
-**Statut : validé ; protections et files ouvertes.**
+**Statut : validé ; construction Q01 close, protections générales Q02 ouvertes.**
 
 
 ## Session quotidienne de dix minutes
@@ -12,7 +12,9 @@
 5. Vérifier les échéances et quitter le jeu.
 
 Ces actions décrivent l'expérience cible, pas des fonctionnalités livrées à l'étape 0.
-Les files et leurs limites relèvent de Q01, sans avantage payant envisagé.
+La file de construction Q01 est validée : 3 ordres actif inclus, un actif/colonie, cascade dépendante
+et remboursements selon [économie v0.1](colony-economy-v0.1.md). Aucun avantage payant. Les files de
+recherche restent à cadrer sous Q05 ; ne pas leur appliquer Q01 par défaut.
 
 ## Session de une à deux heures
 

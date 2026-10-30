@@ -18,7 +18,7 @@ from app.colony.service import (
     effective_duration_us,
     plan_order,
     read_snapshot,
-    refund_fits,
+    recoverable_refunds,
 )
 from app.persistence.models import Colony, Empire, StellarSystem, Universe
 from app.simulation.models import ColonyTimeline
@@ -119,13 +119,9 @@ def queue_view(state: ColonyState, permissions: list[str]) -> list[dict]:
     result = []
     for order in state.queue:
         snapshot = read_snapshot(order)
-        affected, _, refunds = cancellation_plan(state.queue, order)
-        if "colony.cancel" not in permissions:
-            reason = "permission_denied"
-        elif not refund_fits(state.balances, refunds):
-            reason = "refund_exceeds_capacity"
-        else:
-            reason = None
+        affected, per_order, refunds = cancellation_plan(state.queue, order)
+        _, recovered, lost = recoverable_refunds(state.balances, per_order)
+        reason = None if "colony.cancel" in permissions else "permission_denied"
         result.append(
             {
                 "id": str(order.id),
@@ -143,6 +139,8 @@ def queue_view(state: ColonyState, permissions: list[str]) -> list[dict]:
                     "available": reason is None,
                     "reason": reason,
                     "refund": amounts(refunds),
+                    "recoverable": amounts(recovered),
+                    "lost": amounts(lost),
                     "also_cancels": [str(row.id) for row in affected if row.id != order.id],
                 },
             }

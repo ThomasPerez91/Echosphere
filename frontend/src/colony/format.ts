@@ -22,6 +22,13 @@ export function units(value: string) {
   return number.format(BigInt(value) / MICRO);
 }
 
+/** Refunds and losses must expose every micro-unit, including a loss smaller than one unit. */
+export function exactUnits(value: string) {
+  const micro = BigInt(value);
+  const fraction = String(micro % MICRO).padStart(6, '0').replace(/0+$/, '');
+  return `${number.format(micro / MICRO)}${fraction ? `,${fraction}` : ''}`;
+}
+
 /** Hourly rate with at most one decimal, rounded down. */
 export function rate(value: string) {
   const tenths = BigInt(value) * 10n / MICRO;
@@ -58,7 +65,6 @@ const messages: Record<string, string> = {
   sector_unavailable: 'Aucun secteur disponible pour cette action, ou le niveau demandé ne suit pas le niveau prévu.',
   unique_limit: 'Cette infrastructure est limitée à un exemplaire par colonie.',
   prerequisites_unmet: 'Une infrastructure prérequise doit d’abord être achevée.',
-  refund_exceeds_capacity: 'Annulation impossible : le remboursement dépasserait la capacité de stockage. Dépensez des ressources puis réessayez.',
   order_completed: 'Cette construction est déjà terminée.',
   order_not_found: 'Cet ordre n’existe plus. La colonie a été actualisée.',
   permission_denied: 'Votre accès à cet Empire ne permet pas cette action.',

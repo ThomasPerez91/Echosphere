@@ -1,5 +1,9 @@
 # Lobby et interface interne Portal→Game — C06 de 5C
 
+> Complément produit du 31/10/2026 : Q19–Q29/Q55 (modes/admission/Empire partagé) sont closes
+> côté produit, réalisation des parcours future. Les mentions ouvertes antérieures sont historiques.
+> Voir [modes](../01-game-design/game-modes.md) et [registre](../05-project/open-questions.md).
+
 **Statut : implémenté sur work/step-5c-portal-account-lobby / PR #7, non intégré à master.**
 2026-10-30, Codex local ; instruction utilisateur « Continue » après C05.
 [Contrats 5B inchangés](identity-contracts.md) · [ADR 0008](../adr/0008-control-plane-game-data-plane.md) ·

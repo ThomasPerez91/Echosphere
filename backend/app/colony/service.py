@@ -224,15 +224,35 @@ def cancellation_plan(
             r: value * bps // 10000 for r, value in snapshot.quote.cost.items()
         }
         for resource, value in per_order[str(row.id)].items():
-            totals[resource] = amount(totals[resource] + value)
+            totals[resource] += value  # Theoretical sums need not fit a persisted BIGINT.
     return affected, per_order, totals
 
 
-def refund_fits(balances: dict[str, ResourceBalance], refunds: dict[str, int]) -> bool:
-    return all(
-        balances[r].capacity is not None and balances[r].stock + value <= balances[r].capacity
-        for r, value in refunds.items()
-    )
+def recoverable_refunds(
+    balances: dict[str, ResourceBalance], per_order: dict[str, dict[str, int]]
+) -> tuple[dict[str, dict[str, int]], dict[str, int], dict[str, int]]:
+    """Q39: allocate available storage in queue order, discarding overflow permanently.
+
+    Pure calculation shared by preview and command. Per-order receipts record only resources
+    actually credited, so replay cannot restore lost amounts or credit any refund twice.
+    """
+    remaining = {}
+    for resource in RESOURCES:
+        balance = balances[resource]
+        if balance is None or balance.capacity is None:
+            raise ColonyError("Missing finite colony storage capacity")
+        remaining[resource] = max(0, balance.capacity - balance.stock)
+    actual, recovered, lost = {}, dict.fromkeys(RESOURCES, 0), dict.fromkeys(RESOURCES, 0)
+    for order_id, theoretical in per_order.items():
+        actual[order_id] = {}
+        for resource in RESOURCES:
+            value = theoretical.get(resource, 0)
+            credited = min(value, remaining[resource])
+            actual[order_id][resource] = credited
+            remaining[resource] -= credited
+            recovered[resource] += credited
+            lost[resource] += value - credited
+    return actual, recovered, lost
 
 
 def initialize_colony(
@@ -480,15 +500,11 @@ def cancel(
         rules = catch_up_owned(session, engine, universe_id, empire_id, colony_id, utc(at))
         if order.status == "completed":
             raise ColonyError("Completed construction cannot be cancelled", "order_completed")
-        affected, per_order, refunds = cancellation_plan(queue_rows(session, colony_id), order)
+        affected, per_order, _ = cancellation_plan(queue_rows(session, colony_id), order)
         balances = {r: session.get(ResourceBalance, (colony_id, r)) for r in RESOURCES}
-        if not refund_fits(balances, refunds):
-            raise ColonyError(
-                "Refund exceeds storage capacity; spend resources before cancelling",
-                "refund_exceeds_capacity",
-            )
+        actual, refunds, _ = recoverable_refunds(balances, per_order)
         for row in affected:
-            row.refunded = per_order[str(row.id)]
+            row.refunded = actual[str(row.id)]
         for resource, value in refunds.items():
             balance = balances[resource]
             balance.stock = amount(balance.stock + value)

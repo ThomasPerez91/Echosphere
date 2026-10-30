@@ -128,7 +128,7 @@ C07 livre le [handoff/GameSession](docs/03-technical/game-handoff.md) ; [recette
 [Recette C01](docs/03-technical/portal-foundation.md).
 
 Compte global, plusieurs parties : User → UniverseMembership → Universe → éventuellement Empire/
-rôle/permissions. Ne pas réduire à Empire.owner_user_id ; empire partagé Q21 reste ouvert.
+rôle/permissions. Ne pas réduire à Empire.owner_user_id ; empire partagé Q21 validé, parcours produit futur.
 Universe n’est ni User ni processus. Pas de compte global factice ou accès implicite pour une démo.
 Q16 a son cadrage 5B couvert ; détails délégués et reports Q48/Q49/Q55 au registre.
 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats implémentés dans leur périmètre 5C par C02–C08, fusionnés via PR #7 (`ff6ef89`).
@@ -146,12 +146,12 @@ Ne pas élargir le périmètre sur la seule base de la passation.
 - Rattrapage complet sous verrou avant dépense, coûts et ordre dans la transaction du caller.
   Handler sans commit, effet externe ou lock d’un autre stream ; rollback atomique et reprise.
 - 5A : trois ordres actif inclus, un actif ; réservation immédiate, snapshots par univers/ordre,
-  bonus industriel au démarrage du suivant. Annulation 100/80 idempotente ; Q39 pas définitivement
-  arbitrée, refus de saturation actuel à préserver sans en faire une décision produit finale.
+  bonus industriel au démarrage du suivant. Annulation 100/80 théoriques idempotente ; Q39 validée : crédit plafonné par ressource,
+  excédent perdu définitivement, preview complète et cascade Q01 validée.
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède
-  Vue d’ensemble/Infrastructures/Orbite/Défense, pas de huitième domaine global. Q30–Q38 ouvertes.
+  Vue d’ensemble/Infrastructures/Orbite/Défense, pas de huitième domaine global. Q30–Q38 validées, non implémentées.
 - Mobile/clavier obligatoires, pas de hover seul, aucune fixture runtime ou mutation sans identité.
 
 ## Conventions et validation

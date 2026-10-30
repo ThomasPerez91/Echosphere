@@ -14,8 +14,8 @@ Aucune règle n’est recalculée dans un handler HTTP ou dans React. Aucun appe
 requête gameplay : une GameSession valide suffit tant que ses échéances 5B ne sont pas atteintes.
 
 Validation et prévisualisation partagent les mêmes fonctions du service : `plan_order` (secteur,
-file, contiguïté, unicité, prérequis, ressources), `cancellation_plan`/`refund_fits` (cascade,
-remboursements 100/80, refus Q39) et `effective_duration_us`. La projection appelle ces fonctions
+file, contiguïté, unicité, prérequis, ressources), `cancellation_plan`/`recoverable_refunds` (cascade,
+remboursements théoriques 100/80, plafonnement et pertes Q39) et `effective_duration_us`. La projection appelle ces fonctions
 sur l’état chargé ; la commande les rappelle sous verrou avant de dépenser.
 
 ## Chaîne d’autorisation
@@ -94,10 +94,15 @@ Corps `{"error": {"code": ...}, "portal_url": ...}`, `Cache-Control: no-store`.
 | `colony_not_found`, `order_not_found` | 404 | Hors scope, sans lecture ou inconnu |
 | `invalid_request` | 415/422 | Type de contenu, corps, champ ou infrastructure inconnus |
 | `queue_full`, `sector_unavailable`, `unique_limit`, `prerequisites_unmet`, `insufficient_resources` | 409 | Règles 5A |
-| `order_completed`, `refund_exceeds_capacity`, `idempotency_conflict` | 409 | Annulation tardive, Q39, clé réutilisée |
+| `order_completed`, `idempotency_conflict` | 409 | Annulation tardive, clé réutilisée |
 | `colony_busy`, `temporarily_unavailable` | 503 | Événement bloqué/budget de rattrapage, base indisponible |
 
-Q39 est inchangée : un remboursement qui dépasserait la capacité est refusé atomiquement.
+Q39, arbitrage du 31/10/2026 : l’annulation reste possible ; crédit plafonné par ressource, excédent
+perdu définitivement. La projection `cancel.refund` contient le théorique agrégé, `recoverable` le
+crédit possible et `lost` la perte (chaînes de micro-unités), avec `also_cancels` pour toute la cascade.
+Même calcul pur en projection et commande ; application sous verrou après rattrapage, reçus
+`order.refunded` contenant le réel, replay par identité d’ordre sans second crédit. L’annulation
+n’utilise pas de nouvelle clé client : un retry après réponse perdue vise le même ordre.
 
 ## UI Colony (frontend Game)
 
@@ -113,7 +118,7 @@ d’achèvement côté client ni de polling permanent.
 Sous-navigation Vue d’ensemble / Infrastructures / Orbite / Défense. Vue d’ensemble : stocks et
 capacités, production, alertes dérivées des valeurs serveur (stock ≥ 90 %, file pleine, aucun
 secteur libre), file et résumé tabulaire. Infrastructures : file avec avancement et annulation
-confirmée (remboursement et cascade affichés, refus Q39 expliqué), infrastructures existantes avec
+confirmée (théorique, récupérable, perte définitive et liste détaillée de la cascade affichés), infrastructures existantes avec
 amélioration, nouvelles infrastructures avec coût, durée de base/effective, secteur libre choisi,
 bouton désactivé et raison serveur si indisponible. Orbite et Défense restent des états futurs
 explicites, sans bouton ni donnée inventée. Top bar : stocks et production de la colonie ; Empire

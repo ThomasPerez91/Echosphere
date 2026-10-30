@@ -178,6 +178,10 @@ def main():
                 "completed",
                 "portal-stop",
                 "portal-stopped",
+                "q39-start",
+                "q39-ready",
+                "q39-fill",
+                "q39-filled",
                 "expire",
                 "expired",
             )
@@ -248,6 +252,22 @@ def main():
                         )
                         (artifacts / "portal-stopped").write_text("ready")
                         done.add("portal")
+                    if (artifacts / "q39-start").exists() and "q39-start" not in done:
+                        run(
+                            *compose,
+                            "stop",
+                            "--timeout",
+                            "3",
+                            "worker",
+                            env=environment,
+                        )
+                        game(f"fill_storage({created['colony_id']!r})")
+                        (artifacts / "q39-ready").write_text("ready")
+                        done.add("q39-start")
+                    if (artifacts / "q39-fill").exists() and "q39-fill" not in done:
+                        game(f"fill_storage({created['colony_id']!r})")
+                        (artifacts / "q39-filled").write_text("ready")
+                        done.add("q39-fill")
                     if (artifacts / "expire").exists() and "expire" not in done:
                         game(f"expire({universe!r})")
                         (artifacts / "expired").write_text("ready")
@@ -259,7 +279,7 @@ def main():
                         redacted(stdout + stderr)
                     )
                     raise RuntimeError("5D real browser scenario failed")
-                assert done == {"built", "portal", "expire"}
+                assert done == {"built", "portal", "q39-start", "q39-fill", "expire"}
                 print(stdout)
         finally:
             if started:

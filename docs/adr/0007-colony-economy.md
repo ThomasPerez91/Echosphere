@@ -1,5 +1,9 @@
 # ADR 0007 — Domaine Colony, ruleset par univers et file transactionnelle
 
+> Mise à jour du 31/10/2026 : le refus de remboursement saturé décrit historiquement ici
+> est remplacé par Q39 (plafonnement et perte), et la cascade est validée sous Q01.
+> Référence actuelle : [économie v0.1](../01-game-design/colony-economy-v0.1.md).
+
 Date : 2026-10-28. Statut : acceptée pour l’implémentation Étape 5A ; valeurs de balance provisoires.
 
 ## Contexte

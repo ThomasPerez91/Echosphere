@@ -459,17 +459,20 @@ def test_database_rejects_duplicate_sector_and_invalid_level(economy):
             session.flush()
 
 
-def test_refund_capacity_refusal_is_atomic_and_preserves_full_entitlement(economy):
+def test_refund_overflow_is_discarded_and_replay_never_restores_it(economy):
     factory, clock, engine, make = economy
     scope = make()
     first = add(factory, engine, scope)
     with factory.begin() as session:
-        session.get(ResourceBalance, (scope.colony, "alloys")).stock = 10000 * MICRO_UNITS
-    with pytest.raises(ColonyError, match="Refund exceeds"):
-        stop(factory, engine, scope, first.id)
-    with factory() as session:
-        assert session.get(ConstructionOrder, first.id).status == "active"
-    assert balances(factory, scope)["alloys"] == 10000 * MICRO_UNITS
+        balance = session.get(ResourceBalance, (scope.colony, "alloys"))
+        balance.stock = balance.capacity
+    receipt = stop(factory, engine, scope, first.id)
+    assert receipt.status == "cancelled" and receipt.refunded["alloys"] == 0
+    assert receipt.refunded["flux"] == 96 * MICRO_UNITS
+    with factory.begin() as session:
+        session.get(ResourceBalance, (scope.colony, "alloys")).stock -= 500 * MICRO_UNITS
+    stop(factory, engine, scope, first.id)
+    assert balances(factory, scope)["alloys"] == 9500 * MICRO_UNITS
 
 
 def test_completed_order_cannot_be_cancelled(economy):
@@ -602,3 +605,29 @@ def test_event_cannot_complete_an_order_from_another_stream(economy):
             )
             == 4
         )
+
+
+def test_capped_refund_rolls_back_if_cancellation_cannot_acknowledge_event(economy):
+    from app.simulation.scheduler import TimelineError
+
+    factory, _, engine, make = economy
+    scope = make()
+    order = add(factory, engine, scope)
+    with factory.begin() as session:
+        row = session.get(ResourceBalance, (scope.colony, "alloys"))
+        row.stock = row.capacity - MICRO_UNITS
+        event = session.scalar(
+            select(ScheduledEvent).where(
+                ScheduledEvent.idempotency_key == f"construction:{order.id}"
+            )
+        )
+        session.delete(event)  # Inject inconsistent storage to exercise rollback after credit.
+    before = balances(factory, scope)
+    with factory.begin() as session:
+        with pytest.raises(TimelineError, match="event missing"):
+            cancel(session, engine, scope.universe, scope.empire, scope.colony, order.id, at=START)
+        # The caller may still commit unrelated work after a refusal: SAVEPOINT restores Q39 too.
+    assert balances(factory, scope) == before
+    with factory() as session:
+        row = session.get(ConstructionOrder, order.id)
+        assert row.status == "active" and row.refunded is None

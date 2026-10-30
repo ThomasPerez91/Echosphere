@@ -1,5 +1,9 @@
 # Identité et contrats Portal/Game — étape 5B
 
+> Complément produit du 31/10/2026 : Q19–Q29/Q55 (modes/admission/Empire partagé) sont closes
+> côté produit, réalisation des parcours future. Les mentions ouvertes antérieures sont historiques.
+> Voir [modes](../01-game-design/game-modes.md) et [registre](../05-project/open-questions.md).
+
 **Statut : contrats 5B validés ; C02–C07 comptes/sessions/MFA/lobby et contrôle interne implémentés sur PR #7.** Consolidation : 2026-10-29.
 Source : arbitrages utilisateur explicites pour PR #6, puis validation du bloc complet en quatorze
 points avec trois corrections : effets MFA ciblés, plafonds de sessions configurables et CORS refusé
@@ -51,7 +55,8 @@ grant de rétablir un accès après purge ou livraison retardée.
 La fondation distingue consultation, construction et annulation (`colony.read`, `colony.construct`,
 `colony.cancel` comme noms techniques). Aucun privilège gameplay implicite pour un administrateur
 plateforme ou le créateur d’une partie. Partage d’Empire et spectateurs non livrés par implication :
-Q21 et les questions de modes restent ouvertes, sans contrainte `Empire.owner_user_id` unique.
+Q21 et Q19–Q29/Q55 sont clos côté produit depuis le 31/10/2026 ; implémentation des parcours future,
+sans contrainte `Empire.owner_user_id` unique.
 
 Chaque requête Game contrôle : session → accès actif/membership/univers → permissions/binding →
 propriété et visibilité de l’entité. Pour une commande, les droits sont revérifiés dans la transaction

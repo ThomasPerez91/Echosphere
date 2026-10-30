@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, expect, test, vi } from 'vitest';
 import App from './App';
 import type { Projection } from './colony/api';
+import { exactUnits } from './colony/format';
 
 const universe = '052d4535-79c7-413b-ace3-47c732561fbd';
 const colonyId = '7d1c56a0-3c52-4e8e-9d6b-2b1f4b0f8a11';
@@ -107,19 +108,28 @@ test('a server refusal is explained and the colony is re-read without activity',
   expect(fetcher.mock.calls.filter(call => call[1]?.method === 'POST' && String(call[0]).endsWith('/navigation'))).toHaveLength(0);
 });
 
-test('cancellation needs an explicit confirmation and shows the refund; Q39 refusal blocks it', async () => {
-  const order = { id: 'order-1', sequence: 1, status: 'active' as const, infrastructure_type: 'data_node', sector_index: 5, target_level: 1,
+test('overflow remains cancellable and shows authoritative losses and the entire cascade before POST', async () => {
+  const root = { id: 'order-1', sequence: 1, status: 'active' as const, infrastructure_type: 'data_node', sector_index: 5, target_level: 1,
     cost: amounts(250, 120, 0), base_duration_us: String(120e6), applied_bonus_bps: 1000,
     started_at: '2099-01-01T00:00:00+00:00', due_at: '2099-01-01T00:01:49+00:00',
-    cancel: { available: true, reason: null, refund: amounts(200, 96, 0), also_cancels: [] } };
-  const blocked = { ...order, id: 'order-2', status: 'queued' as const, started_at: null, due_at: null,
-    cancel: { available: false, reason: 'refund_exceeds_capacity', refund: amounts(250, 120, 0), also_cancels: [] } };
-  const fetcher = setup('colony/infrastructure', { colony: [{ body: projection({ queue: [order, blocked] }) }] });
-  const refused = await screen.findByRole('button', { name: 'Annuler Nœud de données', description: /remboursement dépasserait la capacité/ });
-  expect(refused).toBeDisabled();
-  fireEvent.click(screen.getByRole('button', { name: 'Annuler Nœud de données', description: '' }));
-  expect(screen.getByText(/Remboursement : 200 Alliages, 96 Flux/)).toBeVisible();
+    cancel: { available: true, reason: null, refund: amounts(1000, 446, 50), recoverable: amounts(600, 100, 50),
+      lost: amounts(400, 346, 0), also_cancels: ['order-2'] } };
+  const dependent = { ...root, id: 'order-2', sequence: 2, status: 'queued' as const, target_level: 2,
+    started_at: null, due_at: null, cancel: { available: true, reason: null, refund: amounts(800, 350, 50),
+      recoverable: amounts(600, 100, 50), lost: amounts(200, 250, 0), also_cancels: [] } };
+  const independent = { ...dependent, id: 'order-3', sequence: 3, infrastructure_type: 'flux_reactor', sector_index: 6, target_level: 1 };
+  const fetcher = setup('colony/infrastructure', { colony: [{ body: projection({ queue: [root, dependent, independent] }) }] });
+  fireEvent.click((await screen.findAllByRole('button', { name: 'Annuler Nœud de données' }))[0]);
+  expect(screen.getByText('Remboursement théorique : 1 000 Alliages, 446 Flux, 50 Données.')).toBeVisible();
+  expect(screen.getByText('Vous récupérerez : 600 Alliages, 100 Flux, 50 Données.')).toBeVisible();
+  expect(screen.getByText('Perte définitive faute de stockage : 400 Alliages, 346 Flux.')).toBeVisible();
+  const group = screen.getByRole('group', { name: 'Confirmer l’annulation de Nœud de données' });
+  expect(group).toHaveTextContent('Nœud de données · Secteur 5 · Niveau 2');
+  expect(group).not.toHaveTextContent('Réacteur de Flux');
   expect(posts(fetcher)).toHaveLength(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Garder' }));
+  expect(posts(fetcher)).toHaveLength(0);
+  fireEvent.click(screen.getAllByRole('button', { name: 'Annuler Nœud de données' })[0]);
   fireEvent.click(screen.getByRole('button', { name: 'Confirmer l’annulation' }));
   await waitFor(() => expect(posts(fetcher)).toHaveLength(1));
   expect(String(posts(fetcher)[0][0])).toContain('/construction-orders/order-1/cancel');
@@ -146,7 +156,7 @@ test('reaching the server deadline triggers a read, never a command or activity'
   const order = { id: 'order-1', sequence: 1, status: 'active' as const, infrastructure_type: 'data_node', sector_index: 5, target_level: 1,
     cost: amounts(250, 120, 0), base_duration_us: String(120e6), applied_bonus_bps: 1000,
     started_at: '2099-01-01T00:00:00+00:00', due_at: '2099-01-01T00:00:10+00:00',
-    cancel: { available: true, reason: null, refund: amounts(200, 96, 0), also_cancels: [] } };
+    cancel: { available: true, reason: null, refund: amounts(200, 96, 0), recoverable: amounts(200, 96, 0), lost: amounts(0, 0, 0), also_cancels: [] } };
   const fetcher = setup('colony/overview', { colony: [{ body: projection({ queue: [order] }) }, { body: projection() }] });
   await act(() => vi.advanceTimersByTimeAsync(100));
   const reads = () => fetcher.mock.calls.filter(call => String(call[0]).endsWith(colonyId)).length;
@@ -154,4 +164,30 @@ test('reaching the server deadline triggers a read, never a command or activity'
   await act(() => vi.advanceTimersByTimeAsync(12000));
   expect(reads()).toBeGreaterThan(before);
   expect(fetcher.mock.calls.filter(call => call[1]?.method === 'POST')).toHaveLength(0);
+});
+
+
+test('a lost cancellation response can be retried for the same order without a new construction', async () => {
+  const order = { id: 'cancel-retry', sequence: 1, status: 'active' as const, infrastructure_type: 'data_node', sector_index: 5, target_level: 1,
+    cost: amounts(250, 120, 0), base_duration_us: String(120e6), applied_bonus_bps: 1000,
+    started_at: '2099-01-01T00:00:00+00:00', due_at: '2099-01-01T00:01:49+00:00',
+    cancel: { available: true, reason: null, refund: amounts(200, 96, 0), recoverable: amounts(0, 96, 0),
+      lost: amounts(200, 0, 0), also_cancels: [] } };
+  const fetcher = setup('colony/infrastructure', { colony: [{ body: projection({ queue: [order] }) }],
+    command: [new TypeError('response lost'), { body: { colony: projection() } }] });
+  fireEvent.click(await screen.findByRole('button', { name: 'Annuler Nœud de données' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmer l’annulation' }));
+  await screen.findByText(/Résultat non confirmé/);
+  fireEvent.click(screen.getByRole('button', { name: 'Annuler Nœud de données' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmer l’annulation' }));
+  await waitFor(() => expect(posts(fetcher)).toHaveLength(2));
+  expect(posts(fetcher)[0][0]).toBe(posts(fetcher)[1][0]);
+  expect(posts(fetcher)[1][0]).toContain('/cancel-retry/cancel');
+});
+
+
+test('refund presentation never hides a fractional loss or rounds large integer amounts', () => {
+  expect(exactUnits('1')).toBe('0,000001');
+  expect(exactUnits('199999999')).toBe('199,999999');
+  expect(exactUnits('18446744073709551614').replace(/\s/g, ' ')).toBe('18 446 744 073 709,551614');
 });

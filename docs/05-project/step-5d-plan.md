@@ -21,7 +21,7 @@ authentifient, autorisent et délèguent. Aucun deuxième scheduler, aucune donn
 | D01 | Contrat API Colony et projection autorisée (service de lecture) | Canonique, projection testée sans recalcul de règles |
 | D02 | Permissions et lecture HTTP (liste + détail) | Chaîne session → accès → binding → colonie, refus sans fuite |
 | D03 | Commande HTTP de construction | Idempotency key, CSRF/origine, transaction unique, activité explicite |
-| D04 | Annulation, idempotence et concurrence | 100/80, Q39 refus atomique, courses testées |
+| D04 | Annulation, idempotence et concurrence | 100/80 théoriques, Q39 plafonnement/perte atomiques, courses testées |
 | D05 | UI Vue d’ensemble Colony | Données réelles, top bar ressources, file |
 | D06 | UI Infrastructures interactive | Construire/améliorer/annuler, états de mutation |
 | D07 | Responsive, accessibilité, erreurs | 320/390/768/1440, clavier, viewport réel |
@@ -40,4 +40,4 @@ aucun compte magique, aucun bouton « Créer une partie ».
 
 Recherche, galaxie, exploration, flottes, colonisation, IA, combat, diplomatie, partage d’Empire
 (Q21), défense active (Q30–Q38), orbite jouable, population, commerce, WebSocket, notifications
-complètes, changement de Q39. L’étape 6 ne commence pas dans ce lot.
+complètes. Q39 est incluse par instruction complémentaire du 31/10/2026. L’étape 6 ne commence pas dans ce lot.

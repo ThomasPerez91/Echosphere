@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { Option, Order, Projection } from '../colony/api';
-import { costParts, duration, errorMessage, infrastructureLabel, rate, ratio, reasonLabel, resourceKeys,
+import type { Amounts, Option, Order, Projection } from '../colony/api';
+import { costParts, duration, errorMessage, exactUnits, infrastructureLabel, rate, ratio, reasonLabel, resourceKeys,
   resourceLabels, resourceSymbols, time, units } from '../colony/format';
 import type { useColony } from '../hooks/useColony';
 import { Badge, Button } from './ui';
@@ -79,7 +79,7 @@ function Queue({ colony, projection, offset }: { colony: Colony; projection: Pro
     {!projection.queue.length ? <p className="muted">Aucune construction en cours. Les ordres continuent sans navigateur ouvert.</p>
       : <ol className="queue-list">{projection.queue.map(order => {
         const label = infrastructureLabel(order.infrastructure_type);
-        const refund = costParts(order.cancel.refund).map(part => `${part.value} ${part.label}`).join(', ') || 'aucun';
+        const describeAmounts = (value: Amounts) => resourceKeys.filter(key => BigInt(value[key]) > 0n).map(key => `${exactUnits(value[key])} ${resourceLabels[key]}`).join(', ') || 'aucun';
         const pending = colony.pending === JSON.stringify({ kind: 'cancel', order_id: order.id });
         return <li key={order.id} className="queue-item">
           <div className="queue-title"><strong>{label}</strong>
@@ -88,7 +88,17 @@ function Queue({ colony, projection, offset }: { colony: Colony; projection: Pro
           {order.status === 'active' ? <Progress order={order} offset={offset} /> : <span className="queue-waiting">Démarre après l’ordre précédent ; durée fixée au démarrage.</span>}
           {projection.permissions.includes('colony.cancel') && (confirm === order.id
             ? <div className="confirm" role="group" aria-label={`Confirmer l’annulation de ${label}`}>
-                <p>Remboursement : {refund}{order.cancel.also_cancels.length ? ` · annule aussi ${order.cancel.also_cancels.length} amélioration(s) dépendante(s)` : ''}.</p>
+                <p>Remboursement théorique : {describeAmounts(order.cancel.refund)}.</p>
+                <p>Vous récupérerez : {describeAmounts(order.cancel.recoverable)}.</p>
+                <p>Perte définitive faute de stockage : {describeAmounts(order.cancel.lost)}.</p>
+                {!!order.cancel.also_cancels.length && <>
+                  <p>Seront aussi annulées les améliorations dépendantes suivantes (incluses dans ces montants) :</p>
+                  <ul>{order.cancel.also_cancels.map(id => {
+                    const dependent = projection.queue.find(row => row.id === id)!;
+                    return <li key={id}>{infrastructureLabel(dependent.infrastructure_type)} · Secteur {dependent.sector_index} · Niveau {dependent.target_level}</li>;
+                  })}</ul>
+                </>}
+                <p className="muted">Estimation à la date serveur affichée ; montants recalculés au moment de l’annulation.</p>
                 <Button className="button--danger" disabled={!!colony.pending || !order.cancel.available}
                   onClick={() => { void colony.command({ kind: 'cancel', order_id: order.id }); setConfirm(null); }}>Confirmer l’annulation</Button>
                 <Button onClick={() => setConfirm(null)}>Garder</Button>

@@ -113,3 +113,14 @@ Scénarios futurs [ADR 0008](../adr/0008-control-plane-game-data-plane.md) : Por
 Game/worker actifs, sessions existantes utilisables, handoff non rejouable, interfaces internes
 non autorisées refusées, provision/grant idempotents, synchronisation et révocation selon contrat.
 Ces tests ne sont ni ajoutés ni déclarés passés par la passation.
+
+## Complément Q39 — PR #8
+
+Projection et commande partagent le plafonnement par ressource. Tests : crédit total, saturation
+mono/multi-ressources, queued 100/active 80, cascade et ordre indépendant, concurrence de cascades,
+replay après réponse perdue et place libérée, invariant stock ≤ capacité et absence de création.
+Tests purs : allocation exacte, non-mutation et somme théorique dépassant BIGINT sans crédit hors
+capacité. UI : théorique/récupérable/perte et liste complète avant confirmation, zéro POST avant clic.
+Smoke réel Colony étendu à l’overflow avec Portal arrêté : remplissage de la seule base jetable,
+confirmation UI à 390 px, annulation et retry sans crédit supplémentaire. Les commandes de fixture
+refusent toute autre base ; aucune donnée runtime fictive introduite.

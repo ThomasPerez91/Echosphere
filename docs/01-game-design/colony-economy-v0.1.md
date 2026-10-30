@@ -110,10 +110,14 @@ sur le même secteur avec leurs remboursements propres ; les autres secteurs gar
 Le suivant démarre à la date logique de l’annulation. Les événements déjà échus sont traités avant
 la commande : une construction achevée ne peut plus être annulée, même si le worker était en retard.
 
-Cas de stockage insuffisant pour le remboursement : refus atomique et explicite, aucune partie de
-l’annulation ou du remboursement n’est appliquée. Dépenser/libérer de la place permet de réessayer.
-C’est un choix conservateur d’implémentation en attente de validation produit (Q39), afin de respecter
-les 100/80 % sans inventer de stock hors plafond ni perdre un remboursement silencieusement.
+**Q39 close, décision utilisateur du 31/10/2026** : annulation toujours possible même si le
+remboursement théorique 100/80 dépasse le stockage. Chaque ressource est créditée jusqu’à sa capacité ;
+le reste est définitivement perdu, sans réserve cachée/différée. Le serveur règle la production puis
+recalcule sous verrou. La cascade partage la place disponible : allocation dans l’ordre de la file,
+reçus par ordre contenant uniquement le crédit réel ; aucune double attribution de place.
+Avant confirmation, l’UI montre remboursement théorique, récupérable, perte et tous les ordres
+dépendants affectés. Preview à la date serveur, recalcul autoritatif à acceptation ; commande atomique
+et idempotente. L’ancien refus 5A/5D est remplacé, pas présenté comme règle actuelle.
 
 ## Limites
 
@@ -125,5 +129,9 @@ recherche, combat ou multijoueur. Orbite/Défense restent des états futurs expl
 - [Domaine et persistance](../03-technical/data-model.md) · [ADR 0007](../adr/0007-colony-economy.md)
 - [Défense future](planetary-defense.md) · [Questions](../05-project/open-questions.md)
 
-**Qualification de la cascade** : comportement implémenté, proposition produit/UX encore à confirmer
-sous Q01. Les 100/80 % sont les règles v0.1 explicitement demandées ; Q39 garde la saturation ouverte.
+**Q01 close pour construction**, décision du 31/10/2026 : file 3 actif inclus, un actif par
+colonie, 100/80 théoriques et cascade dépendante validés. Plusieurs colonies pourront construire
+en parallèle ; jamais d’annulation d’une construction indépendante.
+Pacing cible : onboarding secondes à ~5 min ; début ~5–30 min ; intermédiaire ~30 min–8 h ; avancé
+~8–72 h ; projets majeurs potentiellement plusieurs jours. Valeurs exactes configurables/balançables
+dans game_data, inchangées dans ce correctif. Aucune nouvelle colonie générée ni nouveau mode livré.

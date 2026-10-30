@@ -1,61 +1,59 @@
-# Modes de jeu et familles d'univers
+# Modes de jeu et familles d’univers
 
-**Statut : familles produit et compatibilité architecturale validées ; modes multijoueurs futurs.**
+**Statut : décisions produit Q19–Q29/Q55 closes le 31/10/2026 ; fonctionnalités de modes futures.**
+Provenance : instruction utilisateur explicite de finalisation de PR #8. Les caps sont des valeurs
+initiales configurables ; aucune capacité de charge n’est démontrée par ces décisions.
+Universe reste la frontière d’instance, ni utilisateur ni processus. Le socle comptes/memberships/
+bindings existe depuis 5C ; les parcours produit ci-dessous ne sont pas livrés par 5D.
 
-Universe constitue la frontière d'une instance de jeu. Ni « un univers = un utilisateur », ni
-« un processus serveur = un univers ». Plusieurs instances pourront coexister et progresser sans
-qu'un joueur ou son navigateur soit connecté. Ce document n'ajoute aucun mode au code.
+| Famille canonique | Humains, valeurs initiales | Admission | Durée et pause gameplay |
+| --- | --- | --- | --- |
+| SOLO | 1 humain | Aucune admission extérieure | Open-ended ; pause autorisée |
+| PRIVATE | Maximum initial 8 humains | Invisible publiquement par défaut, invitation uniquement | Open-ended par défaut ; pause seulement avec accord de tous les participants humains actifs |
+| PERSISTENT | Objectif 200 memberships humaines, référence 50 GameSessions simultanées | CLOSED / APPROVAL / OPEN | Aucune fin automatique ; jamais de pause gameplay |
 
-| Famille | Cible | Contraintes et statut |
-| --- | --- | --- |
-| Solo | Un humain avec plusieurs civilisations IA | Base du MVP initial |
-| Partie multijoueur privée | Amis, environ 2 à X humains | Futur ; X et règles non décidés |
-| Univers multijoueur persistant | Univers partagé pouvant accueillir beaucoup de joueurs | Futur ; continu, aucune durée maximale obligatoire |
+## Parties et configuration (Q19/Q20/Q22/Q26/Q27/Q28)
 
-## Solo, MVP initial
+PRIVATE est configurable dans les limites d’un ruleset supporté, progresse sans joueur connecté,
+et pourra accueillir des IA lorsqu’elles seront implémentées. Aucune condition de victoire
+obligatoire MVP ; aucune durée maximale obligatoire par famille. Chaque Empire démarre indépendant,
+sans équipe/alliance imposée. Empire partagé et alliance restent deux notions distinctes.
 
-Construire la boucle du joueur face à des IA autonomes soumises aux mêmes règles et à une connaissance
-limitée. « MVP solo » ne signifie pas que Universe possède implicitement un owner unique. La gestion
-des comptes, de participation et d'autorisation n'est pas livrée par l'étape 3.
+Chaque Universe épingle une version précise du ruleset. Seule vitesse produit initiale : **1x**.
+Préparer d’autres profils techniquement sans les activer ; aucune modification silencieuse du
+ruleset d’un univers existant. Les multiplicateurs employés par les tests ne sont pas des presets.
+En pause, progression gameplay et IA doivent réellement être suspendues. Une maintenance technique
+n’est pas une pause gameplay. Aucun système de pause n’est implémenté dans ce lot.
 
-## Parties privées futures
+## Compte global, Empire partagé et départ (Q21/Q23)
 
-Possibilités à discuter : invitations, nombre de places, IA optionnelles, vitesse/ruleset, durées
-courtes/moyennes/longues et conditions de fin configurables. Ce sont des questions, pas un catalogue
-validé. Aucune décision sur pause, départ en équipe, empire partagé, alliances ou changement de joueur.
+Un compte global peut participer simultanément à plusieurs univers : User → UniverseMembership →
+Universe → EmpireBinding/permissions. **Un Empire peut être partagé par plusieurs joueurs.**
+Les profils conceptuels administrateur d’Empire, opérateur et observateur désignent des ensembles
+de permissions ; ils ne les contournent jamais. Aucun Empire.owner_user_id comme autorité unique.
+Les bindings/permissions 5C/5D sont le socle existant ; aucune UI de partage n’est livrée ici.
 
-## Univers persistants futurs
+Quitter retire l’accès, sans supprimer automatiquement l’Empire ni son monde. Sans participant
+humain, l’Empire devient dormant ; aucune prise de contrôle IA implicite avant le lot IA.
 
-Fonctionnement continu indépendant des connexions et sans durée maximale obligatoire. Rejoindre
-une instance déjà active doit rester possible architecturalement ; modalités de late join, protection
-d'un nouveau joueur, rattrapage et accès exact restent ouverts. La comparaison à OGame concerne
-uniquement la persistance : Echosphere conserve son gameplay original, sans grille ni récolte manuelle.
-La stabilité économique et la protection hors connexion exigent encore des arbitrages.
+## Late join et protection (Q24/Q25)
 
-## Participation et configuration futures
+PERSISTENT autorise le late join si admissions ouvertes, capacité disponible, point de départ valide,
+ruleset compatible et protection nouvel entrant applicable. Le nouvel arrivant crée normalement un
+nouvel Empire ; rejoindre un Empire existant relève du partage Q21. PRIVATE exige invitation et
+autorisation de late join. Les politiques d’admission ne donnent jamais de droits gameplay directement.
 
-Une future association Account/User ↔ UniverseMembership ↔ éventuellement Empire ↔ rôle/permissions
-pourra représenter contrôle d'empire, plusieurs joueurs, éventuel partage si validé, spectateur/admin
-si nécessaire. Ni cette table ni Empire.owner_user_id ne sont implémentés actuellement.
+Protection persistent : maximum initial configurable **7 jours réels**, fin anticipée en cas
+d’action offensive volontaire. Impossible d’attaquer ou d’être attaqué pendant protection ; économie
+et exploration accessibles, aucun bonus caché permanent de production. Le contrat devra articuler
+fin de protection et acceptation de la première action offensive dans le lot combat. Q02 (protection
+hors connexion générale) reste distincte et ouverte ; aucun combat/protection livré maintenant.
 
-Vitesses économie/recherche/déplacement, taille de galaxie, PvP, capacité d'accueil, inscription et fin
-pourront relever d'une configuration Universe ou d'un ruleset/version. Pas de singleton gameplay
-serveur. La configuration technique de connexion PostgreSQL peut être commune ; elle ne fixe pas
-les règles des parties. Valeurs et politique de version restent à décider.
+## Charge de référence (Q29)
 
-## Questions à arbitrer
+Objectif architectural initial : 1 Universe persistent, 200 memberships humaines, 50 GameSessions
+humaines simultanées, jusqu’à 500 Empires humains + IA à terme. Caps techniques configurables,
+**à démontrer par benchmark**, jamais une capacité déjà validée. Voir [performance](../04-quality/performance.md).
 
-Q19–Q29 distinguent règles privées, nombre de joueurs, partage d'empire, victoire/durée, join/leave,
-late join, protection des nouveaux, vitesses, pause privée, équipes et dimensionnement persistant.
-Aucune de ces décisions ne doit être prise par un agent pour faciliter une implémentation anticipée.
-
-[Vision](../00-product-vision.md) · [ADR 0006](../adr/0006-universe-game-instance.md) · [Questions ouvertes](../05-project/open-questions.md)
-
-## Compte global et plusieurs parties — décision validée, non implémentée
-
-Un utilisateur peut participer simultanément à plusieurs univers et y avoir des empires différents.
-User → UniverseMembership → Universe → éventuellement Empire/rôles/permissions ; le partage d’empire
-reste Q21. Entrée via Portal/lobby puis handoff vers GameSession propre au Game Backend.
-[ADR 0008](../adr/0008-control-plane-game-data-plane.md) cadre les frontières, pas les règles de join/leave.
-Parties rapides/intermédiaires/classiques/persistantes sont des exemples de vitesses configurables,
-sans valeurs supplémentaires validées. v0.1 reste ×1 ; autres tests de vitesse ne sont pas des presets produit.
+[Vision](../00-product-vision.md) · [ADR 0006](../adr/0006-universe-game-instance.md) ·
+[ADR 0008](../adr/0008-control-plane-game-data-plane.md) · [Registre](../05-project/open-questions.md)

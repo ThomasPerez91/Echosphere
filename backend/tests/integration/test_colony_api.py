@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import timedelta
 from threading import Barrier
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -268,6 +268,8 @@ def test_read_without_construct_and_construct_without_cancel(world):
         "available": False,
         "reason": "permission_denied",
         "refund": queue[0]["cancel"]["refund"],
+        "recoverable": queue[0]["cancel"]["recoverable"],
+        "lost": queue[0]["cancel"]["lost"],
         "also_cancels": [],
     }
 
@@ -412,18 +414,91 @@ def test_cancel_refunds_queued_full_active_eighty_and_is_idempotent(world):
     assert w.cancel(uuid4()).json()["error"]["code"] == "order_not_found"
 
 
-def test_cancel_refund_overflow_is_refused_atomically_q39(world):
+@pytest.mark.parametrize("queued", [False, True])
+@pytest.mark.parametrize("overflow", [("alloys",), ("alloys", "flux")])
+def test_cancel_caps_each_resource_preview_matches_commit_and_retry(world, queued, overflow):
     w = world()
-    order = w.build(sector=5).json()["order"]["id"]
+    first = w.build(sector=5).json()["order"]["id"]
+    order = w.build(sector=6).json()["order"]["id"] if queued else first
     with w.game.factory.begin() as session:
-        balance = session.get(ResourceBalance, (w.colony, "alloys"))
-        balance.stock = balance.capacity - MICRO_UNITS
+        for resource in overflow:
+            balance = session.get(ResourceBalance, (w.colony, resource))
+            balance.stock = balance.capacity - MICRO_UNITS
+    before = {r: w.stock(r) for r in ("alloys", "flux", "data")}
+    preview = next(row for row in w.read().json()["queue"] if row["id"] == order)["cancel"]
+    assert preview["available"] is True and preview["reason"] is None
+    assert units(preview["refund"]["alloys"]) == (250 if queued else 200)
+    for resource in before:
+        theoretical = int(preview["refund"][resource])
+        recovered = int(preview["recoverable"][resource])
+        assert recovered == (MICRO_UNITS if resource in overflow else theoretical)
+        assert recovered + int(preview["lost"][resource]) == theoretical
+    response = w.cancel(order)
+    assert response.status_code == 200
+    assert response.json()["order"]["refunded"] == preview["recoverable"]
+    after = {r: w.stock(r) for r in before}
+    for resource in before:
+        assert after[resource] == before[resource] + int(preview["recoverable"][resource])
+        assert after[resource] <= 10000 * MICRO_UNITS
+    # Lost response: retry the same order, with no second credit, even after freeing storage.
+    with w.game.factory.begin() as session:
+        session.get(ResourceBalance, (w.colony, "alloys")).stock -= MICRO_UNITS
+    again = w.cancel(order)
+    assert again.status_code == 200
+    assert again.json()["order"]["refunded"] == preview["recoverable"]
+    assert w.stock("alloys") == after["alloys"] - MICRO_UNITS
+
+
+def test_cascade_caps_aggregate_refund_and_preserves_independent_order(world):
+    w = world()
+    root = w.build(sector=5).json()["order"]["id"]
+    dependent = w.build(sector=5, level=2).json()["order"]["id"]
+    independent = w.build(kind="data_node", sector=6).json()["order"]["id"]
+    with w.game.factory.begin() as session:
+        for resource in ("alloys", "flux", "data"):
+            row = session.get(ResourceBalance, (w.colony, resource))
+            row.stock = row.capacity - 300 * MICRO_UNITS
     preview = w.read().json()["queue"][0]["cancel"]
-    assert preview["available"] is False and preview["reason"] == "refund_exceeds_capacity"
-    refused = w.cancel(order)
-    assert refused.status_code == 409
-    assert refused.json()["error"]["code"] == "refund_exceeds_capacity"
-    assert w.read().json()["queue"][0]["status"] == "active"
+    assert preview["also_cancels"] == [dependent]
+    assert units(preview["refund"]["alloys"]) == 1000  # active 200 + queued 800
+    assert units(preview["recoverable"]["alloys"]) == 300
+    assert units(preview["lost"]["alloys"]) == 700
+    assert w.cancel(root).status_code == 200
+    with w.game.factory() as session:
+        receipts = [session.get(ConstructionOrder, UUID(oid)) for oid in (root, dependent)]
+        assert [row.status for row in receipts] == ["cancelled", "cancelled"]
+        assert sum(row.refunded["alloys"] for row in receipts) == 300 * MICRO_UNITS
+    queue = w.read().json()["queue"]
+    assert len(queue) == 1 and queue[0]["id"] == independent and queue[0]["status"] == "active"
+
+
+def test_overlapping_cascade_cancellations_serialize_at_capacity(world):
+    w = world()
+    root = w.build(sector=5).json()["order"]["id"]
+    dependent = w.build(sector=5, level=2).json()["order"]["id"]
+    with w.game.factory.begin() as session:
+        for resource in ("alloys", "flux", "data"):
+            balance = session.get(ResourceBalance, (w.colony, resource))
+            balance.stock = balance.capacity - MICRO_UNITS
+    barrier = Barrier(2)
+
+    def submit(order):
+        barrier.wait(timeout=5)
+        # Independent HTTP clients, shared real session; locks also protect worker interleaving.
+        with TestClient(w.app, base_url=w.game.settings.game_public_origin) as client:
+            client.cookies.set(cookie_name(w.universe), w.raw)
+            return w.cancel(order, client=client).status_code
+
+    with ThreadPoolExecutor(2) as pool:
+        assert list(pool.map(submit, (root, dependent))) == [200, 200]
+    with w.game.factory() as session:
+        orders = [session.get(ConstructionOrder, UUID(oid)) for oid in (root, dependent)]
+        assert all(row.status == "cancelled" for row in orders)
+        for resource in ("alloys", "flux", "data"):
+            refunded = sum(row.refunded[resource] for row in orders)
+            assert refunded <= MICRO_UNITS
+            assert session.get(ResourceBalance, (w.colony, resource)).stock <= 10000 * MICRO_UNITS
+    assert w.cancel(root).status_code == 200
 
 
 def test_completed_order_cannot_be_cancelled(world):
@@ -554,3 +629,27 @@ def test_concurrent_upgrades_of_the_same_building_accept_one(world):
         results = sorted(pool.map(submit, range(2)))
     assert results == ["active", "sector_unavailable"]
     assert w.stock("alloys") == (2000 - 800) * MICRO_UNITS
+
+
+def test_three_order_cascade_allocates_available_storage_only_once(world):
+    w = world()
+    with w.game.factory.begin() as session:
+        for resource in ("alloys", "flux", "data"):
+            row = session.get(ResourceBalance, (w.colony, resource))
+            row.stock = row.capacity
+    ids = [w.build(sector=5, level=level).json()["order"]["id"] for level in (1, 2, 3)]
+    with w.game.factory.begin() as session:
+        for resource in ("alloys", "flux", "data"):
+            row = session.get(ResourceBalance, (w.colony, resource))
+            row.stock = row.capacity - 600 * MICRO_UNITS
+    preview = w.read().json()["queue"][0]["cancel"]
+    assert preview["also_cancels"] == ids[1:]
+    assert units(preview["refund"]["alloys"]) == 3600
+    assert units(preview["recoverable"]["alloys"]) == 600
+    assert units(preview["lost"]["alloys"]) == 3000
+    assert w.cancel(ids[0]).status_code == 200
+    with w.game.factory() as session:
+        rows = [session.get(ConstructionOrder, UUID(oid)) for oid in ids]
+        assert [units(row.refunded["alloys"]) for row in rows] == [200, 400, 0]
+        assert all(row.status == "cancelled" for row in rows)
+    assert w.read().json()["queue"] == []

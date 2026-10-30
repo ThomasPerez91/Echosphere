@@ -102,6 +102,42 @@ try {
   await page.screenshot({ path: '/artifacts/colony-portal-down-390.png' });
   console.log('5D: Portal down — colony readable, construction accepted, worker progressed, no Portal request');
 
+  // Real Q39 overflow: stop worker and top up only the disposable test DB, then use the UI.
+  await marker('q39-start'); await waitMarker('q39-ready');
+  await page.getByRole('button', { name: 'Actualiser la colonie' }).click();
+  await page.getByRole('button', { name: 'Améliorer Complexe d’extraction niveau 3' }).click();
+  await page.getByText('Ordre de construction accepté par le serveur.').waitFor();
+  await marker('q39-fill'); await waitMarker('q39-filled');
+  const overflow = (await projection(page)).body;
+  const cancelled = overflow.queue[0];
+  if (!cancelled || !cancelled.cancel.available || BigInt(cancelled.cancel.lost.alloys) <= 0n
+    || BigInt(cancelled.cancel.recoverable.alloys) !== 0n) throw new Error('Q39 overflow preview expected');
+  await page.getByRole('button', { name: 'Actualiser la colonie' }).click();
+  await page.getByRole('button', { name: 'Annuler Complexe d’extraction', exact: true }).click();
+  const confirmation = page.getByRole('group', { name: 'Confirmer l’annulation de Complexe d’extraction' });
+  await confirmation.getByText(/Remboursement théorique/).waitFor();
+  await confirmation.getByText(/Vous récupérerez : aucun/).waitFor();
+  await confirmation.getByText(/Perte définitive faute de stockage/).waitFor();
+  await page.screenshot({ path: '/artifacts/colony-q39-loss-390.png' });
+  await confirmation.getByRole('button', { name: 'Confirmer l’annulation' }).click();
+  await page.getByText('Annulation enregistrée, remboursement crédité.').waitFor();
+  const afterCancel = (await projection(page)).body;
+  if (afterCancel.queue.length) throw new Error('Q39 cancellation must succeed at capacity');
+  for (const r of afterCancel.resources) {
+    if (BigInt(r.stock) > BigInt(r.capacity)) throw new Error('Capacity exceeded after cancellation');
+  }
+  const replay = await page.evaluate(async ([u, c, o]) => {
+    const session = await (await fetch(`/api/game/${u}/session`, { headers: { 'X-Game-Request': 'bootstrap' } })).json();
+    const response = await fetch(`/api/game/${u}/colonies/${c}/construction-orders/${o}/cancel`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': session.csrf_token }, body: '{}',
+    });
+    return { status: response.status, body: await response.json() };
+  }, [universe, colony, cancelled.id]);
+  if (replay.status !== 200 || Object.values(replay.body.order.refunded).some(v => BigInt(v) !== 0n)) {
+    throw new Error('Repeated cancellation must retain the actual zero-credit receipt');
+  }
+  console.log('Q39: overflow announced before confirmation, cancellation succeeds at capacity, retry credits nothing');
+
   await marker('expire'); await waitMarker('expired');
   await page.getByRole('button', { name: 'Construire Nœud de données' }).click();
   await page.getByRole('alert').filter({ hasText: 'a expiré' }).first().waitFor();

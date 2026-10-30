@@ -1,23 +1,65 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-10-30. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
 ## Reprise rapide
 
-Bloc réécrit par chaque agent qui publie ; format et règles dans le
-[protocole de collaboration](docs/06-handoff/work-codex-handoff.md).
-
 | Champ | État |
 | --- | --- |
-| Branche / PR / base | work/step-5d-secure-colony-ui · PR #8 brouillon · base master ff6ef89 |
-| Tête et CI | Tête = commit D09 portant ce bloc (SHA/CI consignés dans PR #8 après observation). D05–D07 4cddcf9 : push 41127419512 / PR 41127427942 success ; D02–D04 c96e2bf success |
-| Dernier agent | Claude Code local (WSL2), écrivain unique |
-| Travail réalisé | 5D D00–D09 : API Colony sécurisée, UI Colony réelle, recette boucle jouable et Portal coupé, documentation de clôture |
-| Décisions | Aucune nouvelle décision produit ; [canonique 5D](docs/03-technical/colony-api-ui.md), Q39/Q01/Q21/Q55 inchangées |
-| Fichiers modifiés | backend/app/colony/{service,projection,api}.py, main/access http (horloge), tests Colony ; frontend colony/hooks/composants/styles/tests/e2e ; scripts smoke_colony/colony_browser/colony_game_fixture ; CI compose-smoke ; docs |
-| Tests réellement exécutés | Game 178 passed (dont 28 Colony API) ; frontend lint 0 erreur, 24 Vitest, build, 9 Chromium ; Alembic check deux plans ; smokes Game/Portal/mTLS/handoff et recette Colony réussis ; Ruff backend/scripts ; check_docs. Suites Portal non relancées localement (Portal inchangé), exécutées par la CI |
-| Anomalies / corrections restantes | Aucune Bloquante/Majeure connue ; limites dans [known-gaps](docs/06-handoff/known-gaps.md) (création de partie hors produit, fog futur, navigateurs non Chromium) ; aucune revue croisée encore réalisée |
-| Prochaines tâches | Revue finale de PR #8 (revue croisée Codex possible), puis fusion sur instruction ; étape 6 non commencée |
+| Branche / PR / base | work/step-5d-secure-colony-ui · PR #8 · base master ff6ef89 ; vérifier GitHub pour état brouillon/revue |
+| Tête et CI | Complément Q39 issu de b9425ce96367882dc44ce3459b2504175e44385c ; CI initiale PR 41129132438 success. SHA et CI du nouveau commit à relire dans PR #8 après publication |
+| Dernier agent | ChatGPT Work, écrivain unique de ce checkout ; reprise des commits publiés Claude Code |
+| Travail réalisé | Q39 crédit plafonné/perte définitive, preview autoritative et cascade Q01 détaillée, reçus réels idempotents ; arbitrages produit consolidés |
+| Décisions | Q01 construction, Q08, Q17, Q19–Q39 et Q55 closes dans leur portée au registre ; modes/fog/défense futurs, performance non démontrée |
+| Fichiers modifiés | Services/projection Colony, tests Game, client/confirmation/formatage/tests UI, smoke Colony ; docs produit/tech/qualité/registre/passation et AGENTS/context/progress |
+| Tests réellement exécutés | Local Work : Ruff backend/scripts ; Game 53 passed / 138 skipped (pas de PostgreSQL), frontend lint 0 erreur (avertissement préexistant), 26 Vitest, build, 9 Chromium 320/390/768/1440 ; 78 documents/liens ; git diff --check. Suites PostgreSQL/Alembic/smokes à vérifier dans la CI publiée, pas exécutées localement |
+| Anomalies / corrections restantes | Pas de nouvelle Bloquante/Majeure identifiée à la relecture ; verdict de disponibilité conditionné à la CI complète du SHA publié. Docker/PostgreSQL absents du Work courant ; limites navigateurs/charge/support/production conservées |
+| Prochaines tâches | Observer CI complète, actualiser description #8 et Ready for review seulement si verte. Aucun merge sans instruction, aucune étape 6 avant fusion |
+
+## Complément pré-revue Q39 et arbitrages — 31/10/2026
+
+Instruction utilisateur explicite : modifier le code sur la branche existante #8, consolider les
+arbitrages et finaliser la revue, sans nouvelle branche/PR ni fusion. GitHub vérifié : #8 ouverte,
+brouillon, mergeable, tête b9425ce, master ff6ef89 ; aucun commentaire/fils de revue existant.
+Arbre local propre avant reprise, aucun travail non publié écrasé.
+
+Q39 : `recoverable_refunds` partagé par projection et commande, après rattrapage et sous verrou du
+stream pour application ; montant crédité limité par ressource, perte définitive sans réserve.
+Allocation de la place commune en ordre de file, reçus par ordre contenant le crédit réel, replay
+sans nouveau crédit même si de la place se libère. Sommes théoriques transitoires en entiers Python,
+sans overflow BIGINT ; persistance toujours bornée. Aucune migration, dépendance, modification de
+ruleset/game_data, Docker/Compose ou code Portal.
+
+UI : remboursement théorique/récupérable/perte affichés avant confirmation ; tous les upgrades
+dépendants listés avec infrastructure/secteur/niveau, aucun indépendant ajouté. Présentation exacte
+jusqu’à la micro-unité, aucune règle économique React. Estimation datée, recalcul Game à acceptation.
+Tests ajoutés : saturation mono/multi-ressources, 100/80, cascade 3 ordres et indépendant préservé,
+concurrence de cascades, retry après réponse perdue/place libérée, rollback SAVEPOINT après crédit,
+allocation exacte et théorique au-delà de BIGINT. Smoke réel Colony étendu à l’overflow avec Portal
+arrêté, crédit nul à capacité et retry ; setup limité à sa base jetable. À exécuter dans la CI.
+
+Q01 construction/cascade/pacing, Q08, Q17, Q19–Q39 et Q55 transcrites depuis l’instruction du
+31/10/2026 : décisions closes distinctes des paramètres initiaux balançables et implémentations
+futures. Q02/Q03/Q04/Q05/Q10/Q14 et support/configuration production gardent leur portée non tranchée.
+Aucun fog, mode, défense, pause, admission ou parcours de partage développé par implication.
+
+Relecture du diff complet de #8 contre master ff6ef89 : services partagés 5A, GameSession→GameAccess→
+EmpireBinding→colonie, origine/CSRF/enveloppes strictes et permissions distinctes, verrou principal
+avant stream et contrôle des révocations 5B/5C conservés. Fixtures uniquement dans tests/recettes
+avec garde de base, aucun nouveau faux compte/donnée runtime. UI/clavier/viewport vérifiés,
+captures confirmation inspectées à 320 et 1440. Pas d’autre agent de revue lancé ; cette relecture
+Work ne constitue pas une certification de sécurité ni un benchmark.
+
+Environnement Work : Python 3.12/Node/Chromium natifs, ni Docker/socket ni PostgreSQL local.
+Premier lancement Chromium avant fin du téléchargement du navigateur impossible ; relancé après
+installation avec succès. Test de formatage initialement sensible aux espaces fines françaises,
+corrigé dans le test ; aucun échec local restant. Les intégrations SQL et smokes ne sont jamais
+présentés comme exécutés localement. Suite Portal inchangée, couverte par CI complète.
+
+Les checkpoints 5D ci-dessous décrivent leur ancien SHA ; leurs refus Q39/statuts Qxx sont historiques
+et remplacés par ce complément. Étape 6 Recherche non commencée. Après une autorisation distincte
+de fusion : vérifier master/CI, nouveau lot sur master synchronisée avec checkpoint documentaire
+avant implémentation ; références research-view.png/design-system.png.
 
 ## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
 

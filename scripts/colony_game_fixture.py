@@ -99,3 +99,18 @@ def expire(universe_id):
     engine.dispose()
     assert count == 1, "Exactly one live recipe session expected"
     print(json.dumps({"expired": count}))
+
+
+def fill_storage(colony_id):
+    """Q39 recipe setup, guarded by factory's dedicated disposable DB check."""
+    engine, sessions = factory()
+    with sessions.begin() as session:
+        count = session.execute(
+            text(
+                "UPDATE resource_balances SET stock = capacity, remainder = 0 WHERE colony_id = :colony"
+            ),
+            {"colony": colony_id},
+        ).rowcount
+    engine.dispose()
+    assert count == 3
+    print(json.dumps({"filled": count}))

@@ -21,7 +21,7 @@ function projection(queue: unknown[] = []) {
       universe: { id: universe, name: 'Univers de recette' } },
     sectors: { capacity: 12, built: 4, reserved: queue.length, free: 8 - queue.length, free_indices: [5, 6, 7, 8, 9, 10, 11, 12].slice(queue.length) },
     resources: [
-      { resource: 'alloys', stock: M(9400), capacity: M(10000), rate_per_hour: M(120) },
+      { resource: 'alloys', stock: M(queue.length ? 9994 : 9400), capacity: M(10000), rate_per_hour: M(120) },
       { resource: 'flux', stock: M(1500), capacity: M(10000), rate_per_hour: M(100) },
       { resource: 'data', stock: M(750), capacity: M(10000), rate_per_hour: M(60) },
     ],
@@ -56,7 +56,7 @@ async function routes(page: Page) {
       const started = new Date();
       queue = [{ id: 'order-1', sequence: 1, status: 'active', infrastructure_type: 'data_node', sector_index: 5, target_level: 1,
         cost: amounts(250, 120, 0), base_duration_us: String(120e6), applied_bonus_bps: 1000, started_at: started.toISOString(),
-        due_at: new Date(+started + 600e3).toISOString(), cancel: { available: true, reason: null, refund: amounts(200, 96, 0), also_cancels: [] } }];
+        due_at: new Date(+started + 600e3).toISOString(), cancel: { available: true, reason: null, refund: amounts(200, 96, 0), recoverable: amounts(6, 96, 0), lost: amounts(194, 0, 0), also_cancels: [] } }];
       return route.fulfill({ json: { order: { id: 'order-1', status: 'active' }, colony: projection(queue) } });
     }
     return route.fulfill({ json: projection(queue) });
@@ -93,7 +93,12 @@ for (const width of [320, 390, 768, 1440]) {
     const cancel = page.getByRole('button', { name: 'Annuler Nœud de données' });
     await reachable(page, cancel);
     await cancel.click();
-    await expect(page.getByRole('button', { name: 'Confirmer l’annulation' })).toBeVisible();
+    const confirm = page.getByRole('button', { name: 'Confirmer l’annulation' });
+    await expect(confirm).toBeVisible();
+    await expect(page.getByText('Vous récupérerez : 6 Alliages, 96 Flux.')).toBeVisible();
+    await expect(page.getByText('Perte définitive faute de stockage : 194 Alliages.')).toBeVisible();
+    await reachable(page, confirm);
+    await page.screenshot({ path: testInfo.outputPath(`colony-q39-${width}.png`) });
     await page.getByRole('button', { name: 'Garder' }).click();
     expect(posts).toHaveLength(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

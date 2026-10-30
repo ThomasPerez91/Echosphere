@@ -1,6 +1,6 @@
 # Contexte stable — Echosphere
 
-**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-30.
+**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-31.
 Vérifier GitHub réel puis lire AGENTS → context → progress → [passation](docs/06-handoff/README.md).
 
 ## Produit validé, état distinct
@@ -12,11 +12,11 @@ IA stratégique sans LLM, Utility/Goals testable, mêmes règles/services/fog qu
 [Vision](docs/00-product-vision.md), [décisions](docs/06-handoff/decision-status.md).
 
 Solo humain+IA = MVP ; privé/persistant futurs, pas de durée maximale obligatoire en persistant.
-Universe = frontière d’instance, ni User ni processus ; late join et protections restent ouverts.
+Universe = frontière d’instance, ni User ni processus ; late join et protection nouvel entrant validés mais futurs (Q19–Q29/Q55).
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
-éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
+éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 validé, UI de partage future.
 
-## Implémentation — Game 5A intégré, Portal C01–C08 sur PR #7
+## Implémentation et checkpoints historiques — 5A/5B/5C intégrés, 5D sur PR #8
 
 PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
 8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
@@ -45,13 +45,13 @@ Migration 0004 ajoute les quatre tables économiques sans modifier les anciennes
 Ruleset JSON v0.1 strict, copie par univers, vitesses rationnelles et snapshots d’ordres ; balance
 provisoire. Niveaux continus, pas plafond 5. 12 secteurs/2 orbitaux = planète de départ de référence
 seulement, pas invariant futur. File 3/1, réservation immédiate, annulation 100/80, bonus industriel
-à activation ; production réglée à date logique. Q39 reste ouverte pour saturation du remboursement.
-Cascade dépendante implémentée, confirmation produit/UX à garder sous Q01. Voir [économie](docs/01-game-design/colony-economy-v0.1.md)
+à activation ; production réglée à date logique. Q39 validée : remboursement plafonné, excédent perdu ; preview avant confirmation.
+Cascade dépendante implémentée et validée sous Q01. Voir [économie](docs/01-game-design/colony-economy-v0.1.md)
 et [audit](docs/06-handoff/pr-5-audit.md) pour limites de capacité/immutabilité/initialiseur.
 
 Défense future : réseau persistant à capacité/modules limités, coût surface/orbite, dommages/réparation,
-Flux et renseignement à cadrer. UI Colony réservée à Vue d’ensemble/Infrastructures/Orbite/Défense,
-sans données fictives ni huitième domaine global. Aucun combat/défense effective ; Q30–Q38 ouvertes.
+Flux et renseignement : principes validés, chiffres futurs. UI Colony réservée à Vue d’ensemble/Infrastructures/Orbite/Défense,
+sans données fictives ni huitième domaine global. Aucun combat/défense effective ; principes Q30–Q38 validés, implémentation future.
 
 ## Architecture validée future — ADR 0008
 
@@ -88,7 +88,7 @@ credentials refusé par défaut, exception uniquement sur besoin explicite et al
 
 Détails techniques délégués aux lots dépendants, sans nouveau questionnaire par paramètre. Restent
 différés : procédure support joueur/privilégié Q48 (blocage sans procédure), fournisseur et configuration
-production Q49, règles des modes Q55/Q19–Q29 et partage Empire Q21. Aucun arbitrage supplémentaire
+production Q49, implémentation future des modes Q55/Q19–Q29 et du partage Empire Q21 (décisions closes). Aucun arbitrage supplémentaire
 nécessaire à 5B identifié. Architecture cadrée ne signifie pas sécurité implémentée/testée.
 [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), [architecture](docs/03-technical/architecture.md).
 
@@ -118,3 +118,11 @@ lecture avec rattrapage paresseux, construction/annulation idempotentes délégu
 UI Colony réelle et recette Portal coupé. Aucune migration ; création de partie toujours hors produit.
 [Roadmap](docs/05-project/roadmap.md),
 [Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).
+
+## Complément autorisé avant revue PR #8 — 31/10/2026
+
+Q01 construction, Q08, Q17, Q19–Q39 et Q55 closes dans la portée du registre, sans développement
+anticipé de fog/modes/défense/partage. Seule Q39 modifie les services/preview/UI dans ce correctif.
+Valeurs initiales et pacing configurables/balançables, budgets performance non démontrés.
+Travail Work sur la branche existante #8, aucun merge autorisé. Après une future instruction de
+fusion : vérifier master/CI, nouveau lot depuis master avec checkpoint documentaire avant Recherche.
