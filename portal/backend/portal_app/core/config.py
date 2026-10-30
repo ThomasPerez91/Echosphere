@@ -46,6 +46,36 @@ class Settings(BaseSettings):
     auth_delay_max_ms: int = Field(default=1000, ge=1, le=3000)
     trusted_proxy_host: str | None = None
 
+    control_targets: dict[str, str] = {"primary": "https://game-control:9443"}
+    control_ca: Path = Path("/run/portal-control/game-ca.pem")
+    control_cert: Path = Path("/run/portal-control/client.pem")
+    control_key: Path = Path("/run/portal-control/client.key")
+    control_poll_seconds: int = Field(default=2, ge=1, le=60)
+    control_reconcile_seconds: int = Field(default=60, ge=10, le=3600)
+
+    @field_validator("control_targets")
+    @classmethod
+    def check_targets(cls, values):
+        import re
+        from urllib.parse import urlsplit
+
+        if not values:
+            raise ValueError("At least one explicit control target is required")
+        for key, value in values.items():
+            parsed = urlsplit(value)
+            if (
+                not re.fullmatch(r"[a-z][a-z0-9-]{0,39}", key)
+                or parsed.scheme != "https"
+                or not parsed.hostname
+                or parsed.username
+                or parsed.password
+                or parsed.path
+                or parsed.query
+                or parsed.fragment
+            ):
+                raise ValueError("Control targets must be explicit HTTPS origins")
+        return values
+
     @field_validator("public_origin")
     @classmethod
     def check_origin(cls, value: str) -> str:

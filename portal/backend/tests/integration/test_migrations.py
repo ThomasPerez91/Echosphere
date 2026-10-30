@@ -26,10 +26,13 @@ def test_independent_accounts_history_roundtrip():
         command.check(config)
         with engine.connect() as connection:
             assert connection.scalar(text("SELECT version_num FROM portal_alembic_version")) == (
-                "p0004_mfa"
+                "p0005_control"
             )
             assert connection.scalar(text("SHOW timezone")) == "UTC"
         assert set(inspect(engine).get_table_names()) == {
+            "universe_references",
+            "universe_memberships",
+            "control_outbox",
             "portal_alembic_version",
             "auth_failures",
             "mfa_backup_codes",

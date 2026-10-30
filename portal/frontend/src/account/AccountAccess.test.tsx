@@ -7,7 +7,9 @@ const snapshot = {
   csrf_token: 'session-proof', session_id: 'one', sessions: [{ id: 'one', current: true }],
 };
 function installFetcher(fetcher: (url: string, options?: RequestInit) => unknown) {
-  vi.stubGlobal('fetch', (url: string, options?: RequestInit) => url === '/api/mfa/status'
+  vi.stubGlobal('fetch', (url: string, options?: RequestInit) => url === '/api/lobby/memberships'
+    ? Promise.resolve({ ok: true, json: async () => ({ memberships: [], revocations: [] }) })
+    : url === '/api/mfa/status'
     ? Promise.resolve({ ok: true, json: async () => ({ enabled: false, totp: false, credentials: [] }) })
     : fetcher(url, options));
 }

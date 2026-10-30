@@ -26,14 +26,15 @@ Accounts DB et HTTPS local ; [C02](../03-technical/portal-registration.md) ajout
 Argon2id, vérification et email durable local. [C03](../03-technical/portal-sessions.md) ajoute connexion/sessions Portal, CSRF et intentions de logout.
 [C04](../03-technical/portal-account-security.md) ajoute opérations sensibles sans MFA, step-up et logout global.
 [C05](../03-technical/portal-mfa.md) ajoute MFA TOTP/WebAuthn, secours et récupération limitée.
-**Non implémenté** : lobby,
-handoff, API gameplay et systèmes futurs du MVP. 5B reste seulement partiellement implémenté.
+[C06](../03-technical/portal-game-control.md) ajoute lobby, outbox et contrôle mTLS, droits effectifs
+et marqueurs de révocation acquittés par Game.
+**Non implémenté** : handoff/GameSession, API gameplay et systèmes futurs du MVP. 5B reste seulement partiellement implémenté.
 
 5B autorisé puis consolidé le 2026-10-29 sur work/step-5b-identity-contracts :
-[contrats validés](../03-technical/identity-contracts.md), **partiellement implémentés par C02–C05 sur PR #7 seulement**.
+[contrats validés](../03-technical/identity-contracts.md), **partiellement implémentés par C02–C06 sur PR #7 seulement**.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1` le 2026-10-29.
 5C devient le lot courant sur work/step-5c-portal-account-lobby depuis ce merge : premier checkpoint
-documentaire et cadrage réalisés, puis C01–C05 autorisés et implémentés ; C06 suit, aucun début de 5D. Le
+documentaire et cadrage réalisés, puis C01–C06 autorisés et implémentés ; C07 suit, aucun début de 5D. Le
 [registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
 délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
 ajout de facteur/régénération volontaire des secours avec step-up existant ; plafonds 10/10 configurables et sans effet sur

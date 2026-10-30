@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { Lobby } from './Lobby';
 import { AccountForms } from './AccountForms';
 import { ResetRequestForm, SensitiveSettings } from './SecurityForms';
 import { FactorFields, MfaRecovery, MfaSettings } from './MfaForms';
@@ -113,7 +114,7 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
       <h2 id="sessions-title">Vos connexions</h2>
       <p>{state.user.email}</p>
       {!state.user.email_verified && <p>Confirmez votre adresse email avant de pouvoir accéder aux parties.</p>}
-      <p>Votre compte est connecté. Le lobby des parties est en préparation.</p>
+      <Lobby csrf={state.csrf_token} />
       <button type="button" disabled={pending} onClick={() => { void action(); }}>Actualiser mes connexions</button>
       <ul className="sessions-list">{(state.sessions ?? [{ id: state.session_id, current: true }]).map((item, index) => <li key={item.id}>
         <span>{item.current ? 'Cet appareil' : `Autre connexion ${index + 1}`}</span>

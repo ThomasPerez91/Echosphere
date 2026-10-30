@@ -1,7 +1,7 @@
 # Contrats API
 
-**Statut : sondes Game/Portal et inscription/vérification C02 et sessions Portal C03 ; gameplay futur.**
-[Routes C02, erreurs et protections](portal-registration.md). [Routes C03](portal-sessions.md), sessions/CSRF et logout ; lobby/S2S/handoff futurs.
+**Statut : Game public = sondes ; Portal C01–C06 et interface privée mTLS livrés sur PR #7, non intégrés ; gameplay futur.**
+[Routes C02, erreurs et protections](portal-registration.md). [Routes C03](portal-sessions.md), sessions/CSRF et logout ; [C06 lobby/mTLS](portal-game-control.md) livré, handoff/GameSession futurs.
 
 
 | Endpoint backend | Succès | Échec attendu | Utilité |
@@ -51,7 +51,7 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 [identity-contracts](identity-contracts.md) porte les autorités, opérations internes, handoff,
 sessions, erreurs et règles compte/MFA validés le 2026-10-29. Le [registre Q40–Q56](../05-project/open-questions.md)
 distingue contrats clos, détails techniques délégués et reports. Les sondes restent les seules routes Game actuelles. Portal ajoute les sondes C01 et les
-[routes d’inscription/vérification C02](portal-registration.md), et les [sessions C03](portal-sessions.md), sans route gameplay. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C05 sur PR #7.
+[routes d’inscription/vérification C02](portal-registration.md), et les [sessions C03](portal-sessions.md), sans route gameplay. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C06 sur PR #7.
 
 Portal expose les futurs services compte/lobby. Après ticket signé 60 s/unique lié au navigateur,
 GameSession opaque : accès direct Game, sans proxy ni consultation Portal par commande. Game vérifie
@@ -89,4 +89,17 @@ limitée quinze minutes ; preuve par action cinq minutes, garde-fous privilégi�
 restauration support inventée. Migration Accounts p0004_mfa, clé TOTP séparée, cooldown progressif,
 audit et notifications. Ajout de facteur/régénération volontaire protégés conservent les sessions ;
 activation, réduction/remplacement/désactivation et récupération révoquent globalement. Intentions
-Game pending jusqu’à C06/C07 ; aucun secret Accounts ou SQL Portal dans Game, aucune API Colony.
+Game pending à ce checkpoint C05 ; [C06](portal-game-control.md) livre depuis leur transport et
+acquittement. Aucun secret Accounts ou SQL Portal dans Game, aucune API Colony.
+
+## Extension C06 sur PR #7
+
+[Lobby et contrôle privé](portal-game-control.md) : références/memberships/outbox Accounts p0005,
+droits/bindings/ledger/epochs Game 0005. Listener mTLS distinct de l’API publique, certificat client
+épinglé depuis TLS, aucune identité de header ; destinations configurées, pas de SQL Portal→Game.
+Snapshots complets/révisions monotones, retry d’opération stable sans nouvelle date, acquittement
+validé et réconciliation. Révocations compte/appareil diffusées à chaque cible configurée, sources
+acknowledged seulement après tous les acquittements. Pas de session Game avant C07, aucune API Colony.
+Lobby limité à son compte, pending/applied/expiration datés, aucun univers de démo ou join public ;
+GET sans activité ni renouvellement, refresh volontaire classé serveur. Recette réelle sur deux bases
+temporaires *_test et refus TLS/headers, séparée du Chromium à API interceptée ; résultats dans progress.

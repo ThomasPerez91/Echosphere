@@ -4,11 +4,96 @@ Mise à jour : 2026-10-30. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Lot courant — 5C : Portal Account/Lobby foundation
 
-**Statut : C01–C05 implémentés et testés sur PR #7 ; C06 lobby/S2S à suivre. 5C en cours.**
-5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/opérations sensibles/MFA C02–C05 implémentés sur PR #7 seulement.
+**Statut : C01–C06 implémentés et testés sur PR #7 ; C07 handoff/GameSession à suivre. 5C en cours.**
+5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/MFA/lobby/contrôle privé C02–C06 implémentés sur PR #7 seulement.
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
-Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C05 est décrit en premier.
+Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C06 est décrit en premier.
+
+### C06 — lobby et contrôle privé Portal→Game, 2026-10-30
+
+Instruction utilisateur « Continue » après C05. GitHub réel relu : PR #7 OPEN/brouillon, tête locale/
+distante 348d0a0cb23d7ef6ef789bd0ed051d64569a972c, master/base
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611. Fetch/ff-only déjà synchronisés, arbre propre, branche
+work/step-5c-portal-account-lobby conservée. CI C05 push 41071464090 et PR 41071472286 success
+observées ; dernier travail publié Codex local C05, aucune autre tête ou modification concurrente.
+Pas d’agent délégué, nouvelle branche, merge ou 5D. Périmètre C06 présenté avant code substantiel.
+
+[Canonique C06](docs/03-technical/portal-game-control.md), schéma versionné contracts/portal-game/v1 :
+références/memberships/outbox Portal, droits/bindings/ledger/epochs Game, aucune connexion SQL
+Portal→Game. Migration Accounts p0005_control (trois tables), Game 0005_game_access (cinq tables),
+révisions précédentes immuables et downgrade peuplé refusé. Aucun domaine Colony/simulation,
+game_data ou frontend Game modifié ; aucune API gameplay ni GameSession anticipée.
+
+Processus privé du même monolithe Game : game-control, TLS 9443 sans port hôte ; l’API publique
+ne monte pas /internal. mTLS obligatoire puis empreinte du certificat réellement vérifié extraite
+par l’adaptateur H11 Uvicorn et épinglée au service portal-control. Aucun header/forwarded scheme
+ne prouve l’identité ; autorisation avant lookup de résultat. PKI dev séparée, CA clés privées
+réservées à init, feuilles Game/Portal dans volumes propres RO ; aucune clé client Portal dans Game.
+PORTAL_CONTROL_TARGETS explicite, vérification CA/nom DNS, pas de redirect/fallback HTTP. Nouveau
+worker Portal/pool/réseau propre, aucun besoin des clés email/TOTP. CPU/charge hostile non attestés.
+
+Intention + snapshot complet + livraison dans transaction Accounts ; effet + déduplication + résultat
+immuable dans transaction Game. Révision inférieure ignorée, identique contradictoire refusée ;
+état/bindings modifiés exigent access_epoch supérieur, renouvellement inchangé ne révoque pas.
+Portal_confirmed_at/valid_until originaux conservés lors de retries/réconciliation ; huit heures
+non glissantes, confirmation future refusée, ancien grant ne ressuscite pas un accès suspendu.
+Game valide les Empires/scopes/FK et permissions explicites ; aucun owner, rôle ou droit par défaut.
+
+Timeout après commit : receipt de même opération récupérable ; aucun nouvel identifiant ou date sur
+retry. Acquittement validé/atomique, reçu ancien ne rabaisse pas la projection. Réconciliation
+inférieur/absent relivre le même état ; supérieur/contradictoire reste pending pour investigation,
+aucune intention Portal adoptée depuis Game. Sources C03–C05 durablement matérialisées par cible,
+revocation acknowledged seulement après tous les acquittements ; compte/appareil indépendants.
+Une source déjà matérialisée mais non acquittée ne bloque pas les sources suivantes. Tombstones/
+ledger distincts de l’audit 90 jours. Branchement aux véritables sessions et portée session : C07.
+
+Lobby : seulement ses participations, état vide réel, pending/applied/expiration/statuts et dates,
+aucune entrée disponible avant handoff. GET sans activité/renouvellement, refresh volontaire classé
+serveur. Message après logout prudent, acquittements consultables au lobby connecté ; suivi anonyme
+complet à C07/C08. Orchestration technique via shell Accounts pour opérateur déjà autorisé, UUID et
+bindings explicites ; aucune route publique create/join, génération jouable ou fixture runtime.
+
+Validations réellement exécutées :
+
+- Ruff backend/scripts/Portal, format des ajouts ; **112 tests Game** (101 antérieurs + 11 C06) et
+  **105 tests Portal** (93 antérieurs + 12 outbox/lobby), aucun ignoré, bases dédiées
+  echosphere_c06_game_test/echosphere_c06_accounts_test. Concurrence, ordre, scopes/FK, replay/conflict,
+  durée, rollback, fan-out sans famine/abandon sur retrait de cible, receipt invalide/perdu, réconciliation et lecture sans activité.
+  Roundtrips/absence de dérive et downgrade peuplé refusé ; warning Starlette/httpx connu.
+- Frontend Portal npm ci/lint, **24 tests**, build et **14 Chromium** réussis ; état vide/pending/
+  acquitté, erreur privée masquée, refresh clavier 320/1440, nom long sans débordement, captures
+  inspectées. API interceptée distincte du transport réel ; parcours C01–C05 préservés.
+- Connexion mTLS réelle du worker vers listener réussie. Recette control dédiée : deux bases *_test,
+  réseau/listener/volume temporaires ; client Portal n’utilisant que sa DB et le HTTP Game. Clients
+  sans certificat/mauvaise CA/certificat non épinglé même CA, nom DNS erroné/header forgé refusés ;
+  contrat/corps refusés, provisionnement/accès réel, acquittement perdu et récupéré, ancien grant sans
+  résurrection, révocations et réconciliation. Ressources temporaires supprimées, volumes conservés.
+- Docs : 71 références/liens, Q01–Q56 et décisions 5B sections 1–8 inchangées. ADR 0008 : statut de
+  réalisation partielle actualisé, aucune décision modifiée. Secrets/périmètre et diff relus.
+
+Recette finale Compose config/build/up --wait et trois smokes réussis : Game, Portal HTTPS/CORS/
+pannes croisées, contrôle mTLS/livraison sur bases temporaires. Accounts p0005_control et Game
+0005_game_access sans dérive ; migrations/init Exited(0), bases/APIs/frontends/Mailpit healthy et
+workers/listener running. Volumes et confiance CA/hosts hôte préservés ; bases conservées sans
+fixture de compte/univers ajoutée. Les deux bases de suites sont supprimées après validations.
+Tête C06 : commit portant ce checkpoint ; SHA publié et CI exacte à consigner dans PR #7 après
+observation, aucune CI configurée présentée comme exécutée. Environnement Docker/WSL2 fonctionnel
+pour ces recettes, aucun parcours Windows graphique revendiqué.
+Interruption puis reprise sur instruction « Reprend » : la revue automatique a échoué sur limite
+d’usage, sans rejet de sécurité. Aucun contournement ; contrôle repris après rétablissement. Les
+105 tests Portal déjà lancés ont été relus comme réussis, puis recette finale du worker relancée.
+Échecs intermédiaires corrigés : Compose refusait network_mode et networks simultanés pour init
+(réseau interne conservé), format/imports Ruff, header de certificat brut avec retours ligne invalide
+pour le test HTTP forgé (valeur synthétique non secrète), erreurs de sous-processus désormais expurgées
+pour ne pas imprimer environnement/arguments. Aucun échec présenté comme recette réussie.
+
+Limites : feuilles PKI dev 30 jours sans renouvellement silencieux, rotation et configuration
+production/C09/Q49 à préparer ; adaptateur H11 lié à Uvicorn figé. Pas de handoff/GameSession,
+commande Colony, parcours complet navigateur HTTPS→partie, charge hostile, perte physique de DB ou
+restauration sauvegarde testés. Q48 support, Q49 email/configuration et Q55 modes inchangés. Suite
+**C07 handoff sécurisé et GameSessions**, puis C08/C09. 5C non terminé, PR #7 reste brouillon ;
+aucune fusion ni implémentation 5D.
 
 ### C05 — MFA TOTP/WebAuthn et récupération limitée, 2026-10-30
 

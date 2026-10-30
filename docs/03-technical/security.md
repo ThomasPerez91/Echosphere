@@ -106,7 +106,7 @@ lots. Aucun bypass ou service payant introduit par cette délégation.
 Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver. Deux applications sur le même hôte ne prouvent
 pas la résistance à une saturation réseau ou DDoS. Aucun WAF/Redis installé ou utilisé comme autorité
 gameplay. Les scénarios de refus, concurrence, reprise et panne sont des obligations de 5C/5D,
-non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C05 sur PR #7.
+non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C06 sur PR #7.
 5C est le lot courant autorisé, sans début de 5D.
 
 ## État livré en C01–C03 — PR #7
@@ -115,7 +115,7 @@ non des tests déjà exécutés. 5B documentaire terminé et intégré à master
 CA Docker, sans installation hôte. [C02](portal-registration.md) livre Argon2id, contrôle de
 mots de passe compromis par préfixe, preuves uniques 24 h, file email chiffrée, anti-abus transactionnel,
 Origin/JSON stricts et erreurs sans données d’entrée. [C03](portal-sessions.md) ajoute sessions opaques/cookies host-only protégés, CSRF,
-activité explicite serveur et déconnexion avec intention durable. MFA ajoutée par C05 ; aucun mTLS S2S. CORS Portal refusé par défaut et sondes sans détails privés. Les autres contrôles (S2S/handoff) restent des obligations des prochains tickets,
+activité explicite serveur et déconnexion avec intention durable. MFA ajoutée par C05 ; mTLS privé ajouté par C06. CORS Portal refusé par défaut et sondes sans détails privés. Les autres contrôles (handoff/GameSession) restent des obligations des prochains tickets,
 pas des protections déjà livrées.
 
 ## Extension C04 sur PR #7
@@ -133,4 +133,17 @@ limitée quinze minutes ; preuve par action cinq minutes, garde-fous privilégi�
 restauration support inventée. Migration Accounts p0004_mfa, clé TOTP séparée, cooldown progressif,
 audit et notifications. Ajout de facteur/régénération volontaire protégés conservent les sessions ;
 activation, réduction/remplacement/désactivation et récupération révoquent globalement. Intentions
-Game pending jusqu’à C06/C07 ; aucun secret Accounts ou SQL Portal dans Game, aucune API Colony.
+Game pending à ce checkpoint C05 ; [C06](portal-game-control.md) livre depuis leur transport et
+acquittement. Aucun secret Accounts ou SQL Portal dans Game, aucune API Colony.
+
+## Extension C06 sur PR #7
+
+[Lobby et contrôle privé](portal-game-control.md) : références/memberships/outbox Accounts p0005,
+droits/bindings/ledger/epochs Game 0005. Listener mTLS distinct de l’API publique, certificat client
+épinglé depuis TLS, aucune identité de header ; destinations configurées, pas de SQL Portal→Game.
+Snapshots complets/révisions monotones, retry d’opération stable sans nouvelle date, acquittement
+validé et réconciliation. Révocations compte/appareil diffusées à chaque cible configurée, sources
+acknowledged seulement après tous les acquittements. Pas de session Game avant C07, aucune API Colony.
+Lobby limité à son compte, pending/applied/expiration datés, aucun univers de démo ou join public ;
+GET sans activité ni renouvellement, refresh volontaire classé serveur. Recette réelle sur deux bases
+temporaires *_test et refus TLS/headers, séparée du Chromium à API interceptée ; résultats dans progress.

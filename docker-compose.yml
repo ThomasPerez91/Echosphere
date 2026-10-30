@@ -172,6 +172,41 @@ services:
       portal-mailpit:
         condition: service_started
     restart: unless-stopped
+  control-tls-init:
+    <<: *portal
+    user: "0:0"
+    command: ["python", "-m", "portal_app.core.init_control_tls"]
+    volumes:
+      - control_ca:/run/control-ca
+      - game_control_tls:/run/game-control
+      - portal_control_tls:/run/portal-control
+    networks: [control]
+  game-control:
+    <<: *backend
+    command: ["python", "-m", "app.control.http"]
+    networks: [default, control]
+    volumes:
+      - game_control_tls:/run/game-control:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      control-tls-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  portal-control-worker:
+    <<: *portal
+    command: ["python", "-m", "portal_app.control.worker"]
+    networks: [portal_db, control]
+    volumes:
+      - portal_control_tls:/run/portal-control:ro
+    depends_on:
+      portal-migrate:
+        condition: service_completed_successfully
+      control-tls-init:
+        condition: service_completed_successfully
+      game-control:
+        condition: service_started
+    restart: unless-stopped
   local-edge:
     image: caddy:2-alpine
     ports:
@@ -195,10 +230,15 @@ volumes:
   local_tls_config:
   portal_secrets:
   portal_mail_data:
+  control_ca:
+  game_control_tls:
+  portal_control_tls:
 networks:
   default:
   portal_web:
   portal_db:
     internal: true
   portal_mail:
+    internal: true
+  control:
     internal: true

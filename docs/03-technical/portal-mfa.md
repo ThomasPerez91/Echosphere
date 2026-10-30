@@ -4,6 +4,8 @@
 2026-10-30, Codex local ; instruction utilisateur « Vasy enchaine » après C04.
 [Contrats 5B inchangés](identity-contracts.md) · [Plan 5C](../05-project/step-5c-plan.md) ·
 [Sessions](portal-sessions.md) · [Opérations sensibles](portal-account-security.md).
+État courant : [C06](portal-game-control.md) livre maintenant le transport/acquittement des marqueurs
+de révocation ; les mentions C06/C07 futures ci-dessous décrivent le périmètre historique C05.
 
 ## Parcours et autorité
 
@@ -151,7 +153,7 @@ Smokes Compose : TLS réel, bases/migrations et résilience des services. Ces pr
 pas une recette complète navigateur HTTPS → vraie API → authentificateur matériel : C09 doit la
 compléter. Aucun test Safari/Firefox, téléphone physique, clé matérielle ou délivrabilité publique
 attesté. Support renforcé Q48, configuration production Q49 et modes Q55 restent différés.
-**Suite C06** lobby/interface interne, puis C07 handoff ; 5D exclu, aucune fusion PR #7 autorisée.
+**C06 livré** : lobby/interface interne et acquittements des révocations ; suite C07 handoff ; 5D exclu, aucune fusion PR #7 autorisée.
 
 Références techniques : [PyOTP](https://pyauth.github.io/pyotp/),
 [py_webauthn](https://duo-labs.github.io/py_webauthn/),

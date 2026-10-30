@@ -54,7 +54,9 @@ def accounts(database_engine, tmp_path):
         with database_engine.begin() as connection:
             connection.execute(
                 text(
-                    "TRUNCATE auth_failures, mfa_backup_codes, mfa_challenges, "
+                    "TRUNCATE control_outbox, universe_memberships, "
+                    "universe_references, auth_failures, mfa_backup_codes, "
+                    "mfa_challenges, "
                     "mfa_recovery_sessions, "
                     "totp_credentials, webauthn_credentials, security_email_outbox, "
                     "account_revocations, step_up_grants, "

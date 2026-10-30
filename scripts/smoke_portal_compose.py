@@ -117,11 +117,12 @@ def main():
     identity = "SELECT current_database() || '/' || current_user"
     assert query("portal-postgres", identity) != query("postgres", identity)
     assert query("portal-postgres", "SELECT version_num FROM portal_alembic_version") == (
-        "p0004_mfa"
+        "p0005_control"
     )
-    assert query("postgres", "SELECT version_num FROM alembic_version") == "0004_colony_economy"
+    assert query("postgres", "SELECT version_num FROM alembic_version") == "0005_game_access"
     tables = "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
     assert set(query("portal-postgres", tables).splitlines()) == {
+        "universe_references", "universe_memberships", "control_outbox",
         "portal_alembic_version", "users", "password_credentials", "account_tokens",
         "email_outbox", "abuse_counters", "security_events",
         "browser_profiles", "account_devices", "portal_sessions",

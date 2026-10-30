@@ -5,6 +5,10 @@
 [Contrats 5B](identity-contracts.md) · [Plan 5C](../05-project/step-5c-plan.md) ·
 [Sessions C03](portal-sessions.md) · [Emails C02](portal-registration.md).
 
+État courant après C06 : [lobby et interface mTLS](portal-game-control.md) transportent et acquittent
+les marqueurs compte/appareil. Les limites de livraison futures ci-dessous décrivent le checkpoint
+historique du sous-ticket ; handoff/GameSession restent C07.
+
 ## Périmètre livré et dépendances
 
 Réauthentification par action, changement de mot de passe, récupération par email, changement
@@ -150,7 +154,7 @@ Validation : concurrence/rollback/délais exacts/scopes de preuves, interdiction
 révocation/login en vol, notifications sans secrets, SMTP en panne/retry et deux workers, UI mobile/
 clavier. Résultats réellement exécutés dans progress et CI de la PR. UI avec API interceptée distincte
 des intégrations API/PostgreSQL et smokes TLS ; recette navigateur HTTPS complète à C09.
-C05 et son intégration aux guards C04 sont livrés ; suite : **C06 lobby/interface interne**. 5D exclu, PR #7 non fusionnée.
+C05 et son intégration aux guards C04 sont livrés ; C06 lobby/interface interne livré ; suite : **C07 handoff/GameSession**. 5D exclu, PR #7 non fusionnée.
 
 Sources : [OWASP récupération](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html),
 [OWASP autorisation d’action](https://cheatsheetseries.owasp.org/cheatsheets/Transaction_Authorization_Cheat_Sheet.html),

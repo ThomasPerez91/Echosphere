@@ -16,6 +16,7 @@ test('WebAuthn registration and login use a real Chromium authenticator at mobil
     csrf_token: 'test-session-proof', session_id: 'current', sessions: [{ id: 'current', current: true }] };
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
+    if (path === '/api/lobby/memberships') return route.fulfill({ json: { memberships: [], revocations: [] } });
     if (path === '/api/ready') return route.fulfill({ json: { status: 'ready', service: 'portal' } });
     if (path === '/api/auth/sessions') return route.fulfill({ json: snapshot });
     if (path === '/api/mfa/status') return route.fulfill({ json: { enabled: !!credentialId, totp: false,

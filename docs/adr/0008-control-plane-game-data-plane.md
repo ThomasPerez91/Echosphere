@@ -1,6 +1,6 @@
 # ADR 0008 — Portal Control Plane / Game Data Plane
 
-- **Statut : Décision validée, architecture cible non implémentée.**
+- **Statut : Décision validée ; réalisation partielle C01–C06 sur PR #7, non intégrée à master.**
 - Date : 2026-10-28 ; source : instruction explicite de la mission de passation.
 - Affine [ADR 0001](0001-modular-monolith.md) et [ADR 0006](0006-universe-game-instance.md).
   Ne remplace ni ne renumérote [ADR 0007](0007-colony-economy.md).
@@ -12,7 +12,9 @@ outbox/idempotence/révisions, révocations ciblées et règles compte/MFA. Bloc
 corrections MFA sans global systématique, plafonds de sessions configurables et CORS refusé par défaut.
 Le [registre Q40–Q56](../05-project/open-questions.md) distingue clôtures 5B, détails délégués et reports
 support/email/modes. L’ADR garde sa provenance du 28/10, sans laisser ses anciens points ouverts
-contredire le complément validé. Aucune implémentation ajoutée.
+contredire le complément validé. Aucune implémentation ajoutée par ce complément documentaire.
+[C06](../03-technical/portal-game-control.md) matérialise désormais lobby/interface mTLS et droits ;
+handoff/GameSession restent C07. Les décisions de cet ADR restent inchangées.
 
 ## Contexte et décision
 

@@ -6,7 +6,7 @@ Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progre
 [Contrats 5B](../03-technical/identity-contracts.md) validés et consolidés après arbitrage du bloc
 complet corrigé ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
 contrats d’auth partiellement implémentés sur PR #7 par C02. 5C est le lot courant : checkpoint/cadrage effectués,
-[socle C01](../03-technical/portal-foundation.md) et [C02](../03-technical/portal-registration.md) implémentés sur PR #7, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md) et [C05 MFA](../03-technical/portal-mfa.md), sans lobby/handoff.
+[socle C01](../03-technical/portal-foundation.md) et [C02](../03-technical/portal-registration.md) implémentés sur PR #7, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md) et [C05 MFA](../03-technical/portal-mfa.md), avec [C06 lobby/mTLS](../03-technical/portal-game-control.md), sans handoff/GameSession.
 HTTPS/routage/isolation de panne des bases testés, pas de confiance navigateur Windows/charge démontrée.
 [Q40–Q56](../05-project/open-questions.md) séparent clôtures, détails techniques délégués et reports.
 Restent ouverts : procédures support renforcé joueur/privilégié Q48 (aucun déblocage sans procédure
@@ -135,7 +135,7 @@ aucune délivrabilité publique ou procédure support attestée. Plancher anti-�
 reset 150 ms configurable, pas de temps constant garanti sous charge. Recette UI interceptée séparée
 des intégrations PostgreSQL/API/SMTP et du smoke TLS ; navigateur HTTPS complet à C09.
 
-## Limites courantes après C05
+## Limites historiques après C05
 
 [C05 MFA](../03-technical/portal-mfa.md) lève les limites de preuves MFA/login/step-up de C03/C04.
 TOTP/WebAuthn/secours et récupération limitée fonctionnels sur PR #7, non intégrés à master.
@@ -147,3 +147,17 @@ un authentificateur virtuel et une API interceptée ; vérifications cryptograph
 Compose testés séparément. Recette complète C09 future. Livraison Game/réconciliation C06/C07 absente,
 intentions toujours pending ; aucune fenêtre Game créée ou relancée par un changement MFA.
 Cooldown et quotas testés ne constituent pas une preuve de résistance à une charge hostile.
+
+## Limites courantes après C06
+
+[C06](../03-technical/portal-game-control.md) livre la synchronisation et l’acquittement des révocations
+compte/appareil, mais aucune GameSession ni ticket : branchement aux sessions et révocation de session
+précise restent C07. Lobby réel, aucune entrée jouable/catalogue/join ou monde créé par défaut.
+État d’acquittement daté ; pas de disponibilité Game instantanée garantie. Le message après logout
+reste pending, suivi anonyme/complet à C07/C08 ; le lobby connecté expose les acquittements réels.
+PKI de développement et empreintes TLS testées, feuilles 30 jours sans renouvellement silencieux ;
+rotation/configuration production et recette opérationnelle avant exposition, C09/Q49. Adaptateur
+H11 dépend de la version Uvicorn figée, recette mTLS obligatoire à sa mise à jour. Aucun test de charge,
+perte physique de DB, restauration de sauvegarde, handoff ou navigateur complet de partie attesté.
+Source pending vers cible retirée/renommée ou état Game contradictoire supérieur : intervention
+opérateur, jamais abandon de révocation ou abaissement silencieux. Q48/Q49/Q55 et Q19–Q29 conservées.

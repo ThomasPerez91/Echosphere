@@ -63,6 +63,7 @@ REQUIRED = {
             "portal-sessions",
             "portal-account-security",
             "portal-mfa",
+            "portal-game-control",
             "deployment",
         )
     ],

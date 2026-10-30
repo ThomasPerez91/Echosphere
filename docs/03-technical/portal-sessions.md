@@ -9,6 +9,10 @@
 livrés sur PR #7 ; les limites historiques ci-dessous décrivent le seul sous-ticket initial.
 Les exclusions d’opérations sensibles ci-dessous décrivent le périmètre historique de cet incrément.
 
+État courant après C06 : [lobby et interface mTLS](portal-game-control.md) transportent et acquittent
+les marqueurs compte/appareil. Les limites de livraison futures ci-dessous décrivent le checkpoint
+historique du sous-ticket ; handoff/GameSession restent C07.
+
 ## Périmètre et parcours
 
 Connexion email/mot de passe, lecture de sa session et de ses connexions actives, actualisation

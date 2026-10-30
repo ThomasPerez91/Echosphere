@@ -19,3 +19,5 @@ select{font:inherit;max-width:100%;min-height:46px;padding:10px;color:#e7eef7;ba
 .security-settings form,.security-settings label{min-width:0}.security-settings select{width:100%;min-width:0}
 
 .recovery-codes{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;font-size:13px}form,label{min-width:0}select{width:100%;min-width:0}
+
+.membership { min-width: 0; overflow-wrap: anywhere; }
