@@ -1,7 +1,7 @@
 # Architecture technique
 
 **Statuts : Game Backend implémenté jusqu’à 5A, intégré par PR #5 ; cible Portal/Game validée,
-Portal C01–C06 implémenté sur PR #7, handoff/GameSession futurs.** État d’intégration et CI dans [progress.md](../../progress.md).
+Portal C01–C07 implémenté sur PR #7, handoff/GameSession C07 livrés.** État d’intégration et CI dans [progress.md](../../progress.md).
 
 ## Réalité du dépôt
 
@@ -74,7 +74,7 @@ PR #5 fusionnée sur master 8214e0b, puis **5B documentaire terminé et intégr�
 merge `63bb7d1`. Les [contrats 5B](identity-contracts.md) sont validés, partiellement implémentés par C02–C06 sur PR #7.
 Le [registre Q40–Q56](../05-project/open-questions.md) conserve clôtures, détails délégués et reports
 support/email/modes. Lot courant autorisé : 5C compte/lobby, nouvelle branche depuis ce merge,
-checkpoint documentaire et cadrage réalisés, socle C01 livré sur PR #7 ; C02 comptes/vérification livré ; C03 sessions livré ; C04 opérations sensibles, C05 MFA et C06 lobby/mTLS livrés ; C07 suit.
+checkpoint documentaire et cadrage réalisés, socle C01 livré sur PR #7 ; C02 comptes/vérification livré ; C03 sessions livré ; C04 opérations sensibles, C05 MFA et C06 lobby/mTLS livrés ; C07 livré ; C08 suit.
 Aucun début de 5D API Colony,
 aucune nouvelle fusion sans instruction explicite.
 Voir [roadmap](../05-project/roadmap.md), [sécurité](security.md), [API](api.md),

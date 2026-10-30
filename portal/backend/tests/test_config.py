@@ -34,3 +34,11 @@ def test_invalid_configuration_hides_environment_value(monkeypatch):
 def test_pool_is_bounded(size):
     with pytest.raises(ValidationError):
         Settings(database_pool_size=size)
+
+
+def test_game_and_portal_cookies_cannot_share_a_host_even_on_distinct_ports():
+    with pytest.raises(ValidationError):
+        Settings(
+            public_origin="https://same.example:8443",
+            game_public_targets={"primary": "https://same.example:9443"},
+        )

@@ -94,7 +94,7 @@ class AccountBodyLimit:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http" or not scope["path"].startswith(
-            ("/accounts/", "/auth/", "/security/", "/mfa/")
+            ("/accounts/", "/auth/", "/security/", "/mfa/", "/handoff/")
         ):
             await self.app(scope, receive, send)
             return

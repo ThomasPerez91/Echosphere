@@ -41,6 +41,9 @@ class GameAccess(Base):
     __table_args__ = (
         UniqueConstraint("global_user_id", "universe_id"),
         UniqueConstraint("membership_id", "universe_id"),
+        UniqueConstraint(
+            "membership_id", "global_user_id", "universe_id", name="uq_game_access_session_scope"
+        ),
         CheckConstraint("revision >= 1 AND access_epoch >= 1", name="access_revision"),
         CheckConstraint("status IN ('active', 'suspended', 'revoked')", name="access_status"),
         CheckConstraint(

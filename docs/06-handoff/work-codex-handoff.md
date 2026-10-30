@@ -155,6 +155,7 @@ docker compose exec -T portal-backend alembic check
 python3 scripts/smoke_compose.py
 python3 scripts/smoke_portal_compose.py
 python3 scripts/smoke_control_compose.py
+python3 scripts/smoke_handoff_compose.py
 docker compose down                            # conserve les volumes
 ```
 

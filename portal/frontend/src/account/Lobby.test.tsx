@@ -38,3 +38,20 @@ test('malformed private responses are hidden and service failure does not invent
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('indisponible'));
   expect(document.body.textContent).not.toContain('private payload');
 });
+
+test('acknowledged entry navigates by link and explicit confirmation waits for Game', async () => {
+  const universe = 'e2a64223-2319-4d91-a381-e6b24551e191';
+  const entry = { ...member, universe_id: universe, delivery_state: 'applied', applied_status: 'active',
+    entry_available: true, entry_url: `https://game.echosphere.localhost:8443/api/game/${universe}/start` };
+  const fetcher = vi.fn().mockResolvedValueOnce(ok({ memberships: [entry], revocations: [] }))
+    .mockResolvedValueOnce(ok({ status: 'pending' }))
+    .mockResolvedValueOnce(ok({ memberships: [{ ...entry, delivery_state: 'pending', entry_available: false }], revocations: [] }));
+  vi.stubGlobal('fetch', fetcher); render(<Lobby csrf="csrf" />);
+  expect(await screen.findByRole('link', { name: 'Entrer dans cet univers' })).toHaveAttribute('href', entry.entry_url);
+  expect(fetcher).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmer de nouveaux droits pour cette partie' }));
+  expect(await screen.findByText('Confirmation de Game en attente')).toBeVisible();
+  expect(screen.queryByRole('link', { name: 'Entrer dans cet univers' })).not.toBeInTheDocument();
+  expect(fetcher.mock.calls[1][0]).toBe(`/api/lobby/universes/${universe}/renew`);
+  expect(fetcher.mock.calls[1][1].headers['X-CSRF-Token']).toBe('csrf');
+});

@@ -1,7 +1,7 @@
 # Documentation Echosphere
 
 État intégré : étape 5A, domaine économique interne, scheduler et shell ; 5B contrats intégrés.
-Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; handoff/GameSession futurs. Aucune partie jouable ni
+Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; [C07 handoff/sessions Game](03-technical/game-handoff.md) livré. Aucune partie jouable ni
 API gameplay publique. [Économie v0.1](01-game-design/colony-economy-v0.1.md) et
 [défense future](01-game-design/planetary-defense.md) distinguent règles implémentées et orientations.
 
@@ -43,9 +43,9 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
 - [Contrats 5B](03-technical/identity-contracts.md) : décisions validées et consolidées le 2026-10-29,
-  **partiellement implémentées sur PR #7 (C02–C06)** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
+  **partiellement implémentées sur PR #7 (C02–C07)** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. Lot courant
-  5C : checkpoint/cadrage effectués, C01–C06 implémentés sur PR #7 ; C07 suit, 5D non commencé.
+  5C : checkpoint/cadrage effectués, C01–C07 implémentés sur PR #7 ; C08 suit, 5D non commencé.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité

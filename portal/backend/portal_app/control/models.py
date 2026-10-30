@@ -17,7 +17,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
+from portal_app.account_security import models as security_models  # noqa: F401
 from portal_app.persistence.models import Base
+from portal_app.sessions import models as session_models  # noqa: F401
 
 
 class UniverseReference(Base):

@@ -16,7 +16,7 @@ Universe = frontière d’instance, ni User ni processus ; late join et protecti
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
 éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
 
-## Implémentation — Game 5A intégré, Portal C01–C06 sur PR #7
+## Implémentation — Game 5A intégré, Portal C01–C07 sur PR #7
 
 PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
 8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
@@ -36,7 +36,7 @@ et logout global. [C05](docs/03-technical/portal-mfa.md) ajoute TOTP/WebAuthn, d
 limitée et preuves MFA des opérations sensibles ; garde-fous privilégiés WebAuthn, sans console admin.
 [C06](docs/03-technical/portal-game-control.md) ajoute memberships/lobby, outbox et listener privé
 mTLS Game : droits effectifs, révisions/epochs et acquittements des révocations compte/appareil.
-Pas de handoff/GameSession ni API Colony. [Recette C01](docs/03-technical/portal-foundation.md).
+[C07](docs/03-technical/game-handoff.md) ajoute le handoff et les sessions Game, sans API Colony. [Recette C01](docs/03-technical/portal-foundation.md).
 Routage/TLS, mTLS privé et livraison réelle sur bases temporaires testés ; aucune protection de charge prétendue.
 Game : FastAPI/SQLAlchemy/Alembic/PostgreSQL + worker, React/TypeScript/Vite ; UTC, autorité serveur.
 EventStream/ScheduledEvent génériques ; ColonyTimeline/ResourceBalance pour économie exacte.
@@ -64,7 +64,7 @@ autonome ; client gameplay directement à Game sans appel Portal par commande. I
 outbox Portal, état d’accès Game versionné et application idempotente. Portal possède l’intention,
 Game les droits effectifs. Aucun credential Accounts en Game DB.
 
-**5B validé et consolidé le 2026-10-29, partiellement implémenté par C02–C06 sur PR #7** :
+**5B validé et consolidé le 2026-10-29, partiellement implémenté par C02–C07 sur PR #7** :
 [contrats canoniques](docs/03-technical/identity-contracts.md),
 [statuts Q40–Q56](docs/05-project/open-questions.md).
 Email/mot de passe Argon2id MVP, identité indépendante, vérification email avant handoff ; récupération
@@ -103,13 +103,12 @@ La passation documentaire de la branche #5 est historique depuis la fusion de #5
 autorisé part de master synchronisée sur une nouvelle branche work/....
 PR #6 fusionnée sur instruction explicite le 2026-10-29 : master
 63bb7d1c902e9c0fbae3497d4a36c107a80eb611. **5B documentaire terminé et intégré à master** ;
-contrats validés, sous-ensembles C02–C06 implémentés sur PR #7 seulement. Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ;
+contrats validés, sous-ensembles C02–C07 implémentés sur PR #7 seulement. Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ;
 reports Q48/Q49/Q55 conservés selon le registre, aucun arbitrage rouvert.
 
 Lot courant autorisé : **5C — Portal Account/Lobby foundation**, branche
 work/step-5c-portal-account-lobby créée depuis master fraîchement synchronisée en fast-forward.
 Premier checkpoint documentaire 1c27497 et cadrage 8122cf7 publiés avant code. L’utilisateur a ensuite
-autorisé « alors go » : C01–C06 implémentés et testés sur PR #7, 5C reste en cours. Prochaine action : C07
-handoff/GameSession selon contrats 5B, sans nouvelle validation par paramètre technique délégué. 5D exclu ; aucune nouvelle fusion
+autorisé « alors go » : C01–C07 implémentés et testés sur PR #7, 5C reste en cours. Prochaine action : C08 parcours frontend et intégration au shell selon contrats 5B, sans nouvelle validation par paramètre technique délégué. 5D exclu ; aucune nouvelle fusion
 sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
 [Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).

@@ -12,6 +12,7 @@ from portal_app.accounts.service import Accounts
 from portal_app.api.account_security import router as security_router
 from portal_app.api.accounts import AccountBodyLimit
 from portal_app.api.accounts import router as accounts_router
+from portal_app.api.handoff import router as handoff_router
 from portal_app.api.lobby import router as lobby_router
 from portal_app.api.mfa import router as mfa_router
 from portal_app.api.probes import router
@@ -68,6 +69,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(security_router)
     application.include_router(mfa_router)
     application.include_router(lobby_router)
+    application.include_router(handoff_router)
     return application
 
 

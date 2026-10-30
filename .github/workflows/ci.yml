@@ -126,6 +126,7 @@ jobs:
       - run: python3 scripts/smoke_compose.py
       - run: python3 scripts/smoke_portal_compose.py
       - run: python3 scripts/smoke_control_compose.py
+      - run: python3 scripts/smoke_handoff_compose.py
       - if: always()
         run: docker compose ps && docker compose logs --no-color --tail=150
       - if: always()

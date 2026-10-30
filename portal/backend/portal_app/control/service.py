@@ -186,7 +186,19 @@ class Lobby:
                         "last_checked_at": wire_time(row.last_checked_at)
                         if row.last_checked_at
                         else None,
-                        "entry_available": False,
+                        "entry_available": bool(
+                            confirmed
+                            and user.email_verified_at is not None
+                            and row.desired_status == "active"
+                            and now < row.valid_until
+                            and universe.backend_id in self.accounts.settings.game_public_targets
+                        ),
+                        "entry_url": (
+                            self.accounts.settings.game_public_targets.get(universe.backend_id, "")
+                            + f"/api/game/{universe.id}/start"
+                        )
+                        if universe.backend_id in self.accounts.settings.game_public_targets
+                        else None,
                     }
                 )
             from portal_app.account_security.models import AccountRevocation
@@ -210,5 +222,5 @@ class Lobby:
             return {
                 "memberships": memberships,
                 "revocations": revocations,
-                "handoff_available": False,
+                "handoff_available": True,
             }

@@ -6,7 +6,7 @@ Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progre
 [Contrats 5B](../03-technical/identity-contracts.md) validés et consolidés après arbitrage du bloc
 complet corrigé ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
 contrats d’auth partiellement implémentés sur PR #7 par C02. 5C est le lot courant : checkpoint/cadrage effectués,
-[socle C01](../03-technical/portal-foundation.md) et [C02](../03-technical/portal-registration.md) implémentés sur PR #7, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md) et [C05 MFA](../03-technical/portal-mfa.md), avec [C06 lobby/mTLS](../03-technical/portal-game-control.md), sans handoff/GameSession.
+[socle C01](../03-technical/portal-foundation.md) et [C02](../03-technical/portal-registration.md) implémentés sur PR #7, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md) et [C05 MFA](../03-technical/portal-mfa.md), avec [C06 lobby/mTLS](../03-technical/portal-game-control.md) et [C07 handoff/sessions Game](../03-technical/game-handoff.md).
 HTTPS/routage/isolation de panne des bases testés, pas de confiance navigateur Windows/charge démontrée.
 [Q40–Q56](../05-project/open-questions.md) séparent clôtures, détails techniques délégués et reports.
 Restent ouverts : procédures support renforcé joueur/privilégié Q48 (aucun déblocage sans procédure

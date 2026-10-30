@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     auth_delay_max_ms: int = Field(default=1000, ge=1, le=3000)
     trusted_proxy_host: str | None = None
 
+    handoff_ip_limit: int = Field(default=60, ge=1, le=1000)
+    handoff_account_limit: int = Field(default=30, ge=1, le=1000)
+    handoff_private_key: Path = Path("/run/portal-handoff/signing.pem")
+    handoff_key_id: str = Field(default="local-v1", pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    game_public_targets: dict[str, str] = {"primary": "https://game.echosphere.localhost:8443"}
+
     control_targets: dict[str, str] = {"primary": "https://game-control:9443"}
     control_ca: Path = Path("/run/portal-control/game-ca.pem")
     control_cert: Path = Path("/run/portal-control/client.pem")
@@ -53,7 +59,7 @@ class Settings(BaseSettings):
     control_poll_seconds: int = Field(default=2, ge=1, le=60)
     control_reconcile_seconds: int = Field(default=60, ge=10, le=3600)
 
-    @field_validator("control_targets")
+    @field_validator("control_targets", "game_public_targets")
     @classmethod
     def check_targets(cls, values):
         import re
@@ -100,6 +106,15 @@ class Settings(BaseSettings):
         if value not in ("disabled", "smtp_local"):
             raise ValueError("No production email provider has been selected")
         return value
+
+    @model_validator(mode="after")
+    def isolated_cookie_hosts(self):
+        from urllib.parse import urlsplit
+
+        host = urlsplit(self.public_origin).hostname
+        if any(urlsplit(origin).hostname == host for origin in self.game_public_targets.values()):
+            raise ValueError("Portal and Game require distinct cookie hosts, not only ports")
+        return self
 
     @property
     def database_url(self) -> URL:

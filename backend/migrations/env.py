@@ -1,5 +1,6 @@
 from alembic import context
 
+from app.access import models as access_models  # noqa: F401
 from app.colony import models as colony_models  # noqa: F401
 from app.control import models as control_models  # noqa: F401
 from app.core.config import Settings

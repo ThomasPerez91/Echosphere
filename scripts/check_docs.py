@@ -64,6 +64,7 @@ REQUIRED = {
             "portal-account-security",
             "portal-mfa",
             "portal-game-control",
+            "game-handoff",
             "deployment",
         )
     ],

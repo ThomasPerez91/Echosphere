@@ -10,22 +10,102 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 | Champ | État |
 | --- | --- |
 | Branche / PR / base | work/step-5c-portal-account-lobby · PR #7 OPEN brouillon · base master 63bb7d1 |
-| Tête et CI | Tête = commit documentaire portant ce bloc (SHA/CI consignés dans PR #7 après observation). Dernier commit fonctionnel C06 7a00c7b : CI push 41098495003 et PR 41098504081 success, 5 jobs chacun |
-| Dernier agent | Rédaction documentaire Claude Code local (WSL2), reprise/publication Codex local après confirmation utilisateur ; C01–C06 publiés par Codex local |
-| Travail réalisé | Protocole de collaboration Work/Codex/Claude Code, revue croisée, CLAUDE.md, exemples de reprise actualisés ; aucun code |
-| Décisions | Protocole validé par l’utilisateur le 2026-10-30 : [protocole](docs/06-handoff/work-codex-handoff.md), [AGENTS](AGENTS.md), [index](docs/06-handoff/decision-status.md) |
-| Fichiers modifiés | CLAUDE.md (nouveau), AGENTS.md, progress.md, context.md, README.md, CONTRIBUTING.md, docs/README.md, docs/06-handoff/{README,work-codex-handoff,decision-status}.md, docs/04-quality/definition-of-done.md |
-| Tests réellement exécutés | check_docs.py et git diff --check ; import CLAUDE.md→AGENTS.md vérifié via Claude Code. Aucun test fonctionnel relancé (aucun code modifié) |
-| Anomalies / corrections restantes | Aucune revue croisée ouverte sur PR #7. Limites C06 ci-dessous ; Q48/Q49/Q55 différées |
-| Prochaines tâches | C07 handoff/GameSession → C08 parcours frontend compte/lobby → C09 recette de clôture → clôture 5C (fusion sur instruction seulement) ; 5D exclu |
+| Tête et CI | Tête = commit C07 portant ce checkpoint ; SHA/CI publiés dans PR #7 après observation. Checkpoints visuels 2286c35 et collaboration 97e8ccc publiés séparément ; dernier fonctionnel précédent C06 7a00c7b vert |
+| Dernier agent | Codex local, seul écrivain après confirmation utilisateur de la fin du travail Claude Code ; documentation Claude conservée dans 97e8ccc |
+| Travail réalisé | Références visuelles et C07 : pré-auth, handoff signé, session Game, contexte et logout, raccordement lobby ; pas de gameplay |
+| Décisions | Contrats 5B inchangés, [C07](docs/03-technical/game-handoff.md) détaille les mécanismes délégués ; [guide visuel](docs/visual-reference/README.md) |
+| Fichiers modifiés | Game access/0006, Portal handoff/lobby, schéma pur, clés/Compose, tests/recettes et documents canoniques |
+| Tests réellement exécutés | 148 Game et 118 Portal complets sur DB dédiées ; 25 tests Portal frontend, lint/build, 14 Chromium ; smokes Game/Portal/mTLS et parcours HTTPS 320/1440 ; docs/liens/diff. Détails et limites C07 ci-dessous |
+| Anomalies / corrections restantes | C08 intégration shell/parcours et C09 clôture ; rotation/nettoyage/production à recetter. Q48/Q49/Q55 inchangées ; aucune revue croisée formelle attestée |
+| Prochaines tâches | C08 parcours frontend et contexte dans le shell → C09 recette/clôture 5C ; aucun merge sans instruction ; 5D exclu |
+
 
 ## Lot courant — 5C : Portal Account/Lobby foundation
 
-**Statut : C01–C06 implémentés et testés sur PR #7 ; C07 handoff/GameSession à suivre. 5C en cours.**
-5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/MFA/lobby/contrôle privé C02–C06 implémentés sur PR #7 seulement.
+**Statut : C01–C07 implémentés et testés sur PR #7 ; C08 parcours/shell à suivre. 5C en cours.**
+5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/MFA/lobby/contrôle privé/handoff C02–C07 implémentés sur PR #7 seulement.
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
-Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C06 est décrit en premier.
+Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C07 est décrit en premier.
+
+### C07 — handoff et sessions Game, 2026-10-30
+
+Instruction utilisateur : intégrer d’abord le brief visuel, puis poursuivre C07. Reprise GitHub réelle :
+PR #7 OPEN/brouillon, tête 7a00c7ba656a22aca67e47f758b1d99ebfa54b5e, base master 63bb7d1 ; fetch/ff-only
+sans divergence, CI C06 push 41098495003 et PR 41098504081 success. Dossier visuel préexistant non
+suivi, six PNG et README vide ; images inspectées et octets conservés dans 2286c35 (guide/AGENTS/index).
+
+Pendant le démarrage C07, des modifications Claude Code ont été observées dans le même répertoire.
+Écritures suspendues ; utilisateur confirme explicitement que Codex peut reprendre seul. Aucun reset,
+stash ou écrasement : documentation Claude conservée/publiée séparément dans 97e8ccc, avec provenance.
+Même branche work/step-5c-portal-account-lobby ; aucune nouvelle branche, fusion ni 5D.
+
+[Canonique C07](docs/03-technical/game-handoff.md) et contracts/handoff/v1.schema.json : Ed25519 via
+PyJWT 2.15.1, clés publiques locales prédistribuées et type/algorithme/origines/claims stricts. Ticket
+60 s maximum, sans credential/permission client ; pré-auth 5 min liée au cookie et univers ; POST de
+navigation, CSRF et email vérifié, aucun ticket URL/localStorage/log. Secrets de signature 0600 en
+volume Portal propre, Game public seul, distincts de mTLS et MFA/mail. Hôtes de cookies distincts
+exigés même si ports différents. Anciennes dépendances figées conservées, ajout JWT/crypto Game.
+
+Migration Game additive 0006_game_sessions (pré-auth, jti consommés, sessions, FK composite de scope
+renforcée sur GameAccess) ; Accounts p0005_control inchangée. Historique publié immuable ; downgrade
+peuplé refusé. Vérification locale puis principal verrouillé, contrôle générations/état/dates et
+consommation atomique. Courses avec révocation, quotas et rejeu contrôlés ; réponse perdue impose un
+nouveau parcours. Réentrée d’une session active : rotation opaque sans repousser absolu/borne d’accès.
+Ancien cookie d’un autre compte encore valide refusé ; déjà révoqué par Portal, il ne bloque pas le
+nouveau compte légitime. Aucune connexion ou credential Accounts dans Game, pas de dépendance Portal
+par lecture Game ; futurs appels 5D devront garder locked et EventStream dans la même transaction.
+
+Game 8 h absolues/2 h inactif et accès capturé à l’entrée ; lectures automatiques sans effet,
+action explicite serveur/CSRF seule actualisant l’inactivité. Cookie host-only/HttpOnly/Secure par
+univers. Cap initial configurable dix univers/appareil, comptage sérialisé sans éviction/membership
+cap. Révocations C06 compte/appareil/membership appliquées aux vraies sessions ; logout Game ciblé
+conserve Portal/autres univers/appareils et interdit les cérémonies déjà en vol de ce slot.
+
+Lobby relié au circuit, participation active/acquittée/vérifiée seulement ; renouvellement explicite
+inchangé dans l’outbox, entrée pending jusqu’au receipt, jamais renouvellement en GET ou réactivation
+implicite. Vue Game native minimale avec nom d’univers, échéances, actualisation explicite, retour
+lobby et logout ; aucun stock/file/Empire factice. Palette et focus cohérents avec le shell ; adaptation
+complète du shell React et simplification du parcours restent C08.
+
+Validations réellement exécutées :
+
+- Ruff backend/scripts/Portal, **148 tests Game et 118 Portal** complets sur echosphere_c07_game_test
+  et echosphere_c07_accounts_test ; aucun ignoré. Schémas, signatures/clés/origines/type/scopes/cookie,
+  consommation concurrente unique, expirations exactes, générations, logout ciblé, quotas concurrents,
+  rollback, FK inter-comptes, requêtes automatiques/explicites et cookies déjà révoqués. Historiques,
+  roundtrips/Alembic check et refus de downgrade peuplé ; warning Starlette/httpx connu.
+- Portal frontend : npm ci/lint, **25 tests**, build et **14 Chromium** réussis. Lien d’entrée et
+  confirmation explicite/pending testés ; captures Game inspectées à 320/1440, sans débordement.
+- Compose config/build/up --wait ; Alembic Game 0006_game_sessions et Accounts p0005_control sans
+  dérive. Smokes Game, Portal HTTPS/CORS/pannes croisées, privé mTLS/outbox/replay/révocations réussis.
+  Nouvelle recette Chromium **HTTPS réel à 320 et 1440, sans API interceptée** : compte fixture
+  uniquement en DB *_test du projet temporaire, provision/grant via worker mTLS, POST entre origines,
+  cookies isolés, absence ticket URL, GET sans activité, actualisation explicite sans repousser absolu,
+  retour lobby, logout Game conservant Portal et nouvelle entrée. Aucun port hôte ni CA/hosts modifiés.
+  Projet/volumes temporaires supprimés par la recette, données courantes préservées.
+  Recette finale relancée après les derniers ajustements de contexte/refus CSRF et réussie.
+  Caddy conservé redémarré pour charger son fichier modifié ; TLS/routage des deux origines et
+  refus 401 de la nouvelle API Game sans session vérifiés. Deux DB de suites supprimées après succès ;
+  bases conservées contrôlées : users=0 et game_principals=0, aucune fixture runtime.
+- **74 documents/liens**, diff propre ; comparaison binaire des six PNG, Q01–Q56 et sections 1–8 de
+  5B inchangées. Aucun domaine Colony/simulation, game_data, frontend Game ou migration ancienne modifié.
+
+Corrections de recette consignées : contexte Docker ignorait portal dans le premier build des outils
+(corrigé par contexte Portal), PYTHONPATH absent au premier lancement (collecte impossible, non succès).
+Le shell C06 ne chargeait pas ses cibles FK en processus autonome : import explicite et test séparé.
+Le vrai navigateur a montré Origin null sous no-referrer au POST de transfert : strict-origin adopté
+sur ces seules pages, sans accepter null ni ouvrir CORS ; CSP Game autorise ses lectures same-origin.
+Un smoke de panne PG a été lancé trop tôt pendant une suite Portal : 3 échecs/11 erreurs de connexion
+à l’arrêt du serveur, non retenus comme succès ; DB dédiée recréée après la panne et suite complète
+relancée avec 118 réussites. Aucun défaut WSL2 démontré par ces erreurs de commande/ordonnancement.
+
+Limites : vue C07 minimale hors intégration React complète, erreurs/expiration/parcours/suivi après
+logout à affiner C08 ; production/rotation/nettoyage/backups/recette de charge à C09 et lots prévus.
+Pas de commande Colony ni preuve de gameplay sous panne Portal (5D), support/MFA totale, modes ou
+Empire partagé ajoutés. Pas de Safari/Firefox, appareil physique, lecteur d’écran ni charge hostile
+attestés. Q48/Q49/Q55 conservées. C07 livré ; C08/C09 nécessaires avant clôture 5C, PR #7 brouillon,
+aucun merge autorisé. CI propre au commit à observer après publication et consigner dans la PR.
 
 ### Collaboration multi-agents — documentaire, 2026-10-30
 

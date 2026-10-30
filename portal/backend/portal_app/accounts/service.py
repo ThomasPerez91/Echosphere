@@ -64,6 +64,11 @@ class Accounts:
                 self.settings.security_ip_limit,
                 self.settings.security_subject_limit,
             )
+        elif action == "handoff":
+            ip_limit, subject_limit = (
+                self.settings.handoff_ip_limit,
+                self.settings.handoff_account_limit,
+            )
         elif action == "login_start":
             ip_limit = subject_limit = self.settings.bootstrap_ip_limit
         limits = [

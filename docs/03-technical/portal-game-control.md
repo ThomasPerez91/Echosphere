@@ -5,6 +5,10 @@
 [Contrats 5B inchangés](identity-contracts.md) · [ADR 0008](../adr/0008-control-plane-game-data-plane.md) ·
 [Plan 5C](../05-project/step-5c-plan.md) · [MFA C05](portal-mfa.md).
 
+Évolution courante : [C07](game-handoff.md) ajoute tickets/sessions et fait appliquer ces générations
+à chaque admission/usage. Le périmètre et les résultats ci-dessous décrivent la livraison C06.
+Le shell opérateur charge désormais ses cibles FK en processus autonome (correctif découvert en C07).
+
 ## Périmètre et frontières
 
 Portal conserve références d’univers, intention de membership et livraison. Game conserve Universe,

@@ -1,6 +1,6 @@
 # Modèle de données conceptuel
 
-**Statut : Implémenté jusqu’au domaine Colony 5A sur PR #5 ; identité et autres domaines futurs.**
+**Statut : Colony 5A intégré ; identité C02–C07 implémentée sur PR #7 ; autres domaines futurs.**
 
 
 | Concept | Responsabilité et relations proposées |
@@ -156,7 +156,15 @@ droits/bindings/ledger/epochs Game 0005. Listener mTLS distinct de l’API publi
 épinglé depuis TLS, aucune identité de header ; destinations configurées, pas de SQL Portal→Game.
 Snapshots complets/révisions monotones, retry d’opération stable sans nouvelle date, acquittement
 validé et réconciliation. Révocations compte/appareil diffusées à chaque cible configurée, sources
-acknowledged seulement après tous les acquittements. Pas de session Game avant C07, aucune API Colony.
+acknowledged seulement après tous les acquittements. Sessions Game ajoutées par [C07](game-handoff.md), aucune API Colony.
 Lobby limité à son compte, pending/applied/expiration datés, aucun univers de démo ou join public ;
 GET sans activité ni renouvellement, refresh volontaire classé serveur. Recette réelle sur deux bases
 temporaires *_test et refus TLS/headers, séparée du Chromium à API interceptée ; résultats dans progress.
+
+
+## Complément C07 sur PR #7
+
+[Handoff et sessions Game](game-handoff.md) : ticket signé Ed25519 local, pré-auth navigateur,
+échange POST atomique et cookie par univers ; contexte minimal et logout, aucun endpoint Colony.
+Game additive 0006_game_sessions, Accounts p0005_control inchangée. Rotation/production et
+nettoyage à recetter en C09 ; commandes sécurisées réservées à 5D.

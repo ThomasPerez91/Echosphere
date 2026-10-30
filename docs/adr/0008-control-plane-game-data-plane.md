@@ -1,6 +1,6 @@
 # ADR 0008 — Portal Control Plane / Game Data Plane
 
-- **Statut : Décision validée ; réalisation partielle C01–C06 sur PR #7, non intégrée à master.**
+- **Statut : Décision validée ; réalisation partielle C01–C07 sur PR #7, non intégrée à master.**
 - Date : 2026-10-28 ; source : instruction explicite de la mission de passation.
 - Affine [ADR 0001](0001-modular-monolith.md) et [ADR 0006](0006-universe-game-instance.md).
   Ne remplace ni ne renumérote [ADR 0007](0007-colony-economy.md).
@@ -14,7 +14,7 @@ Le [registre Q40–Q56](../05-project/open-questions.md) distingue clôtures 5B,
 support/email/modes. L’ADR garde sa provenance du 28/10, sans laisser ses anciens points ouverts
 contredire le complément validé. Aucune implémentation ajoutée par ce complément documentaire.
 [C06](../03-technical/portal-game-control.md) matérialise désormais lobby/interface mTLS et droits ;
-handoff/GameSession restent C07. Les décisions de cet ADR restent inchangées.
+[C07](../03-technical/game-handoff.md) matérialise handoff/GameSession. Les décisions de cet ADR restent inchangées.
 
 ## Contexte et décision
 
@@ -66,7 +66,7 @@ délégués à 5C/5D, avec recette avant utilisation.
 
 ## Handoff et autonomie de GameSession
 
-**Contrat validé, non implémenté ; détails dans le canonique 5B** :
+**Contrat validé ; implémentation C07 sur PR #7, détails dans le canonique 5B** :
 
 1. L’utilisateur authentifié au Portal sélectionne un Universe auquel il peut accéder.
 2. Le Portal émet un ticket très court, à usage unique, destiné au Game Backend.
@@ -120,7 +120,7 @@ ceci reste une cible documentaire, pas une commande de lancement actuelle.
 compte/lobby selon cadrage ; 5D : API Colony sécurisée et UI réelle. Pas de Portal complet ou
 multijoueur développé par anticipation. Q16 a son cadrage 5B clos ; réalisation et reports restent
 explicites au registre. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
-contrats toujours non implémentés. 5C est le lot courant autorisé, sans début de 5D.
+contrats implémentés partiellement depuis par C02–C07 sur PR #7. 5C est le lot courant autorisé, sans début de 5D.
 
 ## Conséquences et critères futurs
 
