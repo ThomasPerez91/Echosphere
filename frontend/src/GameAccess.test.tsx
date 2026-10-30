@@ -21,7 +21,8 @@ test('session context is in the existing shell and only explicit navigation post
   expect(screen.getByRole('link', { name: 'Colonie' })).toHaveAttribute('href', `#universe/${universe}/colony`);
   fireEvent.click(screen.getByRole('button', { name: 'Actualiser mon accès' }));
   await waitFor(() => expect(fetcher.mock.calls.filter(call => call[1]?.method === 'POST')).toHaveLength(1));
-  expect(fetcher.mock.calls.at(-1)?.[1]?.headers).toMatchObject({ 'X-CSRF-Token': 'a'.repeat(64) });
+  // Colony reads run concurrently: inspect the explicit POST itself, not whichever call came last.
+  expect(fetcher.mock.calls.filter(call => call[1]?.method === 'POST').at(-1)?.[1]?.headers).toMatchObject({ 'X-CSRF-Token': 'a'.repeat(64) });
   expect(localStorage.length + sessionStorage.length).toBe(0);
 });
 test('an expired session hides context and offers a fresh lobby entry, without auto-renewal', async () => {
