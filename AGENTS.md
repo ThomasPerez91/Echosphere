@@ -14,8 +14,9 @@ Lire les statuts de [docs/README](docs/README.md) ; une proposition d’assistan
 3. Lire AGENTS.md → [context.md](context.md) → [progress.md](progress.md).
 4. Lire [passation](docs/06-handoff/README.md), [roadmap](docs/05-project/roadmap.md),
    [questions](docs/05-project/open-questions.md), documents métier et ADR du lot.
-5. Identifier le dernier travail publié Work ou Codex, sa CI et ses limites. Ne pas démarrer deux
-   modifications concurrentes sur la même branche ni inventer l’identité de l’agent précédent.
+5. Identifier le dernier travail publié (Work, Codex ou Claude Code), sa CI, ses limites et tout
+   travail local non commité. Ne pas démarrer deux modifications concurrentes sur la même branche
+   ni inventer l’identité de l’agent précédent.
 6. Définir le périmètre autorisé : une documentation future n’autorise pas son implémentation.
 
 ## Fin de chaque session
@@ -49,6 +50,29 @@ lot après intégration de sa fondation : master synchronisée puis branche cour
 - Un seul agent écrit dans un répertoire de travail et sur une branche à la fois ; jamais deux agents
   sur les mêmes fichiers du même répertoire. Parallélisme par branches et git worktrees distincts.
 - Aucun test déclaré réussi sans exécution réelle ou vérification de sa CI sur le SHA concerné.
+
+### Priorité, protection du travail et relais
+
+- Codex et ChatGPT Work sont les agents principaux de développement ; Claude Code reprend sur
+  épuisement de crédits/limites, indisponibilité ou demande de revue indépendante. Cette priorité
+  ne change ni les permissions Git ni les règles de validation.
+- Avant toute écriture : `git status`, branche, SHA, diffs indexés/non indexés et fichiers nouveaux
+  examinés ; travail à préserver identifié ; absence d’autre agent écrivant dans le même répertoire
+  vérifiée (en cas de doute, demander à l’utilisateur). Une consigne n’est pas une protection
+  technique : isoler les tâches parallèles par git worktrees.
+- Interdits sans autorisation explicite : `git reset --hard`, `git clean -fd`, `git push --force`,
+  écrasement d’un fichier modifié par un autre agent, remplacement silencieux d’un fichier entier
+  contenant des modifications à préserver, et équivalents destructifs (restore/checkout de fichiers,
+  stash drop/clear, branch -D, worktree remove --force).
+- Reprise : partir du dernier état réellement accessible (disque local pour Codex, commits publiés pour
+  Work), préserver l’incomplet, établir fait/reste à faire, ne pas recommencer à l’aveugle. Divergence,
+  conflit ou travail non enregistré : suspendre l’opération et proposer une résolution gardant les
+  deux versions ; aucun pull/rebase/merge/checkout ne perd silencieusement du travail local.
+- Relecteur en lecture seule : il ne modifie pas les fichiers de l’autre agent sans nouvelle
+  autorisation ; corrections acceptées appliquées de façon contrôlée puis vérifiées par diff et tests.
+- Checkpoints intermédiaires poussés sur la branche du lot pour permettre la reprise, sans secret ni
+  fichier temporaire ; un checkpoint publié n’est ni validation fonctionnelle ni autorisation de fusion.
+  Procédure détaillée : [protocole](docs/06-handoff/work-codex-handoff.md#protection-du-travail-existant).
 
 Historique : la passation du 28/10/2026 (documents seulement, branche de PR #5) est close ; PR #5 et
 #6 sont fusionnées et leurs consignes de reprise ne s’appliquent plus. Anomalies de code observées

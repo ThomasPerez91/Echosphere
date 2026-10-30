@@ -10,11 +10,11 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 | Champ | État |
 | --- | --- |
 | Branche / PR / base | work/step-5c-portal-account-lobby · PR #7 OPEN brouillon · base master 63bb7d1 |
-| Tête et CI | Tête = commit C07 portant ce checkpoint ; SHA/CI publiés dans PR #7 après observation. Checkpoints visuels 2286c35 et collaboration 97e8ccc publiés séparément ; dernier fonctionnel précédent C06 7a00c7b vert |
-| Dernier agent | Codex local, seul écrivain après confirmation utilisateur de la fin du travail Claude Code ; documentation Claude conservée dans 97e8ccc |
-| Travail réalisé | Références visuelles et C07 : pré-auth, handoff signé, session Game, contexte et logout, raccordement lobby ; pas de gameplay |
-| Décisions | Contrats 5B inchangés, [C07](docs/03-technical/game-handoff.md) détaille les mécanismes délégués ; [guide visuel](docs/visual-reference/README.md) |
-| Fichiers modifiés | Game access/0006, Portal handoff/lobby, schéma pur, clés/Compose, tests/recettes et documents canoniques |
+| Tête et CI | Tête = commit documentaire Claude portant ce bloc (SHA/CI consignés dans PR #7 après observation). Dernier fonctionnel C07 49799e4 : CI push 41109472715 et PR 41109481379 success ; 97e8ccc (collaboration) push 41105734068/PR 41105741588 success ; C06 7a00c7b vert |
+| Dernier agent | Claude Code local (WSL2), écrivain unique pour ce commit documentaire après reprise confirmée par l’utilisateur ; C07 publié par Codex local (061fd17, 49799e4), arbre propre à la reprise |
+| Travail réalisé | Protocole de sécurité multi-agents et relais sur épuisement des crédits (documents seulement). Précédemment : références visuelles et C07 par Codex (pré-auth, handoff signé, session Game, contexte et logout, raccordement lobby ; pas de gameplay) |
+| Décisions | [Protocole](docs/06-handoff/work-codex-handoff.md) complété le 2026-10-30 ; contrats 5B inchangés, [C07](docs/03-technical/game-handoff.md) détaille les mécanismes délégués ; [guide visuel](docs/visual-reference/README.md) |
+| Fichiers modifiés | Ce commit : AGENTS.md, work-codex-handoff.md, decision-status.md, progress.md. C07 : Game access/0006, Portal handoff/lobby, schéma pur, clés/Compose, tests/recettes et documents canoniques |
 | Tests réellement exécutés | 148 Game et 118 Portal complets sur DB dédiées ; 25 tests Portal frontend, lint/build, 14 Chromium ; smokes Game/Portal/mTLS et parcours HTTPS 320/1440 ; docs/liens/diff. Détails et limites C07 ci-dessous |
 | Anomalies / corrections restantes | C08 intégration shell/parcours et C09 clôture ; rotation/nettoyage/production à recetter. Q48/Q49/Q55 inchangées ; aucune revue croisée formelle attestée |
 | Prochaines tâches | C08 parcours frontend et contexte dans le shell → C09 recette/clôture 5C ; aucun merge sans instruction ; 5D exclu |
@@ -27,6 +27,23 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
 Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C07 est décrit en premier.
+
+### Protocole de sécurité multi-agents et relais — documentaire, 2026-10-30
+
+Instruction utilisateur « Reprend » puis protocole de sécurité et de relais sur épuisement des crédits.
+Agent : Claude Code local (WSL2). État vérifié avant écriture : PR #7 OPEN/brouillon, tête locale =
+distante 49799e4b42b2831720764ea57a6c3b7aa3495bf5 (C07 Codex), arbre propre, aucun fichier modifié
+hors commits, CI 49799e4 push/PR success. Rien à préserver hors Git ; aucune réécriture de fichier
+entier, éditions ciblées seulement.
+
+Ajouts : priorité Codex/Work principaux et Claude en relais ou revue indépendante, sans effet sur
+permissions/validation ; contrôles obligatoires avant écriture et commandes destructives interdites ;
+reprise depuis l’état réellement accessible (disque Codex, GitHub pour Work), inventaire fait/reste,
+suspension sur divergence/conflit avec résolution préservant les deux versions ; relecteur sans
+modification directe sans nouvelle autorisation ; checkpoints intermédiaires sans secret ni
+temporaire, non assimilables à validation/fusion ; relais concret Codex → Claude Code → Work.
+[AGENTS](AGENTS.md) résume, le [protocole](docs/06-handoff/work-codex-handoff.md) détaille ; CLAUDE.md
+inchangé. Validations : check_docs.py et git diff --check ; aucun test fonctionnel (aucun code).
 
 ### C07 — handoff et sessions Game, 2026-10-30
 

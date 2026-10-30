@@ -1,6 +1,7 @@
 # Protocole de collaboration — ChatGPT Work, Codex et Claude Code
 
-**Statut : règle de travail validée par l’utilisateur le 2026-10-30.** Remplace la procédure à deux
+**Statut : règle de travail validée par l’utilisateur le 2026-10-30, complétée le même jour par le
+protocole de sécurité (priorité, protection du travail, relais sur épuisement des crédits).** Remplace la procédure à deux
 agents Work ↔ Codex du 28/10 (exemples PR #5 désormais historiques). Le nom du fichier est conservé
 pour les liens existants. Consignes de base : [AGENTS](../../AGENTS.md) ; checkpoint courant :
 [progress](../../progress.md) ; recette : [Definition of Done](../04-quality/definition-of-done.md).
@@ -12,6 +13,11 @@ pour les liens existants. Consignes de base : [AGENTS](../../AGENTS.md) ; checkp
 | ChatGPT Work | GitHub (connecteur) | Lire PR/diff/commits/CI, commenter, publier des commits documentaires ou de code sur une branche | Pas de Docker ni de shell local attesté : ses validations sont la CI observée, jamais des « tests locaux » |
 | Codex local | Ubuntu WSL2 + VS Code, filesystem Linux (~/projects) | Git, Docker Compose, tests natifs ou en conteneur, gh | Recette graphique Windows non attestée sauf preuve |
 | Claude Code local | Même WSL2/VS Code, même machine que Codex possible | Idem Codex ; lit AGENTS.md via [CLAUDE.md](../../CLAUDE.md) | Même disque que Codex : voir règles de travail parallèle |
+
+**Priorité** : Codex et ChatGPT Work sont les outils principaux de développement. Claude Code prend
+le relais lorsque leurs crédits ou limites d’utilisation sont atteints, lorsqu’ils sont indisponibles,
+ou sur demande de revue indépendante. La priorité désigne qui travaille ; elle ne modifie jamais les
+permissions Git, le périmètre autorisé ni les règles de validation.
 
 Les trois agents appliquent les mêmes règles de développement, spécifications, invariants et DoD.
 Aucun agent ne partage la mémoire conversationnelle d’un autre : le contexte passe **uniquement** par
@@ -72,7 +78,11 @@ Cycles possibles, sur la même branche de PR :
 ### Règles du relecteur
 
 1. Commence en **lecture seule** : aucun commit, push, modification de fichier ni commentaire
-   « approuvé » avant d’avoir terminé l’examen. Il note le SHA exact relu.
+   « approuvé » avant d’avoir terminé l’examen. Il note le SHA exact relu et comprend les
+   modifications existantes avant de proposer une correction. Il ne modifie pas directement les
+   fichiers du développeur (Claude auditant Codex comme l’inverse) sans nouvelle autorisation de
+   l’utilisateur ; s’il est autorisé, il applique la correction de façon contrôlée, puis la vérifie
+   par diff et tests.
 2. Examine le diff Git (`git diff <base>...<sha>`), le code, les tests, les migrations et les
    spécifications canoniques du lot (contrats, ADR, DoD), plus la CI de ce SHA.
 3. Chaque anomalie est **justifiée par des éléments vérifiables** : fichier:ligne au SHA relu,
@@ -136,6 +146,91 @@ Un worktree ne contient pas le `.env` non versionné : en créer un depuis `.env
 de secret réel. Compose dérive le nom de projet du dossier : un autre worktree a donc ses propres
 volumes (bases vides), mais les ports hôtes (8443, 5173, 8000, 8025) sont fixes — une seule pile
 Compose à la fois. Ne jamais lancer `down -v` sur la pile d’un autre agent.
+
+## Protection du travail existant
+
+Une instruction textuelle n’empêche pas techniquement un écrasement : les worktrees ci-dessus sont la
+protection d’isolation, et les contrôles suivants sont obligatoires avant **toute** modification.
+
+```bash
+git status --short --branch          # branche, avance/retard, fichiers modifiés et non suivis
+git rev-parse HEAD origin/<branche>  # SHA local et publié
+git diff --stat; git diff --cached --stat
+git diff; git diff --cached          # lire réellement les changements existants
+git ls-files --others --exclude-standard
+git worktree list
+find . -path ./.git -prune -o -path '*/node_modules' -prune -o -type f -mmin -15 -print
+ps -eo pid,etime,cmd | grep -Ei 'codex|claude' | grep -v grep
+```
+
+- Tout changement non commité ou fichier nouveau est **le travail de quelqu’un** : l’identifier
+  (agent, lot, progress) et le préserver. Fichiers récents ou processus d’agent actif dans ce
+  répertoire : ne rien écrire, demander à l’utilisateur qui est l’écrivain courant.
+- Éditer par remplacements ciblés ; ne réécrire un fichier entier que s’il n’a aucune modification
+  préexistante à préserver, ou après les avoir relues et intégrées.
+- Interdits sans autorisation explicite de l’utilisateur : `git reset --hard`, `git clean -fd`
+  (et variantes `-x`), `git push --force`/`--force-with-lease`, `git checkout -- <f>`/`git restore`
+  sur un travail d’autrui, `git switch --discard-changes`, `git stash drop`/`clear`, `git branch -D`,
+  `git worktree remove --force`, `docker compose down -v` sur des données à garder, et tout écrasement
+  d’un fichier modifié par un autre agent.
+
+## Reprise sur indisponibilité d’un agent
+
+Cas typique : crédits ou limites de Codex ou de Work atteints au milieu d’un ticket.
+
+1. **Dernier état réellement accessible** : pour Codex local, le disque (commits locaux non poussés,
+   changements indexés/non indexés, fichiers nouveaux, worktrees) **et** GitHub ; pour Work distant,
+   uniquement les commits effectivement publiés sur GitHub et les commentaires de PR. Ce que l’agent
+   « allait faire » sans trace versionnée n’existe pas.
+2. **Préserver avant d’agir** : si du travail non commité doit survivre à une opération risquée,
+   et si l’utilisateur l’autorise, en faire un checkpoint (commit `wip(<ticket>): …` sur la branche
+   du lot), ou à défaut une copie hors dépôt non versionnée :
+   `git diff --binary HEAD > ../echosphere-preserve-<date>.patch` plus la liste des fichiers non suivis.
+3. **Établir fait / reste à faire** : comparer diff, tests présents, progress, PR et document canonique
+   du ticket ; consigner l’inventaire dans progress avant de continuer. Ne pas recommencer à l’aveugle
+   une fonctionnalité partiellement implémentée ; compléter et corriger l’existant.
+4. **Continuer** avec les mêmes exigences : tests, DoD, checkpoint, CI observée.
+
+### Divergence, conflit ou travail non enregistré
+
+Synchroniser seulement par `git fetch` puis `git pull --ff-only`. Si l’avance rapide échoue, si un
+conflit apparaît ou si un switch/pull refuse à cause de changements locaux : **suspendre l’opération**,
+ne rien forcer, et proposer à l’utilisateur une résolution qui garde les deux versions, par exemple
+branche locale de sauvegarde (`git branch backup/<agent>-<date>` sur la tête locale, non poussée sans
+accord), comparaison `git log --left-right --oneline HEAD...origin/<branche>`, puis intégration
+explicite choisie par l’utilisateur. Aucun pull, rebase, merge ou checkout ne doit faire perdre
+silencieusement du travail local.
+
+## Checkpoints intermédiaires et synchronisation GitHub
+
+- Toute livraison suffisamment stable est commitée et poussée sur la branche du lot ; un ticket long
+  produit des checkpoints intermédiaires (commits cohérents, progress à jour) pour qu’un autre agent
+  puisse reprendre si les crédits de l’auteur s’épuisent.
+- Jamais de secret, `.env`, clé, dump, log privé, fichier temporaire, artefact de build ou patch de
+  sauvegarde dans un commit : relire `git diff --cached --stat` avant chaque commit, indexer par
+  chemins explicites plutôt que `git add -A` quand d’autres changements existent.
+- Un checkpoint publié n’est **ni une validation fonctionnelle ni une autorisation de fusion** ; un
+  commit `wip` est signalé comme tel dans progress et dans la PR.
+
+## Relais concret Codex → Claude Code → ChatGPT Work
+
+1. **Codex s’interrompt** (crédits épuisés) : s’il le peut, il commite/pousse un checkpoint et met à
+   jour le bloc Reprise rapide ; sinon son travail reste sur disque.
+2. **L’utilisateur désigne Claude Code** comme écrivain courant. Claude vérifie que Codex n’écrit plus
+   (fichiers récents, processus, confirmation utilisateur), puis applique « Protection du travail
+   existant » et « Reprise sur indisponibilité » : GitHub, disque, diffs, inventaire fait/reste.
+3. **Claude poursuit** le même ticket sur la même branche, avec les mêmes tests et la même DoD, en
+   publiant des checkpoints ; bloc Reprise rapide : « Dernier agent : Claude Code local », travail
+   repris de Codex et ce qui reste.
+4. **Claude cède la main** : arbre propre, tout poussé, CI du SHA observée et consignée dans la PR.
+5. **ChatGPT Work reprend depuis GitHub** : lit PR, SHA, CI et progress ; ne voit pas le disque local,
+   donc tout ce qui n’est pas poussé lui est inaccessible. Il poursuit, relit ou commente selon
+   l’instruction, et ses validations se limitent à la CI observée.
+6. **Retour à Codex** : fetch puis `pull --ff-only` ; en cas de divergence, suspension et résolution
+   préservant les deux versions comme ci-dessus.
+
+À chaque transition, un seul écrivain ; une revue indépendante se fait en lecture seule, de
+préférence dans un worktree détaché sur le SHA publié.
 
 ## Démarrage local frais (Codex / Claude Code)
 
