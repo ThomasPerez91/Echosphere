@@ -124,6 +124,27 @@ Responsive vérifié 320/390/768/1440 en Chromium : pas de débordement horizont
 centre de chaque bouton réellement atteignable dans le viewport (barre mobile fixe compensée par
 `scroll-padding-bottom`), clavier sur construction/annulation et sous-navigation.
 
+## Recette réelle et résilience Portal (D08)
+
+`python3 scripts/smoke_colony_compose.py` (après build des images de l’arbre courant ; job CI
+compose-smoke) crée un projet Compose aléatoire sans port hôte, bases `echosphere_colony_*_test`,
+puis : compte de test et Universe provisionné par Portal via mTLS, graphe Colony de référence par
+`scripts/colony_game_fixture.py` (refusé hors de sa base dédiée ; vitesse de construction ×60 de
+l’instance pour finir en secondes, règles v0.1 sinon identiques), binding Empire par
+`SetUniverseAccess`. Chromium réel 390 px (`scripts/colony_browser.mjs`, sans interception) :
+
+1. login Portal → lobby → handoff signé → shell Game ;
+2. construction d’un Nœud de données : ordre réel, Alliages réservés immédiatement ;
+3. page fermée ; le coordinateur constate en base que le worker termine l’ordre ;
+4. nouvelle page : niveau/production mis à jour (Données 120/h), action suivante acceptée ;
+5. arrêt réel de Portal API et du worker de contrôle (`/api/ready` Portal ≥ 500) : colonie relue,
+   nouvelle construction acceptée, worker qui achève amélioration et réacteur, aucune requête
+   vers l’origine Portal pendant la séquence ;
+6. échéance de session atteinte (échéance absolue ramenée juste après la dernière activité dans la
+   base de test) : commande refusée, UI d’expiration, lecture 401.
+
+Le projet et ses volumes sont supprimés ; la pile conservée n’est pas touchée.
+
 ## Données de partie et tests
 
 Aucun parcours produit ne crée encore une partie : les tests et recettes créent Universe (provision

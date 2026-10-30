@@ -21,8 +21,19 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 
 ## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
 
-**Statut : D00–D07 réalisés ; D08 résilience en cours.** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
+**Statut : D00–D08 réalisés ; D09 recette complète/clôture en cours.** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
 en bout sur une seule branche/PR, sans merge, sans étape 6. Environnement : Claude Code local/WSL2.
+
+### D08 — boucle réelle et Portal coupé, 2026-10-30
+
+`scripts/smoke_colony_compose.py`, `scripts/colony_browser.mjs`, `scripts/colony_game_fixture.py`
+(test-only, base `echosphere_colony_game_test` exigée) ; étape ajoutée au job CI compose-smoke.
+Exécution locale réelle après `docker compose build` de l’arbre : **réussie (code 0)** — login/lobby/
+handoff, réservation immédiate, achèvement par le worker page fermée, production mise à jour,
+action suivante, Portal API + worker de contrôle arrêtés (Portal /api/ready en erreur) avec lecture,
+construction acceptée, worker progressant et zéro requête vers Portal, puis 401 et UI d’expiration
+à l’échéance simulée en base de test. Captures /tmp/echosphere-colony-artifacts inspectées (hors
+dépôt). Projet temporaire et volumes supprimés, pile conservée intacte.
 
 ### D05–D07 — UI Colony connectée, responsive et erreurs, 2026-10-30
 
