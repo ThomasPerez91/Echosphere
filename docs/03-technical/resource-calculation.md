@@ -58,5 +58,5 @@ chaque pas en micro-unités/microsecondes ; production/capacité : plancher. Dur
 à l’activation, bonus industriel courant et vitesse de construction snapshotée. Production perdue
 au stockage plein, reste remis à zéro. Tous les changements de taux/capacité sont précédés d’un
 règlement à la date logique. Aucun float ni plafond de niveau 5. Les chiffres sont dans game_data.
-Remboursement 100/80 %, plancher micro-unité ; si le stockage ne permet pas le montant exact, refus
-atomique sans perte cachée (Q39). Voir [économie v0.1](../01-game-design/colony-economy-v0.1.md).
+Remboursement théorique 100/80 %, plancher micro-unité ; crédit plafonné par ressource, excédent
+définitivement perdu et annoncé avant confirmation, sans refus pour saturation (Q39 close). Voir [économie v0.1](../01-game-design/colony-economy-v0.1.md).

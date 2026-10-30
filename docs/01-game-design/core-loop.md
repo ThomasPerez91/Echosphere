@@ -23,7 +23,7 @@ Aucune interaction fréquente ne doit devenir obligatoire pour exploiter le rend
 
 Un joueur peut préparer les deux couches sans rester connecté. Les décisions ont des conséquences
 compréhensibles et les rapports permettent de corriger le lendemain. Les règles de cadence et de
-files sont à arbitrer en Q01 ; aucune durée n'est figée ici.
+constructions suivent Q01 et le pacing cible de [l’économie](colony-economy-v0.1.md) ; valeurs exactes balançables.
 
 
 ## Références

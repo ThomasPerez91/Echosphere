@@ -21,7 +21,8 @@ test('session context is in the existing shell and only explicit navigation post
   expect(screen.getByRole('link', { name: 'Colonie' })).toHaveAttribute('href', `#universe/${universe}/colony`);
   fireEvent.click(screen.getByRole('button', { name: 'Actualiser mon accès' }));
   await waitFor(() => expect(fetcher.mock.calls.filter(call => call[1]?.method === 'POST')).toHaveLength(1));
-  expect(fetcher.mock.calls.at(-1)?.[1]?.headers).toMatchObject({ 'X-CSRF-Token': 'a'.repeat(64) });
+  // Colony reads run concurrently: inspect the explicit POST itself, not whichever call came last.
+  expect(fetcher.mock.calls.filter(call => call[1]?.method === 'POST').at(-1)?.[1]?.headers).toMatchObject({ 'X-CSRF-Token': 'a'.repeat(64) });
   expect(localStorage.length + sessionStorage.length).toBe(0);
 });
 test('an expired session hides context and offers a fresh lobby entry, without auto-renewal', async () => {
@@ -48,10 +49,11 @@ test('the deadline timer verifies the server without extending activity', async 
   vi.useFakeTimers();
   let reads = 0;
   const near = { ...current, idle_expires_at: '2099-01-01T00:00:01Z' };
-  const fetcher = vi.fn((url: string) => Promise.resolve({
-    ok: url === '/api/ready' || ++reads === 1, status: url === '/api/ready' || reads === 1 ? 200 : 401,
-    json: async () => url === '/api/ready' ? { status: 'ready' } : reads === 1 ? near : { portal_url: current.portal_url },
-  }));
+  // Only session reads are counted; Colony reads are separate and also never post activity.
+  const fetcher = vi.fn((url: string) => Promise.resolve(url.includes('/colonies')
+    ? { ok: false, status: 404, json: async () => ({ error: { code: 'colony_not_found' } }) }
+    : { ok: url === '/api/ready' || ++reads === 1, status: url === '/api/ready' || reads === 1 ? 200 : 401,
+      json: async () => url === '/api/ready' ? { status: 'ready' } : reads === 1 ? near : { portal_url: current.portal_url } }));
   vi.stubGlobal('fetch', fetcher); window.history.replaceState(null, '', `#universe/${universe}/empire`);
   const { act } = await import('@testing-library/react');
   await act(async () => { render(<App />); });

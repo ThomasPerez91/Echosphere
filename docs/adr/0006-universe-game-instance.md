@@ -1,5 +1,9 @@
 # 0006 — Universe est la frontière d'une instance de jeu
 
+> Complément produit du 31/10/2026 : Q19–Q29/Q55 (modes/admission/Empire partagé) sont closes
+> côté produit, réalisation des parcours future. Les mentions ouvertes antérieures sont historiques.
+> Voir [modes](../01-game-design/game-modes.md) et [registre](../05-project/open-questions.md).
+
 - Statut : acceptée, contrainte explicite de compatibilité future.
 - Date : 2026-10-28.
 

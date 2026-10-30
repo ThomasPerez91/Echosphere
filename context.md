@@ -1,6 +1,6 @@
 # Contexte stable — Echosphere
 
-**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-30.
+**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-31.
 Vérifier GitHub réel puis lire AGENTS → context → progress → [passation](docs/06-handoff/README.md).
 
 ## Produit validé, état distinct
@@ -12,11 +12,11 @@ IA stratégique sans LLM, Utility/Goals testable, mêmes règles/services/fog qu
 [Vision](docs/00-product-vision.md), [décisions](docs/06-handoff/decision-status.md).
 
 Solo humain+IA = MVP ; privé/persistant futurs, pas de durée maximale obligatoire en persistant.
-Universe = frontière d’instance, ni User ni processus ; late join et protections restent ouverts.
+Universe = frontière d’instance, ni User ni processus ; late join et protection nouvel entrant validés mais futurs (Q19–Q29/Q55).
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
-éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
+éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 validé, UI de partage future.
 
-## Implémentation — Game 5A intégré, Portal C01–C08 sur PR #7
+## Implémentation et checkpoints historiques — 5A/5B/5C intégrés, 5D sur PR #8
 
 PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
 8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
@@ -27,7 +27,7 @@ Vérifier GitHub : après fusion de #5, considérer 5A/passation comme intégré
 GitHub réel prévaut sur ce checkpoint. Fondations et shell 0–4 intégrés dans master 54f928e au départ ;
 source fonctionnelle 58e8f7c, checkpoint 5be00da vert (101 backend, 11 frontend, 5 Chromium, Compose).
 Sur master après 5B : aucun compte, authentification, membership, lobby fonctionnel ou API gameplay.
-**Sur la branche PR #7, non intégré à master : C01** ajoute le socle Portal backend/frontend,
+**5C intégré à master via PR #7 (`ff6ef89`) : C01** ajoute le socle Portal backend/frontend,
 Accounts DB/metadata/pool/Alembic p0000 séparés et HTTPS local portal.echosphere.localhost/game.echosphere.localhost:8443.
 C02 ajoute inscription/Argon2id/vérification email/outbox durable et formulaires, migration p0001.
 [Recette C02](docs/03-technical/portal-registration.md). C03 ajoute connexion/sessions/profils Portal, CSRF et intentions de logout persistées.
@@ -45,13 +45,13 @@ Migration 0004 ajoute les quatre tables économiques sans modifier les anciennes
 Ruleset JSON v0.1 strict, copie par univers, vitesses rationnelles et snapshots d’ordres ; balance
 provisoire. Niveaux continus, pas plafond 5. 12 secteurs/2 orbitaux = planète de départ de référence
 seulement, pas invariant futur. File 3/1, réservation immédiate, annulation 100/80, bonus industriel
-à activation ; production réglée à date logique. Q39 reste ouverte pour saturation du remboursement.
-Cascade dépendante implémentée, confirmation produit/UX à garder sous Q01. Voir [économie](docs/01-game-design/colony-economy-v0.1.md)
+à activation ; production réglée à date logique. Q39 validée : remboursement plafonné, excédent perdu ; preview avant confirmation.
+Cascade dépendante implémentée et validée sous Q01. Voir [économie](docs/01-game-design/colony-economy-v0.1.md)
 et [audit](docs/06-handoff/pr-5-audit.md) pour limites de capacité/immutabilité/initialiseur.
 
 Défense future : réseau persistant à capacité/modules limités, coût surface/orbite, dommages/réparation,
-Flux et renseignement à cadrer. UI Colony réservée à Vue d’ensemble/Infrastructures/Orbite/Défense,
-sans données fictives ni huitième domaine global. Aucun combat/défense effective ; Q30–Q38 ouvertes.
+Flux et renseignement : principes validés, chiffres futurs. UI Colony réservée à Vue d’ensemble/Infrastructures/Orbite/Défense,
+sans données fictives ni huitième domaine global. Aucun combat/défense effective ; principes Q30–Q38 validés, implémentation future.
 
 ## Architecture validée future — ADR 0008
 
@@ -88,7 +88,7 @@ credentials refusé par défaut, exception uniquement sur besoin explicite et al
 
 Détails techniques délégués aux lots dépendants, sans nouveau questionnaire par paramètre. Restent
 différés : procédure support joueur/privilégié Q48 (blocage sans procédure), fournisseur et configuration
-production Q49, règles des modes Q55/Q19–Q29 et partage Empire Q21. Aucun arbitrage supplémentaire
+production Q49, implémentation future des modes Q55/Q19–Q29 et du partage Empire Q21 (décisions closes). Aucun arbitrage supplémentaire
 nécessaire à 5B identifié. Architecture cadrée ne signifie pas sécurité implémentée/testée.
 [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), [architecture](docs/03-technical/architecture.md).
 
@@ -106,9 +106,23 @@ PR #6 fusionnée sur instruction explicite le 2026-10-29 : master
 contrats validés, sous-ensembles C02–C08 implémentés sur PR #7 seulement. Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ;
 reports Q48/Q49/Q55 conservés selon le registre, aucun arbitrage rouvert.
 
-Lot courant autorisé : **5C — Portal Account/Lobby foundation**, branche
+Lot précédent **5C — Portal Account/Lobby foundation**, branche
 work/step-5c-portal-account-lobby créée depuis master fraîchement synchronisée en fast-forward.
 Premier checkpoint documentaire 1c27497 et cadrage 8122cf7 publiés avant code. L’utilisateur a ensuite
-autorisé « alors go » : C01–C08 implémentés et testés sur PR #7, recette de clôture C09 réalisée puis revue/validations finales par Claude Code le 2026-10-30 : 5C prêt pour revue finale, non fusionné (CI du SHA final consignée dans PR #7). 5D exclu ; aucune nouvelle fusion
-sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
+autorisé « alors go » : C01–C08 implémentés et testés sur PR #7, recette de clôture C09 réalisée puis revue/validations finales par Claude Code le 2026-10-30 : 5C terminé, PR #7 fusionnée dans master le 2026-10-30 (`ff6ef89`, CI post-merge verte).
+**Lot courant autorisé : 5D — API Colony sécurisée et UI Colony interactive** sur
+work/step-5d-secure-colony-ui depuis ce master ; [plan 5D](docs/05-project/step-5d-plan.md). Étape 6 non commencée ;
+aucune fusion sans instruction explicite. 5D D00–D09 réalisés sur PR #8, non intégrés :
+[API Colony](docs/03-technical/colony-api-ui.md) GameSession → GameAccess → EmpireBinding → colonie,
+lecture avec rattrapage paresseux, construction/annulation idempotentes déléguées aux services 5A,
+UI Colony réelle et recette Portal coupé. Aucune migration ; création de partie toujours hors produit.
+[Roadmap](docs/05-project/roadmap.md),
 [Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).
+
+## Complément autorisé avant revue PR #8 — 31/10/2026
+
+Q01 construction, Q08, Q17, Q19–Q39 et Q55 closes dans la portée du registre, sans développement
+anticipé de fog/modes/défense/partage. Seule Q39 modifie les services/preview/UI dans ce correctif.
+Valeurs initiales et pacing configurables/balançables, budgets performance non démontrés.
+Travail Work sur la branche existante #8, aucun merge autorisé. Après une future instruction de
+fusion : vérifier master/CI, nouveau lot depuis master avec checkpoint documentaire avant Recherche.

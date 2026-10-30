@@ -1,26 +1,159 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-10-30. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
 ## Reprise rapide
 
-Bloc réécrit par chaque agent qui publie ; format et règles dans le
-[protocole de collaboration](docs/06-handoff/work-codex-handoff.md).
-
 | Champ | État |
 | --- | --- |
-| Branche / PR / base | work/step-5c-portal-account-lobby · PR #7 OPEN brouillon · base master 63bb7d1 |
-| Tête et CI | Tête = commit Claude portant ce bloc (SHA/CI consignés dans PR #7 après observation). Checkpoint Codex C08/C09 237c97c : CI push 41116382297 / PR 41116392662 success |
-| Dernier agent | Claude Code local (WSL2), seul écrivain après arrêt de Codex demandé par l’utilisateur ; C08/C09 développés par Codex local |
-| Travail réalisé | Revue C08/C09 depuis 35067f8, une anomalie mineure R1 corrigée (reçu affiché après login), validations frontend finales, trois smokes et recette C09 relancés sur le contenu final |
-| Décisions | 5B et Q01–Q56 inchangés ; [C08](docs/03-technical/portal-game-ui.md), [C09](docs/03-technical/portal-operations.md) ; aucune nouvelle décision produit |
-| Fichiers modifiés | Ce commit : portal/frontend AccountAccess.tsx (+ test), statuts AGENTS/context/progress/roadmap/plan 5C/docs README/passation/C08/C09. Aucune migration, dépendance, game_data, Compose ou backend modifié |
-| Tests réellement exécutés | Claude : Game frontend 16 unitaires/build/5 Chromium sur 237c97c ; Portal frontend 30 unitaires/build/14 Chromium après R1 ; lint 0 erreur ; Alembic check deux plans ; smokes Game, Portal, mTLS et handoff C09 réussis ; check_docs. Backend 150 Game/119 Portal : exécutés par Codex sur 237c97c (backend inchangé depuis), non relancés localement par Claude |
-| Anomalies / corrections restantes | R1 corrigée ; aucune Bloquante/Majeure démontrée. Remarques : 2 avertissements ESLint react-hooks préexistants, revue croisée de R1 par Codex non faite. Q48/Q49/Q55 et limites production inchangées |
-| Prochaines tâches | Revue finale utilisateur de PR #7 (sortie de brouillon et fusion sur instruction seulement) ; 5D exclu tant que non autorisé |
+| Branche / PR / base | work/step-5d-secure-colony-ui · PR #8 · base master ff6ef89 ; vérifier GitHub pour état brouillon/revue |
+| Tête et CI | Source Q39 de72c181e6ba35e07ce9c397824a3e45d34e16de : CI PR 41143478865 et push 41143467685 success (5/5). Ce checkpoint documentaire suit la source ; sa propre tête/CI est consignée dans PR #8 après observation |
+| Dernier agent | ChatGPT Work, écrivain unique de ce checkout ; reprise des commits publiés Claude Code |
+| Travail réalisé | Q39 crédit plafonné/perte définitive, preview autoritative et cascade Q01 détaillée, reçus réels idempotents ; arbitrages produit consolidés |
+| Décisions | Q01 construction, Q08, Q17, Q19–Q39 et Q55 closes dans leur portée au registre ; modes/fog/défense futurs, performance non démontrée |
+| Fichiers modifiés | Services/projection Colony, tests Game, client/confirmation/formatage/tests UI, smoke Colony ; docs produit/tech/qualité/registre/passation et AGENTS/context/progress |
+| Tests réellement exécutés | Local Work : Ruff backend/scripts ; Game 53 passed / 138 skipped (pas de PostgreSQL), frontend lint 0 erreur (avertissement préexistant), 26 Vitest, build, 9 Chromium 320/390/768/1440 ; 78 documents/liens ; git diff --check. CI de72c18 : Game 191 passed, Portal 119 passed ; Game 26 Vitest/9 Chromium, Portal 30 Vitest/14 Chromium ; Alembic deux plans sans dérive et smokes Game/Portal/mTLS/handoff/Colony-Q39 verts. SQL/Alembic/smokes non exécutés localement |
+| Anomalies / corrections restantes | Pas de Bloquante/Majeure restante identifiée à la relecture et aux 5 jobs verts de de72c18 ; vérifier aussi la CI du présent checkpoint documentaire. Docker/PostgreSQL absents du Work courant ; limites navigateurs/charge/support/production conservées |
+| Prochaines tâches | Revue finale utilisateur de #8, Ready for review après CI verte de sa tête finale. Aucun merge sans instruction ; après fusion autorisée, vérifier master/CI puis checkpoint du lot Recherche sur nouvelle branche issue de master propre |
 
+## Complément pré-revue Q39 et arbitrages — 31/10/2026
 
-## Lot courant — 5C : Portal Account/Lobby foundation
+Instruction utilisateur explicite : modifier le code sur la branche existante #8, consolider les
+arbitrages et finaliser la revue, sans nouvelle branche/PR ni fusion. GitHub vérifié : #8 ouverte,
+brouillon, mergeable, tête b9425ce, master ff6ef89 ; aucun commentaire/fils de revue existant.
+Arbre local propre avant reprise, aucun travail non publié écrasé.
+
+Q39 : `recoverable_refunds` partagé par projection et commande, après rattrapage et sous verrou du
+stream pour application ; montant crédité limité par ressource, perte définitive sans réserve.
+Allocation de la place commune en ordre de file, reçus par ordre contenant le crédit réel, replay
+sans nouveau crédit même si de la place se libère. Sommes théoriques transitoires en entiers Python,
+sans overflow BIGINT ; persistance toujours bornée. Aucune migration, dépendance, modification de
+ruleset/game_data, Docker/Compose ou code Portal.
+
+UI : remboursement théorique/récupérable/perte affichés avant confirmation ; tous les upgrades
+dépendants listés avec infrastructure/secteur/niveau, aucun indépendant ajouté. Présentation exacte
+jusqu’à la micro-unité, aucune règle économique React. Estimation datée, recalcul Game à acceptation.
+Tests ajoutés : saturation mono/multi-ressources, 100/80, cascade 3 ordres et indépendant préservé,
+concurrence de cascades, retry après réponse perdue/place libérée, rollback SAVEPOINT après crédit,
+allocation exacte et théorique au-delà de BIGINT. Smoke réel Colony étendu à l’overflow avec Portal
+arrêté, crédit nul à capacité et retry ; setup limité à sa base jetable. Exécuté avec succès en CI
+sur de72c18 (non exécuté localement).
+
+Q01 construction/cascade/pacing, Q08, Q17, Q19–Q39 et Q55 transcrites depuis l’instruction du
+31/10/2026 : décisions closes distinctes des paramètres initiaux balançables et implémentations
+futures. Q02/Q03/Q04/Q05/Q10/Q14 et support/configuration production gardent leur portée non tranchée.
+Aucun fog, mode, défense, pause, admission ou parcours de partage développé par implication.
+
+Relecture du diff complet de #8 contre master ff6ef89 : services partagés 5A, GameSession→GameAccess→
+EmpireBinding→colonie, origine/CSRF/enveloppes strictes et permissions distinctes, verrou principal
+avant stream et contrôle des révocations 5B/5C conservés. Fixtures uniquement dans tests/recettes
+avec garde de base, aucun nouveau faux compte/donnée runtime. UI/clavier/viewport vérifiés,
+captures confirmation inspectées à 320 et 1440. Pas d’autre agent de revue lancé ; cette relecture
+Work ne constitue pas une certification de sécurité ni un benchmark.
+
+Environnement Work : Python 3.12/Node/Chromium natifs, ni Docker/socket ni PostgreSQL local.
+Premier lancement Chromium avant fin du téléchargement du navigateur impossible ; relancé après
+installation avec succès. Test de formatage initialement sensible aux espaces fines françaises,
+corrigé dans le test ; aucun échec local restant. Les intégrations SQL et smokes ne sont jamais
+présentés comme exécutés localement. Suite Portal inchangée, couverte par CI complète.
+
+Les checkpoints 5D ci-dessous décrivent leur ancien SHA ; leurs refus Q39/statuts Qxx sont historiques
+et remplacés par ce complément. Étape 6 Recherche non commencée. Après une autorisation distincte
+de fusion : vérifier master/CI, nouveau lot sur master synchronisée avec checkpoint documentaire
+avant implémentation ; références research-view.png/design-system.png.
+
+### Validation du complément publiée et observée
+
+[CI PR 41143478865](https://github.com/ThomasPerez91/Echosphere/actions/runs/41143478865) et
+[CI push 41143467685](https://github.com/ThomasPerez91/Echosphere/actions/runs/41143467685)
+**completed/success, 5/5 jobs** sur de72c181e6ba35e07ce9c397824a3e45d34e16de.
+Game 191 tests PostgreSQL/unitaires ; Portal 119 tests ; Game 26 Vitest/9 Chromium et Portal
+30 Vitest/14 Chromium ; 78 docs/liens. Alembic Game et Accounts : « No new upgrade operations
+detected ». Smokes : Game/DB panne-reprise, Portal/DB isolées, mTLS/control, handoff et Colony.
+Logs Colony relus : boucle page fermée/worker, gameplay sans Portal, Q39 perte annoncée avant clic,
+annulation à capacité et retry sans crédit, puis 401 à expiration. Relecture terminée sans anomalie
+Bloquante/Majeure restante identifiée. Ce commit de checkpoint n’ajoute aucun changement fonctionnel ;
+vérifier sa propre CI dans la description PR avant passage en revue. Ne pas merger sans instruction.
+
+## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
+
+**Statut : D00–D09 réalisés ; PR #8 prête pour revue finale (non fusionnée).** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
+en bout sur une seule branche/PR, sans merge, sans étape 6. Environnement : Claude Code local/WSL2.
+
+### D09 — recette complète et clôture, 2026-10-30
+
+Contenu final validé localement : backend Game **178 passed** (echosphere_5d_game_test), Ruff
+check backend+scripts et format app/tests ; frontend Game ESLint 0 erreur (1 avertissement
+préexistant), **24 Vitest**, build ; Chromium **9 passed** (copie hors dépôt). Pile conservée
+recréée avec les images 5D, volumes préservés : Alembic Game 0006_game_sessions et Accounts
+p0005_control sans dérive (aucune migration 5D) ; smoke_compose, smoke_portal_compose,
+smoke_control_compose et smoke_handoff_compose réussis (code 0), recette smoke_colony_compose
+réussie (D08). Correctif : ordre d’imports Ruff de la fixture Colony (la CI de f837554 l’aurait
+signalé). Portal non modifié : ses suites ne sont pas relancées localement et restent couvertes
+par la CI. Documentation de clôture : roadmap, contexte, API, sécurité, économie, stratégie de
+tests, DoD, index des décisions, lacunes, passation, plan.
+
+Conclusion : 5D atteint son critère de sortie (boucle jouable réelle et Portal coupé démontrés) ;
+PR #8 prête pour revue finale après CI verte du SHA publié. Aucune fusion, étape 6 non commencée.
+
+### D08 — boucle réelle et Portal coupé, 2026-10-30
+
+`scripts/smoke_colony_compose.py`, `scripts/colony_browser.mjs`, `scripts/colony_game_fixture.py`
+(test-only, base `echosphere_colony_game_test` exigée) ; étape ajoutée au job CI compose-smoke.
+Exécution locale réelle après `docker compose build` de l’arbre : **réussie (code 0)** — login/lobby/
+handoff, réservation immédiate, achèvement par le worker page fermée, production mise à jour,
+action suivante, Portal API + worker de contrôle arrêtés (Portal /api/ready en erreur) avec lecture,
+construction acceptée, worker progressant et zéro requête vers Portal, puis 401 et UI d’expiration
+à l’échéance simulée en base de test. Captures /tmp/echosphere-colony-artifacts inspectées (hors
+dépôt). Projet temporaire et volumes supprimés, pile conservée intacte.
+
+### D05–D07 — UI Colony connectée, responsive et erreurs, 2026-10-30
+
+Frontend Game : `src/colony/api.ts` (client validant), `src/colony/format.ts` (présentation exacte
+BigInt, libellés, messages d’erreur), `src/hooks/useColony.ts`, `src/components/ColonyScreen.tsx`,
+câblage App/ColonyView (top bar ressources, Empire réel), tokens rapprochés de la référence
+visuelle. Projection backend complétée par `free_indices`. Détail : [canonique](docs/03-technical/colony-api-ui.md).
+
+Tests réellement exécutés (node:22, conteneurs) : tsc, ESLint 0 erreur (1 avertissement préexistant
+useGameSession), Vitest **24 passed** (16 antérieurs + 8 Colony : rendu sans mutation sous
+StrictMode, double clic unique, retry même clé après issue inconnue, refus expliqué + relecture,
+annulation confirmée/refus Q39, lecture seule sans boutons, 401 → relecture session, échéance →
+lecture sans POST). Test d’échéance C08 adapté pour ne compter que les lectures de session.
+Chromium **9 passed** (5 shell + 4 Colony 320/390/768/1440 : débordement, atteignabilité réelle
+du centre des boutons, clavier, construction, file, annulation non confirmée, sous-vues). Captures
+inspectées à 320 et 1440 ; artefacts hors dépôt.
+
+### D01–D04 — API Colony autorisée, commandes et concurrence, 2026-10-30
+
+[Canonique](docs/03-technical/colony-api-ui.md). Service 5A refactoré sans changement de règle :
+codes publics stables sur ColonyError (messages inchangés), `plan_order`/`colony_state`,
+`cancellation_plan`/`refund_fits`, `effective_duration_us` partagés par commandes et projection.
+`app/colony/projection.py` (lecture, montants micro-unités en chaînes) et `app/colony/api.py` :
+liste, détail, construction, annulation sous `/game/{univers}/colonies`. Chaîne GameSession →
+GameAccess → EmpireBinding → colonie dans une transaction, verrou principal puis stream, commandes
+classées activité explicite, clé idempotente préfixée par participation. Horloge injectable
+`app.state.clock` (SystemClock par défaut) partagée avec l’accès C07. Aucune migration, dépendance,
+game_data ni Compose modifiés.
+
+Tests réellement exécutés : `backend/tests/integration/test_colony_api.py` **28 passed** ; suite Game
+complète **177 passed** puis 178 avec la course d’amélioration (echosphere_5d_game_test dédiée) ;
+Ruff app/tests. Projection, non-fuite (autre compte/univers/Empire, inconnu, sans lecture), cookie
+d’un autre univers, lecture seule ≠ construction, construction sans annulation, réservation unique,
+replay/conflit de clé, espace de clés par participation, enveloppe stricte (origine/CSRF/type/extra/
+booléen/query/clé), file pleine, secteur/contiguïté, unicité, ressources insuffisantes, achèvement
+par worker puis action suivante, rattrapage paresseux sans worker, 100/80, Q39 atomique, ordre
+achevé non annulable, doubles clics/dernier slot/amélioration/annulations concurrents, sessions
+expirées/suspendues/révoquées, saturation avant dépense.
+
+### D00 — synchronisation post-merge, 2026-10-30
+
+GitHub vérifié avant écriture : PR #7 closed/merged, master = origin/master
+ff6ef894bf8c8da9ea14b293d8c63fa503fa07f0 (parents 63bb7d1, 5d438ab), CI push 41123867271 success
+(5/5 jobs). Arbre propre, aucun worktree supplémentaire, aucune PR ouverte. Branche
+work/step-5d-secure-colony-ui créée depuis ce master. Suite Game de référence : **150 passed**
+(echosphere_5d_game_test, conteneur PostgreSQL 17 jetable sur réseau isolé, aucune donnée conservée).
+
+## Lot précédent — 5C : Portal Account/Lobby foundation (fusionné, PR #7)
 
 **Statut : C01–C09 réalisés ; revue et validations finales Claude effectuées, 5C prêt pour revue finale de PR #7 (non fusionnée).**
 5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/MFA/lobby/contrôle privé/handoff C02–C07 implémentés sur PR #7 seulement.

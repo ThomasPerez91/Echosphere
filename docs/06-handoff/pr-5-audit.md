@@ -1,5 +1,9 @@
 # Audit documentaire réel de PR #5
 
+> Mise à jour du 31/10/2026 : le refus de remboursement saturé décrit historiquement ici
+> est remplacé par Q39 (plafonnement et perte), et la cascade est validée sous Q01.
+> Référence actuelle : [économie v0.1](../01-game-design/colony-economy-v0.1.md).
+
 **Statut : observation vérifiée au départ de la passation, 2026-10-28.** Lecture ciblée du code,
 des tests et des preuves GitHub ; pas une certification sécurité, un benchmark ou une nouvelle
 exécution locale des tests fonctionnels. Aucun problème de code corrigé dans cette mission.

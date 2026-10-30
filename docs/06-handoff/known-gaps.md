@@ -1,5 +1,18 @@
 # Lacunes, contradictions et risques à reprendre
 
+## Complément courant — 31/10/2026
+
+Q39 et cascade Q01 validées par l’utilisateur : ancien refus de stockage remplacé dans PR #8
+par crédit plafonné et perte définitive annoncée. Les mentions ouvertes/refus des audits historiques
+ci-dessous décrivent leur ancien SHA. Q08, Q17, Q19–Q38 et Q55 clos côté produit dans le
+[registre](../05-project/open-questions.md) ; fog/modes/défense/partage restent futurs.
+Budgets performance non démontrés. Q02 protection offline générale, balance, support Q48 et
+configuration production Q49 restent distincts. Aucun changement de ruleset ou migration.
+
+Environnement Work de ce complément : Docker/socket et serveur PostgreSQL indisponibles ; suites
+SQL/Alembic et smokes réels exécutés par la CI de la tête publiée, pas revendiqués localement.
+Validation locale : suites sans DB, frontend et Chromium ; détail et résultats dans progress/PR.
+
 **Statut : questions/limites explicites au 2026-10-28.** Ce document n’invente pas les réponses.
 
 Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progress](../../progress.md).
@@ -171,3 +184,17 @@ H11 dépend de la version Uvicorn figée, recette mTLS obligatoire à sa mise à
 perte physique de DB, restauration de sauvegarde, handoff ou navigateur complet de partie attesté.
 Source pending vers cible retirée/renommée ou état Game contradictoire supérieur : intervention
 opérateur, jamais abandon de révocation ou abaissement silencieux. Q48/Q49/Q55 et Q19–Q29 conservées.
+
+## Limites courantes après 5D (PR #8)
+
+- Aucun parcours produit ne crée Empire/planète/colonie : tests et recettes utilisent des fixtures
+  réservées aux bases `*_test` (Q19–Q29/Q55). Une partie réelle exige encore un lot de création.
+- La lecture applique le rattrapage 5A sous verrou du stream (écritures déterministes) ; un événement
+  bloqué rend la colonie `colony_busy` jusqu’à reprise opérateur (`worker --retry`).
+- Fog of war non appliqué au-delà du scope propre : la projection ne contient que la colonie
+  autorisée ; filtrage de connaissance futur (Q08).
+- Stocks affichés à l’instant serveur, sans interpolation client ; rafraîchissement explicite, après
+  commande ou à l’échéance.
+- Expiration de session éprouvée en recette par déplacement de l’échéance en base de test, les
+  frontières exactes étant couvertes par horloge injectée dans les tests d’intégration.
+- Aucun test Safari/Firefox, appareil tactile physique, lecteur d’écran ou charge hostile ; Q17/Q29.

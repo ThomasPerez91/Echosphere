@@ -51,8 +51,10 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 
 ## Domaine interne Étape 5A
 
-Aucune API gameplay, même read-only : l’absence de contrat de participation autorisé pourrait
-créer une fuite. Les commandes internes reçoivent univers/empire/colonie explicites, vérifient la
+Historique 5A : aucune API gameplay tant que la chaîne de participation n’existait pas. Depuis 5D
+(PR #8), [l’API Colony](colony-api-ui.md) applique GameSession → GameAccess → EmpireBinding →
+colonie dans la transaction, refus sans fuite d’existence, CSRF/origine et clés idempotentes par
+participation. Les commandes internes reçoivent univers/empire/colonie explicites, vérifient la
 propriété avant consultation puis sous le lock et dédupliquent les clés. Ces paramètres de confiance
 ne sont pas un substitut à une session HTTP. La future API 5D vérifiera identité/membership/permissions avant
 appel des mêmes services humains/IA/headless. Pas de faux user global ou bypass de Q16.

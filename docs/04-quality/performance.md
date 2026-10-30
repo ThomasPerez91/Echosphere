@@ -11,8 +11,8 @@ Ces index sont des recommandations futures, pas des migrations de l'étape 0.
 
 Latence p50/p95 des lectures/mutations, temps de règlement d'un agrégat, retard p95 des événements,
 débit de rattrapage, durée d'un tour IA, charge/locks PostgreSQL et taille des projections carte.
-Les seuils et la charge de référence restent ouverts en Q17. Ne pas annoncer une capacité multi-joueur
-sans benchmark représentatif.
+Les budgets initiaux Q17/Q29 sont validés ci-dessous comme objectifs à mesurer. Ne pas annoncer
+une capacité multijoueur sans benchmark représentatif.
 
 Prototype : 30–50 systèmes, standard futur 100–150 ; ces tailles ne déterminent pas seules la charge.
 Le nombre d'empires, de tâches dues et de colonies actives comptera davantage pour le backend.
@@ -34,3 +34,20 @@ Voir [architecture](../03-technical/architecture.md) et [tests](testing-strategy
 La cible Portal/Game impose des budgets et ressources isolables : surcharge Portal ne doit pas
 épuiser pools/CPU/RAM Game ou empêcher les workers. Mesurer l’isolation réelle, pas seulement
 la séparation de modules ; aucun benchmark ni garantie DDoS réalisé par cette documentation.
+
+## Budgets initiaux Q17/Q29 — décision du 31/10/2026, non démontrée
+
+Charge : 1 Universe persistent, 200 memberships humaines, 50 GameSessions humaines simultanées,
+jusqu’à 500 Empires humains + IA à terme. Valeurs initiales configurables, aucune garantie de capacité.
+
+| Mesure | Objectif initial |
+| --- | --- |
+| Lecture Game API | p95 < 250 ms |
+| Mutation gameplay | p95 < 500 ms |
+| Erreurs serveur hors erreurs métier | < 0,1 % |
+| Retard worker | p95 < 2 s ; p99 < 5 s |
+| Handoff Portal → Game | p95 < 1 s |
+| Health/readiness | < 100 ms |
+
+Benchmarks futurs séparant Portal, Game HTTP, workers, PostgreSQL et IA. Consigner matériel,
+ruleset, volume/activité, percentiles et erreurs ; aucune suite fonctionnelle ne démontre ces budgets.

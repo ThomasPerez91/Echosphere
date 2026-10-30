@@ -15,7 +15,7 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 4 | Design system responsive | Navigation et composants des vrais écrans | Parcours mobile/clavier et états réseau validés |
 | 5A | Colony domain / economy / construction | Domaine interne, game_data v0.1, niveaux continus, stockage et file | Réservation, annulation, scheduler, concurrence et migrations validés sans API publique |
 | 5B | Identity architecture / Portal-Game contracts | Contrats validés, registre séparant clôtures/délégation/reports | Documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C08 sur PR #7, handoff/GameSession C07 livrés sur PR #7 |
-| 5C | Portal Account/Lobby foundation — lot courant | Fondation minimale compte/lobby selon cadrage 5B | Comptes globaux et accès aux parties sécurisés ; pas de Portal complet/multijoueur anticipé |
+| 5C | Portal Account/Lobby foundation — intégré | Fondation minimale compte/lobby selon cadrage 5B | Comptes globaux et accès aux parties sécurisés ; pas de Portal complet/multijoueur anticipé |
 | 5D | Secure Colony API + interactive Colony UI | APIs protégées appelant les services 5A et UI réelle | Session/autorisation/fog/idempotence contrôlés et résilience Portal/Game testée |
 | 6 | Research | Recherche globale et programmation suivante | Prérequis et application unique à échéance |
 | 7 | Galaxy + Exploration | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
@@ -41,24 +41,27 @@ Reprise locale vérifiée le 2026-10-29, puis lot 5B sur work/step-5b-identity-c
 bloc complet corrigé. **5B documentaire terminé et intégré à master via PR #6**, merge
 63bb7d1c902e9c0fbae3497d4a36c107a80eb611 le 2026-10-29. Contrats partiellement implémentés par C02–C08 sur PR #7, handoff/GameSession C07 livrés sur PR #7.
 [Q40–Q56](open-questions.md) distinguent contrats clos, détails techniques délégués aux lots dépendants
-et reports explicites : support renforcé Q48, fournisseur/configuration production Q49, modes Q55.
+et reports explicites : support renforcé Q48, fournisseur/configuration production Q49 ; admission Q55 désormais close côté
+produit, réalisation future.
 Ces reports ne bloquent pas la clôture du cadrage ; ils bloquent leur fonctionnalité ou déploiement
 concerné tant qu’ils ne sont pas satisfaits. Aucun compte, session, Portal, MFA ou API Colony livré
 par le lot documentaire 5B ; le socle C01 est décrit ci-dessous.
 
-**Lot courant autorisé : 5C**, branche work/step-5c-portal-account-lobby créée depuis cette master
+**Lot 5C (terminé, fusionné)**, branche work/step-5c-portal-account-lobby créée depuis cette master
 synchronisée. Premier checkpoint documentaire commit/push avant code ; ensuite cadrage présenté
 (sous-tickets, tables/migrations Accounts, structure Portal, frontières et dépendances) avant
 implémentation substantielle. Les décisions 5B ne sont pas rouvertes.
 [Cadrage 5C proposé](step-5c-plan.md) : sous-tickets, schémas Accounts et frontière 5D,
 présenté avant toute implémentation substantielle. Depuis, instruction de démarrer C01 :
-[socle Portal C01](../03-technical/portal-foundation.md) implémenté sur PR #7, non intégré à master.
+[socle Portal C01](../03-technical/portal-foundation.md) implémenté sur PR #7.
 Accounts DB/Alembic, backend/frontend et HTTPS local testés. [C02](../03-technical/portal-registration.md)
 ajoute inscription/Argon2id/vérification email et livraison locale durable, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md) et intentions de logout persistées.
 handoff/GameSession C07 livrés sur PR #7. [C04](../03-technical/portal-account-security.md) livre les opérations sensibles,
 [C05](../03-technical/portal-mfa.md) ajoute MFA/secours/récupération et leur intégration. [C06](../03-technical/portal-game-control.md) livre lobby, outbox et contrôle mTLS.
-C08 livré ; recette de clôture C09 réalisée : 5C prêt pour revue finale de PR #7, fusion sur instruction seulement.
-5D reste distinct : API/UI Colony et preuves de résilience gameplay, sans accès permissif transitoire.
+C08 livré ; recette de clôture C09 réalisée : 5C terminé, PR #7 fusionnée dans master le 2026-10-30 (`ff6ef89`, CI post-merge verte).
+**Lot courant autorisé : 5D** sur work/step-5d-secure-colony-ui (PR #8), [plan 5D](step-5d-plan.md) : D00–D09
+réalisés, [API/UI Colony](../03-technical/colony-api-ui.md) et recette réelle Portal coupé ; prêt pour revue finale,
+fusion sur instruction seulement. Étape 6 non commencée.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).
@@ -66,9 +69,10 @@ préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01
 ## Compatibilité des modes futurs
 
 Le MVP se construit en solo avec IA. Parties privées entre amis et univers multijoueurs persistants
-sont futurs, sans code de modes/participation maintenant. Universe reste une frontière d'instance
-isolée ; pas de durée maximale obligatoire pour la famille persistante. Q19–Q29 cadreront règles,
-places, participation, fin, accès et vitesses avant d'ajouter un jalon d'implémentation multijoueur.
+sont futurs, sans parcours produit de modes maintenant (socle de memberships 5C existant). Universe reste une frontière d'instance
+isolée ; pas de durée maximale obligatoire pour la famille persistante. Q19–Q29/Q55 cadrent désormais règles,
+places, participation, fin, accès et vitesses (arbitrages du 31/10/2026) ; leur implémentation reste
+un futur jalon explicite.
 Le séquencement post-MVP reste indicatif et n'impose pas de développer ces systèmes à l'étape 3.
 Voir [modes](../01-game-design/game-modes.md) et [ADR 0006](../adr/0006-universe-game-instance.md).
 
@@ -104,3 +108,13 @@ Voir [releases](releases.md), [backlog](backlog.md) et [questions ouvertes](open
 aucun développement Portal/multijoueur ou refonte Docker n’est autorisé par la passation documentaire.
 Les vitesses futures rapide/intermédiaire/classique/persistant restent des exemples conceptuels,
 sans nouveaux multiplicateurs fixés. Défense complète toujours liée au Combat, UI/docs réservées dès 5A.
+
+## Complément pré-revue de PR #8 — 31/10/2026
+
+Q39 incluse sur la même branche : crédit plafonné, excédent perdu, preview de perte et cascade
+Q01 validée avant confirmation. Fog Q08, modes Q19–Q29/Q55 et défense Q30–Q38 clos côté produit,
+non développés dans ce correctif ; budgets Q17/Q29 objectifs à mesurer. Aucun game_data modifié.
+Après autorisation distincte de fusion de #8 : vérifier master/CI, puis nouveau lot depuis master
+propre avec premier checkpoint documentaire, ensuite étape 6 Recherche. Références visuelles :
+[research-view](../visual-reference/research-view.png) et [design-system](../visual-reference/design-system.png).
+Ne pas commencer étape 6 avant fusion.

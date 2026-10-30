@@ -1,5 +1,9 @@
 # ADR 0008 — Portal Control Plane / Game Data Plane
 
+> Complément produit du 31/10/2026 : Q19–Q29/Q55 (modes/admission/Empire partagé) sont closes
+> côté produit, réalisation des parcours future. Les mentions ouvertes antérieures sont historiques.
+> Voir [modes](../01-game-design/game-modes.md) et [registre](../05-project/open-questions.md).
+
 - **Statut : Décision validée ; réalisation partielle C01–C08 sur PR #7, non intégrée à master.**
 - Date : 2026-10-28 ; source : instruction explicite de la mission de passation.
 - Affine [ADR 0001](0001-modular-monolith.md) et [ADR 0006](0006-universe-game-instance.md).

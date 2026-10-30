@@ -10,7 +10,7 @@ pour les liens existants. Consignes de base : [AGENTS](../../AGENTS.md) ; checkp
 
 | Agent | Environnement | Capacités habituelles | Limite à consigner |
 | --- | --- | --- | --- |
-| ChatGPT Work | GitHub (connecteur) | Lire PR/diff/commits/CI, commenter, publier des commits documentaires ou de code sur une branche | Pas de Docker ni de shell local attesté : ses validations sont la CI observée, jamais des « tests locaux » |
+| ChatGPT Work | GitHub (connecteur) | Lire PR/diff/commits/CI, commenter, publier des commits documentaires ou de code sur une branche | Vérifier les outils à chaque session : le 31/10/2026 shell/Python/Node/Chromium disponibles, Docker/PostgreSQL absents ; distinguer tests locaux et CI observée |
 | Codex local | Ubuntu WSL2 + VS Code, filesystem Linux (~/projects) | Git, Docker Compose, tests natifs ou en conteneur, gh | Recette graphique Windows non attestée sauf preuve |
 | Claude Code local | Même WSL2/VS Code, même machine que Codex possible | Idem Codex ; lit AGENTS.md via [CLAUDE.md](../../CLAUDE.md) | Même disque que Codex : voir règles de travail parallèle |
 

@@ -1,3 +1,5 @@
+import type { useColony } from '../hooks/useColony';
+import { ColonyScreen } from './ColonyScreen';
 import { Badge, EmptyState } from './ui';
 
 const colonyViews = [
@@ -7,9 +9,10 @@ const colonyViews = [
   { id: 'defense', label: 'Défense', title: 'Défense — système futur', description: 'La défense planétaire sera gérée dans la colonie. Les modules, réparations et effets de combat ne sont pas encore disponibles.' },
 ] as const;
 
-export function ColonyView({ view, universe = false, link = (value: string) => `#${value}`, onNavigate }: {
-  view: string; universe?: boolean; link?: (value: string) => string; onNavigate?: () => void;
+export function ColonyView({ view, universe = false, link = (value: string) => `#${value}`, onNavigate, colony }: {
+  view: string; universe?: boolean; link?: (value: string) => string; onNavigate?: () => void; colony?: ReturnType<typeof useColony>;
 }) {
+  if (universe && colony) return <ColonyScreen colony={colony} view={view} link={link} onNavigate={onNavigate} />;
   const selected = colonyViews.find(item => item.id === view);
   return <section className="colony-view" aria-label="Gestion de la colonie">
     <nav aria-label="Sections de la colonie" className="colony-navigation">

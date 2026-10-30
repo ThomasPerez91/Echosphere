@@ -58,7 +58,7 @@ du lot explicitement autorisé, sans interface interne mTLS ou nouvelle API game
 ## Invariants d’instance et temps
 
 Universe est la frontière d’une partie, pas un User ou un processus. Compte global →
-UniverseMembership → Universe → éventuellement Empire/rôle/permissions ; l’empire partagé reste Q21.
+UniverseMembership → Universe → éventuellement Empire/rôle/permissions ; l’empire partagé est validé sous Q21 ; parcours produit futur.
 Les FK composites, scopes d’univers et projections de fog complètent les contrôles applicatifs.
 Controller_type human/ai ne prouve ni identité ni droit. Memberships/comptes restent sans tables.
 

@@ -1,5 +1,19 @@
 # Index central des décisions
 
+**Complément validé le 31/10/2026 (instruction utilisateur PR #8)** : Q01 construction, Q08,
+Q17, Q19–Q39 et Q55 closes dans leur portée au [registre](../05-project/open-questions.md).
+Les lignes anciennes sont des checkpoints ; ce complément prévaut sur les mentions « ouvert »
+antérieures. PR #7 est fusionnée (5C), PR #8 porte 5D non intégré ; vérifier GitHub réel.
+
+| Décision complémentaire | Produit | État de réalisation et référence |
+| --- | --- | --- |
+| Q39 remboursement saturé | Validé : théorique 100/80, crédit limité à capacité, surplus perdu définitivement | Implémenté dans le correctif PR #8 ; [économie](../01-game-design/colony-economy-v0.1.md), [API/UI](../03-technical/colony-api-ui.md) |
+| Q01 construction/cascade/pacing | Validé : 3/1, seuls dépendants annulés, preview complète ; durées exactes balançables | File/cascade existantes, preview améliorée PR #8 ; colonies parallèles et pacing général futurs |
+| Q08 fog | Validé : états canoniques, MONITORED → MAPPED, structure durable, last_seen_at, aucun partage automatique | Futur, [fog](../01-game-design/fog-of-war.md) |
+| Q19–Q29/Q55 familles, partage et admission | Validé, paramètres initiaux configurables | Parcours produit futurs, bindings existants ; [modes](../01-game-design/game-modes.md) |
+| Q30–Q38 défense | Principes validés, chiffres à équilibrer | Non implémenté, [défense](../01-game-design/planetary-defense.md) |
+| Q17/Q29 charge/latences | Objectifs initiaux validés | Aucun benchmark démontré ; [performance](../04-quality/performance.md) |
+
 **Statut : index, pas une seconde spécification.** Mise à jour 2026-10-29. Modifier d’abord le document
 canonique, puis ce tableau et les Qxx concernés. « Implémenté » décrit le code de la branche, pas
 une validation produit ou une fusion. Statuts définis dans [docs/README](../README.md).
@@ -20,18 +34,18 @@ puis cadrage avant code substantiel ; aucun début de 5D ni nouvelle fusion auto
 | Niveaux continus, 1–5 = early game | Décision validée / Implémenté | Progression longue | [Infrastructures](../01-game-design/buildings.md) | Remplace ancienne orientation I–V | Brief 5A et S1, 28/10/2026 |
 | Croissances et chiffres v0.1 | Balance provisoire | À rééquilibrer par simulation | [Économie v0.1](../01-game-design/colony-economy-v0.1.md), game_data | Jamais constantes de service | PR #5, S1/S2 |
 | 12 secteurs / 2 orbitaux | Balance provisoire, départ seulement | Capacités futures variables | [Planètes](../01-game-design/planets-colonies.md) | Initialiseur de référence actuel limité | S1, audit #5 |
-| Refus de remboursement saturé Q39 | Question ouverte, code implémenté | Pas de perte/overflow caché, politique à valider | [Q39](../05-project/open-questions.md) | Ne pas généraliser en décision définitive | PR #5, S1 |
-| Cascade d’annulation dépendante | Implémenté / Proposition produit | Préserve la continuité des niveaux | [Audit #5](pr-5-audit.md), Q01 | UX à confirmer | Choix technique retrouvé via S3/S4 |
+| Ancien refus de remboursement saturé Q39 | Historique remplacé | Nouveau crédit plafonné/perte validé au complément ci-dessus | [Q39](../05-project/open-questions.md) | Ne plus conserver le refus dans le runtime | PR #5 puis instruction utilisateur du 31/10/2026 |
+| Cascade d’annulation dépendante | Implémenté / Décision validée le 31/10/2026 | Préserve la continuité des niveaux | [Audit #5](pr-5-audit.md), Q01 | Preview complète avant confirmation | Choix technique retrouvé via S3/S4 |
 | Recherche globale d’empire | Décision validée, future | Pas de centaines de technologies | [Recherche](../01-game-design/research.md) | Domaines/noms provisoires | S1 ; ancienne portée orientée précisée |
 | Graphe 2D, routes, seed | Décision validée, future | Choix de chemins plutôt que grille OGame | [Galaxie](../01-game-design/galaxy.md) | 30–50 prototype = repère, tailles configurables | S1, PR #1 |
-| Fog UNKNOWN/DETECTED/MAPPED/MONITORED | Orientation validée, future | Connaissance limitée aussi pour IA | [Fog](../01-game-design/fog-of-war.md) | Transitions/fiabilité Q08 | S1 ; aucun contrat final déduit |
+| Fog UNKNOWN/DETECTED/MAPPED/MONITORED | Orientation validée, future | Connaissance limitée aussi pour IA | [Fog](../01-game-design/fog-of-war.md) | Transitions Q08 validées, paramètres capteurs futurs | S1 ; aucun contrat final déduit |
 | Flottes courtes et missions asynchrones | Orientation validée, future | Catalogue lisible, pas de designer complexe | [Flottes](../01-game-design/fleets.md) | Stats/routes/rappels Q09 | S1, docs initiales |
 | Combat automatisé et protections offline | Futur / Question ouverte | Équité et lisibilité avant code | [Combat](../01-game-design/combat.md), Q02/Q10 | Préconditions combat | S1, docs initiales |
-| Défense persistante à capacité limitée et modules | Orientation validée, future | Coût d’opportunité, dommages/réparation | [Défense](../01-game-design/planetary-defense.md) | Sous-vue Colony, Q30–Q38 ouvertes | Brief 5A/S1, PR #5 |
+| Défense persistante à capacité limitée et modules | Orientation validée, future | Coût d’opportunité, dommages/réparation | [Défense](../01-game-design/planetary-defense.md) | Sous-vue Colony, Q30–Q38 closes produit / non implémentées | Brief 5A/S1, PR #5 |
 | IA Utility/Goals, testable sans LLM, mêmes règles/fog | Orientation validée, future | Autonomie sans triche ni moyens gratuits | [IA](../01-game-design/artificial-intelligence.md), [moteur](../03-technical/ai-engine.md) | Poids/profils Q11 | S1, docs PR #1 |
 | Dialogue génératif non stratégique | Futur / post-MVP | Couche facultative sans autorité | [IA](../01-game-design/artificial-intelligence.md) | Aucun LLM moteur requis | S1 |
-| Solo humain+IA puis privé/persistant | Décision validée, modes futurs | Universe frontière d’instance | [Modes](../01-game-design/game-modes.md), ADR 0006 | Late join et protections restent ouverts | PR #3, S1 |
-| Compte global, plusieurs parties, Membership | Décision validée ; User/membership/bindings C02/C06 sur PR #7, partage futur | Séparer compte et empire/partie | [Modèle](../03-technical/data-model.md), ADR 0008 | Empire partagé Q21 non fermé | S1, corroboration partielle S5 |
+| Solo humain+IA puis privé/persistant | Décision validée, modes futurs | Universe frontière d’instance | [Modes](../01-game-design/game-modes.md), ADR 0006 | Late join/protection nouvel entrant validés mais futurs | PR #3, S1 |
+| Compte global, plusieurs parties, Membership | Décision validée ; User/membership/bindings C02/C06 sur PR #7, partage futur | Séparer compte et empire/partie | [Modèle](../03-technical/data-model.md), ADR 0008 | Empire partagé Q21 validé, parcours futur | S1, corroboration partielle S5 |
 | Portal/Game, Accounts DB/Game DB séparés | Décision validée ; C01–C07 implémentés sur PR #7, handoff/GameSession C07 livrés | Exposition et disponibilité distinctes | [ADR 0008](../adr/0008-control-plane-game-data-plane.md) | Affine la frontière plateforme de 0001 | S1, 28/10/2026 |
 | Portal sans SQL Game, interface interne idempotente | Décision validée ; contrôle mTLS/idempotent C06 sur PR #7 | Frontière de propriété et autorisation | [ADR 0008](../adr/0008-control-plane-game-data-plane.md) | mTLS/synchronisation C06 livrés, périmètre gameplay futur | S1 puis bloc final utilisateur du 29/10/2026 |
 | Ticket signé 60 s/unique, pré-auth navigateur 5 min, clés publiques locales | Décision validée ; C07 implémenté sur PR #7 | Game sans appel Portal par commande ; anti-rejeu atomique et clés prédistribuées | [Contrats 5B](../03-technical/identity-contracts.md), ADR 0008 | Q42/Q56 clos 5B, détails crypto délégués | Arbitrages utilisateur explicites du 29/10/2026, PR #6 |
@@ -54,6 +68,7 @@ puis cadrage avant code substantiel ; aucun début de 5D ni nouvelle fusion auto
 | Lobby, droits effectifs, outbox et contrôle privé mTLS C06 | Implémenté sur PR #7, non intégré | Révisions/générations et acquittements sans SQL Portal→Game, certificat de connexion épinglé | [C06](../03-technical/portal-game-control.md) | Handoff/GameSession C07 livrés, C08 suit, 5D non commencé ; Q48/Q49/Q55 conservées | 30/10/2026, Codex local, PR #7 |
 | Handoff signé et sessions Game C07 | Implémenté sur PR #7, non intégré | Consommation atomique, contrôle local des epochs, 8 h/2 h et accès capturé, portées conservées | [C07](../03-technical/game-handoff.md) | C08 parcours/shell et C09 clôture restent nécessaires ; aucune Qxx changée | 30/10/2026, Codex local, instruction utilisateur après références visuelles |
 | Parcours et shell C08, recette de clôture C09 | Implémenté/testé sur PR #7, non intégré | Handoff automatique POST, contexte réel, statuts et reçus limités ; panne/reprise avec worker, rotation et restauration locale | [C08](../03-technical/portal-game-ui.md), [C09](../03-technical/portal-operations.md) | Revue finale avant fusion ; production/support/modes restent différés, 5D non commencé | Instruction utilisateur du 30/10/2026, Codex local |
+| API Colony sécurisée et UI Colony 5D | Implémenté sur PR #8, non intégré | Chaîne GameSession→GameAccess→EmpireBinding→colonie, services 5A réutilisés, boucle jouable et Portal coupé recettés | [API/UI Colony](../03-technical/colony-api-ui.md), [plan 5D](../05-project/step-5d-plan.md) | Création de partie hors produit (Q19–Q29/Q55), Q39/Q01 consolidées par le complément du 31/10/2026, étape 6 non commencée | Instruction utilisateur du 30/10/2026, Claude Code local, PR #8 |
 | UX responsive et sept domaines globaux | Implémenté / Proposition visuelle | Mobile/clavier et états explicites | [UX](../02-ux-ui/information-architecture.md), ADR 0003 | Q15 reste ouverte ; Portal non livré | PR #4/#5, S1 |
 | Diplomatie/commerce avancés, alliances, espionnage | Futur / post-MVP | Ne pas inventer des mécaniques pour compléter le MVP | [Roadmap](../05-project/roadmap.md), Q18 | Relations IA minimales étape 13 | Docs initiales ; S1 préserve les questions |
 | master stable, PR, merge explicite | Décision validée | Référence commune Work/Codex/Claude Code | [AGENTS](../../AGENTS.md) | develop historique superseded | Instructions visibles S2, PR #3 |

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { GameAccess } from './components/GameAccess';
 import { useGameSession } from './hooks/useGameSession';
+import { useColony } from './hooks/useColony';
+import { infrastructureLabel, rate, resourceLabels, resourceSymbols, time, units } from './colony/format';
 import { ColonyView } from './components/ColonyView';
 import { Badge, Button, EmptyState, Panel } from './components/ui';
 import { useReadiness } from './hooks/useReadiness';
@@ -30,6 +32,9 @@ export default function App() {
   const universe = segments[0] === 'universe' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(segments[1] ?? '') ? segments[1] : null;
   const localRoute = universe ? segments.slice(2).join('/') || 'empire' : route;
   const access = useGameSession(universe);
+  const colony = useColony(universe, access.phase === 'active', access.session?.csrf_token, access.retry);
+  const projection = universe && access.phase === 'active' ? colony.projection : null;
+  const active = projection?.queue.find(order => order.status === 'active');
   const href = (section: string) => universe ? `#universe/${universe}/${section}` : `#${section}`;
   const navigation = () => { if (universe && access.phase === 'active' && !access.busy) void access.refresh(); };
   const [destination, colonyView = 'overview'] = localRoute.split('/');
@@ -82,15 +87,34 @@ export default function App() {
 
     <div className="workspace">
       <header className="topbar"><div><span className="eyebrow">ESPACE DE JEU</span><p>{universe ? access.session?.universe_name ?? 'Vérification de la partie' : 'Aucun univers sélectionné'}</p></div>
+        {projection && <dl className="topbar-resources" aria-label={`Stocks de ${projection.colony.name}`}>
+          {projection.resources.map(resource => <div key={resource.resource}><dt><span aria-hidden="true" className={`resource-symbol--${resource.resource}`}>{resourceSymbols[resource.resource]}</span> {resourceLabels[resource.resource]}</dt>
+            <dd>{units(resource.stock)} <span>+{rate(resource.rate_per_hour)}/h</span></dd></div>)}
+        </dl>}
         <div className={`network network--${status}`} role="status"><span className="status-dot" aria-hidden="true" />{statusText}</div>
       </header>
       <main id="main-content" tabIndex={-1}>
         <div className="page-heading"><p className="eyebrow">{section?.label ?? 'Navigation'} / APERÇU</p>
           <h1 ref={heading} tabIndex={-1}>{section?.title ?? 'Page introuvable'}</h1>
-          <p>{section?.description ?? 'Cette destination n’existe pas. Retrouvez les sections dans la navigation.'}</p>
+          <p>{universe && destination === 'colony' && section ? 'Stocks, secteurs, infrastructures et file de construction de votre colonie, calculés et confirmés par le serveur.'
+            : universe && destination === 'empire' && section ? 'Situation de votre colonie et constructions en cours, selon le serveur Game.'
+            : section?.description ?? 'Cette destination n’existe pas. Retrouvez les sections dans la navigation.'}</p>
         </div>
-        {universe && <GameAccess access={access} />}
-        {universe && access.phase !== 'active' ? null : !section ? <a className="button" href={href('empire')}>Revenir à l’Empire</a> : destination === 'empire' ? <>
+        {universe && (destination === 'empire' || access.phase !== 'active') && <GameAccess access={access} />}
+        {universe && access.phase !== 'active' ? null : !section ? <a className="button" href={href('empire')}>Revenir à l’Empire</a> : destination === 'empire' && universe ? <>
+          <section className="resources" aria-label={projection ? `Ressources de ${projection.colony.name}` : 'Ressources de l’empire'}>
+            {projection ? projection.resources.map(resource => <div className="resource-card" key={resource.resource}>
+              <span className={`resource-symbol resource-symbol--${resource.resource}`} aria-hidden="true">{resourceSymbols[resource.resource]}</span>
+              <div><h2>{resourceLabels[resource.resource]}</h2><p>+{rate(resource.rate_per_hour)}/h</p></div><span className="resource-value">{units(resource.stock)}</span>
+            </div>) : <p className="panel" aria-live="polite">{colony.phase === 'empty' ? 'Aucune colonie accessible dans cet univers.' : colony.phase === 'error' ? 'Colonie indisponible pour le moment.' : 'Chargement de votre colonie…'}</p>}
+          </section>
+          <div className="overview-grid"><Panel title="Construction en cours">{active ? <p><strong>{infrastructureLabel(active.infrastructure_type)}</strong> niveau {active.target_level}
+            {active.due_at ? ` · fin prévue ${time(active.due_at)}` : ''}</p> : <p>{projection ? 'Aucune construction en cours.' : 'Données de colonie en attente.'}</p>}
+            <a className="button button--primary" href={href('colony/infrastructure')} onClick={navigation}>Gérer les infrastructures <span aria-hidden="true">↗</span></a></Panel>
+            <Panel title="Colonie">{projection ? <p>{projection.colony.name} · {projection.sectors.built + projection.sectors.reserved} / {projection.sectors.capacity} secteurs utilisés · {projection.queue.length} / {projection.queue_limit} ordres</p>
+              : <p>Les autres domaines de l’Empire arriveront aux prochaines étapes.</p>}
+              <a className="text-link" href={href('colony')} onClick={navigation}>Ouvrir la colonie →</a></Panel></div>
+        </> : destination === 'empire' ? <>
           <section className="hero" aria-labelledby="hero-title">
             <div className="hero-copy"><Badge tone="accent">Les fondations sont en place</Badge>
               <h2 id="hero-title">Préparez la suite<br />de votre histoire.</h2>
@@ -109,11 +133,11 @@ export default function App() {
               <p>Cette vérification indique si les services sont joignables. Elle ne confirme pas qu’une partie est active.</p>
               <Button disabled={status === 'checking'} onClick={retry}>{status === 'checking' ? 'Vérification…' : 'Vérifier la connexion'}</Button>
             </Panel></div>
-        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} /> : <section className="panel destination-panel"><Badge>À venir</Badge>
+        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : <section className="panel destination-panel"><Badge>À venir</Badge>
           <EmptyState title={`${section.label} : espace en préparation`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
           <a className="text-link" href={href('empire')}>← Retour à l’Empire</a>
         </section>}
-        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>Interface en préparation · Aucun gameplay jouable</span></footer>
+        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>{projection ? 'Colonie jouable · autres domaines en préparation' : 'Interface en préparation · Aucun gameplay jouable'}</span></footer>
       </main>
     </div>
   </div>;
