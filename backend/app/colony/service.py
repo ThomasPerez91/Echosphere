@@ -4,6 +4,7 @@ Every command locks the colony stream and uses a SAVEPOINT so refusal cannot par
 No HTTP endpoints, implicit user, commits, timers or external effects here.
 """
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import UUID
 
@@ -27,7 +28,11 @@ from app.simulation.service import TimeEngine, initialize, lock_timeline, schedu
 
 
 class ColonyError(ValueError):
-    pass
+    """Refusal with a stable public code; the message remains the internal explanation."""
+
+    def __init__(self, message: str, code: str = "colony_unavailable"):
+        super().__init__(message)
+        self.code = code
 
 
 class OrderSnapshot(StrictModel):
@@ -76,7 +81,7 @@ def owned_colony(session: Session, universe_id: UUID, empire_id: UUID, colony_id
         .execution_options(populate_existing=True)
     )
     if colony is None:
-        raise ColonyError("Colony unavailable in requested empire/universe")
+        raise ColonyError("Colony unavailable in requested empire/universe", "colony_not_found")
     return colony
 
 
@@ -123,6 +128,111 @@ def refresh_effects(session: Session, colony_id: UUID, rules: Ruleset) -> int:
             raise ColonyError("Effect would reduce capacity below stored resources")
     session.flush()
     return bonus
+
+
+def construction_bonus(rules: Ruleset, rows: list[ColonyInfrastructure]) -> int:
+    """Bonus a construction would receive if it started now (read-only counterpart)."""
+    bonus = 0
+    for row in rows:
+        bonus = amount(
+            bonus + rules.quote(row.infrastructure_type, row.level).construction_bonus_bps
+        )
+    return bonus
+
+
+def effective_duration_us(base_duration_us: int, speed: Ratio, bonus_bps: int) -> int:
+    numerator = base_duration_us * speed.denominator * 10000
+    denominator = speed.numerator * (10000 + bonus_bps)
+    return amount(max(1, (numerator + denominator - 1) // denominator))
+
+
+@dataclass(frozen=True)
+class ColonyState:
+    """Rows loaded once under the caller's lock; validation never mutates them."""
+
+    planet: Planet | None
+    infrastructures: list[ColonyInfrastructure]
+    queue: list[ConstructionOrder]
+    balances: dict[str, ResourceBalance]
+
+
+def colony_state(session: Session, colony: Colony) -> ColonyState:
+    balances = {r: session.get(ResourceBalance, (colony.id, r)) for r in sorted(RESOURCES)}
+    if any(row is None for row in balances.values()):
+        raise ColonyError("Missing resource balance")
+    return ColonyState(
+        session.get(Planet, colony.planet_id),
+        infrastructure_rows(session, colony.id),
+        queue_rows(session, colony.id),
+        balances,
+    )
+
+
+def plan_order(
+    rules: Ruleset, state: ColonyState, kind: str, sector: int, target_level: int
+) -> Quote:
+    """Validate a construction against completed and reserved state; shared by commands/reads."""
+    try:
+        quote = rules.quote(kind, target_level)
+    except ValueError as error:
+        raise ColonyError(str(error), "invalid_request") from None
+    planet = state.planet
+    if type(sector) is not int or planet is None or not 1 <= sector <= planet.sector_capacity:
+        raise ColonyError("Sector outside planetary capacity", "sector_unavailable")
+    if len(state.queue) >= rules.colony.queue_limit:
+        raise ColonyError("Construction queue full", "queue_full")
+    projected = {
+        row.sector_index: (row.infrastructure_type, row.level) for row in state.infrastructures
+    }
+    for order in state.queue:
+        projected[order.sector_index] = (order.infrastructure_type, order.target_level)
+    current = projected.get(sector)
+    if (current and current[0] != kind) or target_level != (current[1] + 1 if current else 1):
+        raise ColonyError("Occupied sector or non-contiguous upgrade", "sector_unavailable")
+    rule = rules.catalogue.infrastructures[kind]
+    if current is None and rule.max_per_colony is not None:
+        if sum(k == kind for k, _ in projected.values()) >= rule.max_per_colony:
+            raise ColonyError("Infrastructure uniqueness limit reached", "unique_limit")
+    for required, level in rule.requires.items():
+        # Prerequisites must be completed, not speculative queued capacity.
+        if not any(
+            r.infrastructure_type == required and r.level >= level for r in state.infrastructures
+        ):
+            raise ColonyError("Infrastructure prerequisites unmet", "prerequisites_unmet")
+    for resource, cost in quote.cost.items():
+        if state.balances[resource].stock < cost:
+            raise ColonyError("Insufficient resources", "insufficient_resources")
+    return quote
+
+
+def cancellation_plan(
+    queue: list[ConstructionOrder], order: ConstructionOrder
+) -> tuple[list[ConstructionOrder], dict[str, dict[str, int]], dict[str, int]]:
+    """Orders removed by cancelling `order`, per-order refunds and their totals; no mutation."""
+    # Removing an upgrade also cancels later dependent upgrades in that sector.
+    affected = [
+        row
+        for row in queue
+        if row.id == order.id
+        or (row.sector_index == order.sector_index and row.sequence > order.sequence)
+    ]
+    per_order, totals = {}, dict.fromkeys(RESOURCES, 0)
+    for row in affected:
+        snapshot = read_snapshot(row)
+        bps = snapshot.refund_active_bps if row.status == "active" else snapshot.refund_queued_bps
+        per_order[str(row.id)] = {
+            r: value * bps // 10000 for r, value in snapshot.quote.cost.items()
+        }
+        for resource, value in per_order[str(row.id)].items():
+            totals[resource] = amount(totals[resource] + value)
+    return affected, per_order, totals
+
+
+def refund_fits(balances: dict[str, ResourceBalance], refunds: dict[str, int]) -> bool:
+    return all(
+        balances[r].capacity is not None and balances[r].stock + value <= balances[r].capacity
+        for r, value in refunds.items()
+    )
 
 
 def initialize_colony(
@@ -189,11 +299,9 @@ def activate_next(session: Session, colony_id: UUID, at: datetime, rules: Rulese
     order = queue[0]
     snapshot = read_snapshot(order)
     bonus = refresh_effects(session, colony_id, rules)
-    speed = snapshot.construction_speed
-    numerator = snapshot.quote.base_duration_us * speed.denominator * 10000
-    denominator = speed.numerator * (10000 + bonus)
-    duration = max(1, (numerator + denominator - 1) // denominator)
-    amount(duration)
+    duration = effective_duration_us(
+        snapshot.quote.base_duration_us, snapshot.construction_speed, bonus
+    )
     try:
         due = utc(at) + timedelta(microseconds=duration)
     except OverflowError as error:
@@ -224,9 +332,9 @@ def catch_up_owned(
     # Ownership may have changed while waiting for the lock; re-read under the stream lock.
     owned_colony(session, universe_id, empire_id, colony_id)
     if timeline.universe_id != universe_id or session.get(ColonyEconomy, colony_id) is None:
-        raise ColonyError("Colony economics missing from requested universe")
+        raise ColonyError("Colony economics missing from requested universe", "colony_not_found")
     if not engine.catch_up(session, colony_id, at).complete:
-        raise ColonyError("Colony timeline is blocked or catch-up budget exhausted")
+        raise ColonyError("Colony timeline is blocked or catch-up budget exhausted", "colony_busy")
     return rules_for(session, universe_id)
 
 
@@ -249,7 +357,7 @@ def enqueue(
         lock_timeline(session, colony_id)
         owned_colony(session, universe_id, empire_id, colony_id)
         if not key or len(key) > 160:
-            raise ColonyError("Invalid command key")
+            raise ColonyError("Invalid command key", "invalid_request")
         existing = session.scalar(
             select(ConstructionOrder)
             .where(
@@ -266,39 +374,10 @@ def enqueue(
                 raise IdempotencyConflict("Construction key reused with another command")
             return existing
         rules = catch_up_owned(session, engine, universe_id, empire_id, colony_id, utc(at))
-        quote = rules.quote(kind, target_level)
-        colony = owned_colony(session, universe_id, empire_id, colony_id)
-        planet = session.get(Planet, colony.planet_id)
-        if type(sector) is not int or planet is None or not 1 <= sector <= planet.sector_capacity:
-            raise ColonyError("Sector outside planetary capacity")
-        queue = queue_rows(session, colony_id)
-        if len(queue) >= rules.colony.queue_limit:
-            raise ColonyError("Construction queue full")
-        projected = {
-            row.sector_index: (row.infrastructure_type, row.level)
-            for row in infrastructure_rows(session, colony_id)
-        }
-        for order in queue:
-            projected[order.sector_index] = (order.infrastructure_type, order.target_level)
-        current = projected.get(sector)
-        if (current and current[0] != kind) or target_level != (current[1] + 1 if current else 1):
-            raise ColonyError("Occupied sector or non-contiguous upgrade")
-        rule = rules.catalogue.infrastructures[kind]
-        if current is None and rule.max_per_colony is not None:
-            if sum(k == kind for k, _ in projected.values()) >= rule.max_per_colony:
-                raise ColonyError("Infrastructure uniqueness limit reached")
-        for required, level in rule.requires.items():
-            # Prerequisites must be completed, not speculative queued capacity.
-            if not any(
-                r.infrastructure_type == required and r.level >= level
-                for r in infrastructure_rows(session, colony_id)
-            ):
-                raise ColonyError("Infrastructure prerequisites unmet")
+        state = colony_state(session, owned_colony(session, universe_id, empire_id, colony_id))
+        quote = plan_order(rules, state, kind, sector, target_level)
         for resource, cost in quote.cost.items():
-            balance = session.get(ResourceBalance, (colony_id, resource))
-            if balance.stock < cost:
-                raise ColonyError("Insufficient resources")
-            balance.stock -= cost
+            state.balances[resource].stock -= cost
         economy = session.get(ColonyEconomy, colony_id)
         snapshot = OrderSnapshot(
             ruleset_version=rules.version,
@@ -395,34 +474,23 @@ def cancel(
             .execution_options(populate_existing=True)
         )
         if order is None:
-            raise ColonyError("Order unavailable in requested colony")
+            raise ColonyError("Order unavailable in requested colony", "order_not_found")
         if order.status == "cancelled":
             return order
         rules = catch_up_owned(session, engine, universe_id, empire_id, colony_id, utc(at))
         if order.status == "completed":
-            raise ColonyError("Completed construction cannot be cancelled")
-        # Removing an upgrade also cancels later dependent upgrades in that sector.
-        affected = [
-            row
-            for row in queue_rows(session, colony_id)
-            if row.id == order.id
-            or (row.sector_index == order.sector_index and row.sequence > order.sequence)
-        ]
-        refunds = dict.fromkeys(RESOURCES, 0)
-        for row in affected:
-            snapshot = read_snapshot(row)
-            bps = (
-                snapshot.refund_active_bps if row.status == "active" else snapshot.refund_queued_bps
+            raise ColonyError("Completed construction cannot be cancelled", "order_completed")
+        affected, per_order, refunds = cancellation_plan(queue_rows(session, colony_id), order)
+        balances = {r: session.get(ResourceBalance, (colony_id, r)) for r in RESOURCES}
+        if not refund_fits(balances, refunds):
+            raise ColonyError(
+                "Refund exceeds storage capacity; spend resources before cancelling",
+                "refund_exceeds_capacity",
             )
-            row.refunded = {r: value * bps // 10000 for r, value in snapshot.quote.cost.items()}
-            for resource, value in row.refunded.items():
-                refunds[resource] = amount(refunds[resource] + value)
+        for row in affected:
+            row.refunded = per_order[str(row.id)]
         for resource, value in refunds.items():
-            balance = session.get(ResourceBalance, (colony_id, resource))
-            if balance.capacity is None or balance.stock + value > balance.capacity:
-                raise ColonyError(
-                    "Refund exceeds storage capacity; spend resources before cancelling"
-                )
+            balance = balances[resource]
             balance.stock = amount(balance.stock + value)
             if balance.stock == balance.capacity:
                 balance.remainder = 0

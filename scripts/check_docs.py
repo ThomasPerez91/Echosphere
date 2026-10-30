@@ -64,6 +64,7 @@ REQUIRED = {
             "portal-account-security",
             "portal-mfa",
             "portal-game-control",
+            "colony-api-ui",
             "game-handoff",
             "portal-game-ui",
             "portal-operations",

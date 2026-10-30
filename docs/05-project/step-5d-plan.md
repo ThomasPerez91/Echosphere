@@ -4,7 +4,7 @@
 Base : master `ff6ef89` (fusion de PR #7, 5C), CI post-merge verte. Contrats : [5B](../03-technical/identity-contracts.md),
 [C07 handoff](../03-technical/game-handoff.md), [économie v0.1](../01-game-design/colony-economy-v0.1.md),
 [ADR 0007](../adr/0007-colony-economy.md), [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
-Canonique technique : `docs/03-technical/colony-api-ui.md`, créé en D01.
+Canonique technique : [API et UI Colony](../03-technical/colony-api-ui.md).
 
 ## Objectif
 
