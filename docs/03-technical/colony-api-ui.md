@@ -145,7 +145,10 @@ l’instance pour finir en secondes, règles v0.1 sinon identiques), binding Emp
 5. arrêt réel de Portal API et du worker de contrôle (`/api/ready` Portal ≥ 500) : colonie relue,
    nouvelle construction acceptée, worker qui achève amélioration et réacteur, aucune requête
    vers l’origine Portal pendant la séquence ;
-6. échéance de session atteinte (échéance absolue ramenée juste après la dernière activité dans la
+6. Q39 : worker arrêté et stockage rempli uniquement dans la base jetable, nouvel ordre puis
+   saturation ; UI théorique/récupérable/perte avant confirmation, annulation à capacité et replay
+   de l’ordre sans nouveau crédit ; aucun appel Portal ;
+7. échéance de session atteinte (échéance absolue ramenée juste après la dernière activité dans la
    base de test) : commande refusée, UI d’expiration, lecture 401.
 
 Le projet et ses volumes sont supprimés ; la pile conservée n’est pas touchée.

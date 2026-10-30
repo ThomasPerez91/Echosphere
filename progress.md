@@ -7,14 +7,14 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 | Champ | État |
 | --- | --- |
 | Branche / PR / base | work/step-5d-secure-colony-ui · PR #8 · base master ff6ef89 ; vérifier GitHub pour état brouillon/revue |
-| Tête et CI | Complément Q39 issu de b9425ce96367882dc44ce3459b2504175e44385c ; CI initiale PR 41129132438 success. SHA et CI du nouveau commit à relire dans PR #8 après publication |
+| Tête et CI | Source Q39 de72c181e6ba35e07ce9c397824a3e45d34e16de : CI PR 41143478865 et push 41143467685 success (5/5). Ce checkpoint documentaire suit la source ; sa propre tête/CI est consignée dans PR #8 après observation |
 | Dernier agent | ChatGPT Work, écrivain unique de ce checkout ; reprise des commits publiés Claude Code |
 | Travail réalisé | Q39 crédit plafonné/perte définitive, preview autoritative et cascade Q01 détaillée, reçus réels idempotents ; arbitrages produit consolidés |
 | Décisions | Q01 construction, Q08, Q17, Q19–Q39 et Q55 closes dans leur portée au registre ; modes/fog/défense futurs, performance non démontrée |
 | Fichiers modifiés | Services/projection Colony, tests Game, client/confirmation/formatage/tests UI, smoke Colony ; docs produit/tech/qualité/registre/passation et AGENTS/context/progress |
-| Tests réellement exécutés | Local Work : Ruff backend/scripts ; Game 53 passed / 138 skipped (pas de PostgreSQL), frontend lint 0 erreur (avertissement préexistant), 26 Vitest, build, 9 Chromium 320/390/768/1440 ; 78 documents/liens ; git diff --check. Suites PostgreSQL/Alembic/smokes à vérifier dans la CI publiée, pas exécutées localement |
-| Anomalies / corrections restantes | Pas de nouvelle Bloquante/Majeure identifiée à la relecture ; verdict de disponibilité conditionné à la CI complète du SHA publié. Docker/PostgreSQL absents du Work courant ; limites navigateurs/charge/support/production conservées |
-| Prochaines tâches | Observer CI complète, actualiser description #8 et Ready for review seulement si verte. Aucun merge sans instruction, aucune étape 6 avant fusion |
+| Tests réellement exécutés | Local Work : Ruff backend/scripts ; Game 53 passed / 138 skipped (pas de PostgreSQL), frontend lint 0 erreur (avertissement préexistant), 26 Vitest, build, 9 Chromium 320/390/768/1440 ; 78 documents/liens ; git diff --check. CI de72c18 : Game 191 passed, Portal 119 passed ; Game 26 Vitest/9 Chromium, Portal 30 Vitest/14 Chromium ; Alembic deux plans sans dérive et smokes Game/Portal/mTLS/handoff/Colony-Q39 verts. SQL/Alembic/smokes non exécutés localement |
+| Anomalies / corrections restantes | Pas de Bloquante/Majeure restante identifiée à la relecture et aux 5 jobs verts de de72c18 ; vérifier aussi la CI du présent checkpoint documentaire. Docker/PostgreSQL absents du Work courant ; limites navigateurs/charge/support/production conservées |
+| Prochaines tâches | Revue finale utilisateur de #8, Ready for review après CI verte de sa tête finale. Aucun merge sans instruction ; après fusion autorisée, vérifier master/CI puis checkpoint du lot Recherche sur nouvelle branche issue de master propre |
 
 ## Complément pré-revue Q39 et arbitrages — 31/10/2026
 
@@ -36,7 +36,8 @@ jusqu’à la micro-unité, aucune règle économique React. Estimation datée, 
 Tests ajoutés : saturation mono/multi-ressources, 100/80, cascade 3 ordres et indépendant préservé,
 concurrence de cascades, retry après réponse perdue/place libérée, rollback SAVEPOINT après crédit,
 allocation exacte et théorique au-delà de BIGINT. Smoke réel Colony étendu à l’overflow avec Portal
-arrêté, crédit nul à capacité et retry ; setup limité à sa base jetable. À exécuter dans la CI.
+arrêté, crédit nul à capacité et retry ; setup limité à sa base jetable. Exécuté avec succès en CI
+sur de72c18 (non exécuté localement).
 
 Q01 construction/cascade/pacing, Q08, Q17, Q19–Q39 et Q55 transcrites depuis l’instruction du
 31/10/2026 : décisions closes distinctes des paramètres initiaux balançables et implémentations
@@ -60,6 +61,19 @@ Les checkpoints 5D ci-dessous décrivent leur ancien SHA ; leurs refus Q39/statu
 et remplacés par ce complément. Étape 6 Recherche non commencée. Après une autorisation distincte
 de fusion : vérifier master/CI, nouveau lot sur master synchronisée avec checkpoint documentaire
 avant implémentation ; références research-view.png/design-system.png.
+
+### Validation du complément publiée et observée
+
+[CI PR 41143478865](https://github.com/ThomasPerez91/Echosphere/actions/runs/41143478865) et
+[CI push 41143467685](https://github.com/ThomasPerez91/Echosphere/actions/runs/41143467685)
+**completed/success, 5/5 jobs** sur de72c181e6ba35e07ce9c397824a3e45d34e16de.
+Game 191 tests PostgreSQL/unitaires ; Portal 119 tests ; Game 26 Vitest/9 Chromium et Portal
+30 Vitest/14 Chromium ; 78 docs/liens. Alembic Game et Accounts : « No new upgrade operations
+detected ». Smokes : Game/DB panne-reprise, Portal/DB isolées, mTLS/control, handoff et Colony.
+Logs Colony relus : boucle page fermée/worker, gameplay sans Portal, Q39 perte annoncée avant clic,
+annulation à capacité et retry sans crédit, puis 401 à expiration. Relecture terminée sans anomalie
+Bloquante/Majeure restante identifiée. Ce commit de checkpoint n’ajoute aucun changement fonctionnel ;
+vérifier sa propre CI dans la description PR avant passage en revue. Ne pas merger sans instruction.
 
 ## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
 
