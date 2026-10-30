@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { consumeVerificationFragment } from './account/verification';
-import { AccountForms } from './account/AccountForms';
+import { AccountAccess } from './account/AccountAccess';
 import { useReadiness } from './useReadiness';
 
 export default function App({ verificationToken = null }: { verificationToken?: string | null }) {
@@ -20,7 +20,7 @@ export default function App({ verificationToken = null }: { verificationToken?: 
       <p className="eyebrow">UN COMPTE, PLUSIEURS HORIZONS</p>
       <h1>Votre prochain univers<br />commence ici.</h1>
       <p className="intro">Le Portal réunira votre compte et vos parties. Le jeu continuera de progresser à son propre rythme.</p>
-      <AccountForms key={token ?? 'public'} verificationToken={token} />
+      <AccountAccess key={token ?? 'public'} verificationToken={token} />
       <section className="panel connection" aria-labelledby="connection-title">
         <div><h2 id="connection-title">Connexion au Portal</h2><p role="status" aria-live="polite">{message}</p></div>
         <button type="button" onClick={retry} disabled={status === 'checking'}>Vérifier à nouveau</button>

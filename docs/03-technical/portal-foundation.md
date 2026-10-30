@@ -8,6 +8,9 @@
 Ce document décrit le socle C01. État courant : [C02](portal-registration.md) ajoute comptes,
 vérification et livraison email ; les exclusions de compte ci-dessous décrivent C01 historiquement.
 
+État courant : [C03 sessions Portal/CSRF](portal-sessions.md) est livré sur PR #7 ; les exclusions
+de sessions de ce document décrivent le périmètre historique de cet incrément.
+
 ## Périmètre livré à C01
 
 Backend Portal FastAPI/Python 3.12 séparé dans portal/backend/portal_app, configuration PORTAL_*,

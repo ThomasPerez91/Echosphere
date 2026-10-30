@@ -4,6 +4,7 @@ from portal_app.accounts import models as account_models  # noqa: F401
 from portal_app.core.config import Settings
 from portal_app.persistence.database import create_database_engine
 from portal_app.persistence.models import Base
+from portal_app.sessions import models as session_models  # noqa: F401
 
 options = {
     "target_metadata": Base.metadata,

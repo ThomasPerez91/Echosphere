@@ -9,7 +9,7 @@ propriété, univers et visibilité avant tout effet.
 
 ## Protections locales conservées depuis l’étape 0
 
-Pas de gestion d'utilisateurs, paiement ou administration. Ports frontend/backend liés à 127.0.0.1,
+À l’étape 0, pas de gestion d’utilisateurs ; C02/C03 ajoutent comptes/sessions Portal. Paiement et administration absents. Ports frontend/backend liés à 127.0.0.1,
 aucun port PostgreSQL publié. L'exemple .env contient seulement des valeurs publiques de développement ;
 .env est ignoré. Ne pas réutiliser ces valeurs en production. Aucun secret dans un `VITE_*`.
 Les erreurs de readiness sont génériques ; les conteneurs applicatifs utilisent un utilisateur non-root.
@@ -106,13 +106,14 @@ lots. Aucun bypass ou service payant introduit par cette délégation.
 Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver. Deux applications sur le même hôte ne prouvent
 pas la résistance à une saturation réseau ou DDoS. Aucun WAF/Redis installé ou utilisé comme autorité
 gameplay. Les scénarios de refus, concurrence, reprise et panne sont des obligations de 5C/5D,
-non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02 sur PR #7.
+non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02/C03 sur PR #7.
 5C est le lot courant autorisé, sans début de 5D.
 
-## État livré en C01/C02 — PR #7
+## État livré en C01–C03 — PR #7
 
 [Socle Portal](portal-foundation.md) : base/configuration/pool/réseaux séparés et HTTPS local avec
 CA Docker, sans installation hôte. [C02](portal-registration.md) livre Argon2id, contrôle de
 mots de passe compromis par préfixe, preuves uniques 24 h, file email chiffrée, anti-abus transactionnel,
-Origin/JSON stricts et erreurs sans données d’entrée. Aucune connexion/session, MFA ou mTLS S2S. CORS Portal refusé par défaut et sondes sans détails privés. Les autres contrôles (sessions/MFA/handoff) restent des obligations des prochains tickets,
+Origin/JSON stricts et erreurs sans données d’entrée. [C03](portal-sessions.md) ajoute sessions opaques/cookies host-only protégés, CSRF,
+activité explicite serveur et déconnexion avec intention durable. Aucune MFA ou mTLS S2S. CORS Portal refusé par défaut et sondes sans détails privés. Les autres contrôles (MFA/handoff) restent des obligations des prochains tickets,
 pas des protections déjà livrées.

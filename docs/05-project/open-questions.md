@@ -7,7 +7,7 @@ les moments limites pour décider avant de dépendre du choix.
 Lot 5B du 2026-10-29 : [contrats identité/Portal-Game](../03-technical/identity-contracts.md)
 validés par l’utilisateur, dont le bloc final en quatorze points avec corrections MFA, sessions
 configurables et CORS. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ;
-contrats partiellement implémentés par C02 sur PR #7, sans connexion/session. 5C devient le lot courant, sans modifier ces décisions.
+contrats partiellement implémentés par C02/C03 sur PR #7, MFA/handoff futurs. 5C devient le lot courant, sans modifier ces décisions.
 Le tableau Q40–Q56 distingue décisions closes, détails techniques délégués et sujets différés.
 
 | ID | Question ouverte | À traiter avant | Référence |
@@ -162,7 +162,7 @@ Q16 a son cadrage identité/session/autorisation couvert par 5B ; sa réalisatio
 les politiques futures liées aux modes restant ouvertes dans leurs propres Qxx.
 Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B n’a été identifié à la consolidation.
 
-5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats partiellement implémentés par C02 sur PR #7, sans connexion/session.
+5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats partiellement implémentés par C02/C03 sur PR #7, MFA/handoff futurs.
 5C est le lot courant autorisé ; aucune nouvelle décision ici. Q01–Q39 ne sont pas renumérotées ; leurs arbitrages gameplay restent
 inchangés, dont Q39 ouverte. Seul le cadrage identité/autorisation de Q16 est actualisé par 5B.
 5B n’a créé aucune table ; C02 ajoute les comptes côté Portal seulement, pas de membership.

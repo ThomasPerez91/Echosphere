@@ -124,3 +124,9 @@ Portal n’écrit pas dans Game DB ; changements via interface interne Game auth
 Portal porte l’intention ; Game l’application locale. Outbox, révisions/idempotence et révocations
 ciblées Q51–Q54 validées ; détails de stockage délégués, aucun SQL nouveau dans ce lot.
 Les FK composites d’univers actuelles restent inchangées. User est implémenté par C02 ; Membership/GameSession restent futurs.
+
+## Extension C03 sur PR #7
+
+[Sessions Portal/CSRF](portal-sessions.md) : migration Accounts additive p0002, cinq tables
+profils/appareils/sessions/challenges/intentions de logout. Aucun schéma Game modifié. Les intentions
+de déconnexion sont persistées mais leur livraison/acquittement distant reste à C06/C07.

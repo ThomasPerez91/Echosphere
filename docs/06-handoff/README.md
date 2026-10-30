@@ -23,14 +23,15 @@ décrivait #5 ouverte ; il reste historique. Vérifier GitHub réel avant d’ag
 Accounts DB/Game DB séparées, interface interne contrôlée et GameSession autonome après handoff.
 **Sur PR #7, non intégré** : [socle Portal C01](../03-technical/portal-foundation.md), backend/frontend,
 Accounts DB et HTTPS local ; [C02](../03-technical/portal-registration.md) ajoute inscription,
-Argon2id, vérification et email durable local. **Non implémenté** : connexion/sessions, MFA, lobby,
+Argon2id, vérification et email durable local. [C03](../03-technical/portal-sessions.md) ajoute connexion/sessions Portal, CSRF et intentions de logout.
+**Non implémenté** : opérations sensibles, MFA, lobby,
 handoff, API gameplay et systèmes futurs du MVP. 5B reste seulement partiellement implémenté.
 
 5B autorisé puis consolidé le 2026-10-29 sur work/step-5b-identity-contracts :
-[contrats validés](../03-technical/identity-contracts.md), **partiellement implémentés par C02 sur PR #7 seulement**.
+[contrats validés](../03-technical/identity-contracts.md), **partiellement implémentés par C02/C03 sur PR #7 seulement**.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1` le 2026-10-29.
 5C devient le lot courant sur work/step-5c-portal-account-lobby depuis ce merge : premier checkpoint
-documentaire et cadrage réalisés, puis C01/C02 autorisés et implémentés ; C03 suit, aucun début de 5D. Le
+documentaire et cadrage réalisés, puis C01–C03 autorisés et implémentés ; C04 suit, aucun début de 5D. Le
 [registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
 délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
 ajout de facteur/régénération volontaire des secours avec step-up existant ; plafonds 10/10 configurables et sans effet sur

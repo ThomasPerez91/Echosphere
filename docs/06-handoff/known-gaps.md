@@ -6,7 +6,7 @@ Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progre
 [Contrats 5B](../03-technical/identity-contracts.md) validés et consolidés après arbitrage du bloc
 complet corrigé ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
 contrats d’auth partiellement implémentés sur PR #7 par C02. 5C est le lot courant : checkpoint/cadrage effectués,
-[socle C01](../03-technical/portal-foundation.md) et [C02](../03-technical/portal-registration.md) implémentés sur PR #7, sans connexion/session/handoff.
+[socle C01](../03-technical/portal-foundation.md) et [C02](../03-technical/portal-registration.md) implémentés sur PR #7, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md), sans MFA/handoff.
 HTTPS/routage/isolation de panne des bases testés, pas de confiance navigateur Windows/charge démontrée.
 [Q40–Q56](../05-project/open-questions.md) séparent clôtures, détails techniques délégués et reports.
 Restent ouverts : procédures support renforcé joueur/privilégié Q48 (aucun déblocage sans procédure
@@ -114,3 +114,12 @@ de preuve. Mailpit local ne prouve pas la délivrabilité publique ; fournisseur
 Clé persistante locale hors Git, procédures production de sauvegarde/rotation non livrées.
 UI Chromium avec API interceptée et SMTP/API PostgreSQL réels testés séparément ; pas de parcours
 complet navigateur hôte HTTPS, tactile ou lecteur d’écran attesté. Warning Starlette/httpx connu.
+
+## Limites C03
+
+[Sessions Portal/CSRF](../03-technical/portal-sessions.md) livrés sur PR #7, pas sur master.
+Logout Portal atomique avec intention durable et génération appareil, mais aucune livraison Game :
+état pending et UI fidèle, acquittements/retry/réconciliation à C06/C07. Pas de logout tous appareils
+sans le step-up futur, ni MFA/compte sensible/handoff. La preuve multi-onglets couvre rotation/refus
+et relecture sans rejeu ; aucun secret en stockage navigateur. Recette complète navigateur HTTPS et
+handoff prévue C09 ; smokes TLS/API et UI interceptée sont des preuves séparées.

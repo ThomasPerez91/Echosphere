@@ -11,3 +11,5 @@ button:disabled{opacity:.6;cursor:wait}footer{font-size:12px;color:#96b0c3;borde
 @media(max-width:520px){.portal-shell{padding-top:22px}.portal-label{font-size:9px;letter-spacing:.08em}.brand{font-size:21px}main{padding-top:50px}.panel{padding:20px}.connection{align-items:stretch;flex-direction:column;gap:15px}button{width:100%}}
 
 form{display:grid;gap:18px;margin-top:24px}label{display:grid;gap:7px;font-weight:600;font-size:14px}input{width:100%;min-height:46px;padding:10px 12px;font:inherit;color:#e7eef7;background:#08121f;border:1px solid #536b80;border-radius:8px}#password-help{font-size:12px;font-weight:400;color:#acc0d1}.text-button{background:transparent;color:#77f0ce;border-color:transparent;margin-top:18px;padding-left:0;text-align:left}.panel .form-error{color:#ffb8b8;margin-top:18px}.panel .form-success{color:#77f0ce;margin-top:18px}
+
+.sessions-list{list-style:none;padding:0;display:grid;gap:14px;margin-top:20px}.sessions-list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}

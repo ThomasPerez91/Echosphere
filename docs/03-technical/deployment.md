@@ -113,3 +113,9 @@ le socle Game ; la [recette Portal](portal-foundation.md) détaille certificats,
 portal-mail-worker et Mailpit (UI loopback 8025, SMTP réseau interne non publié), volumes portal_secrets
 et portal_mail_data. Ne pas perdre la clé des emails en attente ; aucune clé en Git.
 Migration Accounts p0001 additive ; aucun changement Game. Aucun fournisseur de production choisi.
+
+## Extension C03 sur PR #7
+
+[Sessions Portal/CSRF](portal-sessions.md) : migration Accounts additive p0002, cinq tables
+profils/appareils/sessions/challenges/intentions de logout. Aucun schéma Game modifié. Les intentions
+de déconnexion sont persistées mais leur livraison/acquittement distant reste à C06/C07.

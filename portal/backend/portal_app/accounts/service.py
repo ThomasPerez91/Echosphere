@@ -44,18 +44,31 @@ class Accounts:
         now = self.clock()
         window = now.replace(minute=0, second=0, microsecond=0)
         verification = action == "verify"
+        ip_limit = (
+            self.settings.verification_ip_limit
+            if verification
+            else self.settings.registration_ip_limit
+        )
+        subject_limit = (
+            self.settings.verification_token_limit
+            if verification
+            else self.settings.email_request_limit
+        )
+        if action == "login":
+            ip_limit, subject_limit = (
+                self.settings.login_ip_limit,
+                self.settings.login_account_limit,
+            )
+        elif action == "login_start":
+            ip_limit = subject_limit = self.settings.bootstrap_ip_limit
         limits = [
             (
                 f"{action}:ip:{token_digest(peer)}",
-                self.settings.verification_ip_limit
-                if verification
-                else self.settings.registration_ip_limit,
+                ip_limit,
             ),
             (
                 f"{action}:subject:{token_digest(subject)}",
-                self.settings.verification_token_limit
-                if verification
-                else self.settings.email_request_limit,
+                subject_limit,
             ),
         ]
         allowed = True

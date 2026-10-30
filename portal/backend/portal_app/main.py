@@ -1,4 +1,4 @@
-"""Portal composition root: Accounts services only, no Game connection or session issuance."""
+"""Portal composition root: Accounts services and Portal sessions only, no Game connection."""
 
 from contextlib import asynccontextmanager
 
@@ -12,6 +12,7 @@ from portal_app.accounts.service import Accounts
 from portal_app.api.accounts import AccountBodyLimit
 from portal_app.api.accounts import router as accounts_router
 from portal_app.api.probes import router
+from portal_app.api.sessions import router as sessions_router
 from portal_app.core.config import Settings
 from portal_app.persistence.database import create_database_engine, create_session_factory
 
@@ -60,6 +61,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     application.include_router(router)
     application.include_router(accounts_router)
+    application.include_router(sessions_router)
     return application
 
 

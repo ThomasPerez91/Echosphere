@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     email_request_limit: int = Field(default=5, ge=1, le=100)
     verification_ip_limit: int = Field(default=30, ge=1, le=1000)
     verification_token_limit: int = Field(default=10, ge=1, le=100)
+    connected_device_limit: int = Field(default=10, ge=1, le=100)
+    login_ip_limit: int = Field(default=30, ge=1, le=1000)
+    login_account_limit: int = Field(default=10, ge=1, le=100)
+    bootstrap_ip_limit: int = Field(default=60, ge=1, le=1000)
     trusted_proxy_host: str | None = None
 
     @field_validator("public_origin")

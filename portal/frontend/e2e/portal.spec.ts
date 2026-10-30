@@ -2,6 +2,10 @@ import { expect, test } from '@playwright/test';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/auth/sessions', route => route.fulfill({ status: 401, json: { error: { code: 'authentication_required' } } }));
+});
+
 for (const width of [320, 390, 768, 1440]) {
   test(`Portal keyboard and retry at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });
@@ -87,5 +91,46 @@ for (const width of [320, 1440]) {
     expect(await page.evaluate(() => localStorage.length + sessionStorage.length)).toBe(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('verification.png'), fullPage: true });
+  });
+}
+
+
+for (const width of [320, 1440]) {
+  test(`Login, explicit refresh and logout at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.route('**/api/ready', route => route.fulfill({ json: { status: 'ready', service: 'portal' } }));
+    let loggedIn = false;
+    let navigation = 0;
+    const snapshot = { status: 'authenticated', user: { email: 'player@example.org', email_verified: true },
+      session_id: 'one', csrf_token: 'session-proof', sessions: [{ id: 'one', current: true }] };
+    await page.route('**/api/auth/**', route => {
+      const path = new URL(route.request().url()).pathname;
+      if (path.endsWith('/sessions')) return route.fulfill(loggedIn ? { json: snapshot } : { status: 401, json: {} });
+      if (path.endsWith('/challenge')) return route.fulfill({ json: { csrf_token: 'login-proof' } });
+      if (path.endsWith('/login')) {
+        expect(route.request().headers()['x-csrf-token']).toBe('login-proof');
+        loggedIn = true;
+        return route.fulfill({ json: snapshot });
+      }
+      expect(route.request().headers()['x-csrf-token']).toBe('session-proof');
+      if (path.endsWith('/navigation')) { navigation++; return route.fulfill({ json: snapshot }); }
+      loggedIn = false;
+      return route.fulfill({ json: { current_session_closed: true, game_revocation: 'pending' } });
+    });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Se connecter à mon compte' }).click();
+    await page.getByLabel('Adresse email').fill('player@example.org');
+    await page.getByLabel('Mot de passe', { exact: true }).fill('Browser C03 password !');
+    await page.getByRole('button', { name: 'Ouvrir ma session' }).press('Enter');
+    await expect(page.getByRole('heading', { name: 'Vos connexions' })).toBeVisible();
+    expect(navigation).toBe(0);
+    await page.getByRole('button', { name: 'Actualiser mes connexions' }).click();
+    await expect.poll(() => navigation).toBe(1);
+    await expect(page.getByRole('button', { name: 'Se déconnecter', exact: true })).toBeEnabled();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await page.evaluate(() => localStorage.length + sessionStorage.length)).toBe(0);
+    await page.screenshot({ path: testInfo.outputPath('sessions.png'), fullPage: true });
+    await page.getByRole('button', { name: 'Se déconnecter', exact: true }).click();
+    await expect(page.getByRole('alert')).toContainText('Déconnexion des parties en attente');
   });
 }

@@ -4,22 +4,24 @@ import App from './App';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
-test('reports Portal readiness without a gameplay or login action', async () => {
+test('reports Portal readiness without a gameplay action', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: 'ready', service: 'portal' }) }));
   render(<App />);
   expect(await screen.findByText('Portal disponible')).toBeVisible();
-  expect(screen.queryByRole('button', { name: /connexion|jouer/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /^jouer$/i })).not.toBeInTheDocument();
 });
 
 test('rejects a Game response and recovers on explicit retry', async () => {
-  const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'ready' }) })
-    .mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'ready', service: 'portal' }) });
+  let calls = 0;
+  const fetcher = vi.fn((url: string) => url.includes('/auth/')
+    ? Promise.resolve({ ok: false, status: 401, json: async () => ({}) })
+    : Promise.resolve({ ok: true, json: async () => (++calls === 1 ? { status: 'ready' } : { status: 'ready', service: 'portal' }) }));
   vi.stubGlobal('fetch', fetcher);
   render(<App />);
   expect(await screen.findByText('Portal indisponible')).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Vérifier à nouveau' }));
   expect(await screen.findByText('Portal disponible')).toBeVisible();
-  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(fetcher).toHaveBeenCalledTimes(3);
 });
 
 test('network error allows retry instead of reporting readiness', async () => {

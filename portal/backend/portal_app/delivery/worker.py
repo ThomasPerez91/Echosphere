@@ -17,6 +17,7 @@ from portal_app.accounts.security import PublicError, token_digest
 from portal_app.accounts.service import Accounts
 from portal_app.core.config import Settings
 from portal_app.persistence.database import create_database_engine, create_session_factory
+from portal_app.sessions.models import LoginChallenge
 
 
 class LocalSMTP:
@@ -109,6 +110,9 @@ def deliver_one(accounts: Accounts, transport: LocalSMTP) -> bool:
 def prune(accounts: Accounts) -> None:
     now = accounts.clock()
     with accounts.factory.begin() as session:
+        session.execute(
+            delete(LoginChallenge).where(LoginChallenge.expires_at < now - timedelta(days=1))
+        )
         session.execute(
             delete(SecurityEvent).where(SecurityEvent.created_at < now - timedelta(days=90))
         )

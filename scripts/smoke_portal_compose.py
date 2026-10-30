@@ -78,6 +78,23 @@ def main():
         "status": "ready"
     }
 
+    # Exercise real TLS routing/cookie flags without creating a runtime account.
+    status, body, cookie_headers = get(
+        context, "portal.echosphere.localhost", "/api/auth/challenge",
+        headers={"X-Portal-Request": "bootstrap"},
+    )
+    assert status == 200 and len(json.loads(body)["csrf_token"]) == 64
+    protected = {key.lower(): value for key, value in cookie_headers.items()}
+    cookie = protected["set-cookie"]
+    assert cookie.startswith("__Host-portal-login=")
+    assert all(flag in cookie for flag in ("Secure", "HttpOnly", "SameSite=strict", "Path=/"))
+    assert "Domain=" not in cookie and protected["cache-control"] == "no-store"
+    assert get(context, "portal.echosphere.localhost", "/api/auth/session",
+        headers={"X-Portal-Request": "bootstrap"})[0] == 401
+    assert get(context, "portal.echosphere.localhost", "/api/auth/session", headers={
+        "X-Portal-Request": "bootstrap", "Origin": "https://game.echosphere.localhost:8443"
+    })[0] == 403
+
     # A real preflight through the Portal origin does not open credentialed CORS.
     _, _, headers = get(
         context, "portal.echosphere.localhost", "/api/ready", method="OPTIONS", headers={
@@ -100,13 +117,15 @@ def main():
     identity = "SELECT current_database() || '/' || current_user"
     assert query("portal-postgres", identity) != query("postgres", identity)
     assert query("portal-postgres", "SELECT version_num FROM portal_alembic_version") == (
-        "p0001_accounts_registration"
+        "p0002_portal_sessions"
     )
     assert query("postgres", "SELECT version_num FROM alembic_version") == "0004_colony_economy"
     tables = "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
     assert set(query("portal-postgres", tables).splitlines()) == {
         "portal_alembic_version", "users", "password_credentials", "account_tokens",
         "email_outbox", "abuse_counters", "security_events",
+        "browser_profiles", "account_devices", "portal_sessions",
+        "login_challenges", "logout_requests",
     }
     assert "portal_alembic_version" not in query("postgres", tables).splitlines()
 

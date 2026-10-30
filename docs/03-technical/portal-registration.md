@@ -5,6 +5,9 @@
 [Plan 5C](../05-project/step-5c-plan.md) · [Socle/réseaux/HTTPS](portal-foundation.md) ·
 [Contrats 5B inchangés](identity-contracts.md).
 
+État courant : [C03 sessions Portal/CSRF](portal-sessions.md) est livré sur PR #7 ; les exclusions
+de sessions de ce document décrivent le périmètre historique de cet incrément.
+
 ## Périmètre
 
 Inscription email/mot de passe, renvoi et confirmation de l’adresse initiale, formulaires Portal,

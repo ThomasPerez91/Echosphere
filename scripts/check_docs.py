@@ -60,6 +60,7 @@ REQUIRED = {
             "identity-contracts",
             "portal-foundation",
             "portal-registration",
+            "portal-sessions",
             "deployment",
         )
     ],

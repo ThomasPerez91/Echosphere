@@ -1,6 +1,6 @@
 # Contexte stable — Echosphere
 
-**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-29.
+**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-30.
 Vérifier GitHub réel puis lire AGENTS → context → progress → [passation](docs/06-handoff/README.md).
 
 ## Produit validé, état distinct
@@ -16,7 +16,7 @@ Universe = frontière d’instance, ni User ni processus ; late join et protecti
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
 éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 non arbitré.
 
-## Implémentation — Game 5A intégré, Portal C01/C02 sur PR #7
+## Implémentation — Game 5A intégré, Portal C01–C03 sur PR #7
 
 PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
 8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
@@ -30,7 +30,8 @@ Sur master après 5B : aucun compte, authentification, membership, lobby fonctio
 **Sur la branche PR #7, non intégré à master : C01** ajoute le socle Portal backend/frontend,
 Accounts DB/metadata/pool/Alembic p0000 séparés et HTTPS local portal.echosphere.localhost/game.echosphere.localhost:8443.
 C02 ajoute inscription/Argon2id/vérification email/outbox durable et formulaires, migration p0001.
-[Recette C02](docs/03-technical/portal-registration.md). Aucune connexion/session/MFA/membership/handoff. [Recette C01](docs/03-technical/portal-foundation.md).
+[Recette C02](docs/03-technical/portal-registration.md). C03 ajoute connexion/sessions/profils Portal, CSRF et intentions de logout persistées.
+[Recette C03](docs/03-technical/portal-sessions.md). Pas de MFA/membership/handoff ou livraison Game. [Recette C01](docs/03-technical/portal-foundation.md).
 Routage/TLS et panne croisée des bases testés ; aucun mTLS S2S ou protection de charge prétendu.
 Game : FastAPI/SQLAlchemy/Alembic/PostgreSQL + worker, React/TypeScript/Vite ; UTC, autorité serveur.
 EventStream/ScheduledEvent génériques ; ColonyTimeline/ResourceBalance pour économie exacte.
@@ -58,7 +59,7 @@ autonome ; client gameplay directement à Game sans appel Portal par commande. I
 outbox Portal, état d’accès Game versionné et application idempotente. Portal possède l’intention,
 Game les droits effectifs. Aucun credential Accounts en Game DB.
 
-**5B validé et consolidé le 2026-10-29, partiellement implémenté par C02 sur PR #7** :
+**5B validé et consolidé le 2026-10-29, partiellement implémenté par C02/C03 sur PR #7** :
 [contrats canoniques](docs/03-technical/identity-contracts.md),
 [statuts Q40–Q56](docs/05-project/open-questions.md).
 Email/mot de passe Argon2id MVP, identité indépendante, vérification email avant handoff ; récupération
@@ -98,13 +99,13 @@ partir sur une nouvelle branche work/... pour tout nouveau lot autorisé, sans r
 progress porte le checkpoint et les actions de reprise avant/après fusion.
 PR #6 fusionnée sur instruction explicite le 2026-10-29 : master
 63bb7d1c902e9c0fbae3497d4a36c107a80eb611. **5B documentaire terminé et intégré à master** ;
-contrats validés, premier sous-ensemble C02 implémenté sur PR #7 seulement. Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ;
+contrats validés, sous-ensembles C02/C03 implémentés sur PR #7 seulement. Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ;
 reports Q48/Q49/Q55 conservés selon le registre, aucun arbitrage rouvert.
 
 Lot courant autorisé : **5C — Portal Account/Lobby foundation**, branche
 work/step-5c-portal-account-lobby créée depuis master fraîchement synchronisée en fast-forward.
 Premier checkpoint documentaire 1c27497 et cadrage 8122cf7 publiés avant code. L’utilisateur a ensuite
-autorisé « alors go » : C01 puis C02 implémentés et testés sur PR #7, 5C reste en cours. Prochaine action : C03
-sessions Portal selon contrats 5B, sans nouvelle validation par paramètre technique délégué. 5D exclu ; aucune nouvelle fusion
+autorisé « alors go » : C01–C03 implémentés et testés sur PR #7, 5C reste en cours. Prochaine action : C04
+opérations sensibles selon contrats 5B, sans nouvelle validation par paramètre technique délégué. 5D exclu ; aucune nouvelle fusion
 sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
 [Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).
