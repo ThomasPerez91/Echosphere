@@ -132,7 +132,7 @@ Universe n’est ni User ni processus. Pas de compte global factice ou accès im
 Q16 a son cadrage 5B couvert ; détails délégués et reports Q48/Q49/Q55 au registre.
 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats seulement partiellement implémentés sur PR #7 par C02–C08.
 Lot courant autorisé : 5C compte/lobby. Checkpoint et cadrage effectués ; C01 implémenté sur PR #7,
-C02/C03 comptes/vérification/sessions, C04 opérations sensibles et C05 MFA implémentés ; C06 lobby/S2S implémenté ; C07 handoff/GameSession est implémenté ; C08 est livré et C09 vérifie la clôture ; revue finale de PR #7 ensuite. Migrations Accounts séparées, pas de SQL Portal→Game.
+C02/C03 comptes/vérification/sessions, C04 opérations sensibles et C05 MFA implémentés ; C06 lobby/S2S implémenté ; C07 handoff/GameSession est implémenté ; C08 livré et recette de clôture C09 réalisée : 5C prêt pour revue finale de PR #7, non fusionné. Migrations Accounts séparées, pas de SQL Portal→Game.
 5D API Colony sécurisée reste hors lot. Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver

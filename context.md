@@ -109,6 +109,6 @@ reports Q48/Q49/Q55 conservés selon le registre, aucun arbitrage rouvert.
 Lot courant autorisé : **5C — Portal Account/Lobby foundation**, branche
 work/step-5c-portal-account-lobby créée depuis master fraîchement synchronisée en fast-forward.
 Premier checkpoint documentaire 1c27497 et cadrage 8122cf7 publiés avant code. L’utilisateur a ensuite
-autorisé « alors go » : C01–C08 implémentés et testés sur PR #7, 5C reste en cours. C08 parcours frontend et intégration au shell livré ; C09 recette de clôture selon contrats 5B, sans nouvelle validation par paramètre technique délégué. 5D exclu ; aucune nouvelle fusion
+autorisé « alors go » : C01–C08 implémentés et testés sur PR #7, recette de clôture C09 réalisée puis revue/validations finales par Claude Code le 2026-10-30 : 5C prêt pour revue finale, non fusionné (CI du SHA final consignée dans PR #7). 5D exclu ; aucune nouvelle fusion
 sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
 [Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).

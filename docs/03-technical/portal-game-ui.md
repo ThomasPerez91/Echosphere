@@ -1,6 +1,6 @@
 # C08 — parcours compte/lobby et contexte Game
 
-**Statut : implémenté sur PR #7, non intégré à master ; recette de clôture C09 à suivre.**
+**Statut : implémenté sur PR #7, non intégré à master ; recette de clôture C09 réalisée.**
 [Contrats 5B](identity-contracts.md), [handoff C07](game-handoff.md) et
 [guide visuel](../visual-reference/README.md) conservés.
 

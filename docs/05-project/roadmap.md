@@ -57,7 +57,7 @@ Accounts DB/Alembic, backend/frontend et HTTPS local testés. [C02](../03-techni
 ajoute inscription/Argon2id/vérification email et livraison locale durable, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md) et intentions de logout persistées.
 handoff/GameSession C07 livrés sur PR #7. [C04](../03-technical/portal-account-security.md) livre les opérations sensibles,
 [C05](../03-technical/portal-mfa.md) ajoute MFA/secours/récupération et leur intégration. [C06](../03-technical/portal-game-control.md) livre lobby, outbox et contrôle mTLS.
-C08 livré ; C09 porte la clôture pour revue finale de 5C.
+C08 livré ; recette de clôture C09 réalisée : 5C prêt pour revue finale de PR #7, fusion sur instruction seulement.
 5D reste distinct : API/UI Colony et preuves de résilience gameplay, sans accès permissif transitoire.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :

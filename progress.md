@@ -10,23 +10,53 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 | Champ | État |
 | --- | --- |
 | Branche / PR / base | work/step-5c-portal-account-lobby · PR #7 OPEN brouillon · base master 63bb7d1 |
-| Tête et CI | Tête = checkpoint C08/C09 portant ce bloc ; SHA publié dans PR #7. CI de ce checkpoint à observer, aucun succès présumé. Base de reprise 35067f85df1bebbaa4dc1a1b047b64d997a7b3e3, CI push 41110493629 / PR 41110502475 success |
-| Dernier agent | Codex local ; arrêt explicite demandé par l’utilisateur pour relais Claude, sans travail concurrent à reprendre |
-| Travail réalisé | C08 implémenté et testé ; C09 recette panne/reprise/rotation/restore locale réalisée. Clôture finale et CI de tête encore à terminer |
-| Décisions | 5B et Q01–Q56 inchangés ; [C08](docs/03-technical/portal-game-ui.md), [C09](docs/03-technical/portal-operations.md), aucune nouvelle décision produit |
-| Fichiers modifiés | Game access/HTTP + shell React ; Portal bootstrap/lobby/reçus/sessions ; tests/recette C09 et documents de statut. Aucune migration, dépendance ou game_data modifié |
-| Tests réellement exécutés | 150 Game, 119 Portal ; 16 tests frontend Game + 5 Chromium, 29 Portal + 14 Chromium ; recette HTTPS C09 réelle 320/1440 avec panne Portal, worker, révocation et restore ; 76 docs/liens et diff. Détails et réserves ci-dessous |
-| Anomalies / corrections restantes | Relecture finale des diff/statuts, lint final et suites frontend après derniers ajustements de reçu ; relancer les trois autres smokes sur la tête finale, vérifier CI publiée et mettre à jour PR. Ne pas déclarer 5C clos avant ces contrôles |
-| Prochaines tâches | Claude reprend ce checkpoint sans réécrire/recommencer C08 ; terminer C09/CI, rapport de clôture pour revue finale. Aucun merge, 5D exclu |
+| Tête et CI | Tête = commit Claude portant ce bloc (SHA/CI consignés dans PR #7 après observation). Checkpoint Codex C08/C09 237c97c : CI push 41116382297 / PR 41116392662 success |
+| Dernier agent | Claude Code local (WSL2), seul écrivain après arrêt de Codex demandé par l’utilisateur ; C08/C09 développés par Codex local |
+| Travail réalisé | Revue C08/C09 depuis 35067f8, une anomalie mineure R1 corrigée (reçu affiché après login), validations frontend finales, trois smokes et recette C09 relancés sur le contenu final |
+| Décisions | 5B et Q01–Q56 inchangés ; [C08](docs/03-technical/portal-game-ui.md), [C09](docs/03-technical/portal-operations.md) ; aucune nouvelle décision produit |
+| Fichiers modifiés | Ce commit : portal/frontend AccountAccess.tsx (+ test), statuts AGENTS/context/progress/roadmap/plan 5C/docs README/passation/C08/C09. Aucune migration, dépendance, game_data, Compose ou backend modifié |
+| Tests réellement exécutés | Claude : Game frontend 16 unitaires/build/5 Chromium sur 237c97c ; Portal frontend 30 unitaires/build/14 Chromium après R1 ; lint 0 erreur ; Alembic check deux plans ; smokes Game, Portal, mTLS et handoff C09 réussis ; check_docs. Backend 150 Game/119 Portal : exécutés par Codex sur 237c97c (backend inchangé depuis), non relancés localement par Claude |
+| Anomalies / corrections restantes | R1 corrigée ; aucune Bloquante/Majeure démontrée. Remarques : 2 avertissements ESLint react-hooks préexistants, revue croisée de R1 par Codex non faite. Q48/Q49/Q55 et limites production inchangées |
+| Prochaines tâches | Revue finale utilisateur de PR #7 (sortie de brouillon et fusion sur instruction seulement) ; 5D exclu tant que non autorisé |
 
 
 ## Lot courant — 5C : Portal Account/Lobby foundation
 
-**Statut : C01–C08 implémentés ; C09 recette locale réalisée, clôture/CI encore en cours. Relais Claude demandé.**
+**Statut : C01–C09 réalisés ; revue et validations finales Claude effectuées, 5C prêt pour revue finale de PR #7 (non fusionnée).**
 5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/MFA/lobby/contrôle privé/handoff C02–C07 implémentés sur PR #7 seulement.
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
 Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C07 est décrit en premier.
+
+### Revue et validations finales Claude — C08/C09, 2026-10-30
+
+Agent : Claude Code local (WSL2), écrivain unique après arrêt de Codex. État vérifié avant écriture :
+PR #7 OPEN/brouillon, base master 63bb7d1, tête locale = distante 237c97c1e0dc1e39dc78cfd1c292591eb429b2f3,
+arbre propre, aucun worktree ni fichier non commité ; CI 237c97c push 41116382297/PR 41116392662 success.
+
+Revue du diff 35067f8..237c97c (56 fichiers) : reçus chiffrés 15 min sans pouvoir d’authentification,
+cookies `__Host-` sans Set-Cookie tardif effaçant une connexion plus récente, POST JSON corps vide/CSRF/
+origine, pages de transfert à nonce CSP, timers passifs relisant le serveur, générations/abort contre
+les réponses tardives et StrictMode. **R1 (Mineure, confirmée et corrigée)** : après un login normal, le
+serveur efface le reçu mais l’UI conservait l’ancien statut « en attente » (onLogin sans remontage de
+RevocationStatus), contrairement au canonique C08. Test de reproduction ajouté, en échec avant la
+correction et réussi après. Aucune autre anomalie démontrée ; remarques non bloquantes : avertissements
+ESLint react-hooks (compteur de génération, dépendance Lobby) et capture pleine page 320 où la barre
+mobile fixe recouvre un bouton (artefact de capture, pas de défaut d’UI démontré). L’absence d’autre
+anomalie détectée n’est pas une garantie ; aucune revue croisée Codex de R1.
+
+Validations réellement exécutées par Claude (conteneurs node:22-bookworm, copies hors dépôt) :
+Game frontend sur 237c97c lint 0 erreur, 16 tests, build, 5 Chromium ; Portal frontend sur 237c97c
+29 tests/build/14 Chromium, puis après R1 lint 0 erreur, 30 tests, build, 14 Chromium. Pile reconstruite
+depuis l’arbre final (volumes conservés) : Alembic Game 0006_game_sessions et Accounts p0005_control sans
+dérive ; smoke_compose, smoke_portal_compose, smoke_control_compose et smoke_handoff_compose réussis
+(code 0), recette C09 complète incluse. Pile conservée de nouveau running/healthy. Suites backend non
+relancées par Claude : backend inchangé depuis les 150 Game/119 Portal de Codex sur 237c97c ; la CI du
+SHA final les réexécute. Bases echosphere_c08_* conservées par Codex non supprimées (pas d’instruction).
+
+Conclusion : 5C est terminé côté implémentation et recette locale, **prêt pour revue finale** dès que la
+CI du SHA final est observée verte (consignée dans PR #7). Ni fusion, ni sortie de brouillon, ni 5D sans
+instruction ; production, Q48/Q49/Q55 et charge hostile restent hors clôture.
 
 ### Relais explicite Codex → Claude — C08/C09, 2026-10-30
 

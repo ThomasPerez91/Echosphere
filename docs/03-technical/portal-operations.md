@@ -1,6 +1,6 @@
 # C09 — recette de clôture et opérations Portal/Game
 
-**Statut : recette locale C09 réalisée sur PR #7 ; clôture et CI finales à terminer après relais Claude. Aucune exposition production autorisée.**
+**Statut : recette C09 réalisée sur PR #7 et relancée par Claude Code sur le contenu final le 2026-10-30 ; 5C prêt pour revue finale, CI du SHA final consignée dans PR #7. Aucune exposition production autorisée.**
 Ce document précise les opérations déléguées de 5C, sans fermer les reports Q48/Q49/Q55 ou modifier
 les [décisions 5B](identity-contracts.md). [Parcours C08](portal-game-ui.md), [plan 5C](../05-project/step-5c-plan.md).
 

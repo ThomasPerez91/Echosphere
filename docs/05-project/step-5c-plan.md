@@ -1,6 +1,6 @@
 # Étape 5C — cadrage Portal Account/Lobby foundation
 
-**Statut : découpage présenté ; C01–C08 implémentés sur PR #7, C09 recette de clôture.** Mise à jour 2026-10-30.
+**Statut : découpage présenté ; C01–C09 réalisés sur PR #7 ; 5C prêt pour revue finale, non fusionné.** Mise à jour 2026-10-30.
 Autorisation utilisateur : poursuivre 5C après un premier checkpoint documentaire commit/push.
 Contrats de référence **validés, inchangés** : [identity-contracts](../03-technical/identity-contracts.md),
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md), [registre Q40–Q56](open-questions.md).
