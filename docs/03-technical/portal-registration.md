@@ -8,7 +8,8 @@
 État courant : [C03 sessions Portal/CSRF](portal-sessions.md) est livré sur PR #7 ; les exclusions
 de sessions de ce document décrivent le périmètre historique de cet incrément.
 
-État courant : [C04 opérations sensibles sans MFA](portal-account-security.md) livré sur PR #7.
+État courant : [C04 opérations sensibles](portal-account-security.md) et [C05 MFA](portal-mfa.md)
+livrés sur PR #7 ; les limites historiques ci-dessous décrivent le seul sous-ticket initial.
 Les exclusions d’opérations sensibles ci-dessous décrivent le périmètre historique de cet incrément.
 
 ## Périmètre
@@ -132,8 +133,8 @@ actifs. Recette backend : Ruff/pytest depuis portal/backend avec son propre lock
 uniquement RUN_DB_TESTS=1 et PORTAL_POSTGRES_* vers une base dédiée *_test. Frontend : npm ci,
 lint/test/build/test:e2e dans portal/frontend. Scénarios, résultats effectifs et limites dans progress.
 
-C03 est la suite : appareils, connexion/session Portal et CSRF. C04/C05 porteront opérations sensibles
-et MFA ; C06/C07 memberships/S2S/handoff ; C08/C09 complétion UI et recette. 5D non commencé.
+C03 sessions/CSRF et C04/C05 opérations sensibles/MFA sont livrés sur PR #7.
+Suite : C06/C07 memberships/S2S/handoff ; C08/C09 complétion UI et recette. 5D non commencé.
 Q48/Q49/Q55 conservent leurs reports ; aucune décision 5B n’a été modifiée.
 
 Sources primaires : [argon2-cffi](https://argon2-cffi.readthedocs.io/en/stable/parameters.html),

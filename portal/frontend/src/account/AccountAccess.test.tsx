@@ -6,11 +6,16 @@ const snapshot = {
   status: 'authenticated', user: { email: 'player@example.org', email_verified: true },
   csrf_token: 'session-proof', session_id: 'one', sessions: [{ id: 'one', current: true }],
 };
+function installFetcher(fetcher: (url: string, options?: RequestInit) => unknown) {
+  vi.stubGlobal('fetch', (url: string, options?: RequestInit) => url === '/api/mfa/status'
+    ? Promise.resolve({ ok: true, json: async () => ({ enabled: false, totp: false, credentials: [] }) })
+    : fetcher(url, options));
+}
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 test('automatic bootstrap is a read and explicit refresh is a CSRF protected action', async () => {
   const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => snapshot });
-  vi.stubGlobal('fetch', fetcher);
+  installFetcher(fetcher);
   render(<AccountAccess verificationToken={null} />);
   expect(await screen.findByText('player@example.org')).toBeVisible();
   expect(fetcher).toHaveBeenCalledTimes(1);
@@ -28,7 +33,7 @@ test('login obtains a bound challenge and never puts secrets in browser storage'
     ? { ok: false, status: 401, json: async () => ({}) }
     : url.endsWith('/challenge') ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
     : { ok: true, json: async () => snapshot }));
-  vi.stubGlobal('fetch', fetcher);
+  installFetcher(fetcher);
   render(<AccountAccess verificationToken={null} />);
   fireEvent.click(screen.getByRole('button', { name: 'Se connecter à mon compte' }));
   fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
@@ -45,7 +50,7 @@ test('login obtains a bound challenge and never puts secrets in browser storage'
 test('logout reports pending remote revocation and does not claim universal disconnection', async () => {
   const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => snapshot })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ current_session_closed: true, game_revocation: 'pending' }) });
-  vi.stubGlobal('fetch', fetcher);
+  installFetcher(fetcher);
   render(<AccountAccess verificationToken={null} />);
   fireEvent.click(await screen.findByRole('button', { name: /^Se déconnecter$/ }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Déconnexion des parties en attente');
@@ -56,7 +61,7 @@ test('device cap refusal is actionable and does not expose server response conte
   const fetcher = vi.fn((url: string) => Promise.resolve(url.endsWith('/challenge')
     ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
     : { ok: false, status: 409, json: async () => ({ error: { code: 'device_limit_reached', private: 'never display this' } }) }));
-  vi.stubGlobal('fetch', fetcher);
+  installFetcher(fetcher);
   render(<AccountAccess verificationToken={null} />);
   fireEvent.click(screen.getByRole('button', { name: 'Se connecter à mon compte' }));
   fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
@@ -72,7 +77,7 @@ test('another tab rotating authentication reloads proof without replaying the ac
   const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => snapshot })
     .mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({}) })
     .mockResolvedValueOnce({ ok: true, json: async () => changed });
-  vi.stubGlobal('fetch', fetcher);
+  installFetcher(fetcher);
   render(<AccountAccess verificationToken={null} />);
   fireEvent.click(await screen.findByRole('button', { name: 'Actualiser mes connexions' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Vérifiez son état puis réessayez');
@@ -86,7 +91,7 @@ test('a delayed automatic read cannot restore a session predating the login tran
   const fetcher = vi.fn((url: string) => url.endsWith('/sessions') ? delayed : Promise.resolve(
     url.endsWith('/challenge') ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
       : { ok: true, json: async () => snapshot }));
-  vi.stubGlobal('fetch', fetcher);
+  installFetcher(fetcher);
   render(<AccountAccess verificationToken={null} />);
   fireEvent.click(screen.getByRole('button', { name: 'Se connecter à mon compte' }));
   fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });

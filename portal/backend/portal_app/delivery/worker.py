@@ -17,6 +17,7 @@ from portal_app.accounts.models import AbuseCounter, AccountToken, EmailOutbox, 
 from portal_app.accounts.security import PublicError, token_digest
 from portal_app.accounts.service import Accounts
 from portal_app.core.config import Settings
+from portal_app.mfa.models import AuthFailure, MfaChallenge, MfaRecoverySession
 from portal_app.persistence.database import create_database_engine, create_session_factory
 from portal_app.sessions.models import LoginChallenge
 
@@ -111,6 +112,18 @@ def deliver_one(accounts: Accounts, transport: LocalSMTP) -> bool:
 def prune(accounts: Accounts) -> None:
     now = accounts.clock()
     with accounts.factory.begin() as session:
+        session.execute(
+            update(MfaChallenge).where(MfaChallenge.expires_at <= now).values(encrypted_secret=None)
+        )
+        session.execute(
+            delete(MfaChallenge).where(MfaChallenge.expires_at < now - timedelta(days=1))
+        )
+        session.execute(
+            delete(MfaRecoverySession).where(
+                MfaRecoverySession.expires_at < now - timedelta(days=1)
+            )
+        )
+        session.execute(delete(AuthFailure).where(AuthFailure.updated_at < now - timedelta(days=1)))
         session.execute(
             delete(LoginChallenge).where(LoginChallenge.expires_at < now - timedelta(days=1))
         )

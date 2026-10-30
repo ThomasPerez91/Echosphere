@@ -37,16 +37,28 @@ def build_security_message(row, payload, origin):
         body = (
             f"Confirmez cette {side} adresse pour la même demande de changement :\n"
             f"{origin}/#confirm-email-change={payload['token']}\n"
-            "Les deux confirmations expirent une heure après la création de la demande. "
+            "Les confirmations requises expirent une heure après la création de la demande. "
             "Ignorez si vous n’avez pas demandé ce changement."
         )
     else:
         message["Subject"] = "Votre sécurité Echosphere a été modifiée"
-        what = "mot de passe" if row.kind == "password_changed" else "adresse email"
+        what = (
+            "mot de passe"
+            if row.kind == "password_changed"
+            else "authentification MFA"
+            if row.kind == "mfa_changed"
+            else "adresse email"
+        )
+        change = (
+            "Votre authentification MFA a été modifiée.\n"
+            if row.kind == "mfa_changed"
+            else f"Votre {what} a été modifié. Une nouvelle connexion normale est nécessaire.\n"
+        )
         body = (
-            f"Votre {what} a été modifié. Une nouvelle connexion normale est nécessaire.\n"
-            f"Opération non reconnue ? Ouvrez le parcours de sécurité : {origin}/#security-alert\n"
-            "Aucun rétablissement automatique d’une ancienne adresse n’est effectué."
+            change
+            + "Opération non reconnue ? Ouvrez le parcours de sécurité : "
+            + f"{origin}/#security-alert\n"
+            + "Aucun rétablissement automatique d’une ancienne adresse n’est effectué."
         )
     message.set_content(body)
     return message
@@ -78,8 +90,6 @@ def deliver_security_one(accounts, transport):
                 and reset.active
                 and now < reset.expires_at
                 and user.status == "active"
-                and not user.mfa_enabled
-                and not user.platform_privileged
             )
         elif row.kind in ("email_old", "email_new"):
             change = session.get(EmailChangeRequest, row.email_change_id)
@@ -94,8 +104,6 @@ def deliver_security_one(accounts, transport):
                     alive(session.get(PortalSession, change.session_id), now)
                     and user.status == "active"
                     and user.email == change.old_email
-                    and not user.mfa_enabled
-                    and not user.platform_privileged
                 )
         if not valid:
             row.state, row.payload_ciphertext = "cancelled", None

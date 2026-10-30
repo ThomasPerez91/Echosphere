@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     security_subject_limit: int = Field(default=10, ge=1, le=100)
     reset_response_floor_ms: int = Field(default=150, ge=50, le=1000)
     security_notice_hours: int = Field(default=24, ge=1, le=168)
+    mfa_key_file: Path = Path("/run/portal-secrets/mfa.key")
+    webauthn_rp_id: str = "portal.echosphere.localhost"
+    production: bool = False
+    auth_delay_base_ms: int = Field(default=100, ge=1, le=1000)
+    auth_delay_max_ms: int = Field(default=1000, ge=1, le=3000)
     trusted_proxy_host: str | None = None
 
     @field_validator("public_origin")

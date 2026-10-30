@@ -17,3 +17,5 @@ form{display:grid;gap:18px;margin-top:24px}label{display:grid;gap:7px;font-weigh
 select{font:inherit;max-width:100%;min-height:46px;padding:10px;color:#e7eef7;background:#08121f;border:1px solid #536b80;border-radius:8px}.security-settings{border-top:1px solid #2a3e50;margin-top:28px;padding-top:18px}
 
 .security-settings form,.security-settings label{min-width:0}.security-settings select{width:100%;min-width:0}
+
+.recovery-codes{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;font-size:13px}form,label{min-width:0}select{width:100%;min-width:0}

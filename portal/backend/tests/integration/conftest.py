@@ -36,7 +36,10 @@ def accounts(database_engine, tmp_path):
     key = tmp_path / "mail.key"
     key.write_bytes(Fernet.generate_key())
     key.chmod(0o600)
-    settings = Settings(mail_key_file=key, trusted_proxy_host=None)
+    mfa_key = tmp_path / "mfa.key"
+    mfa_key.write_bytes(Fernet.generate_key())
+    mfa_key.chmod(0o600)
+    settings = Settings(mail_key_file=key, mfa_key_file=mfa_key, trusted_proxy_host=None)
     current = [datetime(2026, 10, 29, 8, tzinfo=UTC)]
     service = Accounts(
         create_session_factory(database_engine),
@@ -51,7 +54,10 @@ def accounts(database_engine, tmp_path):
         with database_engine.begin() as connection:
             connection.execute(
                 text(
-                    "TRUNCATE security_email_outbox, account_revocations, step_up_grants, "
+                    "TRUNCATE auth_failures, mfa_backup_codes, mfa_challenges, "
+                    "mfa_recovery_sessions, "
+                    "totp_credentials, webauthn_credentials, security_email_outbox, "
+                    "account_revocations, step_up_grants, "
                     "email_change_requests, password_reset_requests, logout_requests, "
                     "login_challenges, portal_sessions, account_devices, "
                     "browser_profiles, security_events, abuse_counters, email_outbox, "

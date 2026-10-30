@@ -28,7 +28,9 @@ class StepUpGrant(Base):
             ["portal_sessions.id", "portal_sessions.device_id", "portal_sessions.user_id"],
         ),
         CheckConstraint(
-            "action IN ('password_change', 'email_change', 'logout_all')", name="stepup_action"
+            "action IN ('password_change', 'email_change', 'logout_all', 'mfa_enroll', "
+            "'mfa_remove', 'mfa_disable', 'mfa_backup_codes')",
+            name="stepup_action",
         ),
         CheckConstraint("expires_at = created_at + interval '5 minutes'", name="stepup_lifetime"),
         CheckConstraint("consumed_at IS NULL OR revoked_at IS NULL", name="stepup_state"),
@@ -39,6 +41,9 @@ class StepUpGrant(Base):
     device_id: Mapped[UUID] = mapped_column()
     digest: Mapped[str] = mapped_column(String(64), unique=True)
     action: Mapped[str] = mapped_column(String(32))
+    assurance: Mapped[str] = mapped_column(
+        String(16), default="password", server_default="password"
+    )
     parameters_digest: Mapped[str] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -85,6 +90,9 @@ class EmailChangeRequest(Base):
     )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    assurance: Mapped[str] = mapped_column(
+        String(16), default="password", server_default="password"
+    )
     session_id: Mapped[UUID] = mapped_column()
     device_id: Mapped[UUID] = mapped_column()
     old_email: Mapped[str] = mapped_column(String(320))
@@ -107,7 +115,8 @@ class AccountRevocation(Base):
         UniqueConstraint("user_id", "account_epoch"),
         CheckConstraint("account_epoch > 0", name="account_epoch_positive"),
         CheckConstraint(
-            "reason IN ('password_reset', 'password_change', 'email_change', 'logout_all')",
+            "reason IN ('password_reset', 'password_change', 'email_change', 'logout_all', "
+            "'mfa_activate', 'mfa_change', 'mfa_disable', 'mfa_recovery')",
             name="account_revoke_reason",
         ),
         CheckConstraint("state IN ('pending', 'acknowledged')", name="account_revoke_state"),
@@ -125,7 +134,7 @@ class SecurityEmail(Base):
     __table_args__ = (
         CheckConstraint(
             "kind IN ('password_reset', 'email_old', 'email_new', 'password_changed', "
-            "'email_changed_old', 'email_changed_new')",
+            "'email_changed_old', 'email_changed_new', 'mfa_changed')",
             name="security_mail_kind",
         ),
         CheckConstraint("state IN ('pending', 'sent', 'cancelled')", name="security_mail_state"),

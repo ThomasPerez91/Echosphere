@@ -36,6 +36,9 @@ class User(Base):
     platform_privileged: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default=text("false")
     )
+    privilege_recovery_required: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false")
+    )
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 

@@ -1,7 +1,7 @@
 # Contrats API
 
 **Statut : sondes Game/Portal et inscription/vérification C02 et sessions Portal C03 ; gameplay futur.**
-[Routes C02, erreurs et protections](portal-registration.md). [Routes C03](portal-sessions.md), sessions/CSRF et logout ; MFA/S2S/handoff futurs.
+[Routes C02, erreurs et protections](portal-registration.md). [Routes C03](portal-sessions.md), sessions/CSRF et logout ; lobby/S2S/handoff futurs.
 
 
 | Endpoint backend | Succès | Échec attendu | Utilité |
@@ -51,7 +51,7 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 [identity-contracts](identity-contracts.md) porte les autorités, opérations internes, handoff,
 sessions, erreurs et règles compte/MFA validés le 2026-10-29. Le [registre Q40–Q56](../05-project/open-questions.md)
 distingue contrats clos, détails techniques délégués et reports. Les sondes restent les seules routes Game actuelles. Portal ajoute les sondes C01 et les
-[routes d’inscription/vérification C02](portal-registration.md), et les [sessions C03](portal-sessions.md), sans route gameplay. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C04 sur PR #7.
+[routes d’inscription/vérification C02](portal-registration.md), et les [sessions C03](portal-sessions.md), sans route gameplay. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C05 sur PR #7.
 
 Portal expose les futurs services compte/lobby. Après ticket signé 60 s/unique lié au navigateur,
 GameSession opaque : accès direct Game, sans proxy ni consultation Portal par commande. Game vérifie
@@ -79,4 +79,14 @@ par la rédaction. [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
 [Opérations sensibles sans MFA](portal-account-security.md) : step-up par action cinq minutes/unique,
 reset trente minutes, double confirmation email une heure et logout global. Migration Accounts p0003
 additive, notifications chiffrées et intentions de révocation Game pending. MFA/privilèges refusés
-sans preuves futures C05 ; aucune livraison Game ou API Colony ajoutée.
+sans preuve suffisante ; [C05](portal-mfa.md) fournit maintenant les facteurs et leur intégration.
+Aucune livraison Game ou API Colony ajoutée.
+
+## Extension C05 sur PR #7
+
+[MFA Portal](portal-mfa.md) : TOTP unique, cinq WebAuthn nommables, dix secours uniques et récupération
+limitée quinze minutes ; preuve par action cinq minutes, garde-fous privilégiés WebAuthn, aucune
+restauration support inventée. Migration Accounts p0004_mfa, clé TOTP séparée, cooldown progressif,
+audit et notifications. Ajout de facteur/régénération volontaire protégés conservent les sessions ;
+activation, réduction/remplacement/désactivation et récupération révoquent globalement. Intentions
+Game pending jusqu’à C06/C07 ; aucun secret Accounts ou SQL Portal dans Game, aucune API Colony.

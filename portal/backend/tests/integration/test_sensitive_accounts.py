@@ -35,6 +35,7 @@ def security(accounts):
 
 
 def login(security, email=EMAIL, password=PASSWORD):
+    security.accounts.test_clock[0] += timedelta(seconds=2)
     service = security.sessions
     raw = service.challenge("peer")
     return service.login(email, password, raw, csrf(raw), None, None, "peer")[0]
@@ -330,13 +331,15 @@ def test_future_mfa_and_privileged_policy_never_falls_back_to_password_only(secu
         lambda: proof(security, raw, "logout_all"),
         lambda: security.logout_all(raw, csrf(raw), ticket),
         lambda: login(security),
-        lambda: security.reset_confirm(reset, NEW, "peer"),
     ):
-        with pytest.raises(PublicError, match="additional_proof_required"):
+        with pytest.raises(PublicError, match="additional_proof_required|mfa_required"):
             operation()
+    security.reset_confirm(reset, NEW, "peer")
     with security.accounts.factory() as session:
         assert getattr(session.scalar(select(User)), flag)
-        assert session.scalar(select(User.security_epoch)) == 0
+        assert session.scalar(select(User.security_epoch)) == 1
+    with pytest.raises(PublicError, match="additional_proof_required|mfa_required"):
+        login(security, password=NEW)
 
 
 class Receiver:

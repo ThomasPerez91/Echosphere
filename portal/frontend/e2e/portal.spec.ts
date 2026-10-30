@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/mfa/status', route => route.fulfill({ json: { enabled: false, totp: false, credentials: [] } }));
   await page.route('**/api/auth/sessions', route => route.fulfill({ status: 401, json: { error: { code: 'authentication_required' } } }));
 });
 

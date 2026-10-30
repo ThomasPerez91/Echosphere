@@ -30,12 +30,6 @@ from portal_app.sessions.models import PortalSession
 from portal_app.sessions.service import Sessions, alive, check_csrf, valid_secret
 
 
-def password_only(user):
-    # C05 must replace this guard with real MFA/WebAuthn verification, never a bypass.
-    if user.mfa_enabled or user.platform_privileged:
-        raise PublicError("additional_proof_required", 403)
-
-
 def binding(raw, action, parameters):
     value = json.dumps(
         ["account-action-v1", action, parameters], sort_keys=True, separators=(",", ":")
@@ -142,7 +136,19 @@ class AccountSecurity:
         )
         self.audit(session, user, reason, now)
 
-    def step_up(self, raw, csrf, password, action, parameters, peer):
+    def step_up(self, raw, csrf, password, action, parameters, peer, factor=None):
+        from portal_app.mfa.throttle import attempt
+
+        with attempt(
+            self.accounts,
+            "stepup",
+            peer,
+            token_digest(raw or ""),
+            session_digest=token_digest(raw or ""),
+        ):
+            return self._step_up(raw, csrf, password, action, parameters, peer, factor)
+
+    def _step_up(self, raw, csrf, password, action, parameters, peer, factor):
         check_csrf(raw, csrf)
         info = self.sessions.read(raw)
         self.accounts.limit("security_stepup", peer, info["user"]["id"])
@@ -152,7 +158,27 @@ class AccountSecurity:
         elif action == "password_change":
             if not isinstance(parameters, str) or not 15 <= len(parameters) <= 128:
                 raise PublicError("password_rejected")
-        elif action != "logout_all" or parameters is not None:
+        elif action == "mfa_enroll":
+            from portal_app.mfa.service import enrollment_parameters
+
+            if not isinstance(parameters, dict):
+                raise PublicError("invalid_request")
+            parameters = enrollment_parameters(
+                parameters.get("kind"), parameters.get("name"), parameters.get("replace_id")
+            )
+        elif action == "mfa_remove":
+            from portal_app.mfa.service import removal_parameters
+
+            parameters = removal_parameters(parameters)
+        elif action not in (
+            "mfa_enroll",
+            "mfa_remove",
+            "mfa_disable",
+            "mfa_backup_codes",
+            "logout_all",
+        ):
+            raise PublicError("invalid_request")
+        elif action in ("logout_all", "mfa_disable", "mfa_backup_codes") and parameters is not None:
             raise PublicError("invalid_request")
         with self.accounts.factory() as session:
             saved = session.scalar(
@@ -164,7 +190,11 @@ class AccountSecurity:
             raise PublicError("reauthentication_required", 403)
         with self.accounts.factory.begin() as session:
             current, user = self.sessions.locked(session, raw)
-            password_only(user)
+            from portal_app.mfa.crypto import verify_factor
+
+            assurance = verify_factor(
+                session, user, self.accounts, factor, binding(raw, action, parameters)
+            )
             if session.get(PasswordCredential, user.id).password_hash != saved:
                 raise PublicError("reauthentication_required", 403)
             now = self.accounts.clock()
@@ -177,6 +207,7 @@ class AccountSecurity:
                     digest=token_digest(secret),
                     action=action,
                     parameters_digest=binding(raw, action, parameters),
+                    assurance=assurance,
                     created_at=now,
                     expires_at=now + timedelta(minutes=5),
                 )
@@ -186,7 +217,6 @@ class AccountSecurity:
             return {"proof": secret, "expires_at": (now + timedelta(minutes=5)).isoformat()}
 
     def consume(self, session, user, current, raw, proof, action, parameters, now):
-        password_only(user)
         if not valid_secret(proof):
             raise PublicError("invalid_step_up", 403)
         grant = session.scalar(select(StepUpGrant).where(StepUpGrant.digest == token_digest(proof)))
@@ -201,7 +231,11 @@ class AccountSecurity:
             or not hmac.compare_digest(grant.parameters_digest, binding(raw, action, parameters))
         ):
             raise PublicError("invalid_step_up", 403)
+        from portal_app.mfa.crypto import policy
+
+        policy(session, user, self.accounts, grant.assurance)
         grant.consumed_at = now
+        return grant
 
     def password_change(self, raw, csrf, proof, password, peer):
         check_csrf(raw, csrf)
@@ -257,12 +291,7 @@ class AccountSecurity:
             self.accounts.cipher()  # Same configuration failure for unknown/known accounts.
             with self.accounts.factory.begin() as session:
                 user = session.scalar(select(User).where(User.email_key == key).with_for_update())
-                if (
-                    user is None
-                    or user.status != "active"
-                    or user.mfa_enabled
-                    or user.platform_privileged
-                ):
+                if user is None or user.status != "active":
                     return
                 now = self.accounts.clock()
                 self.cancel_resets(session, user, now)
@@ -310,7 +339,6 @@ class AccountSecurity:
         saved = self.accounts.passwords.new_hash(password)
         with self.accounts.factory.begin() as session:
             user = session.get(User, identifier, with_for_update=True)
-            password_only(user)
             request = session.scalar(
                 select(PasswordResetRequest).where(
                     PasswordResetRequest.digest == token_digest(token)
@@ -340,7 +368,9 @@ class AccountSecurity:
         with self.accounts.factory.begin() as session:
             current, user = self.sessions.locked(session, raw)
             now = self.accounts.clock()
-            self.consume(session, user, current, raw, proof, "email_change", address, now)
+            authorization = self.consume(
+                session, user, current, raw, proof, "email_change", address, now
+            )
             if key == user.email_key:
                 raise PublicError("invalid_request")
             self.cancel_changes(session, user, now)
@@ -357,18 +387,31 @@ class AccountSecurity:
                 active=True,
                 created_at=now,
                 expires_at=now + timedelta(hours=1),
+                old_confirmed_at=now if user.mfa_enabled else None,
+                assurance=authorization.assurance,
             )
             session.add(change)
             session.flush()
-            self.mail(
-                session, user, "email_old", user.email, now, change.expires_at, old, change=change
-            )
+            if not user.mfa_enabled:
+                self.mail(
+                    session,
+                    user,
+                    "email_old",
+                    user.email,
+                    now,
+                    change.expires_at,
+                    old,
+                    change=change,
+                )
             self.mail(
                 session, user, "email_new", address, now, change.expires_at, new, change=change
             )
             current.last_activity_at = now
             self.audit(session, user, "email_change_requested", now)
-        return {"status": "confirmation_required"}
+        return {
+            "status": "confirmation_required",
+            "old_confirmation_required": not user.mfa_enabled,
+        }
 
     def email_confirm(self, token, peer):
         digest = token_digest(token)
@@ -386,7 +429,6 @@ class AccountSecurity:
             raise PublicError("invalid_email_confirmation")
         with self.accounts.factory.begin() as session:
             user = session.get(User, identifier, with_for_update=True)
-            password_only(user)
             change = session.scalar(
                 select(EmailChangeRequest).where(
                     or_(
@@ -397,6 +439,9 @@ class AccountSecurity:
             )
             now = self.accounts.clock()
             original = session.get(PortalSession, change.session_id)
+            from portal_app.mfa.crypto import policy
+
+            policy(session, user, self.accounts, change.assurance)
             if (
                 user.status != "active"
                 or not change.active

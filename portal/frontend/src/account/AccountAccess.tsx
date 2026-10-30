@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { AccountForms } from './AccountForms';
 import { ResetRequestForm, SensitiveSettings } from './SecurityForms';
+import { FactorFields, MfaRecovery, MfaSettings } from './MfaForms';
+import { factorProof } from './mfa-client';
+import type { FactorChoice } from './mfa-client';
 
 type SessionState = {
   status: 'authenticated'; user: { email: string; email_verified: boolean };
@@ -25,6 +28,8 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
   const [state, setState] = useState<SessionState | null>(null);
   const [loginMode, setLoginMode] = useState(false);
   const [recovering, setRecovering] = useState(false);
+  const [mfaRecovering, setMfaRecovering] = useState(false);
+  const [codes, setCodes] = useState<string[]>([]);
   const [notice, setNotice] = useState('');
   const [pending, setPending] = useState(false);
   const active = useRef(false);
@@ -93,9 +98,17 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
     }
   }
 
+  function mfaOutcome(value: { global_logout?: boolean; backup_codes?: string[]; privileged_recovery_blocked?: boolean }) {
+    if (value.backup_codes) setCodes(value.backup_codes);
+    if (value.global_logout) {
+      transition.current++; setState(null); setLoginMode(true); setMfaRecovering(false);
+      setNotice(value.privileged_recovery_blocked ? 'Facteur rétabli. Les privilèges restent bloqués en attente d’une procédure approuvée.' : 'MFA modifiée. Reconnectez-vous normalement. Déconnexion des parties en attente.');
+    }
+  }
   if (verificationToken) return <AccountForms verificationToken={verificationToken} />;
   return <>
     {notice && <p role="alert">{notice}</p>}
+    {codes.length > 0 && <section className="panel"><h2>Vos dix codes de secours</h2><p>Conservez ces codes en lieu sûr. Ils ne seront plus consultables après fermeture de cet écran ; chaque code sert une seule fois.</p><pre className="recovery-codes">{codes.join('\n')}</pre><button type="button" onClick={() => setCodes([])}>Masquer les codes</button></section>}
     {state ? <section className="panel" aria-labelledby="sessions-title">
       <h2 id="sessions-title">Vos connexions</h2>
       <p>{state.user.email}</p>
@@ -106,14 +119,16 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
         <span>{item.current ? 'Cet appareil' : `Autre connexion ${index + 1}`}</span>
         <button type="button" disabled={pending} onClick={() => { void action(item.id); }}>{item.current ? 'Se déconnecter' : `Fermer la connexion ${index + 1}`}</button>
       </li>)}</ul>
+      <MfaSettings csrf={state.csrf_token} onOutcome={mfaOutcome} />
       <SensitiveSettings csrf={state.csrf_token} onSignedOut={() => {
         transition.current++; setState(null); setLoginMode(true);
         setNotice('Compte déconnecté de tous les appareils sur le Portal. Déconnexion des parties en attente.');
       }} />
     </section> : <>
-      {recovering ? <ResetRequestForm onBack={() => { setRecovering(false); setLoginMode(true); }} /> : loginMode ? <LoginForm onLogin={value => { transition.current++; setState(value); setNotice(''); }} /> : <AccountForms verificationToken={null} />}
-      {loginMode && !recovering && <button type="button" className="text-button" onClick={() => setRecovering(true)}>Mot de passe oublié ?</button>}
-      <button type="button" className="text-button" onClick={() => { setRecovering(false); setLoginMode(value => !value); }}>{loginMode ? 'Créer un compte ou confirmer mon adresse' : 'Se connecter à mon compte'}</button>
+      {mfaRecovering ? <MfaRecovery onBack={() => setMfaRecovering(false)} onOutcome={mfaOutcome} /> : recovering ? <ResetRequestForm onBack={() => { setRecovering(false); setLoginMode(true); }} /> : loginMode ? <LoginForm onLogin={value => { transition.current++; setState(value); setNotice(''); }} /> : <AccountForms verificationToken={null} />}
+      {!mfaRecovering && <button type="button" className="text-button" onClick={() => setMfaRecovering(true)}>J’ai perdu mes facteurs MFA</button>}
+      {loginMode && !recovering && !mfaRecovering && <button type="button" className="text-button" onClick={() => setRecovering(true)}>Mot de passe oublié ?</button>}
+      <button type="button" className="text-button" onClick={() => { setRecovering(false); setMfaRecovering(false); setLoginMode(value => !value); }}>{loginMode ? 'Créer un compte ou confirmer mon adresse' : 'Se connecter à mon compte'}</button>
     </>}
   </>;
 }
@@ -121,6 +136,8 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
 function LoginForm({ onLogin }: { onLogin: (value: SessionState) => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [factorChoice, setFactorChoice] = useState<FactorChoice>('none');
+  const [factorCode, setFactorCode] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const operation = useRef<AbortController | null>(null);
@@ -132,21 +149,22 @@ function LoginForm({ onLogin }: { onLogin: (value: SessionState) => void }) {
     if (pending) return;
     const controller = new AbortController();
     operation.current = controller;
-    const timer = window.setTimeout(() => controller.abort(), 10000);
+    const timer = window.setTimeout(() => controller.abort(), factorChoice === 'webauthn' ? 120000 : 10000);
     setPending(true); setError('');
     try {
       const challenge = await fetch('/api/auth/challenge', { headers: bootstrap, signal: controller.signal });
       const proof: unknown = await challenge.json();
       if (!challenge.ok || !proof || typeof proof !== 'object' || !('csrf_token' in proof) || typeof proof.csrf_token !== 'string') throw new Error('challenge');
+      const factor = await factorProof(factorChoice, factorCode, 'login', null, password, proof.csrf_token, controller.signal, email);
       const response = await fetch('/api/auth/login', { method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': proof.csrf_token },
-        body: JSON.stringify({ email, password }), signal: controller.signal });
+        body: JSON.stringify({ email, password, factor }), signal: controller.signal });
       const body: unknown = await response.json();
       if (!active.current || controller.signal.aborted) return;
       if (response.ok && validState(body)) { setPassword(''); onLogin(body); }
       else {
         const code = body && typeof body === 'object' && 'error' in body && body.error && typeof body.error === 'object' && 'code' in body.error ? body.error.code : null;
-        setError(code === 'device_limit_reached' ? 'Limite d’appareils atteinte. Fermez une connexion depuis un appareil déjà connecté.'
+        setError(code === 'mfa_required' ? 'Choisissez votre facteur MFA enregistré pour vous connecter.' : code === 'device_limit_reached' ? 'Limite d’appareils atteinte. Fermez une connexion depuis un appareil déjà connecté.'
           : response.status === 429 ? 'Trop de tentatives. Réessayez plus tard.'
           : response.status === 503 ? 'Le service est temporairement indisponible.'
           : 'Connexion impossible. Vérifiez votre adresse et votre mot de passe.');
@@ -160,6 +178,7 @@ function LoginForm({ onLogin }: { onLogin: (value: SessionState) => void }) {
     <form onSubmit={submit} aria-busy={pending}>
       <label>Adresse email<input name="email" type="email" autoComplete="username" required maxLength={320} value={email} onChange={event => setEmail(event.target.value)} /></label>
       <label>Mot de passe<input name="password" type="password" autoComplete="current-password" required maxLength={128} value={password} onChange={event => setPassword(event.target.value)} /></label>
+      <FactorFields choice={factorChoice} setChoice={setFactorChoice} code={factorCode} setCode={setFactorCode} />
       <button type="submit" disabled={pending}>{pending ? 'Connexion en cours…' : 'Ouvrir ma session'}</button>
     </form>
     {error && <p role="alert" className="form-error">{error}</p>}

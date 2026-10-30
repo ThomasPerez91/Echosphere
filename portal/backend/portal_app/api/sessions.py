@@ -20,6 +20,10 @@ from portal_app.sessions.service import (
 router = APIRouter(prefix="/auth")
 
 
+class LoginCredentials(Credentials):
+    factor: dict | None = None
+
+
 def service(request):
     return Sessions(request.app.state.accounts)
 
@@ -54,7 +58,7 @@ async def challenge(request: Request):
 
 
 @router.post("/login")
-async def login(data: Credentials, request: Request):
+async def login(data: LoginCredentials, request: Request):
     check_origin(request)
     raw, profile, payload = await run_in_threadpool(
         service(request).login,
@@ -65,6 +69,7 @@ async def login(data: Credentials, request: Request):
         request.cookies.get(PROFILE_COOKIE),
         request.cookies.get(SESSION_COOKIE),
         peer_address(request),
+        data.factor,
     )
     result = response(payload)
     now = request.app.state.accounts.clock()

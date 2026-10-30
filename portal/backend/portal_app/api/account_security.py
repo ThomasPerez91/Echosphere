@@ -19,7 +19,17 @@ class Strict(BaseModel):
 
 
 class StepUp(Strict):
-    action: Literal["password_change", "email_change", "logout_all"]
+    action: Literal[
+        "password_change",
+        "email_change",
+        "logout_all",
+        "mfa_enroll",
+        "mfa_remove",
+        "mfa_disable",
+        "mfa_backup_codes",
+    ]
+    factor: dict | None = None
+    parameters: dict | None = None
     current_password: SecretStr = Field(min_length=1, max_length=128)
     new_password: SecretStr | None = Field(default=None, min_length=15, max_length=128)
     new_email: str | None = Field(default=None, min_length=3, max_length=320)
@@ -75,6 +85,8 @@ def changed(payload):
 async def step_up(data: StepUp, request: Request):
     service, raw, csrf = context(request)
     parameters = data.new_password.get_secret_value() if data.new_password else data.new_email
+    if data.action.startswith("mfa_"):
+        parameters = data.parameters
     return response(
         await run_in_threadpool(
             service.step_up,
@@ -84,6 +96,7 @@ async def step_up(data: StepUp, request: Request):
             data.action,
             parameters,
             peer_address(request),
+            data.factor,
         )
     )
 

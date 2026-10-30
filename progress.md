@@ -4,11 +4,94 @@ Mise à jour : 2026-10-30. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Lot courant — 5C : Portal Account/Lobby foundation
 
-**Statut : C01–C04 implémentés et testés sur PR #7 ; C04 sans MFA, C05 MFA à suivre. 5C en cours.**
-5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/opérations sensibles sans MFA C02–C04 implémentés sur PR #7 seulement.
+**Statut : C01–C05 implémentés et testés sur PR #7 ; C06 lobby/S2S à suivre. 5C en cours.**
+5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/opérations sensibles/MFA C02–C05 implémentés sur PR #7 seulement.
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
-Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C04 est décrit en premier.
+Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C05 est décrit en premier.
+
+### C05 — MFA TOTP/WebAuthn et récupération limitée, 2026-10-30
+
+Instruction utilisateur « Vasy enchaine » après C04. GitHub réel relu avant modification : PR #7
+OPEN/brouillon, tête locale/distante de45031169b09774c75028239e522cee3bcea68b, master
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611. Arbre propre, fetch et ff-only déjà synchronisés.
+CI C04 push 41061047172 et PR 41061054401 completed/success, cinq jobs chacun observés. Dernier
+travail publié : Codex local C04 ; aucune autre tête publiée ni agent concurrent identifié. Même
+branche work/step-5c-portal-account-lobby ; aucune fusion, nouvelle branche ou implémentation 5D.
+
+[Canonique C05](docs/03-technical/portal-mfa.md) : MFA joueur facultative, TOTP unique/cinq WebAuthn
+nommables, vrais facteurs requis au login et step-up par action. PyOTP 2.10, py_webauthn 2.8 et
+@simplewebauthn/browser 14 ; aucune crypto de vérification maison. TOTP 160 bits/six chiffres/30 s,
+±1 pas et dernier pas consommé sous verrou User ; WebAuthn challenge 256 bits/cinq minutes, RP/origine
+exacts, UV obligatoire, compte/session/action/paramètres/epoch liés, clés publiques/compteur seulement.
+Secrets TOTP chiffrés avec clé MFA distincte de la clé email, fichiers privés hors Git et DB.
+Dix secours aléatoires 160 bits, empreintes seules, affichage à génération en mémoire, jamais logs
+ou stockage navigateur. Régénération invalide tout l’ancien jeu.
+
+Effets 5B préservés : activation/réduction/remplacement/désactivation/récupération révoquent globalement ;
+ajout d’un facteur et régénération volontaire avec facteur existant conservent sessions et epoch.
+Audit/notices pour toutes ces modifications ; les notices sans secret n’annoncent pas de déconnexion
+obligatoire pour ces deux opérations. Facteurs/preuves/secours/génération/intention Game/notices
+atomiques sous verrou User ; refus ou erreur ne laisse pas d’effet partiel.
+
+Récupération : mot de passe + secours unique + pré-auth/CSRF, cookie opaque distinct limité 15 min,
+aucune PortalSession ni autorité compte/Game/admin. Facteurs perdus invalidés dès entrée ; MFA reste
+exigée. Restauration du facteur, nouveau jeu de secours et connexion normale obligatoire. Perte
+totale bloquée sans procédure approuvée. Privilèges : WebAuthn obligatoire (deux en production),
+TOTP insuffisant ; récupération doit réenrôler WebAuthn et conserve un verrou privilégié persistant,
+sans endpoint de levée ni procédure support inventée. Aucun privilège attribué par une API publique.
+
+Intégration C04 : step-up avec facteur existant et assurance recontrôlée, email MFA avec preuve forte
+remplaçant celle de l’ancienne adresse, nouvelle adresse toujours à confirmer en une heure commune ;
+reset mot de passe autorisé sans retirer les facteurs, aucune reconnexion/MFA bypassée. Cooldown
+progressif persistant 100→1000 ms configurable en plus des quotas compte/IP/opération ; refus avant
+échéance sans délai repoussé, pas de verrou permanent. Échecs connus audités sans preuve privée,
+audit 90 jours distinct des compteurs et générations anti-rejeu. Worker efface les seeds provisoires
+expirés et purge challenges/capacités/cooldowns expirés ; notifications email locales seulement.
+
+Migration additive Accounts p0004_mfa : six tables facteurs/secours/challenges/récupération/cooldown,
+assurance sur step-up/demande email et verrou de récupération privilégiée User. Révisions publiées
+p0000–p0003 immuables, aucun backend/frontend/game_data Game modifié. Migration et downgrade vide
+testés uniquement sur Accounts echosphere_c05_test, créée puis supprimée après la recette ; aucun downgrade/volume supprimé sur données à garder.
+
+Validations locales réellement exécutées sur C05 :
+
+- Ruff Portal et backend/scripts, format vérifié ; **93 tests backend Portal réussis, aucun ignoré**,
+  PostgreSQL dédiée RUN_DB_TESTS=1. Dix-huit scénarios MFA : signatures réelles/RP/origine/UV/rejeu,
+  TOTP et secours concurrents, scopes/action/expiration, plafonds, transaction interrompue, récupération
+  sans autorité normale, privilèges bloqués, email avec MFA, notices/cooldown/purge et activité serveur.
+  Warning Starlette/httpx connu ; aucun vérificateur cryptographique simulé.
+- npm ci/lint, **21 tests frontend**, build TypeScript/Vite et **12 Chromium** réussis. Bibliothèque
+  WebAuthn réelle avec authentificateur virtuel et API interceptée : enrôlement puis connexion à
+  320 px, aucune donnée privée en stockage navigateur. Captures inspectées ; autres parcours
+  préservés, clavier/same-site et absence de débordement. Métadonnées inchangées du lockfile npm
+  préservées, npm ci vérifié après nettoyage de ce diff.
+- Compose config/build/up --wait, Accounts **p0004_mfa** et Game **0004** sans dérive ; init des
+  deux clés privées sans écrasement de l’existante. Bases/APIs/frontends/Mailpit healthy, workers
+  running, migrations/init Exited(0). Smokes Game et Portal/TLS réellement réussis, avec reprise
+  après pannes des bases ; volumes préservés, aucun changement de confiance CA/hosts hôte.
+- **70 documents/liens**, git diff --check et revue de confidentialité/périmètre. Lignes Q01–Q56,
+  décisions sections 1–8 identity-contracts, ADR et code/données Game comparés inchangés à de45031.
+  Base conservée vérifiée sans User ; aucun compte de démonstration ni donnée runtime ajoutée.
+
+Tête C05 : commit portant ce checkpoint ; SHA publié et CI exacte à consigner dans PR #7 après
+observation. La configuration du workflow ne vaut pas résultat exécuté. Limites :
+pas de parcours complet navigateur HTTPS → vraie API → authentificateur matériel, de test téléphone
+physique/Safari/Firefox/lecteur d’écran, de charge hostile ou délivrabilité publique attestés ; C09
+reste nécessaire. Outils exécutés en conteneurs Docker depuis WSL2 ; Python/Node hôtes non utilisés.
+Aucun blocage WSL2/Docker restant ; le refus DNS du réseau interne était attendu par son isolation.
+
+Les suites intermédiaires 85, puis 90/91, 92 et 93 tests sont
+distinguées des vérifications finales. Échecs intermédiaires corrigés : cooldown absent des horloges
+de tests anciens, collecte Docker sans module local, dépendances tentées sur réseau Accounts interne
+sans DNS externe (installation déplacée dans une image préparée avant isolation), quota horaire
+atteint par le scénario d’enrôlement massif (quota élevé seulement dans ce test de plafond), imports/
+longueurs Ruff et mocks d’interface consommés par la nouvelle lecture MFA. Aucun échec présenté réussi.
+
+Suite : **C06 memberships/lobby et interface interne privée mTLS**, puis C07 handoff/sessions Game.
+Intentions Game toujours pending : aucun transport/acquittement ni nouvelle fenêtre de huit heures.
+Q48 support, Q49 fournisseur/configuration production et Q55 modes restent différés. 5C non terminé,
+PR #7 reste en brouillon ; 5D non commencé et aucune fusion autorisée.
 
 ### C04 — opérations sensibles sans MFA, 2026-10-30
 

@@ -5,7 +5,8 @@
 [Contrats 5B inchangés](identity-contracts.md) · [Plan 5C](../05-project/step-5c-plan.md) ·
 [Inscription C02](portal-registration.md) · [HTTPS local](portal-foundation.md).
 
-État courant : [C04 opérations sensibles sans MFA](portal-account-security.md) livré sur PR #7.
+État courant : [C04 opérations sensibles](portal-account-security.md) et [C05 MFA](portal-mfa.md)
+livrés sur PR #7 ; les limites historiques ci-dessous décrivent le seul sous-ticket initial.
 Les exclusions d’opérations sensibles ci-dessous décrivent le périmètre historique de cet incrément.
 
 ## Périmètre et parcours

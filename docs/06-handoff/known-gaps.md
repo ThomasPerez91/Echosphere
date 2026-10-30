@@ -6,7 +6,7 @@ Actualisation 2026-10-29 : #5 fusionnée, recette locale consignée dans [progre
 [Contrats 5B](../03-technical/identity-contracts.md) validés et consolidés après arbitrage du bloc
 complet corrigé ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
 contrats d’auth partiellement implémentés sur PR #7 par C02. 5C est le lot courant : checkpoint/cadrage effectués,
-[socle C01](../03-technical/portal-foundation.md) et [C02](../03-technical/portal-registration.md) implémentés sur PR #7, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md), sans MFA/handoff.
+[socle C01](../03-technical/portal-foundation.md) et [C02](../03-technical/portal-registration.md) implémentés sur PR #7, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md) et [C05 MFA](../03-technical/portal-mfa.md), sans lobby/handoff.
 HTTPS/routage/isolation de panne des bases testés, pas de confiance navigateur Windows/charge démontrée.
 [Q40–Q56](../05-project/open-questions.md) séparent clôtures, détails techniques délégués et reports.
 Restent ouverts : procédures support renforcé joueur/privilégié Q48 (aucun déblocage sans procédure
@@ -105,7 +105,7 @@ Game ni nouveau service production engagé. Récepteur email et fournisseur non 
 Les tests Chromium Portal interceptent les sondes ; le smoke HTTPS vérifie réellement CA/noms et
 pannes croisées. Pas de parcours authentifié réel tant que les tickets dépendants ne sont pas livrés.
 
-## Limites C02
+## Limites historiques C02
 
 Inscription/vérification locales seulement ; connexion/sessions, MFA et parcours sensibles à suivre.
 Contrôle de mots de passe compromis dépendant de Pwned Passwords : panne → refus temporaire 503.
@@ -126,7 +126,7 @@ sans le step-up futur, ni MFA/compte sensible/handoff. La preuve multi-onglets c
 et relecture sans rejeu ; aucun secret en stockage navigateur. Recette complète navigateur HTTPS et
 handoff prévue C09 ; smokes TLS/API et UI interceptée sont des preuves séparées.
 
-## Limites C04
+## Limites historiques C04
 
 [Opérations sensibles](../03-technical/portal-account-security.md) livrées sans MFA seulement ;
 comptes avec politique MFA/privilégiée refusés tant que C05 ne fournit pas les preuves. Intentions
@@ -134,3 +134,16 @@ globales persistées, aucun transport Game/acquittement, UI en attente. Notifica
 aucune délivrabilité publique ou procédure support attestée. Plancher anti-énumération des demandes
 reset 150 ms configurable, pas de temps constant garanti sous charge. Recette UI interceptée séparée
 des intégrations PostgreSQL/API/SMTP et du smoke TLS ; navigateur HTTPS complet à C09.
+
+## Limites courantes après C05
+
+[C05 MFA](../03-technical/portal-mfa.md) lève les limites de preuves MFA/login/step-up de C03/C04.
+TOTP/WebAuthn/secours et récupération limitée fonctionnels sur PR #7, non intégrés à master.
+Aucun fournisseur email public, console admin ou procédure support Q48 : perte totale bloquée ;
+récupération privilégiée ne restaure jamais les droits, verrou persistant sans endpoint de levée.
+PORTAL_PRODUCTION=true et domaines/RP/clé séparée à configurer avant exposition. Clés matérielles,
+téléphones physiques, Safari/Firefox et navigateur hôte HTTPS complet non attestés. Chromium utilise
+un authentificateur virtuel et une API interceptée ; vérifications cryptographiques/PostgreSQL et TLS
+Compose testés séparément. Recette complète C09 future. Livraison Game/réconciliation C06/C07 absente,
+intentions toujours pending ; aucune fenêtre Game créée ou relancée par un changement MFA.
+Cooldown et quotas testés ne constituent pas une preuve de résistance à une charge hostile.

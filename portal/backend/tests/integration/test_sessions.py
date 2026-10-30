@@ -257,6 +257,7 @@ def test_invalid_credentials_are_generic_and_login_quota_is_independent(accounts
     accounts.settings.login_account_limit = 1
     challenge = service.challenge("peer")
     for email in (EMAIL, "unknown@example.org"):
+        accounts.test_clock[0] += timedelta(seconds=2)
         with pytest.raises(PublicError, match="invalid_credentials"):
             service.login(
                 email, "Wrong password with spaces", challenge, csrf(challenge), None, None, "peer"

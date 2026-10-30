@@ -136,4 +136,14 @@ de déconnexion sont persistées mais leur livraison/acquittement distant reste 
 [Opérations sensibles sans MFA](portal-account-security.md) : step-up par action cinq minutes/unique,
 reset trente minutes, double confirmation email une heure et logout global. Migration Accounts p0003
 additive, notifications chiffrées et intentions de révocation Game pending. MFA/privilèges refusés
-sans preuves futures C05 ; aucune livraison Game ou API Colony ajoutée.
+sans preuve suffisante ; [C05](portal-mfa.md) fournit maintenant les facteurs et leur intégration.
+Aucune livraison Game ou API Colony ajoutée.
+
+## Extension C05 sur PR #7
+
+[MFA Portal](portal-mfa.md) : TOTP unique, cinq WebAuthn nommables, dix secours uniques et récupération
+limitée quinze minutes ; preuve par action cinq minutes, garde-fous privilégiés WebAuthn, aucune
+restauration support inventée. Migration Accounts p0004_mfa, clé TOTP séparée, cooldown progressif,
+audit et notifications. Ajout de facteur/régénération volontaire protégés conservent les sessions ;
+activation, réduction/remplacement/désactivation et récupération révoquent globalement. Intentions
+Game pending jusqu’à C06/C07 ; aucun secret Accounts ou SQL Portal dans Game, aucune API Colony.

@@ -3,6 +3,7 @@ from alembic import context
 from portal_app.account_security import models as security_models  # noqa: F401
 from portal_app.accounts import models as account_models  # noqa: F401
 from portal_app.core.config import Settings
+from portal_app.mfa import models as mfa_models  # noqa: F401
 from portal_app.persistence.database import create_database_engine
 from portal_app.persistence.models import Base
 from portal_app.sessions import models as session_models  # noqa: F401

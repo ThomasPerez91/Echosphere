@@ -94,7 +94,7 @@ class AccountBodyLimit:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http" or not scope["path"].startswith(
-            ("/accounts/", "/auth/", "/security/")
+            ("/accounts/", "/auth/", "/security/", "/mfa/")
         ):
             await self.app(scope, receive, send)
             return
@@ -104,7 +104,8 @@ class AccountBodyLimit:
             if message["type"] == "http.disconnect":
                 return
             body.extend(message.get("body", b""))
-            if len(body) > 8192:
+            maximum = 65536 if scope["path"].startswith("/mfa/") else 8192
+            if len(body) > maximum:
                 response = JSONResponse(
                     {"error": {"code": "invalid_request"}},
                     status_code=413,

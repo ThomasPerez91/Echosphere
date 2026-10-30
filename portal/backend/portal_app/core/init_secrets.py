@@ -1,4 +1,4 @@
-"""Initialize a local-only outbox key in a private Docker volume. Never print it."""
+"""Initialize local-only email and MFA keys in a private Docker volume. Never print them."""
 
 import os
 from pathlib import Path
@@ -22,4 +22,6 @@ def initialize(path: Path) -> None:
 
 
 if __name__ == "__main__":
-    initialize(Settings().mail_key_file)
+    configuration = Settings()
+    initialize(configuration.mail_key_file)
+    initialize(configuration.mfa_key_file)

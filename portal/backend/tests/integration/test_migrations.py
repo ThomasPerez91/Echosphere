@@ -26,11 +26,17 @@ def test_independent_accounts_history_roundtrip():
         command.check(config)
         with engine.connect() as connection:
             assert connection.scalar(text("SELECT version_num FROM portal_alembic_version")) == (
-                "p0003_account_security"
+                "p0004_mfa"
             )
             assert connection.scalar(text("SHOW timezone")) == "UTC"
         assert set(inspect(engine).get_table_names()) == {
             "portal_alembic_version",
+            "auth_failures",
+            "mfa_backup_codes",
+            "mfa_challenges",
+            "mfa_recovery_sessions",
+            "totp_credentials",
+            "webauthn_credentials",
             "security_email_outbox",
             "account_revocations",
             "step_up_grants",

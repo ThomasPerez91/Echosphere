@@ -8,11 +8,11 @@
 ## Périmètre livré et dépendances
 
 Réauthentification par action, changement de mot de passe, récupération par email, changement
-email avec preuves des deux adresses et déconnexion de tous les appareils. Variantes **sans MFA**
-seulement : TOTP/WebAuthn et privilèges plateforme restent à C05. Les flags de politique MFA/privilège
-ne donnent aucun droit : s’ils sont actifs, login au seul mot de passe, step-up et mutations sensibles
-C04 sont refusés. Demande de reset générique sans lien émis pour ces comptes. Aucun bypass MFA,
-désactivation de facteur ou procédure support inventée ; C05 devra ajouter les preuves requises.
+email avec preuves liées et déconnexion de tous les appareils. Le sous-ticket C04 initial était
+sans MFA ; [C05](portal-mfa.md) raccorde désormais TOTP/WebAuthn au login, step-up et mutations.
+Les politiques MFA/privilégiées exigent leurs preuves ; reset du mot de passe autorisé sans
+désactiver les facteurs, reconnexion normale avec MFA ensuite obligatoire. Aucun bypass MFA
+ni procédure support inventée.
 Aucune route publique ne permet de modifier ces flags, compte/génération ou privilèges.
 
 Les opérations révoquent les sessions Portal et persistent l’intention de révocation Game ; leur
@@ -36,7 +36,7 @@ pas avant commit ; échec d’écriture : aucune preuve brûlée ou révocation 
 
 Step-up réussi et demande email sont des interactions explicites datées serveur. Aucune limite
 absolue de session n’est prolongée. Les GET, bootstrap, polling et flags/timestamps client conservent
-les règles C03. MFA/step-up privilégié réel et nouveaux types d’action : migration/contrats C05.
+les règles C03. MFA/step-up privilégié et actions de gestion MFA : [extension C05](portal-mfa.md).
 
 ## Mot de passe
 
@@ -80,7 +80,8 @@ Réémission : ancienne demande/liens/confirmation partielle invalidés ; deux n
 obligatoires, aucun assemblage de demandes. Une confirmation ne relance aucun délai. Reset/changement
 mot de passe annule le parcours email. Session d’origine révoquée/expirée : aucune finalisation ;
 rouvrir un parcours autorisé. Absence d’accès à l’ancienne adresse : pas de bypass mot de passe seul.
-Variante MFA remplaçant la preuve ancienne adresse : C05, bloquée tant que ses preuves manquent.
+Variante MFA remplaçant la preuve ancienne adresse : livrée par [C05](portal-mfa.md),
+avec mot de passe/facteur et toujours confirmation de la nouvelle adresse.
 
 Unicité PostgreSQL de l’adresse normalisée : aucun transfert/fusion de comptes. Demande initiale
 sans révélation d’une adresse déjà attribuée ; conflit à la finalisation : erreur générique et
@@ -108,8 +109,8 @@ un reset anonyme sur un autre compte ne doit pas effacer une connexion plus réc
 L’invalidation serveur fait autorité ; le prochain login normal remplace le cookie désormais invalide.
 
 L’epoch global ne devra **pas** être incrémenté pour un ajout MFA/régénération volontaire de secours
-avec step-up existant, conformément à la correction 5B. Raisons et preuves MFA seront ajoutées par
-migration C05 ; ne pas détourner les raisons password_change/reset pour ces opérations.
+avec step-up existant, conformément à la correction 5B. Raisons et preuves MFA sont ajoutées par
+migration C05 p0004_mfa ; ne pas détourner les raisons password_change/reset pour ces opérations.
 
 ## Stockage, livraison et API
 
@@ -149,7 +150,7 @@ Validation : concurrence/rollback/délais exacts/scopes de preuves, interdiction
 révocation/login en vol, notifications sans secrets, SMTP en panne/retry et deux workers, UI mobile/
 clavier. Résultats réellement exécutés dans progress et CI de la PR. UI avec API interceptée distincte
 des intégrations API/PostgreSQL et smokes TLS ; recette navigateur HTTPS complète à C09.
-Suite : **C05 MFA**, avec intégration aux guards C04 avant activation. 5D exclu, PR #7 non fusionnée.
+C05 et son intégration aux guards C04 sont livrés ; suite : **C06 lobby/interface interne**. 5D exclu, PR #7 non fusionnée.
 
 Sources : [OWASP récupération](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html),
 [OWASP autorisation d’action](https://cheatsheetseries.owasp.org/cheatsheets/Transaction_Authorization_Cheat_Sheet.html),

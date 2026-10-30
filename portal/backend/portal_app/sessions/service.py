@@ -66,7 +66,18 @@ class Sessions:
             )
         return raw
 
-    def login(self, email, password, challenge_raw, proof, profile_raw, current_raw, peer):
+    def login(
+        self, email, password, challenge_raw, proof, profile_raw, current_raw, peer, factor=None
+    ):
+        from portal_app.mfa.throttle import attempt
+
+        _, key = normalize_email(email)
+        with attempt(self.accounts, "login", peer, key, email_key=key):
+            return self._login(
+                email, password, challenge_raw, proof, profile_raw, current_raw, peer, factor
+            )
+
+    def _login(self, email, password, challenge_raw, proof, profile_raw, current_raw, peer, factor):
         check_csrf(challenge_raw, proof)
         _, key = normalize_email(email)
         self.accounts.limit("login", peer, key)
@@ -99,8 +110,12 @@ class Sessions:
                 or user.security_epoch != data.security_epoch
             ):
                 raise PublicError("invalid_credentials", 401)
-            if user.mfa_enabled or user.platform_privileged:
-                raise PublicError("additional_proof_required", 403)
+            from portal_app.account_security.service import binding
+            from portal_app.mfa.crypto import verify_factor
+
+            verify_factor(
+                session, user, self.accounts, factor, binding(challenge_raw, "login", None)
+            )
             challenge = session.scalar(
                 select(LoginChallenge)
                 .where(LoginChallenge.digest == token_digest(challenge_raw))
