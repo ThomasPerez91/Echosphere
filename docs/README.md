@@ -13,6 +13,9 @@ API gameplay publique. [Économie v0.1](01-game-design/colony-economy-v0.1.md) e
 4. [Roadmap](05-project/roadmap.md), [backlog](05-project/backlog.md) et [questions ouvertes](05-project/open-questions.md).
 5. [Definition of Done](04-quality/definition-of-done.md).
 
+Pour un travail UI, consulter aussi les [références visuelles cibles](visual-reference/README.md) :
+direction artistique distincte des spécifications métier.
+
 Les fichiers de chaque domaine sont indexés depuis la vision, l'architecture et la roadmap.
 
 ## Statuts obligatoires

@@ -67,6 +67,14 @@ identifiable par infrastructure, upgrade sans nouvelle place, capacités variabl
 Niveaux continus ; 1–5 seulement early game, pas de plafond 5. Paramètres/facteurs/arrondis dans
 game_data validé et versionné ; valeurs de balance provisoires, jamais copiées en constantes métier.
 
+## Références visuelles
+
+Avant tout travail UI substantiel, lire [le guide visuel](docs/visual-reference/README.md), consulter
+`design-system.png` comme ancre générale et l’écran de référence du domaine concerné. Préserver
+la cohérence avec les composants/styles React existants : une nouvelle UI doit rester reconnaissable
+comme Echosphere, sans dérive graphique progressive non décidée. Le contenu métier des mockups
+n’est jamais une décision validée ; documentation canonique et ADR priment en cas de contradiction.
+
 ## Architecture actuelle et cible
 
 Actuel : backend Game FastAPI modulaire, worker du même code, PostgreSQL, SQLAlchemy/Alembic,

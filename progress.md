@@ -10,6 +10,24 @@ L’utilisateur autorise 5C et exige présentation du cadrage avant implémentat
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
 Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C06 est décrit en premier.
 
+### Références visuelles — checkpoint documentaire avant C07, 2026-10-30
+
+Instruction utilisateur jointe : intégrer les six PNG déjà présents sous docs/visual-reference,
+sans modifier les images, puis poursuivre C07. GitHub relu : PR #7 OPEN/brouillon, tête 7a00c7b,
+base master 63bb7d1 ; fetch/ff-only sans changement. CI push 41098495003 et PR 41098504081 success.
+Seul ajout local préexistant : dossier visuel non suivi, dont le README était vide ; conservé et intégré.
+
+README visuel créé : direction cible, mapping des six écrans, principes, ordre d’autorité et usage
+agents/responsive ; section opérationnelle AGENTS et lien dans docs/README. Images inspectées,
+PNG 1672×941 toutes présentes, noms attendus, octets conservés. Écarts explicités : population,
+stabilité, piles de défenses, capacités/chiffres, catalogue, accélération et navigation illustratifs
+ne remplacent ni règles produit, ni game_data, ni UX canonique. Aucun code/CSS/contrat/Qxx changé.
+
+Validation réellement exécutée : python3 scripts/check_docs.py (72 documents et liens),
+git diff --check ; chemins des six PNG vérifiés et empreintes conservées. Aucun test fonctionnel
+relancé pour ce seul checkpoint documentaire. Branche existante conservée, aucune fusion.
+Suite autorisée : cadrage technique puis implémentation C07 selon 5B, sans 5D.
+
 ### C06 — lobby et contrôle privé Portal→Game, 2026-10-30
 
 Instruction utilisateur « Continue » après C05. GitHub réel relu : PR #7 OPEN/brouillon, tête locale/
