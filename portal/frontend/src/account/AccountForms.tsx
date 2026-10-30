@@ -39,7 +39,7 @@ export function AccountForms({ verificationToken }: { verificationToken: string 
       if (response.ok && status === (mode === 'verify' ? 'verified' : 'request_received')) {
         setPassword('');
         setMessage(mode === 'verify'
-          ? 'Votre adresse est confirmée. La connexion est en préparation.'
+          ? 'Votre adresse est confirmée. Vous pouvez maintenant vous connecter.'
           : 'Demande reçue. Si les conditions sont remplies, vous recevrez un lien de confirmation.');
       } else if (response.status === 429) {
         setError('Trop de demandes. Réessayez plus tard.');
@@ -60,7 +60,7 @@ export function AccountForms({ verificationToken }: { verificationToken: string 
 
   return <section className="panel" aria-labelledby="account-title">
     <h2 id="account-title">{mode === 'verify' ? 'Confirmer votre adresse' : mode === 'resend' ? 'Recevoir un nouveau lien' : 'Créer votre compte'}</h2>
-    <p>{mode === 'verify' ? 'Utilisez le mot de passe choisi lors de cette inscription. Le lien ne fonctionne qu’une fois.' : 'Votre compte sera indépendant de vos parties. La connexion et le lobby sont en préparation.'}</p>
+    <p>{mode === 'verify' ? 'Utilisez le mot de passe choisi lors de cette inscription. Le lien ne fonctionne qu’une fois.' : 'Votre compte est indépendant de vos parties. Le lobby est en préparation.'}</p>
     <form onSubmit={submit} aria-busy={pending}>
       {mode !== 'verify' && <label>Adresse email<input type="email" name="email" autoComplete="username" maxLength={320} required value={email} onChange={event => setEmail(event.target.value)} /></label>}
       <label>Mot de passe<input type="password" name="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} minLength={mode === 'register' ? 15 : 1} maxLength={128} required value={password} onChange={event => setPassword(event.target.value)} aria-describedby="password-help" /></label>

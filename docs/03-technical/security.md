@@ -106,7 +106,7 @@ lots. Aucun bypass ou service payant introduit par cette délégation.
 Isolation CPU/RAM/pools/scaling/DB/réseau à éprouver. Deux applications sur le même hôte ne prouvent
 pas la résistance à une saturation réseau ou DDoS. Aucun WAF/Redis installé ou utilisé comme autorité
 gameplay. Les scénarios de refus, concurrence, reprise et panne sont des obligations de 5C/5D,
-non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02/C03 sur PR #7.
+non des tests déjà exécutés. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C04 sur PR #7.
 5C est le lot courant autorisé, sans début de 5D.
 
 ## État livré en C01–C03 — PR #7
@@ -117,3 +117,10 @@ mots de passe compromis par préfixe, preuves uniques 24 h, file email chiffrée
 Origin/JSON stricts et erreurs sans données d’entrée. [C03](portal-sessions.md) ajoute sessions opaques/cookies host-only protégés, CSRF,
 activité explicite serveur et déconnexion avec intention durable. Aucune MFA ou mTLS S2S. CORS Portal refusé par défaut et sondes sans détails privés. Les autres contrôles (MFA/handoff) restent des obligations des prochains tickets,
 pas des protections déjà livrées.
+
+## Extension C04 sur PR #7
+
+[Opérations sensibles sans MFA](portal-account-security.md) : step-up par action cinq minutes/unique,
+reset trente minutes, double confirmation email une heure et logout global. Migration Accounts p0003
+additive, notifications chiffrées et intentions de révocation Game pending. MFA/privilèges refusés
+sans preuves futures C05 ; aucune livraison Game ou API Colony ajoutée.

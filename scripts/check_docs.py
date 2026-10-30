@@ -61,6 +61,7 @@ REQUIRED = {
             "portal-foundation",
             "portal-registration",
             "portal-sessions",
+            "portal-account-security",
             "deployment",
         )
     ],

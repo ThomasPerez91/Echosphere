@@ -21,13 +21,21 @@ from portal_app.persistence.models import Base
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = (CheckConstraint("status IN ('active', 'suspended')", name="user_status"),)
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'suspended')", name="user_status"),
+        CheckConstraint("security_epoch >= 0", name="user_epoch_nonnegative"),
+    )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     email: Mapped[str] = mapped_column(String(320))
     email_key: Mapped[str] = mapped_column(String(320), unique=True)
     status: Mapped[str] = mapped_column(String(16), default="active")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    security_epoch: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    platform_privileged: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false")
+    )
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 

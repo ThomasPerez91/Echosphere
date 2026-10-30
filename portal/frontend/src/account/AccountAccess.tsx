@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { AccountForms } from './AccountForms';
+import { ResetRequestForm, SensitiveSettings } from './SecurityForms';
 
 type SessionState = {
   status: 'authenticated'; user: { email: string; email_verified: boolean };
@@ -23,6 +24,7 @@ const bootstrap = { 'X-Portal-Request': 'bootstrap' };
 export function AccountAccess({ verificationToken }: { verificationToken: string | null }) {
   const [state, setState] = useState<SessionState | null>(null);
   const [loginMode, setLoginMode] = useState(false);
+  const [recovering, setRecovering] = useState(false);
   const [notice, setNotice] = useState('');
   const [pending, setPending] = useState(false);
   const active = useRef(false);
@@ -104,9 +106,14 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
         <span>{item.current ? 'Cet appareil' : `Autre connexion ${index + 1}`}</span>
         <button type="button" disabled={pending} onClick={() => { void action(item.id); }}>{item.current ? 'Se déconnecter' : `Fermer la connexion ${index + 1}`}</button>
       </li>)}</ul>
+      <SensitiveSettings csrf={state.csrf_token} onSignedOut={() => {
+        transition.current++; setState(null); setLoginMode(true);
+        setNotice('Compte déconnecté de tous les appareils sur le Portal. Déconnexion des parties en attente.');
+      }} />
     </section> : <>
-      {loginMode ? <LoginForm onLogin={value => { transition.current++; setState(value); setNotice(''); }} /> : <AccountForms verificationToken={null} />}
-      <button type="button" className="text-button" onClick={() => setLoginMode(value => !value)}>{loginMode ? 'Créer un compte ou confirmer mon adresse' : 'Se connecter à mon compte'}</button>
+      {recovering ? <ResetRequestForm onBack={() => { setRecovering(false); setLoginMode(true); }} /> : loginMode ? <LoginForm onLogin={value => { transition.current++; setState(value); setNotice(''); }} /> : <AccountForms verificationToken={null} />}
+      {loginMode && !recovering && <button type="button" className="text-button" onClick={() => setRecovering(true)}>Mot de passe oublié ?</button>}
+      <button type="button" className="text-button" onClick={() => { setRecovering(false); setLoginMode(value => !value); }}>{loginMode ? 'Créer un compte ou confirmer mon adresse' : 'Se connecter à mon compte'}</button>
     </>}
   </>;
 }

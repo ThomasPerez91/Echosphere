@@ -115,7 +115,9 @@ Clé persistante locale hors Git, procédures production de sauvegarde/rotation 
 UI Chromium avec API interceptée et SMTP/API PostgreSQL réels testés séparément ; pas de parcours
 complet navigateur hôte HTTPS, tactile ou lecteur d’écran attesté. Warning Starlette/httpx connu.
 
-## Limites C03
+## Limites historiques C03
+
+C04 lève les limites des opérations sensibles sans MFA et du logout global ; détails dans sa section.
 
 [Sessions Portal/CSRF](../03-technical/portal-sessions.md) livrés sur PR #7, pas sur master.
 Logout Portal atomique avec intention durable et génération appareil, mais aucune livraison Game :
@@ -123,3 +125,12 @@ Logout Portal atomique avec intention durable et génération appareil, mais auc
 sans le step-up futur, ni MFA/compte sensible/handoff. La preuve multi-onglets couvre rotation/refus
 et relecture sans rejeu ; aucun secret en stockage navigateur. Recette complète navigateur HTTPS et
 handoff prévue C09 ; smokes TLS/API et UI interceptée sont des preuves séparées.
+
+## Limites C04
+
+[Opérations sensibles](../03-technical/portal-account-security.md) livrées sans MFA seulement ;
+comptes avec politique MFA/privilégiée refusés tant que C05 ne fournit pas les preuves. Intentions
+globales persistées, aucun transport Game/acquittement, UI en attente. Notifications Mailpit locales,
+aucune délivrabilité publique ou procédure support attestée. Plancher anti-énumération des demandes
+reset 150 ms configurable, pas de temps constant garanti sous charge. Recette UI interceptée séparée
+des intégrations PostgreSQL/API/SMTP et du smoke TLS ; navigateur HTTPS complet à C09.

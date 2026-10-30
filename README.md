@@ -5,7 +5,7 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : domaine Colony/économie v0.1 et shell Game intégrés ; Portal C01–C03 sur PR #7 : inscription, vérification email et sessions locales,
+**État actuel : domaine Colony/économie v0.1 et shell Game intégrés ; Portal C01–C04 sur PR #7 : comptes, sessions et opérations sensibles locales sans MFA,
 sans API gameplay ni partie jouable.**
 
 Socle Portal séparé : https://portal.echosphere.localhost:8443 ; Game : https://game.echosphere.localhost:8443.
@@ -77,7 +77,7 @@ pour un serveur public. Ne pas exposer Vite sur internet.
 | postgres | PostgreSQL 17 | Source de vérité et volume persistant local |
 | migrate | Même image backend | Alembic upgrade head, puis sortie 0 |
 | worker | Même code backend | Streams temporels multi-univers, sans port publié |
-| portal-postgres / portal-migrate | Accounts PostgreSQL 17 / Alembic indépendant | Historique p0000–p0002, comptes/preuves email et sessions Portal |
+| portal-postgres / portal-migrate | Accounts PostgreSQL 17 / Alembic indépendant | Historique p0000–p0003, comptes/preuves email et sessions Portal |
 | portal-backend / portal-frontend | FastAPI / React-Vite séparés | Sondes Accounts et écran de préparation |
 | local-edge | Caddy, HTTPS local | Origines Portal/Game :8443, CA Docker sans installation hôte |
 
@@ -159,10 +159,10 @@ n’a livré ni Portal, login, protocole d’auth ni changement Compose ; C01 es
 [sources/statuts](docs/06-handoff/source-map.md) et [prochain lot](docs/05-project/roadmap.md) :
 5B contrats identité/Portal-Game → 5C compte/lobby selon cadrage → 5D API Colony sécurisée/UI réelle.
 PR #5 fusionnée sur master 8214e0b ; recette locale effectuée le 2026-10-29, limites dans progress.
-Les [contrats 5B](docs/03-technical/identity-contracts.md) sont validés et consolidés ; C02/C03 en implémentent les premiers sous-ensembles.
+Les [contrats 5B](docs/03-technical/identity-contracts.md) sont validés et consolidés ; C02–C04 en implémentent les premiers sous-ensembles.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1`. Contrats toujours non
 implémentés. Lot courant : 5C sur `work/step-5c-portal-account-lobby`, checkpoint/cadrage effectués
 puis socle C01 implémenté sur PR #7 ; aucune API Colony 5D commencée.
 Le [registre Q40–Q56](docs/05-project/open-questions.md) distingue décisions closes, détails techniques
 délégués et reports support/email/modes. Aucun nouveau code d’authentification dans 5B. Sur PR #7, C01 ajoute le socle Portal et étend
-Compose ; [C02](docs/03-technical/portal-registration.md) ajoute inscription, Argon2id, vérification et livraison locale durable ; [C03](docs/03-technical/portal-sessions.md) ajoute connexion/sessions et CSRF ; MFA/handoff restent futurs. [Recette C01](docs/03-technical/portal-foundation.md).
+Compose ; [C02](docs/03-technical/portal-registration.md) ajoute inscription, Argon2id, vérification et livraison locale durable ; [C03](docs/03-technical/portal-sessions.md) ajoute connexion/sessions et CSRF ; [C04](docs/03-technical/portal-account-security.md) ajoute step-up, reset/changements sensibles et logout global sans MFA ; MFA/handoff restent futurs. [Recette C01](docs/03-technical/portal-foundation.md).

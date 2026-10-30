@@ -81,7 +81,7 @@ class Sessions:
             ):
                 raise PublicError("login_challenge_expired", 401)
             data = session.execute(
-                select(User.id, PasswordCredential.password_hash)
+                select(User.id, User.security_epoch, PasswordCredential.password_hash)
                 .join(PasswordCredential, PasswordCredential.user_id == User.id)
                 .where(User.email_key == key)
             ).first()
@@ -92,8 +92,15 @@ class Sessions:
             # All account session changes serialize on User; no other User lock acquired.
             user = session.get(User, data.id, with_for_update=True)
             credential = session.get(PasswordCredential, user.id)
-            if user.status != "active" or credential.password_hash != data.password_hash:
+            if (
+                user.status != "active"
+                or credential.password_hash != data.password_hash
+                or user.email_key != key
+                or user.security_epoch != data.security_epoch
+            ):
                 raise PublicError("invalid_credentials", 401)
+            if user.mfa_enabled or user.platform_privileged:
+                raise PublicError("additional_proof_required", 403)
             challenge = session.scalar(
                 select(LoginChallenge)
                 .where(LoginChallenge.digest == token_digest(challenge_raw))

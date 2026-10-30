@@ -12,6 +12,7 @@ from cryptography.fernet import InvalidToken
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import SQLAlchemyError
 
+from portal_app.account_security.delivery import deliver_security_one, prune_security
 from portal_app.accounts.models import AbuseCounter, AccountToken, EmailOutbox, SecurityEvent, User
 from portal_app.accounts.security import PublicError, token_digest
 from portal_app.accounts.service import Accounts
@@ -144,9 +145,18 @@ def main() -> None:
         while True:
             try:
                 prune(accounts)
+                prune_security(accounts)
                 processed = 0
-                while processed < args.limit and deliver_one(accounts, transport):
-                    processed += 1
+                while processed < args.limit:
+                    progressed = False
+                    for deliver in (deliver_security_one, deliver_one):
+                        if processed >= args.limit:
+                            break
+                        if deliver(accounts, transport):
+                            processed += 1
+                            progressed = True
+                    if not progressed:
+                        break
                 print(json.dumps({"processed": processed}), flush=True)
             except SQLAlchemyError:
                 print(json.dumps({"status": "accounts_unavailable"}), flush=True)

@@ -59,6 +59,11 @@ class Accounts:
                 self.settings.login_ip_limit,
                 self.settings.login_account_limit,
             )
+        elif action.startswith("security_"):
+            ip_limit, subject_limit = (
+                self.settings.security_ip_limit,
+                self.settings.security_subject_limit,
+            )
         elif action == "login_start":
             ip_limit = subject_limit = self.settings.bootstrap_ip_limit
         limits = [

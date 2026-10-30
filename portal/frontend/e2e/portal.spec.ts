@@ -134,3 +134,39 @@ for (const width of [320, 1440]) {
     await expect(page.getByRole('alert')).toContainText('Déconnexion des parties en attente');
   });
 }
+
+
+for (const width of [320, 1440]) {
+  test(`Password recovery and email confirmation at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.route('**/api/ready', route => route.fulfill({ json: { status: 'ready', service: 'portal' } }));
+    let recoveries = 0;
+    await page.route('**/api/security/**', route => {
+      const path = new URL(route.request().url()).pathname;
+      if (path.endsWith('/request')) return route.fulfill({ status: 202, json: { status: 'request_received' } });
+      if (path.includes('/password/')) { recoveries++; return route.fulfill({ json: { status: 'password_reset', game_revocation: 'pending' } }); }
+      return route.fulfill({ json: { status: 'additional_confirmation_required' } });
+    });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Se connecter à mon compte' }).click();
+    await page.getByRole('button', { name: 'Mot de passe oublié ?' }).click();
+    await page.getByLabel('Adresse email').fill('player@example.org');
+    await page.getByRole('button', { name: 'Demander un lien de récupération' }).click();
+    await expect(page.getByText('Demande reçue.', { exact: false })).toBeVisible();
+    await page.goto('/#reset-password=' + 'a'.repeat(43));
+    await expect(page.getByRole('heading', { name: 'Choisir un nouveau mot de passe' })).toBeVisible();
+    expect(new URL(page.url()).hash).toBe('');
+    await page.getByLabel('Nouveau mot de passe', { exact: true }).fill('Browser replacement password !');
+    await page.getByLabel('Confirmer le nouveau mot de passe', { exact: true }).fill('Browser replacement password !');
+    await page.getByRole('button', { name: 'Réinitialiser mon mot de passe' }).press('Enter');
+    await expect(page.getByText('Modification réussie.', { exact: false })).toBeVisible();
+    expect(recoveries).toBe(1);
+    await page.goto('/#confirm-email-change=' + 'b'.repeat(43));
+    await page.getByRole('button', { name: 'Confirmer cette adresse' }).click();
+    await expect(page.getByText('Cette adresse est confirmée.', { exact: false })).toBeVisible();
+    expect(new URL(page.url()).hash).toBe('');
+    expect(await page.evaluate(() => localStorage.length + sessionStorage.length)).toBe(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath('security-confirmation.png'), fullPage: true });
+  });
+}

@@ -84,16 +84,18 @@ Aucun credential Accounts en Game DB. Portal indisponible ne doit pas arrêter u
 sessions Game établies dans les limites du contrat 5B validé. Socle C01 sur PR #7 : Portal FastAPI,
 Accounts PostgreSQL/Alembic et frontend séparés, HTTPS local. C02 ajoute inscription/Argon2id/vérification email et outbox locale durable ;
 C03 ajoute connexion, profils/sessions Portal, CSRF et intentions de logout durables.
-MFA/handoff restent futurs. [Recette C03](docs/03-technical/portal-sessions.md). [Recette C02](docs/03-technical/portal-registration.md).
+C04 ajoute opérations sensibles sans MFA, step-up et révocations globales persistées.
+MFA/handoff restent futurs ; politiques MFA/privilégiées refusées sans preuves C05.
+[Recette C04](docs/03-technical/portal-account-security.md). [Recette C03](docs/03-technical/portal-sessions.md). [Recette C02](docs/03-technical/portal-registration.md).
 [Recette C01](docs/03-technical/portal-foundation.md).
 
 Compte global, plusieurs parties : User → UniverseMembership → Universe → éventuellement Empire/
 rôle/permissions. Ne pas réduire à Empire.owner_user_id ; empire partagé Q21 reste ouvert.
 Universe n’est ni User ni processus. Pas de compte global factice ou accès implicite pour une démo.
 Q16 a son cadrage 5B couvert ; détails délégués et reports Q48/Q49/Q55 au registre.
-5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats seulement partiellement implémentés sur PR #7 par C02/C03.
+5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats seulement partiellement implémentés sur PR #7 par C02–C04.
 Lot courant autorisé : 5C compte/lobby. Checkpoint et cadrage effectués ; C01 implémenté sur PR #7,
-C02/C03 comptes/vérification/sessions implémentés ; C04 opérations sensibles est la suite. Migrations Accounts séparées, pas de SQL Portal→Game.
+C02/C03 comptes/vérification/sessions implémentés ; C04 opérations sensibles sans MFA implémenté ; C05 MFA est la suite. Migrations Accounts séparées, pas de SQL Portal→Game.
 5D API Colony sécurisée reste hors lot. Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver

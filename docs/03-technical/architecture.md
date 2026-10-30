@@ -1,7 +1,7 @@
 # Architecture technique
 
 **Statuts : Game Backend implémenté jusqu’à 5A, intégré par PR #5 ; cible Portal/Game validée,
-Portal C01–C03 implémenté sur PR #7, MFA/handoff futurs.** État d’intégration et CI dans [progress.md](../../progress.md).
+Portal C01–C04 implémenté sur PR #7, MFA/handoff futurs.** État d’intégration et CI dans [progress.md](../../progress.md).
 
 ## Réalité du dépôt
 
@@ -19,7 +19,7 @@ Le frontend est un shell sans partie active, pas un lobby ni un client de gamepl
 | game_data/rulesets/v0.1 | Paramètres validés strictement, balance provisoire, copie par univers |
 | backend/migrations | 0001–0004, migrations explicites avant API/worker |
 | frontend/src | Navigation responsive et sous-vues Colony en préparation, readiness via proxy |
-| portal/backend | Sondes Portal, configuration PORTAL_*, pool/metadata Accounts et Alembic p0000–p0002 indépendants, comptes/vérification/email et sessions/CSRF Portal |
+| portal/backend | Sondes Portal, configuration PORTAL_*, pool/metadata Accounts et Alembic p0000–p0003 indépendants, comptes/vérification/email et sessions/CSRF Portal |
 | portal/frontend | Readiness/retry et formulaires d’inscription/renvoi/confirmation, avec sessions/CSRF C03 |
 | infra/local/Caddyfile | Deux origines HTTPS locales, CA Docker sans installation sur l’hôte |
 
@@ -71,10 +71,10 @@ de la fréquence de lecture. Ruleset et vitesses par univers, jamais en singleto
 ## Prochain travail
 
 PR #5 fusionnée sur master 8214e0b, puis **5B documentaire terminé et intégré à master via PR #6**,
-merge `63bb7d1`. Les [contrats 5B](identity-contracts.md) sont validés, partiellement implémentés par C02/C03 sur PR #7.
+merge `63bb7d1`. Les [contrats 5B](identity-contracts.md) sont validés, partiellement implémentés par C02–C04 sur PR #7.
 Le [registre Q40–Q56](../05-project/open-questions.md) conserve clôtures, détails délégués et reports
 support/email/modes. Lot courant autorisé : 5C compte/lobby, nouvelle branche depuis ce merge,
-checkpoint documentaire et cadrage réalisés, socle C01 livré sur PR #7 ; C02 comptes/vérification livré ; C03 sessions livré ; C04 suit.
+checkpoint documentaire et cadrage réalisés, socle C01 livré sur PR #7 ; C02 comptes/vérification livré ; C03 sessions livré ; C04 sans MFA livré ; C05 suit.
 Aucun début de 5D API Colony,
 aucune nouvelle fusion sans instruction explicite.
 Voir [roadmap](../05-project/roadmap.md), [sécurité](security.md), [API](api.md),

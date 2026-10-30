@@ -51,7 +51,7 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 [identity-contracts](identity-contracts.md) porte les autorités, opérations internes, handoff,
 sessions, erreurs et règles compte/MFA validés le 2026-10-29. Le [registre Q40–Q56](../05-project/open-questions.md)
 distingue contrats clos, détails techniques délégués et reports. Les sondes restent les seules routes Game actuelles. Portal ajoute les sondes C01 et les
-[routes d’inscription/vérification C02](portal-registration.md), et les [sessions C03](portal-sessions.md), sans route gameplay. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02/C03 sur PR #7.
+[routes d’inscription/vérification C02](portal-registration.md), et les [sessions C03](portal-sessions.md), sans route gameplay. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C04 sur PR #7.
 
 Portal expose les futurs services compte/lobby. Après ticket signé 60 s/unique lié au navigateur,
 GameSession opaque : accès direct Game, sans proxy ni consultation Portal par commande. Game vérifie
@@ -73,3 +73,10 @@ des protections déjà présentes dans le runtime. Aucun secret localStorage.
 protégée reste hors lot et nécessitera son instruction distincte. Tests futurs
 et prérequis opérationnels sont référencés dans la matrice du canonique ; aucun test d’auth réalisé
 par la rédaction. [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
+
+## Extension C04 sur PR #7
+
+[Opérations sensibles sans MFA](portal-account-security.md) : step-up par action cinq minutes/unique,
+reset trente minutes, double confirmation email une heure et logout global. Migration Accounts p0003
+additive, notifications chiffrées et intentions de révocation Game pending. MFA/privilèges refusés
+sans preuves futures C05 ; aucune livraison Game ou API Colony ajoutée.

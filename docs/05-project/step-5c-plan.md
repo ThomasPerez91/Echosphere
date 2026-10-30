@@ -1,6 +1,6 @@
 # Étape 5C — cadrage Portal Account/Lobby foundation
 
-**Statut : découpage présenté ; C01–C03 implémentés sur PR #7, suite C04 future.** 2026-10-29.
+**Statut : découpage présenté ; C01–C04 implémentés sur PR #7, suite C05 future.** 2026-10-29.
 Autorisation utilisateur : poursuivre 5C après un premier checkpoint documentaire commit/push.
 Contrats de référence **validés, inchangés** : [identity-contracts](../03-technical/identity-contracts.md),
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md), [registre Q40–Q56](open-questions.md).
@@ -52,7 +52,7 @@ Les identifiants Cxx sont des repères de travail locaux, pas des issues GitHub 
 | C01 | **Implémenté sur PR #7** : configuration, FastAPI, Accounts PostgreSQL, Alembic indépendant, frontend React/Vite, sondes et HTTPS local | Deux bases/processus/credentials/pools distincts ; Game existant intact ; migrations avant démarrage, aucun secret Git/VITE |
 | C02 | **Implémenté sur PR #7** : comptes : User stable, credential Argon2id, inscription, vérification email 24 h, envoi durable et non-énumération | Concurrence d’inscription/vérification/réémission, aucune adresse non vérifiée autorisée à entrer Game |
 | C03 | **Implémenté sur PR #7** : sessions Portal/appareils : opaque serveur, CSRF, rotation, activité explicite, gestion des connexions et caps configurables | Frontières 7 j/72 h, trafic automatique sans prolongation, profils/onglets, quota concurrent et logout local |
-| C04 | Compte sensible : step-up par action, reset/changement mot de passe et changement email avec preuves et notifications | Jetons uniques/dernière demande, échéances 30 min/1 h, invalidations croisées et intentions de révocation atomiques, sans auto-login |
+| C04 | **Implémenté sur PR #7 sans MFA** : compte sensible : step-up par action, reset/changement mot de passe et changement email avec preuves et notifications | Jetons uniques/dernière demande, échéances 30 min/1 h, invalidations croisées et intentions de révocation atomiques, sans auto-login |
 | C05 | MFA joueur TOTP/WebAuthn, secours, récupération limitée, protection des privilèges | Un TOTP/cinq WebAuthn, dix secours uniques, step-up 5 min, récupération 15 min, effets MFA ciblés et audit/notifications ; aucune procédure support inventée |
 | C06 | Memberships/lobby et interface interne privée mTLS : outbox, état effectif Game, révisions, idempotence, révocations ciblées et réconciliation | Pending distinct d’applied, doublons/désordre/timeout sans double effet ni résurrection, refus du service non autorisé |
 | C07 | Handoff réel et sessions Game : pré-auth navigateur, signature asymétrique, consommation atomique, clés locales, appareil/scopes et logout | Ticket 60 s unique, clés inconnues refusées, droits 8 h non glissants, session 8 h/2 h, révocations concurrentes et UI en attente fidèle ; aucune API Colony |
@@ -60,7 +60,7 @@ Les identifiants Cxx sont des repères de travail locaux, pas des issues GitHub 
 | C09 | Recette de clôture et passation de l’incrément | Tests ciblés/concurrence PostgreSQL des deux plans, Chromium HTTPS, migration/absence de dérive, reprise workers/livraison, CI et docs de tête ; limites restantes explicites |
 
 Les tests accompagnent chaque ticket ; C09 n’est pas une attente avant de vérifier la sécurité.
-C01 est le premier incrément de code après présentation de ce plan, désormais réalisé ; C02 comptes/vérification est réalisé, C03 sessions est réalisé ; C04 suit. Les dépendances C04/C05 sont
+C01 est le premier incrément de code après présentation de ce plan, désormais réalisé ; C02 comptes/vérification est réalisé, C03 sessions est réalisé ; C04 sans MFA est réalisé ; C05 suit. Les dépendances C04/C05 sont
 itératives : aucun endpoint sensible utilisable sans ses preuves requises, aucune route MFA simulée.
 C06/C07 concernent les fondations d’accès, pas les commandes gameplay réservées à 5D.
 Une protection prévue mais absente ne sera jamais annoncée comme livrée dans un checkpoint partiel.
@@ -128,7 +128,8 @@ Migrations des tickets suivants envisagées :
 
 - P0001 livrée C02 : users/password_credentials/account_tokens/email_outbox/abuse_counters/security_events ;
 - P0002 livrée C03 : browser_profiles/account_devices/portal_sessions/login_challenges/logout_requests ;
-- Révisions ultérieures : opérations sensibles, challenges/MFA/step-up/récupération, puis références
+- P0003 livrée C04 : step-up/reset/changement email, révocations compte et livraison sécurité ;
+- Révisions ultérieures : MFA/récupération limitée, puis références
   univers/memberships/outbox interne. Numérotation précisée au ticket, sans modifier p0001 publiée.
 
 Chaîne Alembic et table de version dans **Accounts DB**, indépendantes de Game 0001–0004. Révisions

@@ -4,11 +4,82 @@ Mise à jour : 2026-10-30. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Lot courant — 5C : Portal Account/Lobby foundation
 
-**Statut : C01–C03 implémentés et testés sur PR #7 ; 5C en cours, C04 opérations sensibles à suivre.**
-5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/vérification/sessions C02/C03 implémentés sur PR #7 seulement.
+**Statut : C01–C04 implémentés et testés sur PR #7 ; C04 sans MFA, C05 MFA à suivre. 5C en cours.**
+5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/opérations sensibles sans MFA C02–C04 implémentés sur PR #7 seulement.
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
-Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C03 est décrit en premier.
+Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C04 est décrit en premier.
+
+### C04 — opérations sensibles sans MFA, 2026-10-30
+
+Instruction utilisateur « enchaine » après C03. État réel relu avant modification : PR #7 OPEN/
+brouillon, tête locale/distante d752f8e429f6a9a6deede04baf67d6eb020380f8, base master
+63bb7d1c902e9c0fbae3497d4a36c107a80eb611. Arbre propre, fetch et merge ff-only déjà synchronisés ;
+CI C03 push 41057087993 et PR 41057096982 success observées. Même branche
+work/step-5c-portal-account-lobby, aucun agent délégué ou autre tête publiée détecté, aucune fusion.
+
+[Canonique C04](docs/03-technical/portal-account-security.md) : step-up mot de passe actuel par
+session/action/paramètres, cinq minutes absolues et usage unique. Liaison HMAC avec le secret de
+session, aucun mot de passe ou checksum non salé en DB. Changement volontaire, reset 30 min/dernier
+jeton unique, changement email deux confirmations liées/une heure commune et déconnexion globale.
+Toutes PortalSessions révoquées y compris courante après succès sensible, step-ups invalidés,
+intention Game globale/epoch monotone et notifications sans secrets persistées dans la transaction.
+Reset/changement mot de passe annule l’email pending ; email changé invalide anciens resets et
+vérifications. Identité globale conservée, aucune connexion automatique ou restauration d’email.
+La demande email reste pending jusqu’aux deux preuves ; session à l’origine encore valide requise.
+
+Migration Accounts additive p0003 : step_up_grants/password_reset_requests/email_change_requests/
+account_revocations/security_email_outbox, génération globale et guards de politique User. Flags
+MFA/privilégié n’accordent aucun privilège : login/password-only et mutations refusés si actifs,
+demande reset générique sans lien ; preuves réelles C05 obligatoires avant ces variantes. Aucun
+MFA/administrateur fictif, support inventé ou nouvelle décision produit. Consommateur Game C06/C07
+absent : révocations pending, UI fidèle sans promesse distante instantanée ni nouveau délai huit heures.
+Le login relit génération/adresse/credential après lock, refus d’une connexion ancienne en vol.
+
+Worker local : seconde file de sécurité chiffrée Fernet, destinataire/IDs/type/token vérifiés,
+retry sans extension et effacement après SMTP/annulation/expiration, alternance des files sans
+starvation. Notifications à l’ancienne/nouvelle adresse avec lien non secret de parcours sécurité,
+pas de credential/token sensible. Mailpit local seulement ; fournisseur/production Q49 inchangés.
+UI : récupération, fragments retirés immédiatement, nouvelle saisie/confirmation du mot de passe,
+paramètres sensibles, deux confirmations email, logout global et nouvelle connexion explicite.
+Réponses privées invalides non affichées, aucun secret en stockage navigateur. Aucune fixture runtime.
+
+Validations locales réellement exécutées (images Python 3.12 / Node 22) :
+
+- Ruff backend/scripts réussi et **75 tests backend Portal réussis, aucun ignoré**, base dédiée
+  echosphere_c04_test créée/supprimée. Scopes de preuves, exacts 5/30/60 min, deux resets/confirmations
+  concurrents, réémission et invalidations croisées, unicité d’adresse sans fusion, rollback complet
+  si notification échoue, garde MFA/privilèges, logout global vs login en vol, SMTP retry/expiry/
+  payload effacé et deux workers ; suites C02/C03 conservées.
+- Migrations/check/roundtrip et refus de downgrade peuplé sur cette base uniquement. P0003 générée
+  depuis le schéma dédié p0002 puis relue/complétée (checks/guard). Aucun downgrade de base conservée,
+  révision publiée p0000–p0002 ni migration Game modifiée. Pas de nouvelle dépendance.
+- Frontend : npm ci, lint sans warning nouveau, **18 tests**, build et **11 Chromium** réussis.
+  Récupération/double confirmation 320/1440, login/refresh/logout et anciennes recettes conservés,
+  clavier et absence de débordement/stockage navigateur ; captures inspectées. API UI interceptée,
+  distincte des intégrations API/PostgreSQL et du SMTP TCP réel couvert dans la suite conservée.
+- Compose config/build/up --wait, Alembic check Accounts p0003 et Game 0004 sans dérive ; deux
+  smokes réellement réussis avec TLS strict, CORS/refus, cookie/challenge, pannes indépendantes et
+  reprise. Volumes préservés, aucune confiance CA/hosts modifiée. Base Accounts conservée sans User.
+- **69 documents**/liens valides, git diff --check et confidentialité/périmètre relus. Lignes Q01–Q56,
+  sections de décisions 1–8 identity-contracts et ADR 0008 comparés inchangés à d752f8e ; aucun
+  backend/frontend/game_data Game modifié. Statuts d’implémentation seulement actualisés.
+
+Échecs intermédiaires corrigés : collecte pytest avec deux noms de fichier identiques (nouveau
+fichier renommé), imports/variable/format Ruff, droits du fichier migration généré root dans Docker
+rétablis sur ce seul fichier, warning Fast Refresh résolu par extraction du helper, débordement
+select/form à 320 px détecté par Chromium puis corrigé et recette complète relancée. Les passages
+en échec ne sont pas présentés comme réussis. La première suite complète 73 backend a précédé
+les deux derniers cas ajoutés, puis le passage final 75 a réussi.
+
+CI de cette tête à observer après commit/push, puis résultat/SHA exacts à consigner dans PR #7 ;
+la configuration du workflow inchangée ne vaut pas preuve exécutée. Suite : **C05 MFA TOTP/WebAuthn,
+secours/récupération et preuves renforcées**, selon les contrats validés. C04 est livré sans MFA ;
+aucune route MFA utilisable sans preuve. Livraison Game C06/C07 et recette complète C09 restent futures.
+Limites : pas de navigateur hôte HTTPS complet, Windows/tactile/lecteur d’écran, charge/DDoS ou
+remise email publique attestés. Plancher anti-énumération 150 ms, pas de temps constant garanti en
+charge. Intention Game pending, support Q48/configuration Q49/modes Q55 conservés. Outils en Docker
+WSL2 utilisables pour ces commandes ; pas de nouvelle branche, merge, déploiement ou début de 5D.
 
 ### C03 — connexion, appareils et sessions Portal, 2026-10-30
 

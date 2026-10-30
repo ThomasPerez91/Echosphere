@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react';
 import { consumeVerificationFragment } from './account/verification';
 import { AccountAccess } from './account/AccountAccess';
+import { RecoveryForm } from './account/SecurityForms';
+import { consumeSecurityFragment } from './account/security-links';
+import type { SecurityLink } from './account/security-links';
 import { useReadiness } from './useReadiness';
 
-export default function App({ verificationToken = null }: { verificationToken?: string | null }) {
+export default function App({ verificationToken = null, securityLink = null }: { verificationToken?: string | null; securityLink?: SecurityLink | null }) {
+  const [security, setSecurity] = useState(securityLink);
   const [token, setToken] = useState(verificationToken);
   useEffect(() => {
-    const read = () => { const next = consumeVerificationFragment(); if (next) setToken(next); };
+    const read = () => {
+      const next = consumeVerificationFragment();
+      const sensitive = consumeSecurityFragment();
+      if (next) { setToken(next); setSecurity(null); }
+      if (sensitive) { setSecurity(sensitive); setToken(null); }
+    };
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
   }, []);
@@ -20,7 +29,7 @@ export default function App({ verificationToken = null }: { verificationToken?: 
       <p className="eyebrow">UN COMPTE, PLUSIEURS HORIZONS</p>
       <h1>Votre prochain univers<br />commence ici.</h1>
       <p className="intro">Le Portal réunira votre compte et vos parties. Le jeu continuera de progresser à son propre rythme.</p>
-      <AccountAccess key={token ?? 'public'} verificationToken={token} />
+      {security ? <RecoveryForm key={security.kind === 'alert' ? 'alert' : security.token} link={security} onBack={() => setSecurity(null)} /> : <AccountAccess key={token ?? 'public'} verificationToken={token} />}
       <section className="panel connection" aria-labelledby="connection-title">
         <div><h2 id="connection-title">Connexion au Portal</h2><p role="status" aria-live="polite">{message}</p></div>
         <button type="button" onClick={retry} disabled={status === 'checking'}>Vérifier à nouveau</button>

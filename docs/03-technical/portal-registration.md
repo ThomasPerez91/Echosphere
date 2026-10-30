@@ -8,6 +8,9 @@
 État courant : [C03 sessions Portal/CSRF](portal-sessions.md) est livré sur PR #7 ; les exclusions
 de sessions de ce document décrivent le périmètre historique de cet incrément.
 
+État courant : [C04 opérations sensibles sans MFA](portal-account-security.md) livré sur PR #7.
+Les exclusions d’opérations sensibles ci-dessous décrivent le périmètre historique de cet incrément.
+
 ## Périmètre
 
 Inscription email/mot de passe, renvoi et confirmation de l’adresse initiale, formulaires Portal,

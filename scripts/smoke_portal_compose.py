@@ -117,7 +117,7 @@ def main():
     identity = "SELECT current_database() || '/' || current_user"
     assert query("portal-postgres", identity) != query("postgres", identity)
     assert query("portal-postgres", "SELECT version_num FROM portal_alembic_version") == (
-        "p0002_portal_sessions"
+        "p0003_account_security"
     )
     assert query("postgres", "SELECT version_num FROM alembic_version") == "0004_colony_economy"
     tables = "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
@@ -126,6 +126,8 @@ def main():
         "email_outbox", "abuse_counters", "security_events",
         "browser_profiles", "account_devices", "portal_sessions",
         "login_challenges", "logout_requests",
+        "security_email_outbox", "account_revocations", "step_up_grants",
+        "email_change_requests", "password_reset_requests",
     }
     assert "portal_alembic_version" not in query("postgres", tables).splitlines()
 

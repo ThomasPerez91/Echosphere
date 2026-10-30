@@ -1,6 +1,6 @@
 # Identité et contrats Portal/Game — étape 5B
 
-**Statut : contrats 5B validés ; C02/C03 inscription/vérification/sessions Portal implémentés sur PR #7.** Consolidation : 2026-10-29.
+**Statut : contrats 5B validés ; C02–C04 comptes/sessions/opérations sensibles sans MFA implémentés sur PR #7.** Consolidation : 2026-10-29.
 Source : arbitrages utilisateur explicites pour PR #6, puis validation du bloc complet en quatorze
 points avec trois corrections : effets MFA ciblés, plafonds de sessions configurables et CORS refusé
 par défaut. Cette synthèse conserve les décisions, sans transcript privé.
@@ -14,7 +14,7 @@ lot courant autorisé ; premier checkpoint documentaire avant code. 5D reste dis
 
 État d’implémentation : [C02](portal-registration.md) livre inscription/Argon2id/vérification initiale
 et email durable local ; [C03](portal-sessions.md) ajoute sessions/CSRF et intentions de logout.
-MFA, opérations sensibles, livraison Game et handoff restent futurs. Ce statut ne modifie aucune décision 5B.
+[C04](portal-account-security.md) livre les opérations sensibles sans MFA ; MFA, livraison Game et handoff restent futurs. Ce statut ne modifie aucune décision 5B.
 
 ## 1. Autorités et modèle logique validés — Q51/Q52/Q53
 
@@ -376,7 +376,7 @@ et matrice de tests. Les préciser et les justifier dans 5C/5D avant le code dé
 questionnaire par détail. Aucun changement produit, bypass ou service payant autorisé par cette
 latitude. Toute décision produit nouvelle reste à faire arbitrer, regroupée avec ses dépendances.
 
-5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats partiellement implémentés par C02/C03 sur PR #7, MFA/handoff futurs.
+5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats partiellement implémentés par C02–C04 sur PR #7, MFA/handoff futurs.
 5C devient le lot courant sur une nouvelle branche issue de ce merge : synchronisation documentaire,
 puis cadrage présenté avant implémentation substantielle. Aucun début de 5D, déploiement ou nouvelle
 fusion autorisé par cette transition. Les décisions 5B ci-dessus restent inchangées.

@@ -130,3 +130,10 @@ Les FK composites d’univers actuelles restent inchangées. User est implément
 [Sessions Portal/CSRF](portal-sessions.md) : migration Accounts additive p0002, cinq tables
 profils/appareils/sessions/challenges/intentions de logout. Aucun schéma Game modifié. Les intentions
 de déconnexion sont persistées mais leur livraison/acquittement distant reste à C06/C07.
+
+## Extension C04 sur PR #7
+
+[Opérations sensibles sans MFA](portal-account-security.md) : step-up par action cinq minutes/unique,
+reset trente minutes, double confirmation email une heure et logout global. Migration Accounts p0003
+additive, notifications chiffrées et intentions de révocation Game pending. MFA/privilèges refusés
+sans preuves futures C05 ; aucune livraison Game ou API Colony ajoutée.

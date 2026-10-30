@@ -9,6 +9,7 @@ from starlette.responses import JSONResponse
 
 from portal_app.accounts.security import PublicError
 from portal_app.accounts.service import Accounts
+from portal_app.api.account_security import router as security_router
 from portal_app.api.accounts import AccountBodyLimit
 from portal_app.api.accounts import router as accounts_router
 from portal_app.api.probes import router
@@ -62,6 +63,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(router)
     application.include_router(accounts_router)
     application.include_router(sessions_router)
+    application.include_router(security_router)
     return application
 
 

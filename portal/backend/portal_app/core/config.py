@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     login_ip_limit: int = Field(default=30, ge=1, le=1000)
     login_account_limit: int = Field(default=10, ge=1, le=100)
     bootstrap_ip_limit: int = Field(default=60, ge=1, le=1000)
+    security_ip_limit: int = Field(default=30, ge=1, le=1000)
+    security_subject_limit: int = Field(default=10, ge=1, le=100)
+    reset_response_floor_ms: int = Field(default=150, ge=50, le=1000)
+    security_notice_hours: int = Field(default=24, ge=1, le=168)
     trusted_proxy_host: str | None = None
 
     @field_validator("public_origin")
