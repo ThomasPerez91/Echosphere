@@ -1,8 +1,10 @@
 # Procédure commune des agents — Echosphere
 
-**Statut : règle de travail Work / Codex local.** GitHub est la source commune du code, décisions,
-architecture et progression. Ne jamais supposer que la mémoire du chat suffit. Lire les statuts de
-[docs/README](docs/README.md) ; une proposition d’assistant ne vaut pas validation utilisateur.
+**Statut : règle de travail commune à ChatGPT Work (GitHub), Codex local et Claude Code local
+(Ubuntu WSL2/VS Code).** Ce fichier est la référence des instructions d’agent ; CLAUDE.md l’importe
+sans le dupliquer. GitHub est la source commune du code, décisions, architecture et progression.
+Aucune mémoire conversationnelle partagée : le contexte passe par documents versionnés, commits et PR.
+Lire les statuts de [docs/README](docs/README.md) ; une proposition d’assistant ne vaut pas validation utilisateur.
 
 ## Début de chaque session
 
@@ -26,32 +28,33 @@ architecture et progression. Ne jamais supposer que la mémoire du chat suffit. 
    ouvrir/actualiser la PR selon le lot. Relire SHA distant et CI effective après publication.
 5. Aucune fusion/tag/release/déploiement ou suppression de branche sans instruction propre.
 
-Même DoD dans Work et Codex. Pas de résultat CI configuré présenté comme exécuté ; pas de WSL2
-annoncé testé sans recette réelle attestée. Procédure concrète :
-[Work ↔ Codex](docs/06-handoff/work-codex-handoff.md), [DoD](docs/04-quality/definition-of-done.md).
+Même DoD, mêmes spécifications et mêmes règles pour les trois agents. Pas de résultat CI configuré
+présenté comme exécuté ; pas de WSL2 annoncé testé sans recette réelle attestée. Procédure concrète :
+[protocole de collaboration](docs/06-handoff/work-codex-handoff.md), [DoD](docs/04-quality/definition-of-done.md).
 
-## Mission documentaire historique et reprise Git
+## Collaboration, revue croisée et Git
 
 master = intégration stable ; work/... → PR master → CI/revue → merge sur autorisation explicite.
 Le workflow historique develop/release est superseded, aucune develop permanente. Pour un nouveau
 lot après intégration de sa fondation : master synchronisée puis branche courte, sans empilement.
 
-Checkpoint du 28/10/2026 : la passation documentaire a été portée par
-**work/step-5a-colony-domain / PR #5**, ouverte et non fusionnée au départ sur 5be00da.
-L’état GitHub réel prévaut toujours sur les consignes contextuelles d’un ancien checkpoint.
+- Checkpoint principal : bloc « Reprise rapide » en tête de [progress](progress.md) (branche, tête/CI,
+  dernier agent si connu, travail, décisions, fichiers, tests réellement exécutés, anomalies,
+  prochaines tâches). Pas de fichier de suivi parallèle ; références durables dans les docs métier.
+- Revue croisée possible dans les deux sens (Codex ↔ Claude Code), ChatGPT Work pouvant relire ou
+  reprendre depuis GitHub : relecteur d’abord en lecture seule sur un SHA noté, anomalies prouvées
+  (fichier:ligne, spécification, commande/sortie) et classées Bloquante/Majeure/Mineure/Remarque,
+  publiées dans la PR. Le développeur confirme ou conteste avec preuve, corrige, relance les tests ;
+  le relecteur valide le nouveau SHA. Absence d’anomalie ≠ garantie ; validation ≠ autorisation de merge.
+- Un seul agent écrit dans un répertoire de travail et sur une branche à la fois ; jamais deux agents
+  sur les mêmes fichiers du même répertoire. Parallélisme par branches et git worktrees distincts.
+- Aucun test déclaré réussi sans exécution réelle ou vérification de sa CI sur le SHA concerné.
 
-- Si PR #5 est encore ouverte et que la mission porte dessus, reprendre sa branche existante ;
-  ne pas créer de nouvelle branche ni PR #6 pour ce lot, ni merger sans autorisation explicite.
-- Si PR #5 est fusionnée, cette consigne est historique : ne pas reprendre sa branche pour un
-  nouveau lot. Tout nouveau lot autorisé repart de master synchronisée sur une nouvelle branche
-  courte work/..., selon son périmètre. Ne pas recréer la branche de PR #5.
-
-Le périmètre de la passation était **documents uniquement**, plus scripts/check_docs.py si nécessaire
-aux nouveaux documents. Services, gameplay, migrations/SQL, game_data (même son README), dépendances,
-Compose/Docker et tests fonctionnels étaient exclus. Toute anomalie de code observée dans cette
-mission va dans [audit](docs/06-handoff/pr-5-audit.md)/[risques](docs/06-handoff/known-gaps.md), sans
-correctif dans ce lot. Une nouvelle instruction et progress déterminent le prochain lot ; aucun
-force-push ou suppression de branche implicite.
+Historique : la passation du 28/10/2026 (documents seulement, branche de PR #5) est close ; PR #5 et
+#6 sont fusionnées et leurs consignes de reprise ne s’appliquent plus. Anomalies de code observées
+hors lot : [audit](docs/06-handoff/pr-5-audit.md)/[risques](docs/06-handoff/known-gaps.md).
+Une nouvelle instruction et progress déterminent le prochain lot ; aucun force-push ou suppression de
+branche implicite.
 
 ## Produit et données
 

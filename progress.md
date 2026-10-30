@@ -2,6 +2,23 @@
 
 Mise à jour : 2026-10-30. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
+## Reprise rapide
+
+Bloc réécrit par chaque agent qui publie ; format et règles dans le
+[protocole de collaboration](docs/06-handoff/work-codex-handoff.md).
+
+| Champ | État |
+| --- | --- |
+| Branche / PR / base | work/step-5c-portal-account-lobby · PR #7 OPEN brouillon · base master 63bb7d1 |
+| Tête et CI | Tête = commit documentaire portant ce bloc (SHA/CI consignés dans PR #7 après observation). Dernier commit fonctionnel C06 7a00c7b : CI push 41098495003 et PR 41098504081 success, 5 jobs chacun |
+| Dernier agent | Rédaction documentaire Claude Code local (WSL2), reprise/publication Codex local après confirmation utilisateur ; C01–C06 publiés par Codex local |
+| Travail réalisé | Protocole de collaboration Work/Codex/Claude Code, revue croisée, CLAUDE.md, exemples de reprise actualisés ; aucun code |
+| Décisions | Protocole validé par l’utilisateur le 2026-10-30 : [protocole](docs/06-handoff/work-codex-handoff.md), [AGENTS](AGENTS.md), [index](docs/06-handoff/decision-status.md) |
+| Fichiers modifiés | CLAUDE.md (nouveau), AGENTS.md, progress.md, context.md, README.md, CONTRIBUTING.md, docs/README.md, docs/06-handoff/{README,work-codex-handoff,decision-status}.md, docs/04-quality/definition-of-done.md |
+| Tests réellement exécutés | check_docs.py et git diff --check ; import CLAUDE.md→AGENTS.md vérifié via Claude Code. Aucun test fonctionnel relancé (aucun code modifié) |
+| Anomalies / corrections restantes | Aucune revue croisée ouverte sur PR #7. Limites C06 ci-dessous ; Q48/Q49/Q55 différées |
+| Prochaines tâches | C07 handoff/GameSession → C08 parcours frontend compte/lobby → C09 recette de clôture → clôture 5C (fusion sur instruction seulement) ; 5D exclu |
+
 ## Lot courant — 5C : Portal Account/Lobby foundation
 
 **Statut : C01–C06 implémentés et testés sur PR #7 ; C07 handoff/GameSession à suivre. 5C en cours.**
@@ -9,6 +26,31 @@ Mise à jour : 2026-10-30. [Contexte](context.md), [passation](docs/06-handoff/R
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
 Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C06 est décrit en premier.
+
+### Collaboration multi-agents — documentaire, 2026-10-30
+
+Instruction utilisateur : valider les quatre corrections de l’analyse du 30/10 et formaliser la
+collaboration ChatGPT Work / Codex / Claude Code, sur la branche de PR #7, sans nouvelle branche ni
+fusion. Agent : Claude Code local (WSL2). GitHub relu avant modification : PR #7 OPEN/brouillon, tête
+locale/distante 7a00c7ba656a22aca67e47f758b1d99ebfa54b5e, base master 63bb7d1, arbre propre.
+
+**CI de C06 observée sur 7a00c7b** : push 41098495003 et pull_request 41098504081 completed/success,
+jobs backend, frontend, portal-backend, portal-frontend et compose-smoke. Cette CI vaut pour 7a00c7b
+seulement ; le commit documentaire suivant a sa propre CI, consignée dans PR #7 après observation.
+
+Livré, documents seulement : [protocole commun](docs/06-handoff/work-codex-handoff.md) (rôles et
+environnements, reprise, checkpoint « Reprise rapide », revue croisée avec criticités/contestation/
+revalidation, branches et worktrees, démarrage local avec Portal et smokes, vérifications Game+Portal) ;
+CLAUDE.md important AGENTS.md sans duplication ; AGENTS généralisé aux trois agents, consignes PR #5
+ramenées à l’historique ; renvois README/CONTRIBUTING/docs/DoD/index des décisions. Aucun code, test,
+migration, dépendance, game_data ou configuration Docker modifié ; docs/visual-reference/ non suivi,
+étranger à ce lot, laissé hors commit. Suite inchangée : C07, C08, C09 puis clôture de 5C.
+
+Reprise Codex : modifications documentaires apparues pendant le démarrage C07 ; écritures suspendues,
+puis utilisateur confirme que Codex peut reprendre seul. Modifications Claude préservées, check_docs
+et diff relus par Codex ; publication documentaire séparée. C07 local en cours et non validé à ce
+checkpoint, aucun code C07 inclus dans ce commit. Le dossier visuel a entre-temps été intégré par
+Codex dans 2286c35 ; la mention « non suivi » ci-dessus décrit le début du travail Claude.
 
 ### Références visuelles — checkpoint documentaire avant C07, 2026-10-30
 

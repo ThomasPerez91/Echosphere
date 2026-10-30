@@ -12,7 +12,9 @@ Socle Portal séparé : https://portal.echosphere.localhost:8443 ; Game : https:
 Certificat local à approuver explicitement et recette : [Portal C01](docs/03-technical/portal-foundation.md).
 
 Lire [AGENTS.md](AGENTS.md), [context.md](context.md), [progress.md](progress.md), puis
-[la passation Work/Codex](docs/06-handoff/README.md) pour reprendre sans historique de chat.
+[la passation](docs/06-handoff/README.md) pour reprendre sans historique de chat. ChatGPT Work,
+Codex et Claude Code suivent le même [protocole de collaboration et de revue croisée](docs/06-handoff/work-codex-handoff.md) ;
+[CLAUDE.md](CLAUDE.md) importe seulement AGENTS.md.
 `master` est l’intégration stable. Nouvelles branches courtes `work/...` depuis master, PR vers master,
 CI/revue et merge sur autorisation ; tags et releases identifiées plus tard.
 
@@ -22,8 +24,10 @@ Recette locale réalisée le 29/10/2026 ; preuves et limites dans [progress](pro
 recette graphique Windows attestée.
 
 Prérequis : Git, Docker Desktop démarré avec intégration WSL2 pour votre distribution et
-Docker Compose v2 récent. Garder les ports 5173 et 8000 disponibles. Aucun Python/Node hôte requis
-pour lancer la pile locale.
+Docker Compose v2 récent. Garder les ports 5173 et 8000 disponibles, plus 8443 (HTTPS local
+Portal/Game) et 8025 (Mailpit) sur la branche de PR #7. Aucun Python/Node hôte requis pour lancer
+la pile locale. Démarrage avec Portal, alembic des deux bases et trois smokes :
+[protocole de collaboration](docs/06-handoff/work-codex-handoff.md#démarrage-local-frais-codex--claude-code).
 
 ```bash
 mkdir -p ~/projects

@@ -95,13 +95,12 @@ nécessaire à 5B identifié. Architecture cadrée ne signifie pas sécurité im
 ## Workflow et prochain travail
 
 master stable, work/... → PR master → CI/revue → merge explicitement autorisé. Pas de develop
-permanente, force push, branche empilée ou release implicite. Work/Codex publient leur checkpoint
-pour l’autre environnement ; [procédure commune](docs/06-handoff/work-codex-handoff.md).
-La passation était limitée aux documents sur la branche existante #5, sans nouvelle PR, merge,
-code métier, migration, game_data, dépendance, Docker ou test modifié. Si #5 est encore ouverte et
-que la mission porte dessus, reprendre cette branche. Après sa fusion, synchroniser master et
-partir sur une nouvelle branche work/... pour tout nouveau lot autorisé, sans recréer la branche #5.
-progress porte le checkpoint et les actions de reprise avant/après fusion.
+permanente, force push, branche empilée ou release implicite. ChatGPT Work (GitHub), Codex local et
+Claude Code local (WSL2) suivent les mêmes règles/DoD, sans mémoire partagée : checkpoint « Reprise
+rapide » de progress, revue croisée dans les PR, un seul écrivain par répertoire/branche et worktrees
+pour le parallélisme ; [protocole commun](docs/06-handoff/work-codex-handoff.md), validé le 2026-10-30.
+La passation documentaire de la branche #5 est historique depuis la fusion de #5 ; tout nouveau lot
+autorisé part de master synchronisée sur une nouvelle branche work/....
 PR #6 fusionnée sur instruction explicite le 2026-10-29 : master
 63bb7d1c902e9c0fbae3497d4a36c107a80eb611. **5B documentaire terminé et intégré à master** ;
 contrats validés, sous-ensembles C02–C06 implémentés sur PR #7 seulement. Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ;

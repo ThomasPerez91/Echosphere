@@ -1,8 +1,8 @@
 # Passation Space Game / Echosphere
 
-**Statut : documentation durable, mission du 2026-10-28.** GitHub est la source de vérité partagée
-pour Work et Codex local ; un historique de chat n’est pas nécessaire pour reprendre le périmètre
-consigné. Cette passation n’est pas un export complet des conversations du projet.
+**Statut : documentation durable, mission du 2026-10-28, protocole multi-agents du 2026-10-30.**
+GitHub est la source de vérité partagée pour ChatGPT Work, Codex local et Claude Code local ; un
+historique de chat n’est pas nécessaire pour reprendre le périmètre consigné. Cette passation n’est pas un export complet des conversations du projet.
 
 ## Reprise en sept lectures
 
@@ -12,7 +12,8 @@ consigné. Cette passation n’est pas un export complet des conversations du pr
 4. [Carte des sources](source-map.md) et [index des décisions](decision-status.md).
 5. [Roadmap](../05-project/roadmap.md) et [questions ouvertes](../05-project/open-questions.md).
 6. [Vision](../00-product-vision.md), références métier du prochain lot et [ADR](../adr/README.md).
-7. [Procédure Work/Codex](work-codex-handoff.md), [audit #5](pr-5-audit.md), [lacunes/risques](known-gaps.md).
+7. [Protocole de collaboration et revue croisée](work-codex-handoff.md), [audit #5](pr-5-audit.md),
+   [lacunes/risques](known-gaps.md).
 
 ## Ce qui est et n’est pas livré
 

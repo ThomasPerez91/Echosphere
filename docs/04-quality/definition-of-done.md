@@ -12,6 +12,14 @@
 - Documentation et ADR actualisés si le comportement ou une décision structurelle change.
 - Aucun secret, logs sensibles, code généré inutile ou dépendance non justifiée.
 - PR compréhensible : comportement final, validation réelle et limites ; pas de merge automatique.
+- Même DoD pour ChatGPT Work, Codex et Claude Code ; bloc « Reprise rapide » de progress à jour.
+
+## Revue croisée
+
+Quand une revue est demandée : SHA relu noté, anomalies prouvées et classées publiées dans la PR,
+réponses confirmée/contestée/hors lot, corrections suivies des tests relancés et de la CI du nouveau
+SHA, puis validation du relecteur sur ce SHA. Aucune Bloquante/Majeure ouverte sans arbitrage
+utilisateur. Procédure : [protocole de collaboration](../06-handoff/work-codex-handoff.md).
 
 ## Passation documentaire historique PR #5
 

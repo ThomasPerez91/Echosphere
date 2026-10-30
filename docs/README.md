@@ -38,7 +38,7 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
 ## Accès durable et références
 
 - [Passation](06-handoff/README.md), [sources](06-handoff/source-map.md), [décisions](06-handoff/decision-status.md),
-  [risques](06-handoff/known-gaps.md), [audit #5](06-handoff/pr-5-audit.md), [Work ↔ Codex](06-handoff/work-codex-handoff.md).
+  [risques](06-handoff/known-gaps.md), [audit #5](06-handoff/pr-5-audit.md), [collaboration Work/Codex/Claude Code](06-handoff/work-codex-handoff.md).
 - [Portal/Game ADR 0008](adr/0008-control-plane-game-data-plane.md) : décision cible **auth future**, socle C01 sur PR #7 ;
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
