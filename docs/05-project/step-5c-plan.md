@@ -1,6 +1,6 @@
 # Étape 5C — cadrage Portal Account/Lobby foundation
 
-**Statut : découpage présenté ; C01–C07 implémentés sur PR #7, suite C08 future.** Mise à jour 2026-10-30.
+**Statut : découpage présenté ; C01–C08 implémentés sur PR #7, C09 recette de clôture.** Mise à jour 2026-10-30.
 Autorisation utilisateur : poursuivre 5C après un premier checkpoint documentaire commit/push.
 Contrats de référence **validés, inchangés** : [identity-contracts](../03-technical/identity-contracts.md),
 [ADR 0008](../adr/0008-control-plane-game-data-plane.md), [registre Q40–Q56](open-questions.md).
@@ -56,11 +56,11 @@ Les identifiants Cxx sont des repères de travail locaux, pas des issues GitHub 
 | C05 | **Implémenté sur PR #7** : MFA joueur TOTP/WebAuthn, secours, récupération limitée, protection des privilèges | Un TOTP/cinq WebAuthn, dix secours uniques, step-up 5 min, récupération 15 min, effets MFA ciblés et audit/notifications ; aucune procédure support inventée |
 | C06 | **Implémenté sur PR #7** : Memberships/lobby et interface interne privée mTLS : outbox, état effectif Game, révisions, idempotence, révocations ciblées et réconciliation | Pending distinct d’applied, doublons/désordre/timeout sans double effet ni résurrection, refus du service non autorisé |
 | C07 | **Implémenté sur PR #7** : Handoff réel et sessions Game : pré-auth navigateur, signature asymétrique, consommation atomique, clés locales, appareil/scopes et logout | Ticket 60 s unique, clés inconnues refusées, droits 8 h non glissants, session 8 h/2 h, révocations concurrentes et UI en attente fidèle ; aucune API Colony |
-| C08 | Parcours frontend compte/lobby/sécurité et adaptation minimale du shell Game | Mobile/clavier, erreurs/chargements, aucun secret localStorage, API même origine et CORS refusé par défaut ; écrans branchés aux vrais services |
-| C09 | Recette de clôture et passation de l’incrément | Tests ciblés/concurrence PostgreSQL des deux plans, Chromium HTTPS, migration/absence de dérive, reprise workers/livraison, CI et docs de tête ; limites restantes explicites |
+| C08 | **Implémenté sur PR #7** : Parcours frontend compte/lobby/sécurité et adaptation minimale du shell Game | Mobile/clavier, erreurs/chargements, aucun secret localStorage, API même origine et CORS refusé par défaut ; écrans branchés aux vrais services |
+| C09 | **Recette réalisée sur PR #7** : Recette de clôture et passation de l’incrément | Tests ciblés/concurrence PostgreSQL des deux plans, Chromium HTTPS, migration/absence de dérive, reprise workers/livraison, CI et docs de tête ; limites restantes explicites |
 
 Les tests accompagnent chaque ticket ; C09 n’est pas une attente avant de vérifier la sécurité.
-C01 est le premier incrément de code après présentation de ce plan, désormais réalisé ; C02 comptes/vérification est réalisé, C03 sessions est réalisé ; C04, C05 MFA et C06 lobby/mTLS sont réalisés ; C07 est réalisé ; C08 suit. Les dépendances C04/C05 sont
+C01 est le premier incrément de code après présentation de ce plan, désormais réalisé ; C02 comptes/vérification est réalisé, C03 sessions est réalisé ; C04, C05 MFA et C06 lobby/mTLS sont réalisés ; C07 et C08 sont réalisés ; C09 porte la recette et la passation de clôture. Les dépendances C04/C05 sont
 itératives : aucun endpoint sensible utilisable sans ses preuves requises, aucune route MFA simulée.
 C06/C07 concernent les fondations d’accès, pas les commandes gameplay réservées à 5D.
 Une protection prévue mais absente ne sera jamais annoncée comme livrée dans un checkpoint partiel.

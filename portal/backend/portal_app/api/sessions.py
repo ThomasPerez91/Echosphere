@@ -72,6 +72,9 @@ async def login(data: LoginCredentials, request: Request):
         data.factor,
     )
     result = response(payload)
+    from portal_app.sessions.receipts import COOKIE
+
+    result.delete_cookie(COOKIE, secure=True, httponly=True, samesite="strict", path="/")
     now = request.app.state.accounts.clock()
     maximum = max(0, int((datetime.fromisoformat(payload["expires_at"]) - now).total_seconds()))
     cookie(result, SESSION_COOKIE, raw, maximum)
@@ -120,11 +123,14 @@ async def close(request, target=None):
         request.headers.get("x-csrf-token"),
         target,
     )
+    identifier = payload.pop("revocation_id", None)
     result = response(payload)
     if payload["current_session_closed"]:
-        result.delete_cookie(
-            SESSION_COOKIE, secure=True, httponly=True, samesite="strict", path="/"
-        )
+        from portal_app.sessions.receipts import attach
+
+        attach(result, request.app.state.accounts, "device", identifier)
+        # The server revoked this proof. A delayed response must not erase a newer login cookie.
+        # A subsequent normal login replaces the unusable old cookie, as for C04 sensitive changes.
     return result
 
 
@@ -136,3 +142,15 @@ async def logout(request: Request):
 @router.post("/sessions/{identifier}/logout")
 async def logout_session(identifier: UUID, request: Request):
     return await close(request, identifier)
+
+
+@router.get("/revocation-status")
+async def revocation_status(request: Request):
+    from portal_app.sessions.receipts import COOKIE, RevocationReceipts
+
+    bootstrap(request)
+    return response(
+        await run_in_threadpool(
+            RevocationReceipts(request.app.state.accounts).read, request.cookies.get(COOKIE)
+        )
+    )

@@ -78,7 +78,11 @@ def context(request):
 
 def changed(payload):
     # Keep cookies until the next normal login: a delayed response must not erase a newer cookie.
-    return response(payload)
+    from portal_app.sessions.receipts import COOKIE
+
+    result = response(payload)
+    result.delete_cookie(COOKIE, secure=True, httponly=True, samesite="strict", path="/")
+    return result
 
 
 @router.post("/step-up")
@@ -119,7 +123,11 @@ async def password_change(data: PasswordChange, request: Request):
 @router.post("/logout-all")
 async def logout_all(data: Proof, request: Request):
     service, raw, csrf = context(request)
-    return changed(await run_in_threadpool(service.logout_all, raw, csrf, data.proof))
+    payload = await run_in_threadpool(service.logout_all, raw, csrf, data.proof)
+    identifier = payload.pop("revocation_id", None)
+    from portal_app.sessions.receipts import attach
+
+    return attach(changed(payload), request.app.state.accounts, "account", identifier)
 
 
 @router.post("/password/reset/request", status_code=202)

@@ -13,18 +13,19 @@ function validEntry(value: string, universe: string) {
   } catch { return false; }
 }
 
-export function Lobby({ csrf }: { csrf: string }) {
+export function Lobby({ csrf, onExpired }: { csrf: string; onExpired?: () => void }) {
   const [snapshot, setSnapshot] = useState<Projection | null>(null);
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   const active = useRef(false); const controller = useRef<AbortController | null>(null);
   useEffect(() => {
     active.current = true; const request = new AbortController(); controller.current = request;
     const timer = window.setTimeout(() => request.abort(), 10000);
-    void read(request.signal).catch(() => { if (active.current) setError('Liste des parties indisponible.'); }).finally(() => window.clearTimeout(timer));
+    void read(request.signal).catch(() => { if (active.current && controller.current === request) setError('Liste des parties indisponible.'); }).finally(() => window.clearTimeout(timer));
     return () => { active.current = false; controller.current?.abort(); };
   }, []);
   async function read(signal: AbortSignal) {
     const response = await fetch('/api/lobby/memberships', { headers: { 'X-Portal-Request': 'bootstrap' }, signal });
+    if (response.status === 401) { onExpired?.(); throw new Error('session'); }
     const body: unknown = await response.json();
     if (!response.ok || !body || typeof body !== 'object' || !('memberships' in body) || !Array.isArray(body.memberships)
       || !('revocations' in body) || !Array.isArray(body.revocations)
@@ -37,7 +38,7 @@ export function Lobby({ csrf }: { csrf: string }) {
         && (!item.entry_available || (typeof item.entry_url === 'string' && validEntry(item.entry_url, item.universe_id))))
       || !body.revocations.every(item => item && ['account', 'device'].includes(item.scope)
         && ['pending', 'acknowledged'].includes(item.state) && typeof item.created_at === 'string')) throw new Error('projection');
-    if (active.current && !signal.aborted) setSnapshot(body as Projection);
+    if (active.current && !signal.aborted) { setSnapshot(body as Projection); setError(''); }
   }
   async function refresh() {
     if (busy) return;
@@ -47,6 +48,7 @@ export function Lobby({ csrf }: { csrf: string }) {
       // Explicit user refresh counts; the subsequent GET/polling can never extend idle or rights.
       const navigation = await fetch('/api/auth/navigation', { method: 'POST', headers: {
         'Content-Type': 'application/json', 'X-CSRF-Token': csrf }, body: '{}', signal: request.signal });
+      if (navigation.status === 401) onExpired?.();
       if (!navigation.ok) throw new Error('session');
       await read(request.signal);
     } catch { if (active.current) setError('Liste non confirmée. Vérifiez votre connexion et réessayez.'); }
@@ -59,6 +61,7 @@ export function Lobby({ csrf }: { csrf: string }) {
       const result = await fetch(`/api/lobby/universes/${encodeURIComponent(universe)}/renew`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf }, body: '{}',
         signal: AbortSignal.timeout(10000) });
+      if (result.status === 401) onExpired?.();
       if (!result.ok) throw new Error('renew');
       await read(AbortSignal.timeout(10000));
     } catch { if (active.current) setError('Renouvellement non confirmé. Actualisez la liste avant de réessayer.'); }
@@ -71,7 +74,7 @@ export function Lobby({ csrf }: { csrf: string }) {
       <h4>{item.name}</h4>
       <p>{item.delivery_state === 'pending' ? 'Confirmation de Game en attente' : item.desired_status === 'suspended' ? 'Participation suspendue' : item.desired_status === 'revoked' ? 'Accès révoqué' : item.expired ? 'Confirmation d’accès expirée' : 'Participation confirmée par Game'}</p>
       {item.last_checked_at && <p>Dernière confirmation : <time dateTime={item.last_checked_at}>{new Date(item.last_checked_at).toLocaleString('fr-FR')}</time></p>}
-      {item.entry_available && item.entry_url ? <a href={item.entry_url} referrerPolicy="no-referrer">Entrer dans cet univers</a>
+      {!error && item.entry_available && item.entry_url ? <a href={item.entry_url} referrerPolicy="no-referrer">Entrer dans cet univers</a>
         : <p>L’entrée requiert une adresse vérifiée et un accès actif confirmé par Game.</p>}
       {item.desired_status === 'active' && item.delivery_state === 'applied' && <button type="button" disabled={busy}
         onClick={() => { void renew(item.universe_id); }}>Confirmer de nouveaux droits pour cette partie</button>}

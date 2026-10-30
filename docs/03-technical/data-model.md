@@ -168,3 +168,7 @@ temporaires *_test et refus TLS/headers, séparée du Chromium à API intercept�
 échange POST atomique et cookie par univers ; contexte minimal et logout, aucun endpoint Colony.
 Game additive 0006_game_sessions, Accounts p0005_control inchangée. Rotation/production et
 nettoyage à recetter en C09 ; commandes sécurisées réservées à 5D.
+
+
+Compléments actuels sur PR #7 : [C08 parcours et shell](portal-game-ui.md),
+[C09 recette et opérations](portal-operations.md). Aucun début de 5D ni exposition production.

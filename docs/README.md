@@ -43,10 +43,14 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
 - [Contrats 5B](03-technical/identity-contracts.md) : décisions validées et consolidées le 2026-10-29,
-  **partiellement implémentées sur PR #7 (C02–C07)** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
+  **partiellement implémentées sur PR #7 (C02–C08)** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. Lot courant
-  5C : checkpoint/cadrage effectués, C01–C07 implémentés sur PR #7 ; C08 suit, 5D non commencé.
+  5C : checkpoint/cadrage effectués, C01–C08 implémentés sur PR #7 ; C08 livré, C09 recette de clôture, 5D non commencé.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
 sur les conversations Space Game qui n’ont pas pu être consultées.
+
+
+Compléments actuels sur PR #7 : [C08 parcours et shell](03-technical/portal-game-ui.md),
+[C09 recette et opérations](03-technical/portal-operations.md). Aucun début de 5D ni exposition production.

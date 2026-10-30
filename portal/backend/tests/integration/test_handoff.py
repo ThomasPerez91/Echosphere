@@ -160,7 +160,7 @@ def test_forms_exact_origins_no_ticket_url_csrf_and_no_store(handoff, accounts):
     )
     assert result.status_code == 200 and 'name="ticket"' in result.text
     assert (
-        "script" not in result.text
+        'src="http' not in result.text and "requestSubmit()" in result.text
         and "frame-ancestors 'none'" in result.headers["content-security-policy"]
     )
     assert (

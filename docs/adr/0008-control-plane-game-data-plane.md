@@ -1,6 +1,6 @@
 # ADR 0008 — Portal Control Plane / Game Data Plane
 
-- **Statut : Décision validée ; réalisation partielle C01–C07 sur PR #7, non intégrée à master.**
+- **Statut : Décision validée ; réalisation partielle C01–C08 sur PR #7, non intégrée à master.**
 - Date : 2026-10-28 ; source : instruction explicite de la mission de passation.
 - Affine [ADR 0001](0001-modular-monolith.md) et [ADR 0006](0006-universe-game-instance.md).
   Ne remplace ni ne renumérote [ADR 0007](0007-colony-economy.md).
@@ -120,7 +120,7 @@ ceci reste une cible documentaire, pas une commande de lancement actuelle.
 compte/lobby selon cadrage ; 5D : API Colony sécurisée et UI réelle. Pas de Portal complet ou
 multijoueur développé par anticipation. Q16 a son cadrage 5B clos ; réalisation et reports restent
 explicites au registre. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`),
-contrats implémentés partiellement depuis par C02–C07 sur PR #7. 5C est le lot courant autorisé, sans début de 5D.
+contrats implémentés partiellement depuis par C02–C08 sur PR #7. 5C est le lot courant autorisé, sans début de 5D.
 
 ## Conséquences et critères futurs
 

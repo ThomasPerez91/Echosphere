@@ -13,6 +13,16 @@ Restent ouverts : procédures support renforcé joueur/privilégié Q48 (aucun d
 approuvée), fournisseur et configuration production Q49, politiques des modes futurs Q55/Q19–Q29.
 Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B identifié ; aucun début de 5D.
 
+Actualisation C08/C09 : [parcours/shell](../03-technical/portal-game-ui.md) et
+[recette de clôture](../03-technical/portal-operations.md) sur PR #7. Handoff navigateur HTTPS réel,
+Game autonome sous arrêt Portal, construction acceptée terminée par le worker, révocation retardée
+acquittée et suivi de statut limité, rotation locale des kids et pg_dump/restore des deux DB de test
+recettés. Les anciennes limites de tickets C01–C07 ci-dessous décrivent leurs checkpoints ; ces
+nouvelles preuves les remplacent dans leur périmètre, sans prétendre à une recette Windows matérielle.
+Restent avant production : fournisseur/domaines, PKI/rotation des secrets mail/MFA, barrière de
+restauration et RPO/RTO, archivage anti-rejeu, budgets de charge et observabilité. Aucun prestataire,
+procédure support Q48 ou règle des modes Q55 choisi par implication. 5D reste hors lot.
+
 ## Accès incomplet aux sources
 
 - Pas d’accès direct à toutes les conversations Space Game ou à un export intégral du projet.

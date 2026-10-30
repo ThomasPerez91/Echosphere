@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/auth/revocation-status', route => route.fulfill({ status: 404, json: {} }));
   await page.route('**/api/lobby/memberships', route => route.fulfill({ json: { memberships: [], revocations: [] } }));
   await page.route('**/api/mfa/status', route => route.fulfill({ json: { enabled: false, totp: false, credentials: [] } }));
   await page.route('**/api/auth/sessions', route => route.fulfill({ status: 401, json: { error: { code: 'authentication_required' } } }));
@@ -107,6 +108,7 @@ for (const width of [320, 1440]) {
       session_id: 'one', csrf_token: 'session-proof', sessions: [{ id: 'one', current: true }] };
     await page.route('**/api/auth/**', route => {
       const path = new URL(route.request().url()).pathname;
+      if (path === '/api/auth/revocation-status') return route.fulfill({ status: 404, json: {} });
       if (path.endsWith('/sessions')) return route.fulfill(loggedIn ? { json: snapshot } : { status: 401, json: {} });
       if (path.endsWith('/challenge')) return route.fulfill({ json: { csrf_token: 'login-proof' } });
       if (path.endsWith('/login')) {
@@ -145,6 +147,7 @@ for (const width of [320, 1440]) {
     let recoveries = 0;
     await page.route('**/api/security/**', route => {
       const path = new URL(route.request().url()).pathname;
+      if (path === '/api/auth/revocation-status') return route.fulfill({ status: 404, json: {} });
       if (path.endsWith('/request')) return route.fulfill({ status: 202, json: { status: 'request_received' } });
       if (path.includes('/password/')) { recoveries++; return route.fulfill({ json: { status: 'password_reset', game_revocation: 'pending' } }); }
       return route.fulfill({ json: { status: 'additional_confirmation_required' } });

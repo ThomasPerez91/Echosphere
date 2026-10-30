@@ -4,6 +4,11 @@
 Contrats [5B](identity-contracts.md) inchangés ; [C06](portal-game-control.md) fournit droits et epochs.
 Pas d’API Colony ni de monde de démonstration. Raffinement des parcours/shell : C08 ; clôture : C09.
 
+Évolution C08/C09 : [parcours/shell React](portal-game-ui.md), formulaires automatiquement soumis
+par script à nonce avec fallback manuel, JSON même origine pour les actions explicites ;
+[recette de clôture/opérations](portal-operations.md). Le corps ci-dessous conserve le périmètre
+et les limites du checkpoint C07 ; ses éléments « C08 à suivre » décrivent cette étape historique.
+
 ## Protocole et autorités
 
 JWT Ed25519 via PyJWT 2.15.1/cryptography, algorithme EdDSA imposé, type

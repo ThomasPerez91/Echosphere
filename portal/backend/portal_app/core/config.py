@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     database_pool_size: int = Field(default=3, ge=1, le=20)
 
     public_origin: str = "https://portal.echosphere.localhost:8443"
+    receipt_key_file: Path = Path("/run/portal-secrets/receipt.key")
     mail_key_file: Path = Path("/run/portal-secrets/email.key")
     mail_transport: str = "disabled"
     mail_host: str = "portal-mailpit"

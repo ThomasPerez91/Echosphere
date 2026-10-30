@@ -14,6 +14,15 @@ RECOVERY_COOKIE = "__Host-portal-recovery"
 router = APIRouter(prefix="/mfa")
 
 
+def mfa_response(payload):
+    result = response(payload)
+    if payload.get("global_logout"):
+        from portal_app.sessions.receipts import COOKIE
+
+        result.delete_cookie(COOKIE, secure=True, httponly=True, samesite="strict", path="/")
+    return result
+
+
 class AssertionOptions(Strict):
     current_password: SecretStr = Field(min_length=1, max_length=128)
     action: str = Field(min_length=1, max_length=32)
@@ -57,7 +66,7 @@ def context(request, recovery=False):
 @router.get("/status")
 async def status(request: Request):
     bootstrap(request)
-    return response(
+    return mfa_response(
         await run_in_threadpool(
             Mfa(request.app.state.accounts).status, request.cookies.get(SESSION_COOKIE)
         )
@@ -69,7 +78,7 @@ async def assertion_options(data: AssertionOptions, request: Request):
     service, raw, proof = context(request)
     if data.action == "login":
         raw = request.cookies.get(CHALLENGE_COOKIE)
-    return response(
+    return mfa_response(
         await run_in_threadpool(
             service.assertion_options,
             raw,
@@ -88,7 +97,7 @@ async def assertion_options(data: AssertionOptions, request: Request):
 @router.post("/enroll/begin")
 async def begin(data: Enrollment, request: Request):
     service, raw, proof = context(request)
-    return response(
+    return mfa_response(
         await run_in_threadpool(
             service.begin, raw, proof, data.proof, data.kind, data.name, data.replace_id
         )
@@ -98,7 +107,7 @@ async def begin(data: Enrollment, request: Request):
 @router.post("/enroll/finish")
 async def finish(data: Finish, request: Request):
     service, raw, proof = context(request)
-    return response(
+    return mfa_response(
         await run_in_threadpool(
             service.finish,
             raw,
@@ -113,7 +122,7 @@ async def finish(data: Finish, request: Request):
 @router.post("/manage")
 async def manage(data: Management, request: Request):
     service, raw, proof = context(request)
-    return response(
+    return mfa_response(
         await run_in_threadpool(
             service.manage, raw, proof, data.proof, data.action, data.parameters
         )
@@ -132,7 +141,7 @@ async def recovery(data: Recovery, request: Request):
         request.headers.get("x-csrf-token"),
         peer_address(request),
     )
-    result = response({"status": "mfa_recovery", "csrf_token": csrf(raw), "expires_in": 900})
+    result = mfa_response({"status": "mfa_recovery", "csrf_token": csrf(raw), "expires_in": 900})
     cookie(result, RECOVERY_COOKIE, raw, 900)
     return result
 
@@ -140,7 +149,7 @@ async def recovery(data: Recovery, request: Request):
 @router.post("/recovery/enroll/begin")
 async def recovery_begin(data: Enrollment, request: Request):
     service, raw, proof = context(request, True)
-    return response(
+    return mfa_response(
         await run_in_threadpool(service.begin, raw, proof, None, data.kind, data.name, None, True)
     )
 
@@ -148,7 +157,7 @@ async def recovery_begin(data: Enrollment, request: Request):
 @router.post("/recovery/enroll/finish")
 async def recovery_finish(data: Finish, request: Request):
     service, raw, proof = context(request, True)
-    return response(
+    return mfa_response(
         await run_in_threadpool(
             service.finish,
             raw,

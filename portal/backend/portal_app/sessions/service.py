@@ -199,6 +199,7 @@ class Sessions:
     def payload(self, row, user, raw):
         return {
             "status": "authenticated",
+            "server_time": self.accounts.clock().isoformat(),
             "user": {
                 "id": str(user.id),
                 "email": user.email,
@@ -279,18 +280,19 @@ class Sessions:
             if intention is None:
                 device = session.get(AccountDevice, target.device_id)
                 device.revocation_epoch += 1
-                session.add(
-                    LogoutRequest(
-                        user_id=user.id,
-                        device_id=target.device_id,
-                        portal_session_id=target.id,
-                        created_at=now,
-                        state="pending",
-                        device_epoch=device.revocation_epoch,
-                    )
+                intention = LogoutRequest(
+                    user_id=user.id,
+                    device_id=target.device_id,
+                    portal_session_id=target.id,
+                    created_at=now,
+                    state="pending",
+                    device_epoch=device.revocation_epoch,
                 )
+                session.add(intention)
                 session.add(SecurityEvent(user_id=user.id, kind="portal_logout", created_at=now))
+            session.flush()
             return {
+                "revocation_id": str(intention.id),
                 "status": "portal_logged_out",
                 "game_revocation": "pending",
                 "current_session_closed": current.id == target.id,

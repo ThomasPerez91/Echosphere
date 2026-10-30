@@ -1,6 +1,6 @@
 # Contrats API
 
-**Statut : Game public = sondes et contexte/sessions C07 ; Portal C01–C07 et interface privée mTLS livrés sur PR #7, non intégrés ; gameplay futur.**
+**Statut : Game public = sondes et contexte/sessions C07 ; Portal C01–C08 et interface privée mTLS livrés sur PR #7, non intégrés ; gameplay futur.**
 [Routes C02, erreurs et protections](portal-registration.md). [Routes C03](portal-sessions.md), sessions/CSRF et logout ; [C06 lobby/mTLS](portal-game-control.md) livré, [C07 handoff/GameSession](game-handoff.md) livré sur PR #7.
 
 
@@ -46,14 +46,14 @@ nécessaire à la progression. Notifications/WebSockets futurs restent des proje
 - [Architecture](architecture.md) · [Modèle](data-model.md) · [Temps](event-engine.md)
 - [API](api.md) · [Qualité](../04-quality/testing-strategy.md) · [Questions ouvertes](../05-project/open-questions.md)
 
-## Contrats Portal/Game validés en 5B — C02–C07 partiellement implémentés
+## Contrats Portal/Game validés en 5B — C02–C08 partiellement implémentés
 
 [identity-contracts](identity-contracts.md) porte les autorités, opérations internes, handoff,
 sessions, erreurs et règles compte/MFA validés le 2026-10-29. Le [registre Q40–Q56](../05-project/open-questions.md)
 distingue contrats clos, détails techniques délégués et reports. Game expose les sondes et [C07 handoff/sessions/contexte](game-handoff.md), sans gameplay. Portal ajoute les sondes C01 et les
-[routes d’inscription/vérification C02](portal-registration.md), et les [sessions C03](portal-sessions.md), sans route gameplay. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C07 sur PR #7.
+[routes d’inscription/vérification C02](portal-registration.md), et les [sessions C03](portal-sessions.md), sans route gameplay. 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C08 sur PR #7.
 
-Portal expose les services compte/lobby dans le périmètre C02–C07. Après ticket signé 60 s/unique lié au navigateur,
+Portal expose les services compte/lobby dans le périmètre C02–C08. Après ticket signé 60 s/unique lié au navigateur,
 GameSession opaque : accès direct Game, sans proxy ni consultation Portal par commande. Game vérifie
 session → accès/membership/univers → permissions/binding Empire → propriété/visibilité, puis
 revalide les droits dans la transaction d’acceptation d’une commande.
@@ -111,3 +111,7 @@ temporaires *_test et refus TLS/headers, séparée du Chromium à API intercept�
 échange POST atomique et cookie par univers ; contexte minimal et logout, aucun endpoint Colony.
 Game additive 0006_game_sessions, Accounts p0005_control inchangée. Rotation/production et
 nettoyage à recetter en C09 ; commandes sécurisées réservées à 5D.
+
+
+Compléments actuels sur PR #7 : [C08 parcours et shell](portal-game-ui.md),
+[C09 recette et opérations](portal-operations.md). Aucun début de 5D ni exposition production.

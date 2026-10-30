@@ -397,8 +397,9 @@ def test_http_cookie_origin_csrf_body_and_public_errors(game):
         endpoint + "/logout",
         data={"csrf": read.json()["csrf_token"]},
         headers={"Origin": game.settings.game_public_origin},
+        follow_redirects=False,
     )
-    assert result.status_code == 200
+    assert result.status_code == 303
 
 
 def test_exchange_racing_revocation_cannot_restore_access(game):
@@ -471,3 +472,50 @@ def test_cookie_already_revoked_by_portal_does_not_trap_next_account(game):
     assert game.read(replacement, other[1])["global_user_id"] == str(other[0])
     with pytest.raises(AccessError):
         game.read(raw, one[1])
+
+
+def test_json_game_actions_require_origin_csrf_and_exact_empty_body(game):
+    context = grant(game)
+    game.test_clock[0] = datetime.now(UTC)
+    grant(game, *context, revision=2)
+    raw, _, _ = enter(game, context)
+    app = create_app(game.settings)
+    app.state.session_factory = game.factory
+    client = TestClient(app, base_url=game.settings.game_public_origin)
+    client.cookies.set(cookie_name(context[1]), raw)
+    endpoint = f"/game/{context[1]}"
+    headers = {"Origin": game.settings.game_public_origin, "X-CSRF-Token": csrf(raw)}
+    assert client.post(endpoint + "/navigation", json={}, headers=headers).status_code == 200
+    assert (
+        client.post(endpoint + "/navigation", json={"timestamp": 123}, headers=headers).status_code
+        == 422
+    )
+    assert client.post(endpoint + "/navigation", json={}).status_code == 403
+    assert (
+        client.post(endpoint + "/logout", json={}, headers=headers).json()["status"]
+        == "game_logged_out"
+    )
+    result = client.get(endpoint + "/view", headers={"Accept": "text/html"})
+    assert result.status_code == 401 and "Retour au lobby" in result.text
+
+
+def test_key_rotation_overlap_and_compromised_key_removal_are_local(game, tmp_path):
+    context = grant(game)
+    old_raw, _, _ = enter(game, context)
+    key = Ed25519PrivateKey.generate()
+    public = tmp_path / "next.pem"
+    public.write_bytes(
+        key.public_key().public_bytes(
+            serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+    )
+    game.settings.handoff_public_keys = {**game.settings.handoff_public_keys, "next": public}
+    _, pre, wire = ticket(game, context)
+    encoded = jwt.encode(wire, key, algorithm="EdDSA", headers={"kid": "next", "typ": TYPE})
+    new_raw, _ = game.exchange(encoded, pre, None, context[1])
+    assert game.read(old_raw, context[1])["status"] == "authenticated"
+    assert game.read(new_raw, context[1])["status"] == "authenticated"
+    game.settings.handoff_public_keys = {"next": public}
+    with pytest.raises(AccessError):
+        game.read(old_raw, context[1])
+    assert game.read(new_raw, context[1])["status"] == "authenticated"

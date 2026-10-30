@@ -245,7 +245,9 @@ def test_csrf_cookies_api_classification_and_current_logout(accounts):
         )
         closed = client.post("/auth/logout", headers=valid)
         assert closed.status_code == 200 and closed.json()["game_revocation"] == "pending"
-        assert SESSION_COOKIE not in client.cookies and PROFILE_COOKIE in client.cookies
+        assert SESSION_COOKIE in client.cookies and PROFILE_COOKIE in client.cookies
+        assert not any(header.startswith(SESSION_COOKIE + "=")
+                       for header in closed.headers.get_list("set-cookie"))
         assert (
             client.get("/auth/session", headers={"X-Portal-Request": "bootstrap"}).status_code
             == 401

@@ -5,7 +5,7 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : domaine Colony/économie v0.1 et shell Game intégrés ; Portal C01–C07 sur PR #7 : comptes, sessions, opérations sensibles, MFA, lobby, contrôle privé mTLS et handoff/sessions Game,
+**État actuel : domaine Colony/économie v0.1 et shell Game intégrés ; Portal C01–C08 sur PR #7 : comptes, sessions, opérations sensibles, MFA, lobby, contrôle privé mTLS et handoff/sessions Game,
 sans API gameplay ni partie jouable.**
 
 Socle Portal séparé : https://portal.echosphere.localhost:8443 ; Game : https://game.echosphere.localhost:8443.
@@ -153,7 +153,7 @@ Aucun seed/demo runtime : l’UI Colony réserve ses quatre sections et indique 
 
 ## Architecture cible et reprise durable
 
-**Décision validée, réalisation C01–C07 sur PR #7, non intégrée** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md)
+**Décision validée, réalisation C01–C08 sur PR #7, non intégrée** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md)
 sépare Portal Control Plane (compte global/lobby, Accounts DB) et Game Data Plane (backend actuel,
 Game DB). Plusieurs parties par compte ; interface interne contrôlée, jamais SQL Portal→Game DB.
 Handoff court/unique puis GameSession autonome, gameplay direct à Game. Le lot documentaire 5B
@@ -163,7 +163,7 @@ n’a livré ni Portal, login, protocole d’auth ni changement Compose ; C01 es
 [sources/statuts](docs/06-handoff/source-map.md) et [prochain lot](docs/05-project/roadmap.md) :
 5B contrats identité/Portal-Game → 5C compte/lobby selon cadrage → 5D API Colony sécurisée/UI réelle.
 PR #5 fusionnée sur master 8214e0b ; recette locale effectuée le 2026-10-29, limites dans progress.
-Les [contrats 5B](docs/03-technical/identity-contracts.md) sont validés et consolidés ; C02–C07 en implémentent les premiers sous-ensembles.
+Les [contrats 5B](docs/03-technical/identity-contracts.md) sont validés et consolidés ; C02–C08 en implémentent les premiers sous-ensembles.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1`. Contrats toujours non
 implémentés. Lot courant : 5C sur `work/step-5c-portal-account-lobby`, checkpoint/cadrage effectués
 puis socle C01 implémenté sur PR #7 ; aucune API Colony 5D commencée.

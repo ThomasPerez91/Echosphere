@@ -10,23 +10,89 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 | Champ | État |
 | --- | --- |
 | Branche / PR / base | work/step-5c-portal-account-lobby · PR #7 OPEN brouillon · base master 63bb7d1 |
-| Tête et CI | Tête = commit documentaire Claude portant ce bloc (SHA/CI consignés dans PR #7 après observation). Dernier fonctionnel C07 49799e4 : CI push 41109472715 et PR 41109481379 success ; 97e8ccc (collaboration) push 41105734068/PR 41105741588 success ; C06 7a00c7b vert |
-| Dernier agent | Claude Code local (WSL2), écrivain unique pour ce commit documentaire après reprise confirmée par l’utilisateur ; C07 publié par Codex local (061fd17, 49799e4), arbre propre à la reprise |
-| Travail réalisé | Protocole de sécurité multi-agents et relais sur épuisement des crédits (documents seulement). Précédemment : références visuelles et C07 par Codex (pré-auth, handoff signé, session Game, contexte et logout, raccordement lobby ; pas de gameplay) |
-| Décisions | [Protocole](docs/06-handoff/work-codex-handoff.md) complété le 2026-10-30 ; contrats 5B inchangés, [C07](docs/03-technical/game-handoff.md) détaille les mécanismes délégués ; [guide visuel](docs/visual-reference/README.md) |
-| Fichiers modifiés | Ce commit : AGENTS.md, work-codex-handoff.md, decision-status.md, progress.md. C07 : Game access/0006, Portal handoff/lobby, schéma pur, clés/Compose, tests/recettes et documents canoniques |
-| Tests réellement exécutés | 148 Game et 118 Portal complets sur DB dédiées ; 25 tests Portal frontend, lint/build, 14 Chromium ; smokes Game/Portal/mTLS et parcours HTTPS 320/1440 ; docs/liens/diff. Détails et limites C07 ci-dessous |
-| Anomalies / corrections restantes | C08 intégration shell/parcours et C09 clôture ; rotation/nettoyage/production à recetter. Q48/Q49/Q55 inchangées ; aucune revue croisée formelle attestée |
-| Prochaines tâches | C08 parcours frontend et contexte dans le shell → C09 recette/clôture 5C ; aucun merge sans instruction ; 5D exclu |
+| Tête et CI | Tête = checkpoint C08/C09 portant ce bloc ; SHA publié dans PR #7. CI de ce checkpoint à observer, aucun succès présumé. Base de reprise 35067f85df1bebbaa4dc1a1b047b64d997a7b3e3, CI push 41110493629 / PR 41110502475 success |
+| Dernier agent | Codex local ; arrêt explicite demandé par l’utilisateur pour relais Claude, sans travail concurrent à reprendre |
+| Travail réalisé | C08 implémenté et testé ; C09 recette panne/reprise/rotation/restore locale réalisée. Clôture finale et CI de tête encore à terminer |
+| Décisions | 5B et Q01–Q56 inchangés ; [C08](docs/03-technical/portal-game-ui.md), [C09](docs/03-technical/portal-operations.md), aucune nouvelle décision produit |
+| Fichiers modifiés | Game access/HTTP + shell React ; Portal bootstrap/lobby/reçus/sessions ; tests/recette C09 et documents de statut. Aucune migration, dépendance ou game_data modifié |
+| Tests réellement exécutés | 150 Game, 119 Portal ; 16 tests frontend Game + 5 Chromium, 29 Portal + 14 Chromium ; recette HTTPS C09 réelle 320/1440 avec panne Portal, worker, révocation et restore ; 76 docs/liens et diff. Détails et réserves ci-dessous |
+| Anomalies / corrections restantes | Relecture finale des diff/statuts, lint final et suites frontend après derniers ajustements de reçu ; relancer les trois autres smokes sur la tête finale, vérifier CI publiée et mettre à jour PR. Ne pas déclarer 5C clos avant ces contrôles |
+| Prochaines tâches | Claude reprend ce checkpoint sans réécrire/recommencer C08 ; terminer C09/CI, rapport de clôture pour revue finale. Aucun merge, 5D exclu |
 
 
 ## Lot courant — 5C : Portal Account/Lobby foundation
 
-**Statut : C01–C07 implémentés et testés sur PR #7 ; C08 parcours/shell à suivre. 5C en cours.**
+**Statut : C01–C08 implémentés ; C09 recette locale réalisée, clôture/CI encore en cours. Relais Claude demandé.**
 5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/MFA/lobby/contrôle privé/handoff C02–C07 implémentés sur PR #7 seulement.
 L’utilisateur autorise 5C et exige présentation du cadrage avant implémentation substantielle ; 5D exclu.
 Aucune nouvelle fusion autorisée. Environnement : Codex local/WSL2.
 Les checkpoints pré-code ci-dessous sont historiques ; l’état actuel de C07 est décrit en premier.
+
+### Relais explicite Codex → Claude — C08/C09, 2026-10-30
+
+Utilisateur : enchaîner C08/C09, puis demande de stopper pour préserver les crédits et transmettre
+à Claude. Arrêt du développement ; vérification Portal déjà lancée terminée (119 réussites).
+Checkpoint publié pour protéger le travail, **pas une déclaration de clôture 5C**. Aucun merge,
+5D, nouvelle branche, reset/clean/stash/force-push ou suppression de données conservées.
+
+Reprise initiale propre/synchronisée sur 35067f8, documentation Claude préservée. C08 : handoff
+POST automatique avec CSP nonce et secours manuel, entrée dans le shell React scoped par univers,
+contexte réel/échéances, JSON même origine/CSRF, erreurs HTML lisibles et actions explicites. Timers
+passifs lisant le serveur sans renouvellement ; Portal bootstrap distingue panne/absence de session,
+courses StrictMode/annulation corrigées. Reçu de déconnexion chiffré purpose/scope/source/15 min,
+clé receipt.key séparée et cookie HttpOnly ; aucune autorité de connexion. GET statut sans identité,
+acknowledged uniquement après tous les acquittements C06. Ancien reçu effacé à la connexion/autres
+opérations sensibles pour éviter un faux suivi ; UI réinitialisée. Cookies de session déjà révoqués
+non effacés par une réponse tardive, remplaçables par une authentification normale, sans résurrection.
+Pas de nouvelle table, dépendance, migration, règle produit, mécanique ou fixture runtime.
+
+C09 : nouvelle recette dans scripts/smoke_handoff_compose.py et handoff_browser.mjs : projet Compose
+aléatoire sans ports hôtes, bases *_test et volumes propres ; arrêt Portal API et contrôle, Game
+encore accessible, construction test acceptée puis terminée par le worker réel (c09_game_fixture.py
+strictement gardé par nom DB test). Reprise API puis logout avec livraison arrêtée, état pending ;
+reprise worker de contrôle, receipt acknowledged, ancienne GameSession refusée. pg_dump/pg_restore
+réalisés pour chaque DB vers echosphere_restore_test et têtes Alembic vérifiées ; DB restaurées jamais
+servies comme applications. Projet temporaire supprimé. Production/support/modes restent différés.
+
+Validations réellement obtenues (journaux /tmp, non versionnés) :
+
+- /tmp/echosphere-c09-game.log : **150 passed**, 1 warning Starlette/httpx ; clés en recouvrement puis
+  retrait local testé. /tmp/echosphere-c09-portal-checked.log : **119 passed**, même warning.
+- /tmp/echosphere-c09-game-ui.log : npm ci/lint, **16 tests**, build et **5 Chromium** réussis.
+  /tmp/echosphere-c09-portal-final-ui.log : npm ci/lint, **29 tests**, build réussis ;
+  /tmp/echosphere-c09-portal-ui.log : **14 Chromium** réussis. Les derniers ajustements de nettoyage
+  de reçu/MFA nécessitent relecture et vérification frontend finale ; ne pas les présumer exécutés.
+- /tmp/echosphere-c09-browser-final.log : recette HTTPS C09 complète réussie à 320/1440, panne réelle,
+  progression worker, révocation retardée/acquittée et restore. Captures dans
+  /tmp/echosphere-handoff-artifacts ; à inspecter pour la revue finale. Aucun test Windows matériel,
+  Safari/Firefox, lecteur d’écran ni charge hostile revendiqué.
+- Compose build/up --wait et Alembic check des deux plans réussis ; Game 0006_game_sessions,
+  Accounts p0005_control. **Les trois autres smokes Game/Portal/mTLS n’ont pas encore été relancés
+  sur C08/C09**, contrairement à la recette handoff étendue. Attendre fin des suites avant les smokes
+  qui coupent PG : incident de chevauchement déjà documenté en C07.
+- 76 documents/liens et diff valides. Sections 1–8 5B et 56 lignes Qxx comparées inchangées.
+
+Corrections de tests/recette : attente du bootstrap au login ; identité de requête courante pour
+ignorer le rejet StrictMode ancien ; les mocks doivent distinguer le GET de statut et les POST CSRF.
+Le test de reçu altère un octet chiffré, pas seulement le padding Base64. Les anciennes assertions
+« aucun Set-Cookie après reset » distinguent désormais suppression du reçu et émission interdite
+d’un cookie de login. Les sondes de panne doivent utiliser Chromium, ses règles DNS ne s’appliquant
+pas au client Node APIRequestContext. Diagnostics expurgés des headers Cookie/Authorization.
+
+Reste concret pour Claude :
+
+1. Vérifier ce SHA, PR #7/base/CI et arbre local ; lire AGENTS/context/progress puis canoniques C08/C09.
+2. Relire le diff complet depuis 35067f8, notamment reçus/cookies tardifs, bootstrap StrictMode,
+   timer de session, JSON natif et protocole du test C09. Aucun relecteur indépendant encore attesté.
+3. Finir la cohérence des statuts : quelques docs disent C08 livré/C09 clôture tandis que context
+   et progress doivent rester « en cours » tant que CI finale non observée. Ne pas annoncer production prête.
+4. Lint final + suites frontend finales, puis checks nécessaires selon les résultats ; tests backend
+   déjà passés ci-dessus. Ne pas lancer panne PG pendant une suite. Exécuter les trois autres smokes,
+   éventuellement revalider la recette finale après toute correction runtime.
+5. Vérifier services/volumes et nettoyer seulement les DB de suites dédiées echosphere_c08_game_test
+   et echosphere_c08_accounts_test après usage (elles sont conservées pour le relais).
+6. Commit/push des corrections ciblées, observer la CI du SHA final, actualiser PR #7 et progress.
+   Conclure si 5C est terminé/prêt pour revue finale avant merge ; aucune fusion, aucun début de 5D.
 
 ### Protocole de sécurité multi-agents et relais — documentaire, 2026-10-30
 

@@ -403,7 +403,11 @@ def test_security_api_origin_csrf_and_generic_reset_response_without_cookie_logi
             json={"token": secret, "new_password": NEW},
             headers=origin,
         )
-        assert result.status_code == 200 and "set-cookie" not in result.headers
+        assert result.status_code == 200
+        # Clearing a status-only receipt is not a login cookie issuance.
+        assert not any(header.startswith("__Host-portal-session=")
+                       for header in result.headers.get_list("set-cookie"))
+        assert "__Host-portal-session" not in client.cookies
         assert secret not in result.text and NEW not in result.text
         invalid = client.post(
             "/security/step-up",

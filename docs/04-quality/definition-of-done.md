@@ -29,6 +29,22 @@ index des décisions, ADR 0008, Q01–Q39 préservées/Q40–Q56 ouvertes, lectu
 point de reprise cohérents. Check liens/index et diff autorisé ; CI réelle de tête observée.
 PR mise à jour et laissée non fusionnée. WSL2/protection DDoS non revendiqués comme testés.
 
+## Étape 5C — comptes/lobby et accès
+
+Comptes/MFA/sessions, opérations sensibles et outboxes testés sur Accounts dédiés ; séparation
+Game/Accounts effective, contrôles mTLS et idempotence prouvés. Ticket signé court/unique, pré-auth
+et sessions Game locales bornées, activité explicite et révocations sans résurrection ; jeux de
+clés en recouvrement/retrait testés. Parcours UI réels, mobile/clavier, erreurs/expiration, aucun
+secret navigateur ni fausse partie ; statuts pending/acknowledged véridiques.
+
+Deux chaînes Alembic sans dérive et ancien historique immuable ; suites des deux backends et
+frontends, quatre smokes et CI du SHA publié effectivement observés. Recette Portal arrêté avec
+session Game utilisable et worker en progrès, révocation persistée livrée après reprise ; restauration
+des deux DB dans des bases de test isolées. Clôture locale pour revue ≠ feu vert production : reports
+Q48/Q49/Q55, charge/restauration opérationnelle/rotation des secrets restent explicites. Pas d’API
+Colony 5D ni de merge/déploiement sans instruction distincte. Preuves dans progress/PR ; aucune
+revue indépendante simulée par l’auteur du lot.
+
 ## Étape 5B — contrats documentaires
 
 Décisions validées et provenance dans identity-contracts ; Q40–Q56 distinguent contrats clos,

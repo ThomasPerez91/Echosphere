@@ -39,18 +39,20 @@ def page(title, action, fields, origin):
     return HTMLResponse(
         '<!doctype html><html lang="fr"><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        f'<title>Echosphere — {escape(title)}</title>'
+        f"<title>Echosphere — {escape(title)}</title>"
         f'<style nonce="{nonce}">{TRANSFER_STYLE}</style>'
         f"<body><main><h1>{escape(title)}</h1>"
-        f'<form method="post" action="{escape(action, quote=True)}">{hidden}'
+        f'<form id="handoff" method="post" action="{escape(action, quote=True)}">{hidden}'
         '<button type="submit">Continuer</button></form>'
         "<p>Le transfert expire rapidement. En cas d’échec, recommencez depuis le lobby.</p>"
+        f'<script nonce="{nonce}">document.getElementById("handoff").requestSubmit();</script>'
         "</main></body></html>",
         headers={
             "Cache-Control": "no-store",
             "Referrer-Policy": "strict-origin",
             "X-Content-Type-Options": "nosniff",
             "Content-Security-Policy": f"default-src 'none'; style-src 'nonce-{nonce}'; "
+            f"script-src 'nonce-{nonce}'; "
             f"form-action {origin}; "
             "frame-ancestors 'none'; base-uri 'none'",
         },
@@ -115,4 +117,26 @@ async def issue(request: Request):
         f"{target}/api/game/{universe}/exchange",
         {"ticket": ticket},
         target,
+    )
+
+
+def interrupted(message, origin, status):
+    nonce = secrets.token_urlsafe(24)
+    return HTMLResponse(
+        '<!doctype html><html lang="fr"><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        f'<style nonce="{nonce}">{TRANSFER_STYLE}</style>'
+        '<title>Echosphere — entrée interrompue</title>'
+        "<main><h1>Entrée interrompue</h1><p>"
+        + escape(message)
+        + '</p><a href="'
+        + escape(origin)
+        + '">Retour au lobby</a></main></html>',
+        status_code=status,
+        headers={
+            "Cache-Control": "no-store",
+            "Referrer-Policy": "no-referrer",
+            "Content-Security-Policy": f"default-src 'none'; style-src 'nonce-{nonce}'; "
+            "base-uri 'none'; frame-ancestors 'none'",
+        },
     )

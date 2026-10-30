@@ -76,19 +76,25 @@ form {margin:16px 0} :focus-visible {outline:3px solid #f1d18f;outline-offset:3p
 """
 
 
-def page(title, body, target):
+def page(title, body, target, *, transfer=False):
     nonce = secrets.token_urlsafe(24)
     return HTMLResponse(
         '<!doctype html><html lang="fr"><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
         f"<title>Echosphere — {escape(title)}</title>"
         f'<style nonce="{nonce}">{TRANSFER_STYLE}</style><body><main>'
-        f"<h1>{escape(title)}</h1>{body}</main></body></html>",
+        f"<h1>{escape(title)}</h1>{body}"
+        + (
+            f'<script nonce="{nonce}">document.getElementById("handoff").requestSubmit();</script>'
+            if transfer
+            else ""
+        )
+        + "</main></body></html>",
         headers={
             **HEADERS,
             "Referrer-Policy": "strict-origin",
             "Content-Security-Policy": "default-src 'none'; connect-src 'self'; "
-            f"style-src 'nonce-{nonce}'; "
+            f"style-src 'nonce-{nonce}'; script-src 'nonce-{nonce}'; "
             f"form-action {target}; "
             "base-uri 'none'; frame-ancestors 'none'",
         },
@@ -110,10 +116,11 @@ async def start(universe_id: UUID, request: Request):
     target = request.app.state.settings.portal_public_origin
     result = page(
         "Echosphere — entrée sécurisée",
-        f'<form method="post" action="{escape(target)}/api/handoff/prepare">'
+        f'<form id="handoff" method="post" action="{escape(target)}/api/handoff/prepare">'
         + fields({"universe_id": universe_id, "pre_auth_id": identifier})
         + '<button type="submit">Confirmer avec mon compte Portal</button></form>',
         target,
+        transfer=True,
     )
     result.set_cookie(
         cookie_name(universe_id, True),
@@ -138,7 +145,7 @@ async def exchange(universe_id: UUID, request: Request):
         request.cookies.get(cookie_name(universe_id)),
         universe_id,
     )
-    result = RedirectResponse(f"/api/game/{universe_id}/view", status_code=303, headers=HEADERS)
+    result = RedirectResponse(f"/#universe/{universe_id}/empire", status_code=303, headers=HEADERS)
     result.set_cookie(
         cookie_name(universe_id),
         raw,
@@ -160,86 +167,90 @@ async def read(universe_id: UUID, request: Request):
         request.headers.get("origin") not in (None, request.app.state.settings.game_public_origin)
     ):
         raise AccessError("origin_denied")
-    return JSONResponse(
-        await run_in_threadpool(
-            service(request).read, request.cookies.get(cookie_name(universe_id)), universe_id
-        ),
-        headers=HEADERS,
+    payload = await run_in_threadpool(
+        service(request).read, request.cookies.get(cookie_name(universe_id)), universe_id
     )
+    return session_response(payload, request)
 
 
 @router.get("/view")
 async def view(universe_id: UUID, request: Request):
-    payload = await run_in_threadpool(
+    await run_in_threadpool(
         service(request).read, request.cookies.get(cookie_name(universe_id)), universe_id
     )
-    settings = request.app.state.settings
-    root = f"{settings.game_public_origin}/api/game/{universe_id}"
-    return page(
-        "Contexte Game",
-        "<p>Accès authentifié à l’univers "
-        + escape(payload["universe_name"])
-        + ". Les actions de jeu ne sont pas encore disponibles.</p>"
-        + "<p>Expiration absolue : "
-        + escape(
-            datetime.fromisoformat(payload["expires_at"])
-            .astimezone(UTC)
-            .strftime("%d/%m/%Y à %H:%M UTC")
-        )
-        + "</p>"
-        + "<p>Expiration pour inactivité : "
-        + escape(
-            datetime.fromisoformat(payload["idle_expires_at"])
-            .astimezone(UTC)
-            .strftime("%d/%m/%Y à %H:%M UTC")
-        )
-        + "</p>"
-        + f'<a href="{escape(settings.portal_public_origin)}">Retour au lobby</a>'
-        + f'<form method="post" action="{escape(root)}/navigation">'
-        + fields({"csrf": payload["csrf_token"]})
-        + '<button type="submit">Actualiser explicitement le contexte</button></form>'
-        + f'<form method="post" action="{escape(root)}/logout">'
-        + fields({"csrf": payload["csrf_token"]})
-        + '<button type="submit">Déconnecter cette partie</button></form>',
-        settings.game_public_origin,
+    return RedirectResponse(f"/#universe/{universe_id}/empire", status_code=303, headers=HEADERS)
+
+
+def session_response(payload, request):
+    return JSONResponse(
+        {
+            **payload,
+            "portal_url": request.app.state.settings.portal_public_origin,
+            "server_time": datetime.now(UTC).isoformat(),
+        },
+        headers=HEADERS,
     )
+
+
+async def action_proof(request):
+    if request.headers.get("content-type", "").split(";")[0] == "application/json":
+        try:
+            if await request.json() != {}:
+                raise ValueError()
+        except ValueError:
+            raise AccessError("invalid_request", 422) from None
+        return request.headers.get("x-csrf-token"), True
+    return (await form(request, ("csrf",)))["csrf"], False
 
 
 @router.post("/navigation")
 async def navigation(universe_id: UUID, request: Request):
     origin(request, request.app.state.settings.game_public_origin)
-    values = await form(request, ("csrf",))
-    await run_in_threadpool(
+    proof, json_mode = await action_proof(request)
+    payload = await run_in_threadpool(
         service(request).read,
         request.cookies.get(cookie_name(universe_id)),
         universe_id,
         interaction=True,
-        proof=values["csrf"],
+        proof=proof,
     )
-    return RedirectResponse(f"/api/game/{universe_id}/view", status_code=303, headers=HEADERS)
+    if json_mode:
+        return session_response(payload, request)
+    return RedirectResponse(f"/#universe/{universe_id}/empire", status_code=303, headers=HEADERS)
 
 
 @router.post("/logout")
 async def logout(universe_id: UUID, request: Request):
     origin(request, request.app.state.settings.game_public_origin)
-    values = await form(request, ("csrf",))
-    await run_in_threadpool(
-        service(request).logout,
-        request.cookies.get(cookie_name(universe_id)),
-        universe_id,
-        values["csrf"],
+    proof, json_mode = await action_proof(request)
+    payload = await run_in_threadpool(
+        service(request).logout, request.cookies.get(cookie_name(universe_id)), universe_id, proof
     )
+    if json_mode:
+        # A late response must not erase a newer handoff's cookie from another tab.
+        return JSONResponse(payload, headers=HEADERS)
+    return RedirectResponse(
+        f"/#universe/{universe_id}/signed-out", status_code=303, headers=HEADERS
+    )
+
+
+def navigation_error(request, code, status):
+    messages = {
+        "authentication_required": "Votre session a expiré ou a été déconnectée.",
+        "game_session_limit_reached": "Fermez une autre partie sur cet appareil.",
+        "account_switch_requires_logout": "Déconnectez d’abord la partie de l’autre compte.",
+        "temporarily_unavailable": "Le service Game est temporairement indisponible.",
+    }
     result = page(
-        "Partie déconnectée",
-        "<p>Cette session Game est fermée. Les autres parties et "
-        'la session Portal sont conservées.</p><a href="'
+        "Entrée dans la partie interrompue",
+        "<p>"
+        + messages.get(code, "Le transfert n’est plus valide. Recommencez depuis le lobby.")
+        + '</p><a href="'
         + escape(request.app.state.settings.portal_public_origin)
         + '">Retour au lobby</a>',
         request.app.state.settings.game_public_origin,
     )
-    result.delete_cookie(
-        cookie_name(universe_id), secure=True, httponly=True, samesite="strict", path="/"
-    )
+    result.status_code = status
     return result
 
 

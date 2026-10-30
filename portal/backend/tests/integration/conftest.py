@@ -39,7 +39,14 @@ def accounts(database_engine, tmp_path):
     mfa_key = tmp_path / "mfa.key"
     mfa_key.write_bytes(Fernet.generate_key())
     mfa_key.chmod(0o600)
-    settings = Settings(mail_key_file=key, mfa_key_file=mfa_key, trusted_proxy_host=None)
+    receipt_key = tmp_path / "receipt.key"
+    receipt_key.write_bytes(Fernet.generate_key())
+    settings = Settings(
+        receipt_key_file=receipt_key,
+        mail_key_file=key,
+        mfa_key_file=mfa_key,
+        trusted_proxy_host=None,
+    )
     current = [datetime(2026, 10, 29, 8, tzinfo=UTC)]
     service = Accounts(
         create_session_factory(database_engine),

@@ -125,16 +125,17 @@ class AccountSecurity:
             )
             .values(revoked_at=now)
         )
-        session.add(
-            AccountRevocation(
-                user_id=user.id,
-                account_epoch=user.security_epoch,
-                reason=reason,
-                state="pending",
-                created_at=now,
-            )
+        revocation = AccountRevocation(
+            id=uuid4(),
+            user_id=user.id,
+            account_epoch=user.security_epoch,
+            reason=reason,
+            state="pending",
+            created_at=now,
         )
+        session.add(revocation)
         self.audit(session, user, reason, now)
+        return revocation
 
     def step_up(self, raw, csrf, password, action, parameters, peer, factor=None):
         from portal_app.mfa.throttle import attempt
@@ -276,9 +277,10 @@ class AccountSecurity:
             current, user = self.sessions.locked(session, raw)
             now = self.accounts.clock()
             self.consume(session, user, current, raw, proof, "logout_all", None, now)
-            self.revoke_all(session, user, "logout_all", now)
+            revocation = self.revoke_all(session, user, "logout_all", now)
         return {
             "status": "portal_logged_out",
+            "revocation_id": str(revocation.id),
             "game_revocation": "pending",
             "reauthentication_required": True,
         }

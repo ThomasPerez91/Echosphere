@@ -7,7 +7,9 @@ const snapshot = {
   csrf_token: 'session-proof', session_id: 'one', sessions: [{ id: 'one', current: true }],
 };
 function installFetcher(fetcher: (url: string, options?: RequestInit) => unknown) {
-  vi.stubGlobal('fetch', (url: string, options?: RequestInit) => url === '/api/lobby/memberships'
+  vi.stubGlobal('fetch', (url: string, options?: RequestInit) => url === '/api/auth/revocation-status'
+    ? Promise.resolve({ ok: false, status: 404, json: async () => ({ error: { code: 'receipt_expired' } }) })
+    : url === '/api/lobby/memberships'
     ? Promise.resolve({ ok: true, json: async () => ({ memberships: [], revocations: [] }) })
     : url === '/api/mfa/status'
     ? Promise.resolve({ ok: true, json: async () => ({ enabled: false, totp: false, credentials: [] }) })
@@ -37,7 +39,7 @@ test('login obtains a bound challenge and never puts secrets in browser storage'
     : { ok: true, json: async () => snapshot }));
   installFetcher(fetcher);
   render(<AccountAccess verificationToken={null} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Se connecter à mon compte' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Se connecter à mon compte' }));
   fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
   fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'Test password for C03 !' } });
   fireEvent.click(screen.getByRole('button', { name: 'Ouvrir ma session' }));
@@ -60,12 +62,13 @@ test('logout reports pending remote revocation and does not claim universal disc
 });
 
 test('device cap refusal is actionable and does not expose server response content', async () => {
-  const fetcher = vi.fn((url: string) => Promise.resolve(url.endsWith('/challenge')
-    ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
+  const fetcher = vi.fn((url: string) => Promise.resolve(url.endsWith('/sessions')
+    ? { ok: false, status: 401, json: async () => ({}) }
+    : url.endsWith('/challenge') ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
     : { ok: false, status: 409, json: async () => ({ error: { code: 'device_limit_reached', private: 'never display this' } }) }));
   installFetcher(fetcher);
   render(<AccountAccess verificationToken={null} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Se connecter à mon compte' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Se connecter à mon compte' }));
   fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
   fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'Test password for C03 !' } });
   fireEvent.click(screen.getByRole('button', { name: 'Ouvrir ma session' }));
@@ -87,23 +90,35 @@ test('another tab rotating authentication reloads proof without replaying the ac
   expect(fetcher.mock.calls.filter(item => item[1].method === 'POST')).toHaveLength(1);
 });
 
-test('a delayed automatic read cannot restore a session predating the login transition', async () => {
+test('a delayed bootstrap is aborted on unmount and cannot restore stale UI', async () => {
   let finish: (value: unknown) => void = () => {};
+  let signal: AbortSignal | undefined;
   const delayed = new Promise(resolve => { finish = resolve; });
-  const fetcher = vi.fn((url: string) => url.endsWith('/sessions') ? delayed : Promise.resolve(
-    url.endsWith('/challenge') ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
-      : { ok: true, json: async () => snapshot }));
-  installFetcher(fetcher);
-  render(<AccountAccess verificationToken={null} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Se connecter à mon compte' }));
-  fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
-  fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'Test password for C03 !' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Ouvrir ma session' }));
+  installFetcher((_url, options) => { signal = options?.signal as AbortSignal; return delayed; });
+  const { unmount } = render(<AccountAccess verificationToken={null} />);
+  expect(screen.getByText('Vérification de votre compte…')).toBeVisible();
+  unmount();
+  expect(signal?.aborted).toBe(true);
+  await act(async () => { finish({ ok: true, json: async () => snapshot }); await delayed; });
+  expect(screen.queryByText('player@example.org')).not.toBeInTheDocument();
+});
+
+test('a failed bootstrap offers read-only retry instead of a false signed-out state', async () => {
+  const fetcher = vi.fn().mockRejectedValueOnce(new TypeError('offline'))
+    .mockResolvedValueOnce({ ok: true, json: async () => snapshot });
+  installFetcher(fetcher); render(<AccountAccess verificationToken={null} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Vérifier mon compte' }));
   expect(await screen.findByText('player@example.org')).toBeVisible();
-  await act(async () => {
-    finish({ ok: true, json: async () => ({ ...snapshot, user: { email: 'obsolete@example.org', email_verified: true } }) });
-    await delayed;
-  });
-  expect(screen.queryByText('obsolete@example.org')).not.toBeInTheDocument();
-  expect(screen.getByText('player@example.org')).toBeVisible();
+  expect(fetcher.mock.calls.every(call => call[1].method === undefined)).toBe(true);
+});
+
+test('StrictMode aborted first bootstrap never overrides the current successful request', async () => {
+  const { StrictMode } = await import('react');
+  let calls = 0;
+  installFetcher((_url, options) => ++calls === 1 ? new Promise((_resolve, reject) => {
+    options?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+  }) : Promise.resolve({ ok: false, status: 401, json: async () => ({}) }));
+  render(<StrictMode><AccountAccess verificationToken={null} /></StrictMode>);
+  expect(await screen.findByRole('button', { name: 'Se connecter à mon compte' })).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Compte indisponible' })).not.toBeInTheDocument();
 });

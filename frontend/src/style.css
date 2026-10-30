@@ -130,3 +130,11 @@ main { max-width: 1500px; margin: auto; padding: 36px; }
 .colony-navigation a[aria-current] { border-color: #32636b; color: var(--accent); background: #153038; }
 .colony-context p { font-size: .8rem; margin-top: 12px; }
 @media (max-width: 520px) { .colony-navigation { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.game-access { margin-bottom: 24px; overflow-wrap: anywhere; }
+.game-access dl { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; }
+.game-access dt { color: var(--muted); font-size: .75rem; }
+.game-access dd { margin: 6px 0; font-size: .85rem; }
+.access-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
+.game-access .text-link { display: inline-flex; min-height: 44px; align-items: center; color: var(--accent); }
+@media (max-width:800px) { .game-access dl { grid-template-columns:1fr; gap:8px; } .topbar { flex-wrap:wrap; } }

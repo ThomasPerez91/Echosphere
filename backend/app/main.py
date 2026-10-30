@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.responses import JSONResponse
 
-from app.access.http import GameBodyLimit
+from app.access.http import GameBodyLimit, navigation_error
 from app.access.http import router as access_router
 from app.access.service import AccessError
 from app.api.probes import router
@@ -32,8 +32,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @application.exception_handler(AccessError)
     async def denied(request: Request, exc: AccessError):
+        if "text/html" in request.headers.get("accept", "") and request.url.path.startswith(
+            "/game/"
+        ):
+            return navigation_error(request, exc.code, exc.status)
         return JSONResponse(
-            {"error": {"code": exc.code}},
+            {"error": {"code": exc.code}, "portal_url": configuration.portal_public_origin},
             status_code=exc.status,
             headers={"Cache-Control": "no-store"},
         )
@@ -48,8 +52,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @application.exception_handler(SQLAlchemyError)
     async def unavailable(request: Request, exc: SQLAlchemyError):
+        if "text/html" in request.headers.get("accept", "") and request.url.path.startswith(
+            "/game/"
+        ):
+            return navigation_error(request, "temporarily_unavailable", 503)
         return JSONResponse(
-            {"error": {"code": "temporarily_unavailable"}},
+            {
+                "error": {"code": "temporarily_unavailable"},
+                "portal_url": configuration.portal_public_origin,
+            },
             status_code=503,
             headers={"Cache-Control": "no-store"},
         )

@@ -21,7 +21,7 @@ test('rejects a Game response and recovers on explicit retry', async () => {
   expect(await screen.findByText('Portal indisponible')).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Vérifier à nouveau' }));
   expect(await screen.findByText('Portal disponible')).toBeVisible();
-  expect(fetcher).toHaveBeenCalledTimes(3);
+  expect(fetcher.mock.calls.filter(call => call[0] === '/api/ready')).toHaveLength(2);
 });
 
 test('network error allows retry instead of reporting readiness', async () => {

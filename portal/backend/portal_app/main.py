@@ -40,6 +40,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @application.exception_handler(PublicError)
     async def public_error(request: Request, exc: PublicError):
+        if request.url.path.startswith("/handoff/") and "text/html" in request.headers.get(
+            "accept", ""
+        ):
+            messages = {
+                "authentication_required": "Connectez-vous au Portal pour continuer.",
+                "email_verification_required": "Confirmez votre adresse email pour continuer.",
+                "access_confirmation_required": "Actualisez vos parties pour confirmer cet accès.",
+                "rate_limited": "Trop de demandes. Patientez avant de recommencer.",
+            }
+            from portal_app.api.handoff import interrupted
+
+            return interrupted(
+                messages.get(exc.code, "Recommencez depuis le lobby."),
+                configuration.public_origin,
+                exc.status,
+            )
         return JSONResponse(
             {"error": {"code": exc.code}},
             status_code=exc.status,

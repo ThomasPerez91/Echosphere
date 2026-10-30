@@ -25,3 +25,4 @@ if __name__ == "__main__":
     configuration = Settings()
     initialize(configuration.mail_key_file)
     initialize(configuration.mfa_key_file)
+    initialize(configuration.receipt_key_file)
