@@ -6,15 +6,15 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 | Champ | État |
 | --- | --- |
-| Branche / PR / base | work/step-6-research depuis master 0e2ca11322a85452ad6860a4a35099bbc22a4689 ; une seule PR étape 6 à ouvrir en brouillon après ce premier commit |
-| Tête et CI | Base post-merge #8 : CI 41144706921 success ; tête du checkpoint et sa propre CI à consigner dans la PR après publication |
+| Branche / PR / base | work/step-6-research depuis master 0e2ca11322a85452ad6860a4a35099bbc22a4689 ; PR #9 ouverte en brouillon, unique pour le lot |
+| Tête et CI | Base post-merge #8 : CI 41144706921 success ; premier checkpoint 098ab078889ca7a41b5ed77055663a439670ccdf, CI PR 41145436851 success. Le présent plan a sa propre tête/CI à relire dans PR #9 |
 | Dernier agent | ChatGPT Work, écrivain de ce checkout propre ; reprise des commits publiés 5D |
-| Travail réalisé | R00 : vérification GitHub, master synchronisée ff-only, nouvelle branche depuis master, références post-merge alignées ; aucune fonctionnalité Research |
+| Travail réalisé | R00 publié puis R01 préparé : plan durable et recommandation Q05, références/visuels/code relus ; aucune fonctionnalité Research |
 | Décisions | Q01 construction/Q08/Q17/Q19–Q39/Q55 inchangées ; Recherche globale déjà validée, Q05 toujours ouverte |
-| Fichiers modifiés | Documents de reprise et statut 5D/étape 6 uniquement ; aucun backend/frontend/migration/game_data/dépendance/Docker/test fonctionnel |
+| Fichiers modifiés | Documents de reprise, research.md (proposition), step-6-plan.md et index/registre uniquement ; aucun backend/frontend/migration/game_data/dépendance/Docker/test fonctionnel |
 | Tests réellement exécutés | check_docs.py, git diff --check et périmètre documentaire ; CI post-merge observée. Aucune suite fonctionnelle locale relancée pour ce checkpoint |
 | Anomalies / limites | Aucune PR concurrente étape 6 au contrôle initial. Docker/PostgreSQL absents du Work courant ; aucune capacité de charge ou nouvelle recette WSL2 revendiquée |
-| Prochaines tâches | Lire les références, publier step-6-plan et proposition Q05, puis arrêt pour arbitrage utilisateur avant tout code Research. Après validation explicite seulement : R02–R09, pas étape 7 ni merge |
+| Prochaines tâches | Arrêt pour arbitrage utilisateur Q05 sur le contrat proposé. Après validation explicite : intégrer la décision canonique, puis R02–R09 sur la même branche/PR brouillon, pas étape 7 ni merge |
 
 ## R00 — synchronisation post-merge 5D, 31/10/2026
 
@@ -36,6 +36,41 @@ l’utilisateur avant migration/backend/UI Research. Aucun autre arbitrage produ
 Validation du checkpoint : documents/liens et whitespace, diff Markdown uniquement, invariants Qxx
 conservés. Aucune suite fonctionnelle locale relancée pour ces statuts ; la CI de cette nouvelle
 tête devra être observée après publication et consignée dans l’unique PR du lot.
+
+## R01 — proposition Q05 et plan durables, 31/10/2026
+
+Premier checkpoint R00 **098ab078889ca7a41b5ed77055663a439670ccdf** publié avant cette préparation ;
+[PR #9](https://github.com/ThomasPerez91/Echosphere/pull/9) créée en brouillon, unique. Sa [CI 41145436851](https://github.com/ThomasPerez91/Echosphere/actions/runs/41145436851)
+est observée completed/success ; elle vérifie le code 5D inchangé, pas un système Research.
+
+Références demandées relues : AGENTS/CLAUDE/context/progress intégral, roadmap/registre,
+recherche/boucle/progression/balance, moteur temporel/modèle/sécurité/API Colony, code Empire/
+EventStream/ScheduledEvent/scheduler/worker/rulesets, GameSession/accès/bindings, frontend Game et
+patterns de tests 3/5A/5D. Guide visuel et images design-system/research-view inspectés ; aucun
+catalogue, technologie, valeur ou nombre de places du mockup promu en règle produit.
+
+Nouveau [plan étape 6](docs/05-project/step-6-plan.md) : R00–R09, critères/tests futurs, verrou Q05,
+modèle Empire et financement Colony séparés, compatibilité v0.1/nouveau ruleset sans migration
+silencieuse, extension ciblée des permissions 5C et ordre de verrous multi-stream à démontrer.
+**Points concrets** : stocks attachés à Colony ; seuls trois droits Colony acceptés dans les DTO,
+CHECK SQL, schéma JSON et allowlist Portal ; scheduler sans ordre global entre streams et handler
+sans second lock. Aucun de ces points n’est résolu par du code ou un backfill dans ce checkpoint.
+
+[Q05 dans research.md](docs/01-game-design/research.md) : proposition cohérente de 1 active + 1 suivante,
+paiement intégral depuis une colonie explicitement choisie, annulation théorique 100/80 avec crédit
+plafonné/perte et cascade dépendante, technologies uniques/non exclusives, snapshots à acceptation,
+blocage explicite d’une suivante invalide, permissions séparées et laboratoire futur sans cumul
+implicite. Huit technologies proposées avec modestes effets réellement applicables aux nouveaux
+ordres Colony/Research ; noms/chiffres à équilibrer, aucun game_data ajouté. La proposition ne
+modifie pas Q01/Q39 ni Q26 : **Q05 reste ouverte**, aucune validation déduite du code ou de la CI.
+
+Aucune migration, backend/API/UI Research, catalogue exécutable, effet runtime, test fonctionnel,
+dépendance ou Compose modifié. Les tests R02–R09 listés sont futurs et non exécutés. Contrôles locaux
+de ce diff : check_docs (79 documents/liens), git diff --check, Q01–Q56 uniques, seules les mentions
+Q05 et le statut de lot changés au registre ; autres arbitrages conservés. Suites fonctionnelles
+locales non relancées pour du Markdown ; CI complète propre à la tête publiée à observer dans PR #9.
+Aucun code métier avant arbitrage explicite. **Travail arrêté à Q05 comme demandé par l’utilisateur**,
+PR #9 maintenue en brouillon, aucune fusion ni étape 7.
 
 ## Historique du lot 5D — intégré via PR #8
 

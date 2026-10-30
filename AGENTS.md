@@ -136,7 +136,8 @@ Lot précédent 5C compte/lobby, terminé : C01 implémenté,
 C02/C03 comptes/vérification/sessions, C04 opérations sensibles et C05 MFA implémentés ; C06 lobby/S2S implémenté ; C07 handoff/GameSession est implémenté ; C08 livré et recette de clôture C09 réalisée : 5C fusionné. Migrations Accounts séparées, pas de SQL Portal→Game.
 5D terminée et intégrée via PR #8, y compris Q39 ; [plan historique](docs/05-project/step-5d-plan.md).
 Lot courant : **étape 6 Recherche globale d’Empire**, work/step-6-research depuis master `0e2ca11`.
-Autorisation immédiate limitée au checkpoint, à la lecture, au plan et à une proposition Q05.
+Autorisation immédiate limitée au checkpoint, à la lecture, au [plan étape 6](docs/05-project/step-6-plan.md)
+et à une [proposition Q05](docs/01-game-design/research.md).
 **Arrêt pour validation produit Q05 avant toute migration, game_data Research, service ou UI fonctionnelle.**
 Après validation explicite de Q05 seulement : R02–R09 autorisés dans la même branche/PR brouillon.
 Aucune étape 7 ni fusion sans instruction distincte. Ne pas réutiliser la branche 5D fusionnée.

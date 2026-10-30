@@ -39,13 +39,14 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
 
 - [Passation](06-handoff/README.md), [sources](06-handoff/source-map.md), [décisions](06-handoff/decision-status.md),
   [risques](06-handoff/known-gaps.md), [audit #5](06-handoff/pr-5-audit.md), [collaboration Work/Codex/Claude Code](06-handoff/work-codex-handoff.md).
-- [Portal/Game ADR 0008](adr/0008-control-plane-game-data-plane.md) : décision cible **auth future**, socle C01 sur PR #7 ;
+- [Portal/Game ADR 0008](adr/0008-control-plane-game-data-plane.md) : frontières validées et socle 5C intégré via PR #7, sans certification production ;
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
 - [Contrats 5B](03-technical/identity-contracts.md) : décisions validées et consolidées le 2026-10-29,
   **implémentées dans leur périmètre 5C (C02–C08), fusionnées via PR #7** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. 5C
-  terminé et fusionné (`ff6ef89`). Lot courant : [5D API/UI Colony](05-project/step-5d-plan.md) ; étape 6 non commencée.
+  terminé et fusionné (`ff6ef89`), 5D intégrée via #8 (`0e2ca11`). Lot courant :
+  [étape 6 Recherche](05-project/step-6-plan.md), proposition Q05 avant code ; aucun Research livré.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité

@@ -78,18 +78,18 @@ pour un serveur public. Ne pas exposer Vite sur internet.
 | Service | Technologie | Rôle actuel |
 | --- | --- | --- |
 | frontend | React, TypeScript strict, Vite, Node 22 | Navigation responsive, sections en préparation et readiness via proxy |
-| backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes, modèles et domaine économique interne, sans endpoint métier |
+| backend | Python 3.12, FastAPI, SQLAlchemy, psycopg, Alembic | Sondes, sessions Game et API Colony sécurisée, domaine économique autoritaire |
 | postgres | PostgreSQL 17 | Source de vérité et volume persistant local |
 | migrate | Même image backend | Alembic upgrade head, puis sortie 0 |
 | worker | Même code backend | Streams temporels multi-univers, sans port publié |
 | portal-postgres / portal-migrate | Accounts PostgreSQL 17 / Alembic indépendant | Historique p0000–p0005, comptes/preuves email et sessions Portal |
-| portal-backend / portal-frontend | FastAPI / React-Vite séparés | Sondes Accounts et écran de préparation |
+| portal-backend / portal-frontend | FastAPI / React-Vite séparés | Comptes, sessions/MFA, lobby et parcours handoff |
 | local-edge | Caddy, HTTPS local | Origines Portal/Game :8443, CA Docker sans installation hôte |
 
 Le worker est un autre processus du même monolithe : événements SQL idempotents, production exacte
 et reprise après redémarrage. Les valeurs v0.1 sont dans game_data, mais aucune colonie/partie n’est injectée au démarrage.
 Compose applique les migrations via le service migrate avant API/worker. /ready vérifie la connexion,
-pas l'état de progression du worker. Pas de Redis, auth ou WebSockets.
+pas l'état de progression du worker. Pas de Redis ou WebSockets ; comptes/authentification Portal et sessions Game intégrés en 5C.
 
 ```bash
 # Qualité dans les images de développement :
@@ -127,8 +127,8 @@ n'est injecté pour une démo. Contrats, retries et reprise explicite : [moteur 
 ## Instances de jeu futures
 
 Universe représente une instance isolée, pas un utilisateur : MVP solo avec IA, puis parties privées
-et univers multijoueurs persistants. Seuls les invariants sont documentés ; comptes, memberships,
-invitations, modes, équipes et règles multijoueurs ne sont pas implémentés.
+et univers multijoueurs persistants. Comptes et socle de memberships/permissions intégrés en 5C ;
+parcours produit d’invitation, modes, équipes et règles multijoueurs restent futurs.
 Voir [modes de jeu](docs/01-game-design/game-modes.md).
 
 ## Lire et contribuer
@@ -154,7 +154,7 @@ Aucun seed/demo runtime : l’UI Colony réserve ses quatre sections et indique 
 
 ## Architecture cible et reprise durable
 
-**Décision validée, réalisation C01–C08 sur PR #7, non intégrée** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md)
+**Décision validée, réalisation 5C intégrée via PR #7** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md)
 sépare Portal Control Plane (compte global/lobby, Accounts DB) et Game Data Plane (backend actuel,
 Game DB). Plusieurs parties par compte ; interface interne contrôlée, jamais SQL Portal→Game DB.
 Handoff court/unique puis GameSession autonome, gameplay direct à Game. Le lot documentaire 5B
@@ -165,10 +165,10 @@ n’a livré ni Portal, login, protocole d’auth ni changement Compose ; C01 es
 5B contrats identité/Portal-Game → 5C compte/lobby selon cadrage → 5D API Colony sécurisée/UI réelle.
 PR #5 fusionnée sur master 8214e0b ; recette locale effectuée le 2026-10-29, limites dans progress.
 Les [contrats 5B](docs/03-technical/identity-contracts.md) sont validés et consolidés ; C02–C08 en implémentent les premiers sous-ensembles.
-5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1`. Contrats toujours non
-implémentés. 5C (C01–C09) fusionné via PR #7 (`ff6ef89`). 5D API Colony sécurisée et UI
+5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1`. Contrats implémentés dans la portée 5C/5D, limites production conservées. 5C (C01–C09) fusionné via PR #7 (`ff6ef89`). 5D API Colony sécurisée et UI
 Colony intégrée via PR #8 (`0e2ca11`). Lot courant : étape 6 Recherche sur `work/step-6-research`,
 checkpoint/plan et proposition Q05 seulement avant validation ; aucune fonctionnalité Research livrée.
+[Plan étape 6](docs/05-project/step-6-plan.md) et [proposition Q05](docs/01-game-design/research.md).
 Le [registre Q40–Q56](docs/05-project/open-questions.md) distingue décisions closes, détails techniques
 délégués et reports support/email/modes. Aucun nouveau code d’authentification dans 5B. Sur PR #7, C01 ajoute le socle Portal et étend
 Compose ; [C02](docs/03-technical/portal-registration.md) ajoute inscription, Argon2id, vérification et livraison locale durable ; [C03](docs/03-technical/portal-sessions.md) ajoute connexion/sessions et CSRF ; [C04](docs/03-technical/portal-account-security.md) ajoute step-up, reset/changements sensibles et logout global sans MFA ; [C05](docs/03-technical/portal-mfa.md) ajoute TOTP/WebAuthn, secours et récupération limitée ; [C06](docs/03-technical/portal-game-control.md) livre lobby, synchronisation et révocations mTLS ; handoff/GameSession C07 livrés sur PR #7. [Recette C01](docs/03-technical/portal-foundation.md).

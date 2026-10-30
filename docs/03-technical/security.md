@@ -2,6 +2,11 @@
 
 **Statut : contraintes validées ; protection production future.**
 
+État au 31/10/2026 : socle 5C et API Colony 5D intégrés à master via #8 (`0e2ca11`). Les sections
+historiques C01–C07 ci-dessous décrivent leur portée à livraison, pas une absence actuelle de
+sessions/permissions. Research n’existe pas encore ; [plan étape 6](../05-project/step-6-plan.md)
+et arbitrage Q05 avant code. Aucune sécurité production ou capacité de charge garantie.
+
 
 Backend autoritaire et PostgreSQL source de vérité. Ne jamais faire confiance aux identifiants,
 stocks, coûts ou timestamps envoyés par le navigateur. Les futures commandes vérifient identité,
@@ -56,7 +61,7 @@ Historique 5A : aucune API gameplay tant que la chaîne de participation n’exi
 colonie dans la transaction, refus sans fuite d’existence, CSRF/origine et clés idempotentes par
 participation. Les commandes internes reçoivent univers/empire/colonie explicites, vérifient la
 propriété avant consultation puis sous le lock et dédupliquent les clés. Ces paramètres de confiance
-ne sont pas un substitut à une session HTTP. La future API 5D vérifiera identité/membership/permissions avant
+ne sont pas un substitut à une session HTTP. L’API 5D vérifie identité/membership/permissions avant
 appel des mêmes services humains/IA/headless. Pas de faux user global ou bypass de Q16.
 
 ## Portal/Game — contrats 5B validés, protections futures non implémentées

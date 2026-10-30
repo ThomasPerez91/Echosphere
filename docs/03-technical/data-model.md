@@ -1,6 +1,10 @@
 # Modèle de données conceptuel
 
-**Statut : Colony 5A intégré ; identité C02–C07 implémentée sur PR #7 ; autres domaines futurs.**
+**Statut : fondations, Colony 5A/5D et identité 5C intégrées à master via PR #8 (`0e2ca11`).**
+Les sections de migrations et extensions ci-dessous décrivent leur état à livraison ; leurs mentions
+« futures » de Membership/GameSession/5D sont historiques. Référence actuelle :
+[API Colony](colony-api-ui.md), [handoff](game-handoff.md) et [contrôle privé](portal-game-control.md).
+Research reste future : [plan étape 6](../05-project/step-6-plan.md), Q05 à valider avant tout schéma.
 
 
 | Concept | Responsabilité et relations proposées |
@@ -17,7 +21,7 @@
 | ScheduledEvent | Échéance persistante et référence métier |
 
 Le tableau distingue le modèle cible de la partie implémentée ci-dessous ; les autres concepts restent
-à concevoir aux étapes concernées. L'identité/authentification humaine n'est pas implémentée.
+à concevoir aux étapes concernées. L’identité/authentification humaine existe depuis 5C ; ce tableau n’est pas l’inventaire des tables livrées.
 
 ## Schéma livré (migration 0001_world_foundation)
 

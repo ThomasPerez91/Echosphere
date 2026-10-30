@@ -119,7 +119,8 @@ La création complète de partie reste hors produit ; aucune fixture runtime ajo
 
 **Lot courant : étape 6 — Recherche globale d’Empire**, branche work/step-6-research depuis ce master.
 Premier checkpoint documentaire publié avant implémentation substantielle. Q05 reste ouverte :
-préparer le plan durable et une recommandation, puis attendre la validation produit explicite avant
+[plan durable R00–R09](docs/05-project/step-6-plan.md) et [recommandation Q05](docs/01-game-design/research.md)
+publiés, puis attendre la validation produit explicite avant
 migration, backend Research, catalogue exécutable ou UI fonctionnelle. **Aucune recherche livrée** à ce
 checkpoint. Après Q05 validée, R02–R09 sont autorisés sur cette seule branche/PR ; aucune étape 7.
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)

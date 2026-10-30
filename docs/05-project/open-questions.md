@@ -25,7 +25,7 @@ Le tableau Q40–Q56 distingue décisions closes, détails techniques délégué
 | Q02 | Protection hors connexion, réaction à une attaque, absence prolongée | 12, cadrage dès 1 | [Sessions](../01-game-design/player-session.md) |
 | Q03 | Taux/coûts, stockage, entretien, précision et arrondis des trois ressources | 3/5 | [Calcul](../03-technical/resource-calculation.md) |
 | Q04 | Catalogue/niveaux, traits, capacités exactes, slots orbitaux et réaffectation | 2/5 | [Planètes](../01-game-design/planets-colonies.md) |
-| Q05 | Technologies, prérequis, parallélisme et changement d'orientation | 6 | [Recherche](../01-game-design/research.md) |
+| Q05 | **Ouverte** : technologies, prérequis, parallélisme, file/financement/annulation et changement d’orientation ; recommandation du 31/10/2026 soumise à validation, aucune décision implicite | 6 avant code | [Recherche/Q05](../01-game-design/research.md), [plan R00–R09](step-6-plan.md) |
 | Q06 | Topologie, départs équitables, distribution des mondes, version du générateur | 7 | [Galaxie](../01-game-design/galaxy.md) |
 | Q07 | Coûts/limites d'expansion, habitabilité, contestation, transfert et abandon | 10 | [Colonisation](../01-game-design/colonization.md) |
 | Q08 | **Clos produit, futur** : UNKNOWN sans fuite ; DETECTED existence/position approximative ; MAPPED structure durable ; MONITORED dynamique actualisée ; perte MONITORED → MAPPED, last_seen_at et aucun partage automatique | 7/8 | [Fog](../01-game-design/fog-of-war.md) |
@@ -177,5 +177,5 @@ Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B n’a été id
 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats partiellement implémentés par C02–C07 sur PR #7, handoff/GameSession C07 livrés sur PR #7.
 Historique 5B : seul le cadrage identité/autorisation Q16 avait été actualisé. Le complément
 utilisateur du 31/10/2026 clôt les décisions indiquées ci-dessous, sans renuméroter Q01–Q56 ;
-lot courant 5D sur PR #8, sans merge ni étape 6.
+5D désormais intégrée via PR #8 (`0e2ca11`) ; lot courant étape 6 documentaire sur PR #9, Q05 avant code.
 5B n’a créé aucune table ; C02 ajoute les comptes côté Portal seulement, pas de membership.
