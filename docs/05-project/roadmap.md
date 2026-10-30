@@ -59,9 +59,11 @@ ajoute inscription/Argon2id/vérification email et livraison locale durable, ave
 handoff/GameSession C07 livrés sur PR #7. [C04](../03-technical/portal-account-security.md) livre les opérations sensibles,
 [C05](../03-technical/portal-mfa.md) ajoute MFA/secours/récupération et leur intégration. [C06](../03-technical/portal-game-control.md) livre lobby, outbox et contrôle mTLS.
 C08 livré ; recette de clôture C09 réalisée : 5C terminé, PR #7 fusionnée dans master le 2026-10-30 (`ff6ef89`, CI post-merge verte).
-**Lot courant autorisé : 5D** sur work/step-5d-secure-colony-ui (PR #8), [plan 5D](step-5d-plan.md) : D00–D09
-réalisés, [API/UI Colony](../03-technical/colony-api-ui.md) et recette réelle Portal coupé ; prêt pour revue finale,
-fusion sur instruction seulement. Étape 6 non commencée.
+**5D intégrée à master** via PR #8, merge `0e2ca11` et CI post-merge 41144706921 success.
+D00–D09, [API/UI Colony](../03-technical/colony-api-ui.md), Q39 et recette Portal coupé sont livrés.
+**Lot courant : étape 6 Recherche globale d’Empire**, work/step-6-research depuis ce master,
+une seule PR brouillon. Checkpoint et plan/proposition Q05 d’abord ; arrêt pour validation produit
+Q05 avant migration, backend, game_data Research ou UI fonctionnelle. Aucun Research livré ici.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).
@@ -114,7 +116,7 @@ sans nouveaux multiplicateurs fixés. Défense complète toujours liée au Comba
 Q39 incluse sur la même branche : crédit plafonné, excédent perdu, preview de perte et cascade
 Q01 validée avant confirmation. Fog Q08, modes Q19–Q29/Q55 et défense Q30–Q38 clos côté produit,
 non développés dans ce correctif ; budgets Q17/Q29 objectifs à mesurer. Aucun game_data modifié.
-Après autorisation distincte de fusion de #8 : vérifier master/CI, puis nouveau lot depuis master
-propre avec premier checkpoint documentaire, ensuite étape 6 Recherche. Références visuelles :
+Après fusion de #8 vérifiée : master/CI relues et nouveau lot étape 6 depuis master propre avec
+premier checkpoint documentaire ; implémentation conditionnée à Q05 validée. Références visuelles :
 [research-view](../visual-reference/research-view.png) et [design-system](../visual-reference/design-system.png).
-Ne pas commencer étape 6 avant fusion.
+La condition de fusion est satisfaite ; Q05 reste le verrou produit avant code Research.

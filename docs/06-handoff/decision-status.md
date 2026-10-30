@@ -3,7 +3,8 @@
 **Complément validé le 31/10/2026 (instruction utilisateur PR #8)** : Q01 construction, Q08,
 Q17, Q19–Q39 et Q55 closes dans leur portée au [registre](../05-project/open-questions.md).
 Les lignes anciennes sont des checkpoints ; ce complément prévaut sur les mentions « ouvert »
-antérieures. PR #7 est fusionnée (5C), PR #8 porte 5D non intégré ; vérifier GitHub réel.
+antérieures. PR #7 (5C) et #8 (5D, merge `0e2ca11`) sont fusionnées ; étape 6 documentaire courante,
+Q05 toujours ouverte, aucune fonctionnalité Research livrée. Vérifier GitHub réel.
 
 | Décision complémentaire | Produit | État de réalisation et référence |
 | --- | --- | --- |
@@ -68,7 +69,7 @@ puis cadrage avant code substantiel ; aucun début de 5D ni nouvelle fusion auto
 | Lobby, droits effectifs, outbox et contrôle privé mTLS C06 | Implémenté sur PR #7, non intégré | Révisions/générations et acquittements sans SQL Portal→Game, certificat de connexion épinglé | [C06](../03-technical/portal-game-control.md) | Handoff/GameSession C07 livrés, C08 suit, 5D non commencé ; Q48/Q49/Q55 conservées | 30/10/2026, Codex local, PR #7 |
 | Handoff signé et sessions Game C07 | Implémenté sur PR #7, non intégré | Consommation atomique, contrôle local des epochs, 8 h/2 h et accès capturé, portées conservées | [C07](../03-technical/game-handoff.md) | C08 parcours/shell et C09 clôture restent nécessaires ; aucune Qxx changée | 30/10/2026, Codex local, instruction utilisateur après références visuelles |
 | Parcours et shell C08, recette de clôture C09 | Implémenté/testé sur PR #7, non intégré | Handoff automatique POST, contexte réel, statuts et reçus limités ; panne/reprise avec worker, rotation et restauration locale | [C08](../03-technical/portal-game-ui.md), [C09](../03-technical/portal-operations.md) | Revue finale avant fusion ; production/support/modes restent différés, 5D non commencé | Instruction utilisateur du 30/10/2026, Codex local |
-| API Colony sécurisée et UI Colony 5D | Implémenté sur PR #8, non intégré | Chaîne GameSession→GameAccess→EmpireBinding→colonie, services 5A réutilisés, boucle jouable et Portal coupé recettés | [API/UI Colony](../03-technical/colony-api-ui.md), [plan 5D](../05-project/step-5d-plan.md) | Création de partie hors produit (Q19–Q29/Q55), Q39/Q01 consolidées par le complément du 31/10/2026, étape 6 non commencée | Instruction utilisateur du 30/10/2026, Claude Code local, PR #8 |
+| API Colony sécurisée et UI Colony 5D | Implémenté et intégré via PR #8 (`0e2ca11`) | Chaîne GameSession→GameAccess→EmpireBinding→colonie, services 5A réutilisés, boucle jouable et Portal coupé recettés | [API/UI Colony](../03-technical/colony-api-ui.md), [plan 5D](../05-project/step-5d-plan.md) | Création de partie hors produit (Q19–Q29/Q55), Q39/Q01 consolidées par le complément du 31/10/2026 ; étape 6 documentaire courante, Q05 avant code | Instruction utilisateur du 30/10/2026, Claude Code local, PR #8 |
 | UX responsive et sept domaines globaux | Implémenté / Proposition visuelle | Mobile/clavier et états explicites | [UX](../02-ux-ui/information-architecture.md), ADR 0003 | Q15 reste ouverte ; Portal non livré | PR #4/#5, S1 |
 | Diplomatie/commerce avancés, alliances, espionnage | Futur / post-MVP | Ne pas inventer des mécaniques pour compléter le MVP | [Roadmap](../05-project/roadmap.md), Q18 | Relations IA minimales étape 13 | Docs initiales ; S1 préserve les questions |
 | master stable, PR, merge explicite | Décision validée | Référence commune Work/Codex/Claude Code | [AGENTS](../../AGENTS.md) | develop historique superseded | Instructions visibles S2, PR #3 |

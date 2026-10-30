@@ -107,7 +107,7 @@ n’est jamais une décision validée ; documentation canonique et ADR priment e
 Actuel : backend Game FastAPI modulaire, worker du même code, PostgreSQL, SQLAlchemy/Alembic,
 frontend React/TypeScript/Vite. backend/app/persistence, simulation et colony portent les domaines ;
 backend/migrations les révisions, game_data les rulesets, frontend/src les vues. API Colony 5D
-(lecture/construction/annulation sous GameSession) sur PR #8, [canonique](docs/03-technical/colony-api-ui.md).
+(lecture/construction/annulation sous GameSession) intégrée à master via PR #8 (`0e2ca11`), [canonique](docs/03-technical/colony-api-ui.md).
 
 **Décision validée future** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), deux backends
 isolables chacun monolithe modulaire : Portal Accounts/Auth/Lobby → Accounts DB ; Game gameplay →
@@ -134,7 +134,12 @@ Q16 a son cadrage 5B couvert ; détails délégués et reports Q48/Q49/Q55 au re
 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats implémentés dans leur périmètre 5C par C02–C08, fusionnés via PR #7 (`ff6ef89`).
 Lot précédent 5C compte/lobby, terminé : C01 implémenté,
 C02/C03 comptes/vérification/sessions, C04 opérations sensibles et C05 MFA implémentés ; C06 lobby/S2S implémenté ; C07 handoff/GameSession est implémenté ; C08 livré et recette de clôture C09 réalisée : 5C fusionné. Migrations Accounts séparées, pas de SQL Portal→Game.
-Lot courant autorisé : 5D API Colony sécurisée et UI Colony ([plan](docs/05-project/step-5d-plan.md)) ; étape 6 hors lot.
+5D terminée et intégrée via PR #8, y compris Q39 ; [plan historique](docs/05-project/step-5d-plan.md).
+Lot courant : **étape 6 Recherche globale d’Empire**, work/step-6-research depuis master `0e2ca11`.
+Autorisation immédiate limitée au checkpoint, à la lecture, au plan et à une proposition Q05.
+**Arrêt pour validation produit Q05 avant toute migration, game_data Research, service ou UI fonctionnelle.**
+Après validation explicite de Q05 seulement : R02–R09 autorisés dans la même branche/PR brouillon.
+Aucune étape 7 ni fusion sans instruction distincte. Ne pas réutiliser la branche 5D fusionnée.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver

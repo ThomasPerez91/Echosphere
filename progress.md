@@ -6,6 +6,43 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 | Champ | État |
 | --- | --- |
+| Branche / PR / base | work/step-6-research depuis master 0e2ca11322a85452ad6860a4a35099bbc22a4689 ; une seule PR étape 6 à ouvrir en brouillon après ce premier commit |
+| Tête et CI | Base post-merge #8 : CI 41144706921 success ; tête du checkpoint et sa propre CI à consigner dans la PR après publication |
+| Dernier agent | ChatGPT Work, écrivain de ce checkout propre ; reprise des commits publiés 5D |
+| Travail réalisé | R00 : vérification GitHub, master synchronisée ff-only, nouvelle branche depuis master, références post-merge alignées ; aucune fonctionnalité Research |
+| Décisions | Q01 construction/Q08/Q17/Q19–Q39/Q55 inchangées ; Recherche globale déjà validée, Q05 toujours ouverte |
+| Fichiers modifiés | Documents de reprise et statut 5D/étape 6 uniquement ; aucun backend/frontend/migration/game_data/dépendance/Docker/test fonctionnel |
+| Tests réellement exécutés | check_docs.py, git diff --check et périmètre documentaire ; CI post-merge observée. Aucune suite fonctionnelle locale relancée pour ce checkpoint |
+| Anomalies / limites | Aucune PR concurrente étape 6 au contrôle initial. Docker/PostgreSQL absents du Work courant ; aucune capacité de charge ou nouvelle recette WSL2 revendiquée |
+| Prochaines tâches | Lire les références, publier step-6-plan et proposition Q05, puis arrêt pour arbitrage utilisateur avant tout code Research. Après validation explicite seulement : R02–R09, pas étape 7 ni merge |
+
+## R00 — synchronisation post-merge 5D, 31/10/2026
+
+Instruction utilisateur : reprendre master après fusion #8, créer work/step-6-research et une seule
+PR brouillon pour tout le lot ; publier ce premier checkpoint avant implémentation substantielle.
+GitHub contrôlé : #8 MERGED, ancienne tête d15dfda858cc829efa681572f420e9095fda5ace, merge/master
+0e2ca11322a85452ad6860a4a35099bbc22a4689. [CI post-merge 41144706921](https://github.com/ThomasPerez91/Echosphere/actions/runs/41144706921)
+observée completed/success avant publication du checkpoint. Aucun code métier commencé pendant
+l’attente. Liste des PR ouvertes vide ; branche étape 6 absente avant sa création depuis master.
+Fetch, master locale fast-forward, arbre propre puis branche étape 6 créée au SHA du merge :
+aucune reprise depuis la branche 5D, aucune divergence/travail local perdu ni branche supprimée.
+
+5D D00–D09 et Q39 intégrées à master : première boucle Colony jouable, preview des pertes/cascade,
+API sous GameSession, progression worker et panne Portal. Les preuves détaillées ci-dessous restent
+celles de leurs SHA ; leurs mentions « PR #8 non fusionnée » et « étape 6 non commencée » sont
+historiques. Étape 6 démarre **documentairement seulement** : Q05 doit être proposée et validée par
+l’utilisateur avant migration/backend/UI Research. Aucun autre arbitrage produit modifié.
+
+Validation du checkpoint : documents/liens et whitespace, diff Markdown uniquement, invariants Qxx
+conservés. Aucune suite fonctionnelle locale relancée pour ces statuts ; la CI de cette nouvelle
+tête devra être observée après publication et consignée dans l’unique PR du lot.
+
+## Historique du lot 5D — intégré via PR #8
+
+### Ancien bloc de reprise 5D (historique, remplacé)
+
+| Champ | État |
+| --- | --- |
 | Branche / PR / base | work/step-5d-secure-colony-ui · PR #8 · base master ff6ef89 ; vérifier GitHub pour état brouillon/revue |
 | Tête et CI | Source Q39 de72c181e6ba35e07ce9c397824a3e45d34e16de : CI PR 41143478865 et push 41143467685 success (5/5). Ce checkpoint documentaire suit la source ; sa propre tête/CI est consignée dans PR #8 après observation |
 | Dernier agent | ChatGPT Work, écrivain unique de ce checkout ; reprise des commits publiés Claude Code |
@@ -15,6 +52,7 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 | Tests réellement exécutés | Local Work : Ruff backend/scripts ; Game 53 passed / 138 skipped (pas de PostgreSQL), frontend lint 0 erreur (avertissement préexistant), 26 Vitest, build, 9 Chromium 320/390/768/1440 ; 78 documents/liens ; git diff --check. CI de72c18 : Game 191 passed, Portal 119 passed ; Game 26 Vitest/9 Chromium, Portal 30 Vitest/14 Chromium ; Alembic deux plans sans dérive et smokes Game/Portal/mTLS/handoff/Colony-Q39 verts. SQL/Alembic/smokes non exécutés localement |
 | Anomalies / corrections restantes | Pas de Bloquante/Majeure restante identifiée à la relecture et aux 5 jobs verts de de72c18 ; vérifier aussi la CI du présent checkpoint documentaire. Docker/PostgreSQL absents du Work courant ; limites navigateurs/charge/support/production conservées |
 | Prochaines tâches | Revue finale utilisateur de #8, Ready for review après CI verte de sa tête finale. Aucun merge sans instruction ; après fusion autorisée, vérifier master/CI puis checkpoint du lot Recherche sur nouvelle branche issue de master propre |
+
 
 ## Complément pré-revue Q39 et arbitrages — 31/10/2026
 
@@ -75,7 +113,7 @@ annulation à capacité et retry sans crédit, puis 401 à expiration. Relecture
 Bloquante/Majeure restante identifiée. Ce commit de checkpoint n’ajoute aucun changement fonctionnel ;
 vérifier sa propre CI dans la description PR avant passage en revue. Ne pas merger sans instruction.
 
-## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
+## Historique 5D — API Colony sécurisée et UI Colony interactive
 
 **Statut : D00–D09 réalisés ; PR #8 prête pour revue finale (non fusionnée).** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
 en bout sur une seule branche/PR, sans merge, sans étape 6. Environnement : Claude Code local/WSL2.

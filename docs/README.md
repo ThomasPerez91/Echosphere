@@ -1,7 +1,7 @@
 # Documentation Echosphere
 
 État intégré : étape 5A, domaine économique interne, scheduler et shell ; 5B contrats intégrés.
-Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; [C07 handoff/sessions Game](03-technical/game-handoff.md) livré, fusionnés via PR #7. Sur PR #8, non intégré :
+Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; [C07 handoff/sessions Game](03-technical/game-handoff.md) livré, fusionnés via PR #7. Intégrée via PR #8 (`0e2ca11`) :
 [API Colony sécurisée et UI Colony](03-technical/colony-api-ui.md), première boucle jouable. [Économie v0.1](01-game-design/colony-economy-v0.1.md) et
 [défense future](01-game-design/planetary-defense.md) distinguent règles implémentées et orientations.
 
@@ -53,4 +53,4 @@ sur les conversations Space Game qui n’ont pas pu être consultées.
 
 
 Compléments actuels sur PR #7 : [C08 parcours et shell](03-technical/portal-game-ui.md),
-[C09 recette et opérations](03-technical/portal-operations.md). Aucun début de 5D ni exposition production.
+[C09 recette et opérations](03-technical/portal-operations.md). 5D intégrée via #8 ; aucun Research livré ni exposition production.

@@ -16,7 +16,7 @@ Universe = frontière d’instance, ni User ni processus ; late join et protecti
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
 éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 validé, UI de partage future.
 
-## Implémentation et checkpoints historiques — 5A/5B/5C intégrés, 5D sur PR #8
+## Implémentation intégrée — jusqu’à 5D ; checkpoints antérieurs conservés
 
 PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
 8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
@@ -110,19 +110,22 @@ Lot précédent **5C — Portal Account/Lobby foundation**, branche
 work/step-5c-portal-account-lobby créée depuis master fraîchement synchronisée en fast-forward.
 Premier checkpoint documentaire 1c27497 et cadrage 8122cf7 publiés avant code. L’utilisateur a ensuite
 autorisé « alors go » : C01–C08 implémentés et testés sur PR #7, recette de clôture C09 réalisée puis revue/validations finales par Claude Code le 2026-10-30 : 5C terminé, PR #7 fusionnée dans master le 2026-10-30 (`ff6ef89`, CI post-merge verte).
-**Lot courant autorisé : 5D — API Colony sécurisée et UI Colony interactive** sur
-work/step-5d-secure-colony-ui depuis ce master ; [plan 5D](docs/05-project/step-5d-plan.md). Étape 6 non commencée ;
-aucune fusion sans instruction explicite. 5D D00–D09 réalisés sur PR #8, non intégrés :
-[API Colony](docs/03-technical/colony-api-ui.md) GameSession → GameAccess → EmpireBinding → colonie,
-lecture avec rattrapage paresseux, construction/annulation idempotentes déléguées aux services 5A,
-UI Colony réelle et recette Portal coupé. Aucune migration ; création de partie toujours hors produit.
-[Roadmap](docs/05-project/roadmap.md),
-[Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).
+**5D terminée et intégrée** : PR #8 fusionnée au commit master
+`0e2ca11322a85452ad6860a4a35099bbc22a4689`, ancienne tête d15dfda858cc829efa681572f420e9095fda5ace.
+Vérification GitHub du 31/10/2026 : CI post-merge 41144706921 success ; aucune PR concurrente Recherche.
+La [boucle Colony jouable](docs/03-technical/colony-api-ui.md) est livrée : lecture/construction/
+annulation sécurisées, Q39 plafonnement/perte et cascade Q01, worker et recette Portal coupé.
+La création complète de partie reste hors produit ; aucune fixture runtime ajoutée.
 
-## Complément autorisé avant revue PR #8 — 31/10/2026
+**Lot courant : étape 6 — Recherche globale d’Empire**, branche work/step-6-research depuis ce master.
+Premier checkpoint documentaire publié avant implémentation substantielle. Q05 reste ouverte :
+préparer le plan durable et une recommandation, puis attendre la validation produit explicite avant
+migration, backend Research, catalogue exécutable ou UI fonctionnelle. **Aucune recherche livrée** à ce
+checkpoint. Après Q05 validée, R02–R09 sont autorisés sur cette seule branche/PR ; aucune étape 7.
+Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
+portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.
 
-Q01 construction, Q08, Q17, Q19–Q39 et Q55 closes dans la portée du registre, sans développement
-anticipé de fog/modes/défense/partage. Seule Q39 modifie les services/preview/UI dans ce correctif.
-Valeurs initiales et pacing configurables/balançables, budgets performance non démontrés.
-Travail Work sur la branche existante #8, aucun merge autorisé. Après une future instruction de
-fusion : vérifier master/CI, nouveau lot depuis master avec checkpoint documentaire avant Recherche.
+Les arbitrages du 31/10/2026 Q01 construction/Q08/Q17/Q19–Q39/Q55 restent inchangés. Modes, fog,
+partage produit et défense futurs, caps/pacing balançables et budgets de performance non démontrés.
+Aucun nouveau merge autorisé. Références UI Recherche : design-system.png et research-view.png,
+illustrations de composition seulement, jamais catalogue ou règles validés.
