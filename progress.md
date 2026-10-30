@@ -98,7 +98,10 @@ Le vrai navigateur a montré Origin null sous no-referrer au POST de transfert :
 sur ces seules pages, sans accepter null ni ouvrir CORS ; CSP Game autorise ses lectures same-origin.
 Un smoke de panne PG a été lancé trop tôt pendant une suite Portal : 3 échecs/11 erreurs de connexion
 à l’arrêt du serveur, non retenus comme succès ; DB dédiée recréée après la panne et suite complète
-relancée avec 118 réussites. Aucun défaut WSL2 démontré par ces erreurs de commande/ordonnancement.
+relancée avec 118 réussites. Relecture des logs CI de 061fd17 : le test SQL inter-comptes rencontrait
+l’unicité du slot avant la FK visée. Le test a été renforcé pour libérer le slot concurrent et exiger
+le nom exact de la FK ; scénario ciblé réellement réussi sur une troisième DB *_test supprimée ensuite.
+Aucun code runtime modifié par cette précision de test. Aucun défaut WSL2 démontré par ces erreurs de commande/ordonnancement.
 
 Limites : vue C07 minimale hors intégration React complète, erreurs/expiration/parcours/suivi après
 logout à affiner C08 ; production/rotation/nettoyage/backups/recette de charge à C09 et lots prévus.

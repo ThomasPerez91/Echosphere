@@ -448,11 +448,13 @@ def test_sql_session_membership_cannot_belong_to_another_account(game):
     one = grant(game)
     raw, payload, _ = enter(game, one)
     other = grant(game, universe=one[1])
-    _, _, wire = enter(game, other)
-    with pytest.raises(IntegrityError), game.factory.begin() as session:
+    other_raw, _, wire = enter(game, other)
+    game.logout(other_raw, other[1], csrf(other_raw))
+    with pytest.raises(IntegrityError) as failure, game.factory.begin() as session:
         row = session.get(GameSession, UUID(payload["session_id"]))
         row.global_user_id, row.device_id = other[0], UUID(wire["device_id"])
         session.flush()
+    assert failure.value.orig.diag.constraint_name == "fk_game_sessions_membership_id_game_accesses"
     assert game.read(raw, one[1])["status"] == "authenticated"
 
 
