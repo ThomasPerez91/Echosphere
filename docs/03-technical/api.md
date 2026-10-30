@@ -1,6 +1,6 @@
 # Contrats API
 
-**Statut : Game public = sondes et contexte/sessions C07 ; Portal C01–C08 et interface privée mTLS livrés sur PR #7, non intégrés ; gameplay futur.**
+**Statut : Game public = sondes, contexte/sessions C07 et, sur PR #8 (5D), [API Colony](colony-api-ui.md) ; Portal C01–C08 et interface privée mTLS fusionnés via PR #7.**
 [Routes C02, erreurs et protections](portal-registration.md). [Routes C03](portal-sessions.md), sessions/CSRF et logout ; [C06 lobby/mTLS](portal-game-control.md) livré, [C07 handoff/GameSession](game-handoff.md) livré sur PR #7.
 
 

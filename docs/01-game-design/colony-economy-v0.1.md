@@ -117,9 +117,10 @@ les 100/80 % sans inventer de stock hors plafond ni perdre un remboursement sile
 
 ## Limites
 
-Domaine interne uniquement : pas d’API publique de lecture/mutation, d’identité factice, de partie
-jouable, défense effective, orbitaux, flotte, recherche, combat ou multijoueur. L’UI réserve les quatre
-sous-sections Colony sans afficher de stocks/bâtiments/timers fictifs. La suite est 5B contrats identité/Portal-Game, 5C compte/lobby selon cadrage, 5D API/UI sécurisées.
+5D (PR #8) expose ces règles par une [API sécurisée et une UI réelle](../03-technical/colony-api-ui.md),
+sans les recalculer : lecture, construction/amélioration et annulation sous GameSession. Toujours
+hors périmètre : identité factice, création de partie, défense effective, orbitaux, flotte,
+recherche, combat ou multijoueur. Orbite/Défense restent des états futurs explicites. La suite est 5B contrats identité/Portal-Game, 5C compte/lobby selon cadrage, 5D API/UI sécurisées.
 
 - [Domaine et persistance](../03-technical/data-model.md) · [ADR 0007](../adr/0007-colony-economy.md)
 - [Défense future](planetary-defense.md) · [Questions](../05-project/open-questions.md)

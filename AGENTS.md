@@ -106,7 +106,8 @@ n’est jamais une décision validée ; documentation canonique et ADR priment e
 
 Actuel : backend Game FastAPI modulaire, worker du même code, PostgreSQL, SQLAlchemy/Alembic,
 frontend React/TypeScript/Vite. backend/app/persistence, simulation et colony portent les domaines ;
-backend/migrations les révisions, game_data les rulesets, frontend/src les vues. Pas d’API gameplay.
+backend/migrations les révisions, game_data les rulesets, frontend/src les vues. API Colony 5D
+(lecture/construction/annulation sous GameSession) sur PR #8, [canonique](docs/03-technical/colony-api-ui.md).
 
 **Décision validée future** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), deux backends
 isolables chacun monolithe modulaire : Portal Accounts/Auth/Lobby → Accounts DB ; Game gameplay →

@@ -11,20 +11,21 @@ import time
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import text
-
 from app.colony.rules import Ruleset, load_ruleset
 from app.colony.service import configure_universe, initialize_colony
 from app.core.config import Settings
 from app.persistence.database import create_database_engine, create_session_factory
 from app.persistence.models import Colony, Empire, Planet, StellarSystem, Universe
+from sqlalchemy import text
 
 DATABASE = "echosphere_colony_game_test"
 
 
 def factory():
     settings = Settings()
-    assert settings.postgres_db == DATABASE, "Colony fixture is restricted to its disposable DB"
+    assert settings.postgres_db == DATABASE, (
+        "Colony fixture is restricted to its disposable DB"
+    )
     engine = create_database_engine(settings)
     return engine, create_session_factory(engine)
 
@@ -44,7 +45,9 @@ def setup(universe_id):
     rules = Ruleset.model_validate(data)
     with sessions.begin() as session:
         configure_universe(session, universe_id, rules)
-        empire = Empire(universe_id=universe_id, name="Empire de recette", controller_type="human")
+        empire = Empire(
+            universe_id=universe_id, name="Empire de recette", controller_type="human"
+        )
         system = StellarSystem(universe_id=universe_id, name="Système de recette")
         session.add_all([empire, system])
         session.flush()
@@ -57,7 +60,9 @@ def setup(universe_id):
         )
         session.add(planet)
         session.flush()
-        colony = Colony(universe_id=universe_id, empire_id=empire.id, planet_id=planet.id)
+        colony = Colony(
+            universe_id=universe_id, empire_id=empire.id, planet_id=planet.id
+        )
         session.add(colony)
         session.flush()
         initialize_colony(session, universe_id, empire.id, colony.id, datetime.now(UTC))

@@ -93,6 +93,17 @@ Playwright conserve 320/390/768/1440 et teste les sous-sections Colony, clavier 
 défensives réelles. Aucun snapshot artificiel ajouté. Compose teste en plus le chargement v0.1 dans
 l’image du worker. Les fixtures économiques restent dans les tests, jamais au démarrage normal.
 
+## API et UI Colony (5D)
+
+`backend/tests/integration/test_colony_api.py` (PostgreSQL `*_test`) : chaîne d’autorisation et
+refus sans fuite, permissions read/construct/cancel distinctes, enveloppe stricte, réservation,
+idempotence par participation, refus 5A, achèvement worker, rattrapage paresseux, 100/80 et Q39,
+courses (double clic, dernier slot, amélioration, annulation) et sessions expirées/suspendues/
+révoquées. Frontend : `src/Colony.test.tsx` (mutations explicites, clé conservée après issue
+inconnue, StrictMode, échéance → lecture) et `e2e/colony.spec.ts` (320/390/768/1440, atteignabilité
+réelle dans le viewport). Recette réelle `scripts/smoke_colony_compose.py` : boucle jouable complète
+et Portal coupé sur projet jetable, en CI compose-smoke.
+
 ## Passation documentaire et résilience future
 
 Mission présente : check documentaire, liens/index ADR, recherche des contradictions et diff de

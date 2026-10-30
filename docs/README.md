@@ -1,8 +1,8 @@
 # Documentation Echosphere
 
 État intégré : étape 5A, domaine économique interne, scheduler et shell ; 5B contrats intégrés.
-Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; [C07 handoff/sessions Game](03-technical/game-handoff.md) livré. Aucune partie jouable ni
-API gameplay publique. [Économie v0.1](01-game-design/colony-economy-v0.1.md) et
+Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; [C07 handoff/sessions Game](03-technical/game-handoff.md) livré, fusionnés via PR #7. Sur PR #8, non intégré :
+[API Colony sécurisée et UI Colony](03-technical/colony-api-ui.md), première boucle jouable. [Économie v0.1](01-game-design/colony-economy-v0.1.md) et
 [défense future](01-game-design/planetary-defense.md) distinguent règles implémentées et orientations.
 
 ## Lire dans cet ordre

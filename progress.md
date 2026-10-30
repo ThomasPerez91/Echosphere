@@ -9,20 +9,36 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 
 | Champ | État |
 | --- | --- |
-| Branche / PR / base | work/step-5d-secure-colony-ui · PR 5D à ouvrir/en brouillon · base master ff6ef89 (5C fusionné, CI post-merge 41123867271 success) |
-| Tête et CI | Tête = commit portant ce bloc ; SHA/CI consignés dans la PR après observation |
-| Dernier agent | Claude Code local (WSL2), écrivain unique ; Codex arrêté |
-| Travail réalisé | D00 : synchronisation post-merge, branche 5D, [plan 5D](docs/05-project/step-5d-plan.md), statuts 5C passés en historique |
-| Décisions | Aucune nouvelle décision produit ; contrats 5B, 5A et Q01–Q56 inchangés |
-| Fichiers modifiés | Plan 5D, statuts AGENTS/context/README/roadmap/docs/passation/C08/C09/plan 5C, progress |
-| Tests réellement exécutés | Référence master : 150 tests Game sur PostgreSQL dédiée echosphere_5d_game_test ; check_docs |
-| Anomalies / corrections restantes | Aucune ; graphe de partie disponible uniquement par fixtures *_test (aucun parcours produit de création) |
-| Prochaines tâches | D01 contrat/projection → D02 lecture autorisée → D03 construction → D04 annulation/concurrence → D05–D07 UI → D08 résilience → D09 clôture |
+| Branche / PR / base | work/step-5d-secure-colony-ui · PR #8 brouillon · base master ff6ef89 |
+| Tête et CI | Tête = commit D09 portant ce bloc (SHA/CI consignés dans PR #8 après observation). D05–D07 4cddcf9 : push 41127419512 / PR 41127427942 success ; D02–D04 c96e2bf success |
+| Dernier agent | Claude Code local (WSL2), écrivain unique |
+| Travail réalisé | 5D D00–D09 : API Colony sécurisée, UI Colony réelle, recette boucle jouable et Portal coupé, documentation de clôture |
+| Décisions | Aucune nouvelle décision produit ; [canonique 5D](docs/03-technical/colony-api-ui.md), Q39/Q01/Q21/Q55 inchangées |
+| Fichiers modifiés | backend/app/colony/{service,projection,api}.py, main/access http (horloge), tests Colony ; frontend colony/hooks/composants/styles/tests/e2e ; scripts smoke_colony/colony_browser/colony_game_fixture ; CI compose-smoke ; docs |
+| Tests réellement exécutés | Game 178 passed (dont 28 Colony API) ; frontend lint 0 erreur, 24 Vitest, build, 9 Chromium ; Alembic check deux plans ; smokes Game/Portal/mTLS/handoff et recette Colony réussis ; Ruff backend/scripts ; check_docs. Suites Portal non relancées localement (Portal inchangé), exécutées par la CI |
+| Anomalies / corrections restantes | Aucune Bloquante/Majeure connue ; limites dans [known-gaps](docs/06-handoff/known-gaps.md) (création de partie hors produit, fog futur, navigateurs non Chromium) ; aucune revue croisée encore réalisée |
+| Prochaines tâches | Revue finale de PR #8 (revue croisée Codex possible), puis fusion sur instruction ; étape 6 non commencée |
 
 ## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
 
-**Statut : D00–D08 réalisés ; D09 recette complète/clôture en cours.** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
+**Statut : D00–D09 réalisés ; PR #8 prête pour revue finale (non fusionnée).** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
 en bout sur une seule branche/PR, sans merge, sans étape 6. Environnement : Claude Code local/WSL2.
+
+### D09 — recette complète et clôture, 2026-10-30
+
+Contenu final validé localement : backend Game **178 passed** (echosphere_5d_game_test), Ruff
+check backend+scripts et format app/tests ; frontend Game ESLint 0 erreur (1 avertissement
+préexistant), **24 Vitest**, build ; Chromium **9 passed** (copie hors dépôt). Pile conservée
+recréée avec les images 5D, volumes préservés : Alembic Game 0006_game_sessions et Accounts
+p0005_control sans dérive (aucune migration 5D) ; smoke_compose, smoke_portal_compose,
+smoke_control_compose et smoke_handoff_compose réussis (code 0), recette smoke_colony_compose
+réussie (D08). Correctif : ordre d’imports Ruff de la fixture Colony (la CI de f837554 l’aurait
+signalé). Portal non modifié : ses suites ne sont pas relancées localement et restent couvertes
+par la CI. Documentation de clôture : roadmap, contexte, API, sécurité, économie, stratégie de
+tests, DoD, index des décisions, lacunes, passation, plan.
+
+Conclusion : 5D atteint son critère de sortie (boucle jouable réelle et Portal coupé démontrés) ;
+PR #8 prête pour revue finale après CI verte du SHA publié. Aucune fusion, étape 6 non commencée.
 
 ### D08 — boucle réelle et Portal coupé, 2026-10-30
 

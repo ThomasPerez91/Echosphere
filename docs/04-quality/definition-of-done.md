@@ -29,6 +29,15 @@ index des décisions, ADR 0008, Q01–Q39 préservées/Q40–Q56 ouvertes, lectu
 point de reprise cohérents. Check liens/index et diff autorisé ; CI réelle de tête observée.
 PR mise à jour et laissée non fusionnée. WSL2/protection DDoS non revendiqués comme testés.
 
+## Étape 5D — API Colony sécurisée et UI
+
+Routes authentifiées par GameSession, autorisées par GameAccess/EmpireBinding/permission dans la
+transaction, sans appel Portal ; règles déléguées aux services 5A, sans recalcul HTTP/React.
+Idempotence, concurrence, Q39 et sessions testées sur PostgreSQL ; UI réelle sans donnée fictive,
+mutations explicites uniques, clavier et 320/390/768/1440 vérifiés dans le viewport. Recette réelle
+boucle jouable + Portal coupé, suites/smokes et CI du SHA publiés ; aucune migration ou création
+de partie produit implicite. Fusion sur instruction seulement ; étape 6 non commencée.
+
 ## Étape 5C — comptes/lobby et accès
 
 Comptes/MFA/sessions, opérations sensibles et outboxes testés sur Accounts dédiés ; séparation

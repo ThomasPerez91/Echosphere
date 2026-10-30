@@ -5,8 +5,9 @@ partiellement inconnue et rencontrer des civilisations IA qui suivent les mêmes
 Une préparation d'environ dix minutes par jour ; des sessions longues pour mieux décider, sans
 rendement lié à la présence. Aucun bouton de récolte, aucun pay-to-win.
 
-**État actuel : domaine Colony/économie v0.1 et shell Game intégrés ; Portal C01–C08 sur PR #7 : comptes, sessions, opérations sensibles, MFA, lobby, contrôle privé mTLS et handoff/sessions Game,
-sans API gameplay ni partie jouable.**
+**État : master intègre l’économie Colony v0.1, le shell Game et Portal 5C (comptes, sessions, MFA, lobby,
+contrôle privé mTLS, handoff/sessions Game). Sur PR #8, non intégré : [5D API/UI Colony](docs/03-technical/colony-api-ui.md),
+première boucle jouable (lecture, construction, annulation) sous GameSession, sans création de partie produit.**
 
 Socle Portal séparé : https://portal.echosphere.localhost:8443 ; Game : https://game.echosphere.localhost:8443.
 Certificat local à approuver explicitement et recette : [Portal C01](docs/03-technical/portal-foundation.md).

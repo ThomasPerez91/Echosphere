@@ -112,5 +112,9 @@ Premier checkpoint documentaire 1c27497 et cadrage 8122cf7 publiés avant code. 
 autorisé « alors go » : C01–C08 implémentés et testés sur PR #7, recette de clôture C09 réalisée puis revue/validations finales par Claude Code le 2026-10-30 : 5C terminé, PR #7 fusionnée dans master le 2026-10-30 (`ff6ef89`, CI post-merge verte).
 **Lot courant autorisé : 5D — API Colony sécurisée et UI Colony interactive** sur
 work/step-5d-secure-colony-ui depuis ce master ; [plan 5D](docs/05-project/step-5d-plan.md). Étape 6 non commencée ;
-aucune fusion sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
+aucune fusion sans instruction explicite. 5D D00–D09 réalisés sur PR #8, non intégrés :
+[API Colony](docs/03-technical/colony-api-ui.md) GameSession → GameAccess → EmpireBinding → colonie,
+lecture avec rattrapage paresseux, construction/annulation idempotentes déléguées aux services 5A,
+UI Colony réelle et recette Portal coupé. Aucune migration ; création de partie toujours hors produit.
+[Roadmap](docs/05-project/roadmap.md),
 [Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).

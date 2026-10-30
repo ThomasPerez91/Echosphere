@@ -31,7 +31,8 @@ Argon2id, vérification et email durable local. [C03](../03-technical/portal-ses
 et marqueurs de révocation acquittés par Game.
 [C08](../03-technical/portal-game-ui.md) intègre le contexte au shell et les parcours ;
 [C09](../03-technical/portal-operations.md) porte la recette de panne/reprise et de clôture.
-**Non implémenté** : API gameplay et systèmes futurs du MVP. 5B reste seulement partiellement implémenté.
+**Sur PR #8, non intégré** : [5D API/UI Colony](../03-technical/colony-api-ui.md), première boucle jouable.
+**Non implémenté** : création de partie produit et systèmes futurs du MVP (recherche, galaxie…). 5B reste seulement partiellement implémenté.
 
 5B autorisé puis consolidé le 2026-10-29 sur work/step-5b-identity-contracts :
 [contrats validés](../03-technical/identity-contracts.md), **partiellement implémentés par C02–C08 sur PR #7 seulement**.

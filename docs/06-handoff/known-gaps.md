@@ -171,3 +171,17 @@ H11 dépend de la version Uvicorn figée, recette mTLS obligatoire à sa mise à
 perte physique de DB, restauration de sauvegarde, handoff ou navigateur complet de partie attesté.
 Source pending vers cible retirée/renommée ou état Game contradictoire supérieur : intervention
 opérateur, jamais abandon de révocation ou abaissement silencieux. Q48/Q49/Q55 et Q19–Q29 conservées.
+
+## Limites courantes après 5D (PR #8)
+
+- Aucun parcours produit ne crée Empire/planète/colonie : tests et recettes utilisent des fixtures
+  réservées aux bases `*_test` (Q19–Q29/Q55). Une partie réelle exige encore un lot de création.
+- La lecture applique le rattrapage 5A sous verrou du stream (écritures déterministes) ; un événement
+  bloqué rend la colonie `colony_busy` jusqu’à reprise opérateur (`worker --retry`).
+- Fog of war non appliqué au-delà du scope propre : la projection ne contient que la colonie
+  autorisée ; filtrage de connaissance futur (Q08).
+- Stocks affichés à l’instant serveur, sans interpolation client ; rafraîchissement explicite, après
+  commande ou à l’échéance.
+- Expiration de session éprouvée en recette par déplacement de l’échéance en base de test, les
+  frontières exactes étant couvertes par horloge injectée dans les tests d’intégration.
+- Aucun test Safari/Firefox, appareil tactile physique, lecteur d’écran ou charge hostile ; Q17/Q29.

@@ -85,69 +85,167 @@ def main():
   local-edge:
     ports: !reset []
 """)
-        compose = ("docker", "compose", "-p", project, "-f", str(ROOT / "docker-compose.yml"),
-                   "-f", str(override))
+        compose = (
+            "docker",
+            "compose",
+            "-p",
+            project,
+            "-f",
+            str(ROOT / "docker-compose.yml"),
+            "-f",
+            str(override),
+        )
 
         def game(call):
-            return run(*compose, "exec", "-T", "backend", "python", "-", env=environment,
-                       input=fixture + "\n" + call + "\n")
+            return run(
+                *compose,
+                "exec",
+                "-T",
+                "backend",
+                "python",
+                "-",
+                env=environment,
+                input=fixture + "\n" + call + "\n",
+            )
 
         started = False
         try:
-            run("docker", "build", "-t", "echosphere-handoff-browser:dev", "-f", "-",
+            run(
+                "docker",
+                "build",
+                "-t",
+                "echosphere-handoff-browser:dev",
+                "-f",
+                "-",
                 str(ROOT / "portal/frontend"),
                 input="FROM mcr.microsoft.com/playwright:v1.56.1-noble\nWORKDIR /browser\n"
-                "COPY package.json package-lock.json ./\nRUN npm ci\n")
+                "COPY package.json package-lock.json ./\nRUN npm ci\n",
+            )
             print("Colony recipe: starting isolated project", flush=True)
             started = True
-            run(*compose, "up", "--no-build", "-d", "--wait", "--wait-timeout", "180",
-                env=environment)
-            user = run(*compose, "exec", "-T", "portal-backend", "python", "-", env=environment,
-                       input=PORTAL_FIXTURE.replace("__UNIVERSE__", universe)).splitlines()[-1]
+            run(
+                *compose,
+                "up",
+                "--no-build",
+                "-d",
+                "--wait",
+                "--wait-timeout",
+                "180",
+                env=environment,
+            )
+            user = run(
+                *compose,
+                "exec",
+                "-T",
+                "portal-backend",
+                "python",
+                "-",
+                env=environment,
+                input=PORTAL_FIXTURE.replace("__UNIVERSE__", universe),
+            ).splitlines()[-1]
             created = json.loads(game(f"setup({universe!r})").splitlines()[-1])
-            run(*compose, "exec", "-T", "portal-backend", "python", "-", env=environment,
-                input=PORTAL_ACCESS.replace("__USER__", user).replace("__UNIVERSE__", universe)
-                .replace("__EMPIRE__", created["empire_id"]))
-            print("Colony recipe: test-only account, universe, colony and Empire binding ready",
-                  flush=True)
-            edge = json.loads(run("docker", "inspect",
-                                  run(*compose, "ps", "-q", "local-edge", env=environment)))[0]
+            run(
+                *compose,
+                "exec",
+                "-T",
+                "portal-backend",
+                "python",
+                "-",
+                env=environment,
+                input=PORTAL_ACCESS.replace("__USER__", user)
+                .replace("__UNIVERSE__", universe)
+                .replace("__EMPIRE__", created["empire_id"]),
+            )
+            print(
+                "Colony recipe: test-only account, universe, colony and Empire binding ready",
+                flush=True,
+            )
+            edge = json.loads(
+                run(
+                    "docker",
+                    "inspect",
+                    run(*compose, "ps", "-q", "local-edge", env=environment),
+                )
+            )[0]
             network = project + "_default"
             ip = edge["NetworkSettings"]["Networks"][network]["IPAddress"]
-            artifacts = Path(os.environ.get("COLONY_ARTIFACTS", "/tmp/echosphere-colony-artifacts"))
+            artifacts = Path(
+                os.environ.get("COLONY_ARTIFACTS", "/tmp/echosphere-colony-artifacts")
+            )
             artifacts.mkdir(parents=True, exist_ok=True)
-            names = ("built", "completed", "portal-stop", "portal-stopped", "expire", "expired")
+            names = (
+                "built",
+                "completed",
+                "portal-stop",
+                "portal-stopped",
+                "expire",
+                "expired",
+            )
             for name in names:
                 (artifacts / name).unlink(missing_ok=True)
-            args = ("docker", "run", "--rm", "--network", network, "--ipc=host",
-                    "-v", str(ROOT / "scripts/colony_browser.mjs") + ":/browser/colony.mjs:ro",
-                    "-v", str(artifacts.resolve()) + ":/artifacts",
-                    "-e", "COLONY_UNIVERSE=" + universe, "-e", "COLONY_ID=" + created["colony_id"],
-                    "-e", "COLONY_EDGE_IP=" + ip,
-                    "echosphere-handoff-browser:dev", "node", "/browser/colony.mjs")
+            args = (
+                "docker",
+                "run",
+                "--rm",
+                "--network",
+                network,
+                "--ipc=host",
+                "-v",
+                str(ROOT / "scripts/colony_browser.mjs") + ":/browser/colony.mjs:ro",
+                "-v",
+                str(artifacts.resolve()) + ":/artifacts",
+                "-e",
+                "COLONY_UNIVERSE=" + universe,
+                "-e",
+                "COLONY_ID=" + created["colony_id"],
+                "-e",
+                "COLONY_EDGE_IP=" + ip,
+                "echosphere-handoff-browser:dev",
+                "node",
+                "/browser/colony.mjs",
+            )
             done = set()
             deadline = time.monotonic() + 300
-            with subprocess.Popen(args, cwd=ROOT, text=True, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE) as browser:
+            with subprocess.Popen(
+                args,
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ) as browser:
                 while browser.poll() is None:
                     if time.monotonic() >= deadline:
                         browser.terminate()
-                        raise RuntimeError("Colony browser coordination exceeded its deadline")
+                        raise RuntimeError(
+                            "Colony browser coordination exceeded its deadline"
+                        )
                     if (artifacts / "built").exists() and "built" not in done:
                         # The page is closed: only the live worker can complete the order.
                         for _ in range(60):
-                            rows = json.loads(game(f"orders({created['colony_id']!r})")
-                                              .splitlines()[-1])
+                            rows = json.loads(
+                                game(f"orders({created['colony_id']!r})").splitlines()[
+                                    -1
+                                ]
+                            )
                             if rows and all(row[2] == "completed" for row in rows):
                                 break
                             time.sleep(1)
                         else:
-                            raise RuntimeError("Worker did not complete the accepted order")
+                            raise RuntimeError(
+                                "Worker did not complete the accepted order"
+                            )
                         (artifacts / "completed").write_text("ready")
                         done.add("built")
                     if (artifacts / "portal-stop").exists() and "portal" not in done:
-                        run(*compose, "stop", "--timeout", "3", "portal-backend",
-                            "portal-control-worker", env=environment)
+                        run(
+                            *compose,
+                            "stop",
+                            "--timeout",
+                            "3",
+                            "portal-backend",
+                            "portal-control-worker",
+                            env=environment,
+                        )
                         (artifacts / "portal-stopped").write_text("ready")
                         done.add("portal")
                     if (artifacts / "expire").exists() and "expire" not in done:
@@ -157,7 +255,9 @@ def main():
                     time.sleep(0.2)
                 stdout, stderr = browser.communicate(timeout=10)
                 if browser.returncode:
-                    Path("/tmp/echosphere-colony-failure.log").write_text(redacted(stdout + stderr))
+                    Path("/tmp/echosphere-colony-failure.log").write_text(
+                        redacted(stdout + stderr)
+                    )
                     raise RuntimeError("5D real browser scenario failed")
                 assert done == {"built", "portal", "expire"}
                 print(stdout)
@@ -165,7 +265,9 @@ def main():
             if started:
                 # This project and all its volumes were created by this recipe only (*_test, no port).
                 run(*compose, "down", "--volumes", "--remove-orphans", env=environment)
-    print("Colony smoke passed; owned temporary project/volumes removed, retained stack preserved")
+    print(
+        "Colony smoke passed; owned temporary project/volumes removed, retained stack preserved"
+    )
 
 
 if __name__ == "__main__":

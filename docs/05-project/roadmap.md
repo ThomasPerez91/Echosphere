@@ -58,8 +58,9 @@ ajoute inscription/Argon2id/vérification email et livraison locale durable, ave
 handoff/GameSession C07 livrés sur PR #7. [C04](../03-technical/portal-account-security.md) livre les opérations sensibles,
 [C05](../03-technical/portal-mfa.md) ajoute MFA/secours/récupération et leur intégration. [C06](../03-technical/portal-game-control.md) livre lobby, outbox et contrôle mTLS.
 C08 livré ; recette de clôture C09 réalisée : 5C terminé, PR #7 fusionnée dans master le 2026-10-30 (`ff6ef89`, CI post-merge verte).
-**Lot courant autorisé : 5D** sur work/step-5d-secure-colony-ui, [plan 5D](step-5d-plan.md) : API/UI Colony et
-preuves de résilience gameplay, sans accès permissif transitoire. Étape 6 non commencée.
+**Lot courant autorisé : 5D** sur work/step-5d-secure-colony-ui (PR #8), [plan 5D](step-5d-plan.md) : D00–D09
+réalisés, [API/UI Colony](../03-technical/colony-api-ui.md) et recette réelle Portal coupé ; prêt pour revue finale,
+fusion sur instruction seulement. Étape 6 non commencée.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).

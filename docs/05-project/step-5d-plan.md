@@ -1,6 +1,6 @@
 # Étape 5D — API Colony sécurisée et UI Colony interactive
 
-**Statut : lot autorisé le 2026-10-30, en cours sur `work/step-5d-secure-colony-ui`.**
+**Statut : D00–D09 réalisés sur `work/step-5d-secure-colony-ui` (PR #8), non intégré ; prêt pour revue finale.**
 Base : master `ff6ef89` (fusion de PR #7, 5C), CI post-merge verte. Contrats : [5B](../03-technical/identity-contracts.md),
 [C07 handoff](../03-technical/game-handoff.md), [économie v0.1](../01-game-design/colony-economy-v0.1.md),
 [ADR 0007](../adr/0007-colony-economy.md), [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
