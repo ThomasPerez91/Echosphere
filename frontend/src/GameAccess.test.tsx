@@ -48,10 +48,11 @@ test('the deadline timer verifies the server without extending activity', async 
   vi.useFakeTimers();
   let reads = 0;
   const near = { ...current, idle_expires_at: '2099-01-01T00:00:01Z' };
-  const fetcher = vi.fn((url: string) => Promise.resolve({
-    ok: url === '/api/ready' || ++reads === 1, status: url === '/api/ready' || reads === 1 ? 200 : 401,
-    json: async () => url === '/api/ready' ? { status: 'ready' } : reads === 1 ? near : { portal_url: current.portal_url },
-  }));
+  // Only session reads are counted; Colony reads are separate and also never post activity.
+  const fetcher = vi.fn((url: string) => Promise.resolve(url.includes('/colonies')
+    ? { ok: false, status: 404, json: async () => ({ error: { code: 'colony_not_found' } }) }
+    : { ok: url === '/api/ready' || ++reads === 1, status: url === '/api/ready' || reads === 1 ? 200 : 401,
+      json: async () => url === '/api/ready' ? { status: 'ready' } : reads === 1 ? near : { portal_url: current.portal_url } }));
   vi.stubGlobal('fetch', fetcher); window.history.replaceState(null, '', `#universe/${universe}/empire`);
   const { act } = await import('@testing-library/react');
   await act(async () => { render(<App />); });

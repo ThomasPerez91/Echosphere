@@ -184,6 +184,11 @@ def project(
             "built": len(built),
             "reserved": len(reserved),
             "free": planet.sector_capacity - len(built) - len(reserved),
+            "free_indices": [
+                index
+                for index in range(1, planet.sector_capacity + 1)
+                if index not in built and index not in reserved
+            ],
         },
         "resources": [
             {

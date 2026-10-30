@@ -99,8 +99,34 @@ Corps `{"error": {"code": ...}, "portal_url": ...}`, `Cache-Control: no-store`.
 
 Q39 est inchangée : un remboursement qui dépasserait la capacité est refusé atomiquement.
 
+## UI Colony (frontend Game)
+
+`useColony` lit la liste puis la projection de la colonie (GET, jamais activité), applique
+seulement des réponses plus récentes (`server_time` monotone, générations, abort) et n’envoie une
+commande que sur clic explicite, une à la fois. Clé d’intention conservée après une issue inconnue
+(timeout, réseau, 5xx) pour qu’un retry ne crée jamais un second ordre ; un refus 4xx clôt
+l’intention puis relit la colonie. Un 401 relit la session C07, qui affiche l’expiration et le retour
+lobby. La barre d’avancement est une projection visuelle des dates serveur ; à l’échéance, une
+lecture légère est déclenchée (puis 3/10/30 s si le worker tarde, ensuite bouton explicite) : jamais
+d’achèvement côté client ni de polling permanent.
+
+Sous-navigation Vue d’ensemble / Infrastructures / Orbite / Défense. Vue d’ensemble : stocks et
+capacités, production, alertes dérivées des valeurs serveur (stock ≥ 90 %, file pleine, aucun
+secteur libre), file et résumé tabulaire. Infrastructures : file avec avancement et annulation
+confirmée (remboursement et cascade affichés, refus Q39 expliqué), infrastructures existantes avec
+amélioration, nouvelles infrastructures avec coût, durée de base/effective, secteur libre choisi,
+bouton désactivé et raison serveur si indisponible. Orbite et Défense restent des états futurs
+explicites, sans bouton ni donnée inventée. Top bar : stocks et production de la colonie ; Empire
+affiche la colonie réelle et sa construction en cours. Aucun élément illustratif des mockups
+(population, défenses, accélération, bâtiments hors catalogue) n’est implémenté.
+
+Responsive vérifié 320/390/768/1440 en Chromium : pas de débordement horizontal, boutons ≥ 44 px,
+centre de chaque bouton réellement atteignable dans le viewport (barre mobile fixe compensée par
+`scroll-padding-bottom`), clavier sur construction/annulation et sous-navigation.
+
 ## Données de partie et tests
 
 Aucun parcours produit ne crée encore une partie : les tests et recettes créent Universe (provision
 C06), économie, Empire, planète et colonie de référence uniquement dans des bases `*_test`, puis
-lient l’Empire par `SetUniverseAccess`. Tests d’intégration : `backend/tests/integration/test_colony_api.py`.
+lient l’Empire par `SetUniverseAccess`. Tests : `backend/tests/integration/test_colony_api.py`,
+`frontend/src/Colony.test.tsx`, `frontend/e2e/colony.spec.ts` (API interceptée).

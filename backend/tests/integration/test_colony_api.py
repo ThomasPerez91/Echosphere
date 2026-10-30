@@ -190,7 +190,13 @@ def test_projection_exposes_real_pinned_state_without_activity(world):
         "data_node",
         "industrial_complex",
     ]
-    assert body["sectors"] == {"capacity": 12, "built": 4, "reserved": 0, "free": 8}
+    assert body["sectors"] == {
+        "capacity": 12,
+        "built": 4,
+        "reserved": 0,
+        "free": 8,
+        "free_indices": [5, 6, 7, 8, 9, 10, 11, 12],
+    }
     assert body["ruleset_version"] == "v0.1" and body["permissions"] == ALL
     build = next(
         o

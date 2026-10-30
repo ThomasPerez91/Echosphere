@@ -21,8 +21,24 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 
 ## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
 
-**Statut : D00–D04 réalisés ; D05 UI en cours.** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
+**Statut : D00–D07 réalisés ; D08 résilience en cours.** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
 en bout sur une seule branche/PR, sans merge, sans étape 6. Environnement : Claude Code local/WSL2.
+
+### D05–D07 — UI Colony connectée, responsive et erreurs, 2026-10-30
+
+Frontend Game : `src/colony/api.ts` (client validant), `src/colony/format.ts` (présentation exacte
+BigInt, libellés, messages d’erreur), `src/hooks/useColony.ts`, `src/components/ColonyScreen.tsx`,
+câblage App/ColonyView (top bar ressources, Empire réel), tokens rapprochés de la référence
+visuelle. Projection backend complétée par `free_indices`. Détail : [canonique](docs/03-technical/colony-api-ui.md).
+
+Tests réellement exécutés (node:22, conteneurs) : tsc, ESLint 0 erreur (1 avertissement préexistant
+useGameSession), Vitest **24 passed** (16 antérieurs + 8 Colony : rendu sans mutation sous
+StrictMode, double clic unique, retry même clé après issue inconnue, refus expliqué + relecture,
+annulation confirmée/refus Q39, lecture seule sans boutons, 401 → relecture session, échéance →
+lecture sans POST). Test d’échéance C08 adapté pour ne compter que les lectures de session.
+Chromium **9 passed** (5 shell + 4 Colony 320/390/768/1440 : débordement, atteignabilité réelle
+du centre des boutons, clavier, construction, file, annulation non confirmée, sous-vues). Captures
+inspectées à 320 et 1440 ; artefacts hors dépôt.
 
 ### D01–D04 — API Colony autorisée, commandes et concurrence, 2026-10-30
 
