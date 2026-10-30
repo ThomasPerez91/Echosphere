@@ -46,19 +46,20 @@ Ces reports ne bloquent pas la clôture du cadrage ; ils bloquent leur fonctionn
 concerné tant qu’ils ne sont pas satisfaits. Aucun compte, session, Portal, MFA ou API Colony livré
 par le lot documentaire 5B ; le socle C01 est décrit ci-dessous.
 
-**Lot courant autorisé : 5C**, branche work/step-5c-portal-account-lobby créée depuis cette master
+**Lot 5C (terminé, fusionné)**, branche work/step-5c-portal-account-lobby créée depuis cette master
 synchronisée. Premier checkpoint documentaire commit/push avant code ; ensuite cadrage présenté
 (sous-tickets, tables/migrations Accounts, structure Portal, frontières et dépendances) avant
 implémentation substantielle. Les décisions 5B ne sont pas rouvertes.
 [Cadrage 5C proposé](step-5c-plan.md) : sous-tickets, schémas Accounts et frontière 5D,
 présenté avant toute implémentation substantielle. Depuis, instruction de démarrer C01 :
-[socle Portal C01](../03-technical/portal-foundation.md) implémenté sur PR #7, non intégré à master.
+[socle Portal C01](../03-technical/portal-foundation.md) implémenté sur PR #7.
 Accounts DB/Alembic, backend/frontend et HTTPS local testés. [C02](../03-technical/portal-registration.md)
 ajoute inscription/Argon2id/vérification email et livraison locale durable, avec [C03 sessions/CSRF](../03-technical/portal-sessions.md) et intentions de logout persistées.
 handoff/GameSession C07 livrés sur PR #7. [C04](../03-technical/portal-account-security.md) livre les opérations sensibles,
 [C05](../03-technical/portal-mfa.md) ajoute MFA/secours/récupération et leur intégration. [C06](../03-technical/portal-game-control.md) livre lobby, outbox et contrôle mTLS.
-C08 livré ; recette de clôture C09 réalisée : 5C prêt pour revue finale de PR #7, fusion sur instruction seulement.
-5D reste distinct : API/UI Colony et preuves de résilience gameplay, sans accès permissif transitoire.
+C08 livré ; recette de clôture C09 réalisée : 5C terminé, PR #7 fusionnée dans master le 2026-10-30 (`ff6ef89`, CI post-merge verte).
+**Lot courant autorisé : 5D** sur work/step-5d-secure-colony-ui, [plan 5D](step-5d-plan.md) : API/UI Colony et
+preuves de résilience gameplay, sans accès permissif transitoire. Étape 6 non commencée.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).

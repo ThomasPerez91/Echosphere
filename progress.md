@@ -9,18 +9,30 @@ Bloc réécrit par chaque agent qui publie ; format et règles dans le
 
 | Champ | État |
 | --- | --- |
-| Branche / PR / base | work/step-5c-portal-account-lobby · PR #7 OPEN brouillon · base master 63bb7d1 |
-| Tête et CI | Tête = commit Claude portant ce bloc (SHA/CI consignés dans PR #7 après observation). Checkpoint Codex C08/C09 237c97c : CI push 41116382297 / PR 41116392662 success |
-| Dernier agent | Claude Code local (WSL2), seul écrivain après arrêt de Codex demandé par l’utilisateur ; C08/C09 développés par Codex local |
-| Travail réalisé | Revue C08/C09 depuis 35067f8, une anomalie mineure R1 corrigée (reçu affiché après login), validations frontend finales, trois smokes et recette C09 relancés sur le contenu final |
-| Décisions | 5B et Q01–Q56 inchangés ; [C08](docs/03-technical/portal-game-ui.md), [C09](docs/03-technical/portal-operations.md) ; aucune nouvelle décision produit |
-| Fichiers modifiés | Ce commit : portal/frontend AccountAccess.tsx (+ test), statuts AGENTS/context/progress/roadmap/plan 5C/docs README/passation/C08/C09. Aucune migration, dépendance, game_data, Compose ou backend modifié |
-| Tests réellement exécutés | Claude : Game frontend 16 unitaires/build/5 Chromium sur 237c97c ; Portal frontend 30 unitaires/build/14 Chromium après R1 ; lint 0 erreur ; Alembic check deux plans ; smokes Game, Portal, mTLS et handoff C09 réussis ; check_docs. Backend 150 Game/119 Portal : exécutés par Codex sur 237c97c (backend inchangé depuis), non relancés localement par Claude |
-| Anomalies / corrections restantes | R1 corrigée ; aucune Bloquante/Majeure démontrée. Remarques : 2 avertissements ESLint react-hooks préexistants, revue croisée de R1 par Codex non faite. Q48/Q49/Q55 et limites production inchangées |
-| Prochaines tâches | Revue finale utilisateur de PR #7 (sortie de brouillon et fusion sur instruction seulement) ; 5D exclu tant que non autorisé |
+| Branche / PR / base | work/step-5d-secure-colony-ui · PR 5D à ouvrir/en brouillon · base master ff6ef89 (5C fusionné, CI post-merge 41123867271 success) |
+| Tête et CI | Tête = commit portant ce bloc ; SHA/CI consignés dans la PR après observation |
+| Dernier agent | Claude Code local (WSL2), écrivain unique ; Codex arrêté |
+| Travail réalisé | D00 : synchronisation post-merge, branche 5D, [plan 5D](docs/05-project/step-5d-plan.md), statuts 5C passés en historique |
+| Décisions | Aucune nouvelle décision produit ; contrats 5B, 5A et Q01–Q56 inchangés |
+| Fichiers modifiés | Plan 5D, statuts AGENTS/context/README/roadmap/docs/passation/C08/C09/plan 5C, progress |
+| Tests réellement exécutés | Référence master : 150 tests Game sur PostgreSQL dédiée echosphere_5d_game_test ; check_docs |
+| Anomalies / corrections restantes | Aucune ; graphe de partie disponible uniquement par fixtures *_test (aucun parcours produit de création) |
+| Prochaines tâches | D01 contrat/projection → D02 lecture autorisée → D03 construction → D04 annulation/concurrence → D05–D07 UI → D08 résilience → D09 clôture |
 
+## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
 
-## Lot courant — 5C : Portal Account/Lobby foundation
+**Statut : D00 réalisé ; D01 en cours.** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
+en bout sur une seule branche/PR, sans merge, sans étape 6. Environnement : Claude Code local/WSL2.
+
+### D00 — synchronisation post-merge, 2026-10-30
+
+GitHub vérifié avant écriture : PR #7 closed/merged, master = origin/master
+ff6ef894bf8c8da9ea14b293d8c63fa503fa07f0 (parents 63bb7d1, 5d438ab), CI push 41123867271 success
+(5/5 jobs). Arbre propre, aucun worktree supplémentaire, aucune PR ouverte. Branche
+work/step-5d-secure-colony-ui créée depuis ce master. Suite Game de référence : **150 passed**
+(echosphere_5d_game_test, conteneur PostgreSQL 17 jetable sur réseau isolé, aucune donnée conservée).
+
+## Lot précédent — 5C : Portal Account/Lobby foundation (fusionné, PR #7)
 
 **Statut : C01–C09 réalisés ; revue et validations finales Claude effectuées, 5C prêt pour revue finale de PR #7 (non fusionnée).**
 5B documentaire terminé et intégré à master via PR #6 ; contrats validés, sous-ensembles comptes/sessions/MFA/lobby/contrôle privé/handoff C02–C07 implémentés sur PR #7 seulement.

@@ -27,7 +27,7 @@ Vérifier GitHub : après fusion de #5, considérer 5A/passation comme intégré
 GitHub réel prévaut sur ce checkpoint. Fondations et shell 0–4 intégrés dans master 54f928e au départ ;
 source fonctionnelle 58e8f7c, checkpoint 5be00da vert (101 backend, 11 frontend, 5 Chromium, Compose).
 Sur master après 5B : aucun compte, authentification, membership, lobby fonctionnel ou API gameplay.
-**Sur la branche PR #7, non intégré à master : C01** ajoute le socle Portal backend/frontend,
+**5C intégré à master via PR #7 (`ff6ef89`) : C01** ajoute le socle Portal backend/frontend,
 Accounts DB/metadata/pool/Alembic p0000 séparés et HTTPS local portal.echosphere.localhost/game.echosphere.localhost:8443.
 C02 ajoute inscription/Argon2id/vérification email/outbox durable et formulaires, migration p0001.
 [Recette C02](docs/03-technical/portal-registration.md). C03 ajoute connexion/sessions/profils Portal, CSRF et intentions de logout persistées.
@@ -106,9 +106,11 @@ PR #6 fusionnée sur instruction explicite le 2026-10-29 : master
 contrats validés, sous-ensembles C02–C08 implémentés sur PR #7 seulement. Q40–Q47, Q50–Q54 et Q56 clos pour le cadrage 5B ;
 reports Q48/Q49/Q55 conservés selon le registre, aucun arbitrage rouvert.
 
-Lot courant autorisé : **5C — Portal Account/Lobby foundation**, branche
+Lot précédent **5C — Portal Account/Lobby foundation**, branche
 work/step-5c-portal-account-lobby créée depuis master fraîchement synchronisée en fast-forward.
 Premier checkpoint documentaire 1c27497 et cadrage 8122cf7 publiés avant code. L’utilisateur a ensuite
-autorisé « alors go » : C01–C08 implémentés et testés sur PR #7, recette de clôture C09 réalisée puis revue/validations finales par Claude Code le 2026-10-30 : 5C prêt pour revue finale, non fusionné (CI du SHA final consignée dans PR #7). 5D exclu ; aucune nouvelle fusion
-sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
+autorisé « alors go » : C01–C08 implémentés et testés sur PR #7, recette de clôture C09 réalisée puis revue/validations finales par Claude Code le 2026-10-30 : 5C terminé, PR #7 fusionnée dans master le 2026-10-30 (`ff6ef89`, CI post-merge verte).
+**Lot courant autorisé : 5D — API Colony sécurisée et UI Colony interactive** sur
+work/step-5d-secure-colony-ui depuis ce master ; [plan 5D](docs/05-project/step-5d-plan.md). Étape 6 non commencée ;
+aucune fusion sans instruction explicite. [Roadmap](docs/05-project/roadmap.md),
 [Q01–Q56](docs/05-project/open-questions.md), [checkpoint](progress.md).

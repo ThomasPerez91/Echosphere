@@ -37,7 +37,8 @@ et marqueurs de révocation acquittés par Game.
 [contrats validés](../03-technical/identity-contracts.md), **partiellement implémentés par C02–C08 sur PR #7 seulement**.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1` le 2026-10-29.
 5C devient le lot courant sur work/step-5c-portal-account-lobby depuis ce merge : premier checkpoint
-documentaire et cadrage réalisés, puis C01–C08 autorisés et implémentés ; C08 livré, recette C09 réalisée, 5C prêt pour revue finale ; aucun début de 5D. Le
+documentaire et cadrage réalisés, puis C01–C08 autorisés et implémentés ; C08 livré, recette C09 réalisée, 5C fusionné via PR #7 (`ff6ef89`). Lot courant :
+[5D](../05-project/step-5d-plan.md). Le
 [registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
 délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
 ajout de facteur/régénération volontaire des secours avec step-up existant ; plafonds 10/10 configurables et sans effet sur

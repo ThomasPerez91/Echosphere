@@ -165,8 +165,8 @@ n’a livré ni Portal, login, protocole d’auth ni changement Compose ; C01 es
 PR #5 fusionnée sur master 8214e0b ; recette locale effectuée le 2026-10-29, limites dans progress.
 Les [contrats 5B](docs/03-technical/identity-contracts.md) sont validés et consolidés ; C02–C08 en implémentent les premiers sous-ensembles.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1`. Contrats toujours non
-implémentés. Lot courant : 5C sur `work/step-5c-portal-account-lobby`, checkpoint/cadrage effectués
-puis socle C01 implémenté sur PR #7 ; aucune API Colony 5D commencée.
+implémentés. 5C (C01–C09) fusionné via PR #7 (`ff6ef89`). Lot courant : 5D API Colony sécurisée et UI
+Colony sur `work/step-5d-secure-colony-ui` ([plan](docs/05-project/step-5d-plan.md)).
 Le [registre Q40–Q56](docs/05-project/open-questions.md) distingue décisions closes, détails techniques
 délégués et reports support/email/modes. Aucun nouveau code d’authentification dans 5B. Sur PR #7, C01 ajoute le socle Portal et étend
 Compose ; [C02](docs/03-technical/portal-registration.md) ajoute inscription, Argon2id, vérification et livraison locale durable ; [C03](docs/03-technical/portal-sessions.md) ajoute connexion/sessions et CSRF ; [C04](docs/03-technical/portal-account-security.md) ajoute step-up, reset/changements sensibles et logout global sans MFA ; [C05](docs/03-technical/portal-mfa.md) ajoute TOTP/WebAuthn, secours et récupération limitée ; [C06](docs/03-technical/portal-game-control.md) livre lobby, synchronisation et révocations mTLS ; handoff/GameSession C07 livrés sur PR #7. [Recette C01](docs/03-technical/portal-foundation.md).
