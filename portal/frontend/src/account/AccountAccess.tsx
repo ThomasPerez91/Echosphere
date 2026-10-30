@@ -157,7 +157,10 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
         setNotice('Compte déconnecté de tous les appareils sur le Portal. Déconnexion des parties en attente.');
       }} />
     </section> : <>
-      {mfaRecovering ? <MfaRecovery onBack={() => setMfaRecovering(false)} onOutcome={mfaOutcome} /> : recovering ? <ResetRequestForm onBack={() => { setRecovering(false); setLoginMode(true); }} /> : loginMode ? <LoginForm onLogin={value => { transition.current++; setState(value); setNotice(''); }} /> : <AccountForms verificationToken={null} />}
+      {mfaRecovering ? <MfaRecovery onBack={() => setMfaRecovering(false)} onOutcome={mfaOutcome} /> : recovering ? <ResetRequestForm onBack={() => { setRecovering(false); setLoginMode(true); }} /> : loginMode ? <LoginForm onLogin={value => {
+        // Login deleted the previous receipt server-side; never keep showing its stale status.
+        transition.current++; setState(value); setNotice(''); setReceiptVersion(version => version + 1);
+      }} /> : <AccountForms verificationToken={null} />}
       {!mfaRecovering && <button type="button" className="text-button" onClick={() => setMfaRecovering(true)}>J’ai perdu mes facteurs MFA</button>}
       {loginMode && !recovering && !mfaRecovering && <button type="button" className="text-button" onClick={() => setRecovering(true)}>Mot de passe oublié ?</button>}
       <button type="button" className="text-button" onClick={() => { setRecovering(false); setMfaRecovering(false); setLoginMode(value => !value); }}>{loginMode ? 'Créer un compte ou confirmer mon adresse' : 'Se connecter à mon compte'}</button>

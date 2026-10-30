@@ -122,3 +122,23 @@ test('StrictMode aborted first bootstrap never overrides the current successful 
   expect(await screen.findByRole('button', { name: 'Se connecter à mon compte' })).toBeVisible();
   expect(screen.queryByRole('heading', { name: 'Compte indisponible' })).not.toBeInTheDocument();
 });
+
+test('a normal login drops the previous revocation receipt status from the screen', async () => {
+  let loggedIn = false;
+  vi.stubGlobal('fetch', (url: string) => Promise.resolve(url === '/api/auth/revocation-status'
+    ? loggedIn ? { ok: false, status: 404, json: async () => ({ error: { code: 'receipt_expired' } }) }
+      : { ok: true, status: 200, json: async () => ({ state: 'pending', scope: 'device', expires_at: '2026-10-30T12:15:00+00:00' }) }
+    : url === '/api/lobby/memberships' ? { ok: true, json: async () => ({ memberships: [], revocations: [] }) }
+    : url === '/api/mfa/status' ? { ok: true, json: async () => ({ enabled: false, totp: false, credentials: [] }) }
+    : url.endsWith('/sessions') ? { ok: false, status: 401, json: async () => ({}) }
+    : url.endsWith('/challenge') ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
+    : (loggedIn = true, { ok: true, json: async () => snapshot })));
+  render(<AccountAccess verificationToken={null} />);
+  expect(await screen.findByText('Déconnexion encore en attente sur certains services Game.')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Se connecter à mon compte' }));
+  fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
+  fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'Test password for C03 !' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Ouvrir ma session' }));
+  expect(await screen.findByText('player@example.org')).toBeVisible();
+  await waitFor(() => expect(screen.queryByText('Déconnexion encore en attente sur certains services Game.')).toBeNull());
+});
