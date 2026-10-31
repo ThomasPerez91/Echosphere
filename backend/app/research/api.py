@@ -133,7 +133,7 @@ class Research(Colonies):
                             "lost": amounts(lost),
                         }
                     )
-            snap = research.read_snapshot(row)
+            snap = research.read_snapshot(session, row)
             orders.append(
                 {
                     "id": str(row.id),

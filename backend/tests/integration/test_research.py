@@ -217,16 +217,12 @@ def test_colony_effect_replaces_tier_and_existing_construction_stays_paid(world)
         assert r.bonuses(s, w.empire)["colony_alloys"] == 1000
 
 
-def test_business_block_preserves_reservation_and_manual_cancel(world):
+def test_business_block_preserves_reservation_and_manual_cancel(world, monkeypatch):
     w = make(world)
     a = start(w)
     b = start(w, "engineering_2")
-    # Simulate a recoverable gameplay prerequisite change in the accepted snapshot.
-    with w.game.factory.begin() as s:
-        row = s.get(ResearchOrder, b.id)
-        snap = dict(row.snapshot)
-        snap["technology"] = {**snap["technology"], "requires": ["energy_1"]}
-        row.snapshot = snap
+    # Inject a gameplay precondition refusal, without corrupting the persisted definition.
+    monkeypatch.setattr(r, "activation_block_reason", lambda *_: "prerequisites_changed")
     w.advance(minutes=3)
     assert read(w).status_code == 200
     with w.game.factory() as s:
@@ -235,13 +231,19 @@ def test_business_block_preserves_reservation_and_manual_cancel(world):
     assert cancel(w, b.id).refunded["data"] == 400_000_000
 
 
-def test_technical_corruption_retries_without_partial_acquisition(world):
+@pytest.mark.parametrize("corruption", ["shape", "definition"])
+def test_technical_corruption_retries_without_partial_acquisition(world, corruption):
     w = make(world)
     a = start(w)
     b = start(w, "energy_1")
     with w.game.factory.begin() as s:
         row = s.get(ResearchOrder, b.id)
-        row.snapshot = {"corrupt": True}
+        if corruption == "shape":
+            row.snapshot = {"corrupt": True}
+        else:
+            snapshot = dict(row.snapshot)
+            snapshot["technology"] = {**snapshot["technology"], "requires": ["xenoscience_1"]}
+            row.snapshot = snapshot
     w.advance(minutes=3)
     engine = TimeEngine(w.game.factory, w.app.state.clock)
     assert engine.process_next()

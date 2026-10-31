@@ -65,7 +65,7 @@ si le stream est complet. Un service de dépense futur exigera cette complétude
 avant coûts et écritures dans sa transaction ; aucun tel endpoint public n'est exposé maintenant.
 
 Les handlers livrés sont RESOURCE_RATE_CHANGE (alloys/flux/data, taux entier non négatif) et
-CONSTRUCTION_COMPLETE en 5A. Les exemples RESEARCH_COMPLETE, AI_TURN, FLEET_ARRIVAL/RETURN,
+CONSTRUCTION_COMPLETE en 5A. RESEARCH_COMPLETE est implémenté en étape 6 sur PR #9. Les exemples AI_TURN, FLEET_ARRIVAL/RETURN,
 EXPLORATION_COMPLETE sont des extensions documentées, pas des handlers factices ou features implémentés.
 Un type inconnu suit la politique retry/blocked, jamais une réussite silencieuse.
 
@@ -107,3 +107,13 @@ Les workers et échéances appartiennent à Game DB et au Game Backend ; ils ne 
 le Portal/auth/lobby ni une session joueur. La séparation [ADR 0008](../adr/0008-control-plane-game-data-plane.md)
 ne change pas ce scheduler ou ses transactions. Provision/grant/revoke internes futurs ne doivent
 pas ajouter d’appels réseau Portal dans un handler ou une dépense. Aucun nouveau scheduler ici.
+
+## Research étape 6 — PR #9
+
+RESEARCH_COMPLETE acquiert une technologie et active la suivante à sa date logique ; durée figée
+à l’acceptation, aucun recalcul/débit. EventStream unique par Empire, même TimeEngine/worker.
+Le handler n’acquiert jamais un second stream. Les transactions de dépense/remboursement et les
+nouveaux devis Colony coordonnent Research avant Colony ; sources triées et rattrapages complets.
+Erreur technique vers retry/opérateur, refus métier de démarrage vers ordre bloqué explicable.
+[Contrat technique](research-api-ui.md), [preuves](../../progress.md). Autonomie Portal recettée
+pour Colony et Research ; aucune présence/session nécessaire à l’achèvement worker.

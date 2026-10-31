@@ -48,6 +48,8 @@ stream Empire, acquiert une fois et active la suivante à la date logique de fin
 ou lock Colony. Une suivante dont les prérequis métier ne permettent plus le départ reste `blocked`,
 avec raison explicite et réservation conservée ; pas de dépassement par un successeur. Une erreur
 technique lève vers rollback/retry/backoff/blocked opérateur du scheduler, pas vers une annulation.
+Le snapshot est également comparé à sa définition/version/vitesse épinglées pour distinguer une
+incohérence persistée d’un refus métier de démarrage ; aucun recalcul selon les acquis ultérieurs.
 
 Annulation : rattraper d’abord l’échéance (une recherche terminée n’est plus annulable), calculer la
 cascade dépendante, verrouiller/rattraper chaque source dans le même ordre, répartir sa place libre

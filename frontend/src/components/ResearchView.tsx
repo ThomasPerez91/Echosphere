@@ -117,6 +117,7 @@ export function ResearchView({
     order?: Order;
   } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const feedbackRef = useRef<HTMLParagraphElement>(null);
   const trigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     setSelection(null);
@@ -174,7 +175,11 @@ export function ResearchView({
         </p>
       )}
       {research.feedback && (
-        <p role={research.feedback.tone === "success" ? "status" : "alert"}>
+        <p
+          ref={feedbackRef}
+          tabIndex={-1}
+          role={research.feedback.tone === "success" ? "status" : "alert"}
+        >
           {research.feedback.tone === "unknown"
             ? "Réponse incertaine. Réessayez la même action : elle ne sera pas dupliquée."
             : research.feedback.text ||
@@ -358,6 +363,11 @@ export function ResearchView({
         ref={dialog}
         className="research-dialog"
         aria-labelledby="research-confirm-title"
+        onClose={() => {
+          const target = trigger.current;
+          if (target?.isConnected && !target.disabled) target.focus();
+          else feedbackRef.current?.focus();
+        }}
         onCancel={(event) => {
           event.preventDefault();
           close();

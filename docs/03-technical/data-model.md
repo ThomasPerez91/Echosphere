@@ -4,7 +4,8 @@
 Les sections de migrations et extensions ci-dessous décrivent leur état à livraison ; leurs mentions
 « futures » de Membership/GameSession/5D sont historiques. Référence actuelle :
 [API Colony](colony-api-ui.md), [handoff](game-handoff.md) et [contrôle privé](portal-game-control.md).
-Research reste future : [plan étape 6](../05-project/step-6-plan.md), Q05 à valider avant tout schéma.
+Research étape 6 sur PR #9, Q05 validée : [plan](../05-project/step-6-plan.md),
+[schéma/API](research-api-ui.md).
 
 
 | Concept | Responsabilité et relations proposées |
@@ -176,3 +177,11 @@ nettoyage à recetter en C09 ; commandes sécurisées réservées à 5D.
 
 Compléments actuels sur PR #7 : [C08 parcours et shell](portal-game-ui.md),
 [C09 recette et opérations](portal-operations.md). Aucun début de 5D ni exposition production.
+
+## Extension étape 6 — PR #9
+
+Game 0007 ajoute EmpireResearch (FK Empire/Universe/EventStream), ResearchOrder (source Colony
+composite dans le même Empire/Universe, snapshots et reçus) et AcquiredTechnology unique.
+Index uniques actif/suivante/technologie non annulée et clés/séquences par Empire. Aucune caisse
+Empire, migration Accounts ou modification des anciennes migrations. Contrats et downgrade :
+[Research technique](research-api-ui.md). Les sections C01–C09 ci-dessus restent historiques.

@@ -168,10 +168,18 @@ def pending(session, empire_id):
     )
 
 
-def read_snapshot(order):
+def read_snapshot(session, order):
     snap = Snapshot.model_validate(order.snapshot)
     if snap.technology_id != order.technology_id or snap.colony_id != str(order.colony_id):
         raise TimelineError("Research snapshot identity mismatch")
+    rules = rules_for(session, order.universe_id)
+    if (
+        rules.research is None
+        or snap.ruleset_version != rules.version
+        or rules.research.technologies.get(order.technology_id) != snap.technology
+        or snap.research_speed != rules.colony.speeds["research"]
+    ):
+        raise TimelineError("Research snapshot differs from its pinned definition")
     if set(snap.cost) != RESOURCES or any(type(v) is not int or v < 0 for v in snap.cost.values()):
         raise TimelineError("Invalid snapshotted costs")
     return snap
@@ -190,15 +198,26 @@ def validate_start(session, empire_id, technology_id, snap):
         raise ResearchError("Research prerequisites unmet", "prerequisites_unmet")
 
 
+def activation_block_reason(session, order, snapshot):
+    """Recoverable gameplay validity only. Technical inconsistencies must raise to retry."""
+    known = {r.technology_id for r in acquired(session, order.empire_id)}
+    if order.technology_id in known:
+        raise TimelineError("Reserved technology is already acquired")
+    if set(snapshot.technology.requires) - known:
+        return "prerequisites_changed"
+    return None
+
+
 def activate_next(session, state, at):
     queue = pending(session, state.empire_id)
     if not queue or queue[0].status in {"active", "blocked"}:
         return
     row = queue[0]
-    snap = read_snapshot(row)  # Corruption raises to scheduler retry; never gameplay blocked.
-    known = {r.technology_id for r in acquired(session, state.empire_id)}
-    if set(snap.technology.requires) - known or row.technology_id in known:
-        row.status, row.blocked_reason = "blocked", "prerequisites_changed"
+    # Corruption raises to scheduler retry; never gameplay blocked.
+    snap = read_snapshot(session, row)
+    reason = activation_block_reason(session, row, snap)
+    if reason:
+        row.status, row.blocked_reason = "blocked", reason
         session.flush()
         return
     row.status, row.started_at = "active", utc(at)
@@ -239,7 +258,9 @@ def start(session, engine, universe_id, empire_id, colony_id, *, key, technology
         # Bound due dates before accepting any reservation.
         try:
             utc(at) + timedelta(
-                microseconds=sum(read_snapshot(r).duration_us for r in pending(session, empire_id))
+                microseconds=sum(
+                    read_snapshot(session, r).duration_us for r in pending(session, empire_id)
+                )
                 + snap.duration_us
             )
         except OverflowError:
@@ -278,7 +299,7 @@ def complete_research(session, event):
         return
     if row.status != "active" or row.due_at != event.due_at:
         raise TimelineError("Research not active at this deadline")
-    snap = read_snapshot(row)
+    snap = read_snapshot(session, row)
     session.add(
         AcquiredTechnology(
             empire_id=row.empire_id,
@@ -301,7 +322,8 @@ def cancellation_plan(session, empire_id, order):
         for r in queue
         if r.id == order.id
         or (
-            order.status == "active" and order.technology_id in read_snapshot(r).technology.requires
+            order.status == "active"
+            and order.technology_id in read_snapshot(session, r).technology.requires
         )
     ]
 
@@ -312,7 +334,7 @@ def refund_plan(session, affected):
         rows = [r for r in affected if r.colony_id == colony_id]
         theoretical = {}
         for row in rows:
-            snap = read_snapshot(row)
+            snap = read_snapshot(session, row)
             bps = snap.refund_active_bps if row.status == "active" else snap.refund_queued_bps
             theoretical[str(row.id)] = {r: v * bps // 10000 for r, v in snap.cost.items()}
         balances = {r: session.get(ResourceBalance, (colony_id, r)) for r in RESOURCES}

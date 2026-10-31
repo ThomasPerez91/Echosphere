@@ -4,7 +4,7 @@
 
 État au 31/10/2026 : socle 5C et API Colony 5D intégrés à master via #8 (`0e2ca11`). Les sections
 historiques C01–C07 ci-dessous décrivent leur portée à livraison, pas une absence actuelle de
-sessions/permissions. Research n’existe pas encore ; [plan étape 6](../05-project/step-6-plan.md)
+sessions/permissions. Research est implémentée sur PR #9 (Q05 validée) ; [plan étape 6](../05-project/step-6-plan.md)
 et arbitrage Q05 avant code. Aucune sécurité production ou capacité de charge garantie.
 
 

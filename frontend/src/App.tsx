@@ -134,7 +134,7 @@ export default function App() {
               <p>Cette vérification indique si les services sont joignables. Elle ne confirme pas qu’une partie est active.</p>
               <Button disabled={status === 'checking'} onClick={retry}>{status === 'checking' ? 'Vérification…' : 'Vérifier la connexion'}</Button>
             </Panel></div>
-        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : destination === 'research' && universe ? <ResearchView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : <section className="panel destination-panel"><Badge>À venir</Badge>
+        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : destination === 'research' && universe ? <ResearchView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'research' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la recherche de vos Empires.</p></Panel> : <section className="panel destination-panel"><Badge>À venir</Badge>
           <EmptyState title={`${section.label} : espace en préparation`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
           <a className="text-link" href={href('empire')}>← Retour à l’Empire</a>
         </section>}
