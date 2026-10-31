@@ -117,3 +117,11 @@ nouveaux devis Colony coordonnent Research avant Colony ; sources triées et rat
 Erreur technique vers retry/opérateur, refus métier de démarrage vers ordre bloqué explicable.
 [Contrat technique](research-api-ui.md), [preuves](../../progress.md). Autonomie Portal recettée
 pour Colony et Research ; aucune présence/session nécessaire à l’achèvement worker.
+
+## Exploration étape 7 — PR #10
+
+EXPLORATION_COMPLETE, dans le même TimeEngine/worker, applique sous le seul stream Exploration
+de l’Empire la cartographie, les voisins détectés, le rapport immuable et la fin de mission ; aucun
+débit, Portal ou session. Commande : principal Game → Exploration → Research → Colony, aucun chemin
+inverse. Snapshot et chemin vérifiés ; incohérence → retry/opérateur, jamais faux succès.
+[Contrat technique](galaxy-api-ui.md), [preuves](../../progress.md).

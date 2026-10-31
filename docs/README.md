@@ -46,7 +46,7 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   **implémentées dans leur périmètre 5C (C02–C08), fusionnées via PR #7** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. 5C
   terminé et fusionné (`ff6ef89`), 5D intégrée via #8 (`0e2ca11`). Lot courant :
-  étape 7 Galaxy + Exploration (G00/G01 autorisés, Q06/Exploration à valider).
+  étape 7 Galaxy + Exploration sur PR #10 (Q06/Exploration validées, G02–G10 réalisés ; [technique](03-technical/galaxy-api-ui.md)).
   [Research](05-project/step-6-plan.md) intégrée via PR #9 (`437844e4`), Q05 close ; [API/UI](03-technical/research-api-ui.md). Étape 8 non commencée.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les

@@ -5,7 +5,7 @@ Les sections de migrations et extensions ci-dessous décrivent leur état à liv
 « futures » de Membership/GameSession/5D sont historiques. Référence actuelle :
 [API Colony](colony-api-ui.md), [handoff](game-handoff.md) et [contrôle privé](portal-game-control.md).
 Research étape 6 sur PR #9, Q05 validée : [plan](../05-project/step-6-plan.md),
-[schéma/API](research-api-ui.md).
+[schéma/API](research-api-ui.md). Galaxie/Exploration étape 7 sur PR #10 : [technique](galaxy-api-ui.md).
 
 
 | Concept | Responsabilité et relations proposées |
@@ -185,3 +185,11 @@ composite dans le même Empire/Universe, snapshots et reçus) et AcquiredTechnol
 Index uniques actif/suivante/technologie non annulée et clés/séquences par Empire. Aucune caisse
 Empire, migration Accounts ou modification des anciennes migrations. Contrats et downgrade :
 [Research technique](research-api-ui.md). Les sections C01–C09 ci-dessus restent historiques.
+
+## Extension étape 7 — PR #10
+
+Game 0008 ajoute le monde généré (manifeste, systèmes positionnés, planètes, routes, sites
+candidats internes), la connaissance typée par Empire (systèmes, planètes, routes ; UNKNOWN =
+absence de ligne) et l’Exploration (ancrage/stream, missions, étapes, rapports immuables). FK
+composites Universe partout, CHECK de cohérence d’état ; aucune migration Accounts ni réécriture
+0001–0007. Contrats et downgrade protégé : [Galaxie technique](galaxy-api-ui.md).

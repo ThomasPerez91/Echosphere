@@ -4,18 +4,47 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — reprise Claude Code, G03–G06 backend audités |
+| Champ | État au 31/10/2026 — étape 7 G02–G10 réalisés, PR #10 |
 | --- | --- |
-| Branche / base / PR | work/step-7-galaxy-exploration ; PR #10 brouillon ; master 437844e4 |
-| Tête | Commit portant ce checkpoint ; dernier publié avant reprise e5d51ae (CI 41191503724 success) ; SHA/CI de tête à relire après push |
-| Agent | Claude Code local (WSL2), écrivain unique depuis la reprise ; Codex arrêté, aucun fichier modifié par lui après 11:12 |
-| Récupération | Travail Codex **non commité** trouvé sur disque (12 fichiers modifiés, 8 nouveaux) ; aucun commit local non poussé ; sauvegardé hors dépôt avant toute écriture puis relu entièrement |
-| Réalisé | G03 manifeste/monde généré/migration 0008, G04 Knowledge typée, G05 Exploration/handler, G06 API Game + permissions propagées ; corrections de revue ci-dessous |
-| Validation locale | PostgreSQL 17 jetable *_test : 265 tests Game (dont 20 Galaxy) ; 123 tests Portal ; ruff Game/scripts/Portal ; frontend lint (warning préexistant), 31 Vitest, build |
-| Limites | G07 UI non branchée (ébauche Codex conservée), G08–G10 à faire ; aucun smoke Galaxy ; étape 8 non commencée ; aucun merge |
-| Suite | G07 UI Galaxy connectée, G08 hardening, G09 smoke Compose, G10 revue complète puis Ready |
+| Branche / base / PR | work/step-7-galaxy-exploration ; PR #10 ; master 437844e4 ; aucun merge |
+| Tête | Commit portant ce checkpoint ; SHA/CI exacts à relire sur PR #10 (consignés aussi en commentaire PR) |
+| Agent | Claude Code local (WSL2), écrivain unique depuis la reprise du travail local Codex |
+| Réalisé | G03 persistance/migration 0008, G04 Knowledge, G05 Exploration, G06 API/permissions, G07 UI Galaxie, G08 hardening, G09 smoke réel, G10 revue/docs |
+| Validation locale | PostgreSQL 17 jetables : 265 Game (dont 20 Galaxy), 123 Portal ; ruff ; frontend lint 0 erreur, 37 Vitest, build, 17 Chromium (Galaxy ×4 largeurs) ; smokes Galaxy et Colony réels réussis (Research : voir entrée G09) |
+| CI | a3e7187 : 4/5, frontend KO sur test Research lent (corrigé) ; e307175 et suivants : voir PR |
+| Limites | Smokes Compose sur projet par défaut (smoke_compose/portal/control/handoff) vérifiés par CI seulement, pour ne pas toucher la pile locale existante ; noms générés provisoires ; Q09 ouverte ; étape 8 non commencée |
+| Suite | Relire CI 5/5 de la tête, PR Ready ; attendre une autorisation explicite de merge |
 
-## Reprise Claude Code — récupération Codex et revue G03–G06, 31/10/2026
+## G07–G10 — UI, hardening, recette réelle et revue, 31/10/2026
+
+G07 : écran Galaxie branché dans le shell (remplace le placeholder), client API validant strictement
+la non-fuite (DETECTED sans structure, aucune référence orpheline), hook `useGalaxy` (générations,
+abort, clé conservée après résultat inconnu, relectures bornées à l’échéance), carte SVG + HTML
+(pan pointeur/tactile limité à la carte, zoom molette/boutons/clavier, recentrage, nœuds
+focusables), liste textuelle équivalente, détail par état, devis serveur, confirmation irrévocable,
+missions/rapports. L’ébauche Codex a été conservée dans l’historique (a3e7187) puis remplacée.
+
+G08 : Vitest (StrictMode sans commande, sélection clavier/commande CSRF unique, même clé après
+résultat inconnu et nouvelle clé après refus, 401, réponse tardive d’un autre Empire, validateur
+anti-fuite) et Chromium 320/390/768/1440 (clavier, pan souris/tactile CDP sans défilement de page,
+molette, cibles ≥ 44 px, liste, dialogue/Escape/focus, pas de défilement horizontal). Revue visuelle
+des captures : marqueurs DETECTED d’une même cellule écartés pour éviter le chevauchement.
+Côté serveur, les courses/participants/Universes/expiration/corruption sont couverts par G03–G06.
+
+G09 : `scripts/smoke_galaxy_compose.py` + `galaxy_game_fixture.py` + `galaxy_browser.mjs`, ajoutés
+à la CI. Exécution locale réelle réussie : carte limitée à 4 systèmes connus sur 40, débit exact,
+page fermée, redémarrage du worker, mission completed/MAPPED/rapport observés **en base avant
+réouverture**, Portal API/contrôle arrêtés, nouvelle expédition terminée page fermée, zéro requête
+Portal, puis expiration → 401 sur lecture et commande alors que l’expédition acceptée juste avant
+se termine. Projet/volumes jetables supprimés. Smoke Colony local réussi.
+
+G10 : revue complète du diff (migration, modèle, générateur non modifié, Knowledge, non-fuite,
+Exploration, permissions, locks, UI, tests, docs). Anomalies corrigées listées dans l’entrée de
+reprise ci-dessous et dans les commits ; test Research Vitest rendu robuste au runner lent (même
+assertion). Docs : [contrat technique](docs/03-technical/galaxy-api-ui.md), plan, canoniques
+Galaxie/Exploration/Fog, modèle, temps, contrôle Portal/Game, index et passation.
+
+## Reprise Claude Code — récupération Codex et revue G03–G06, 31/10/2026 (checkpoint 603646c/a3e7187)
 
 État trouvé : branche à jour avec origin (e5d51ae), aucune divergence ni commit local, mais
 modifications Codex non commitées : app/galaxy (models, world, service, api), migration 0008,

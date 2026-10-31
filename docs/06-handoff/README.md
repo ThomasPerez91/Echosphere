@@ -42,7 +42,7 @@ documentaire et cadrage réalisés, puis C01–C08 autorisés et implémentés ;
 Research est intégrée via PR #9 (`437844e4`), Q05 close ; CI post-merge 41152760101
 success (5/5), vérifiée le 31/10/2026. [API/UI Research](../03-technical/research-api-ui.md).
 Lot courant : étape 7 Galaxy + Exploration, branche unique `work/step-7-galaxy-exploration`.
-G00/G01 autorisés, validation Q06/Exploration requise avant code engageant ; étape 8 non commencée.
+Q06/Exploration validées ; G02–G10 réalisés sur PR #10 ([technique](../03-technical/galaxy-api-ui.md)) ; étape 8 non commencée.
 État et prochain point d’arrêt dans progress ; les anciens checkpoints restent historiques. Le
 [registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
 délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur

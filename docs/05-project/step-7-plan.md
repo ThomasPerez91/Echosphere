@@ -1,6 +1,6 @@
 # Étape 7 — Galaxie procédurale, exploration et connaissance
 
-**Statut au 31/10/2026 : G00/G01 publiés ; Q06 et Exploration validées avec amendements.**
+**Statut au 31/10/2026 : G00–G10 réalisés sur PR #10 (G03–G10 repris et terminés par Claude Code après le travail local Codex) ; Q06 et Exploration validées avec amendements ; aucun merge.**
 Instruction utilisateur : commencer effectivement étape 7, présenter Q06 + Exploration minimale,
 puis attendre validation avant générateur/game_data définitifs, migration ou métier Exploration.
 Aucun code métier livré par G00/G01. Étape 8 System View non commencée.
@@ -24,15 +24,15 @@ sur Ubuntu 24.04. Arrêt si contraintes non robustement satisfaisables ou nouvel
 | --- | --- | --- |
 | G00 | Fetch/master ff-only, branche courte, statuts Research historiques et checkpoint poussé | Réalisé ; arbre initial propre, aucune perte locale, post-merge #9 5/5 success |
 | G01 | Audit du dépôt, proposition Q06 et engagement Exploration sans Fleet, plan durable | Cadrage publié puis validé explicitement avec amendements ; CI préalable requise |
-| G02 | Générateur pur versionné et données strictes ; profil proposé 40 systèmes, bornes 30–50 | Déterminisme canonique/golden fixtures, seeds différentes, connexité/degrés/ponts/distances, géométrie, capacités et métriques d’équité ; aucun résultat revendiqué aujourd’hui |
-| G03 | Manifeste, positions/routes/mondes/sites et commande explicite de génération ; migration additive | PostgreSQL scopes/contraintes, génération atomique/rejeu/refus de remplacement, ancien Universe inchangé, upgrade/check/roundtrip et refus de downgrade peuplé |
-| G04 | Knowledge Empire typée et observations datées ; initialisation limitée explicite | UNKNOWN absent, DETECTED approximatif sans détail, MAPPED durable, MONITORED limité puis retour MAPPED, snapshots de rapport et non-partage |
-| G05 | Exploration indépendante de Fleet, réservation/snapshot/stream/handler | Rattrapage, coût exact, capacité unique, crash/retry/rejeu, application unique et découverte atomique ; aucun autre scheduler |
-| G06 | API Game sous GameSession et permissions explicites, contrat/Portal/CHECK/migration | Chaîne d’autorisation, CSRF, droits distincts, accès direct UNKNOWN indistinguable de l’inexistant, deux participants/Empires/Universes |
-| G07 | Galaxy SVG/HTML réelle et liste équivalente dans le shell existant | Pan/zoom, sélection tactile/clavier, légende textuelle, panneau de connaissance et mission datée ; aucune fixture runtime, aucune System View étape 8 |
-| G08 | Concurrence, non-fuite, responsive/accessibilité | 320/390/768/1440, focus/zoom/pan/détail adaptatif, courses lectures/worker/participants/dépenses/révocation, erreurs/logs sans secrets cachés |
-| G09 | Recette HTTPS réelle sur projet/bases/volumes jetables *_test | Login/handoff, carte limitée, lancement/page fermée, redémarrage worker, découverte observée en base avant réouverture, Portal arrêté/session encore valide, expiration sans arrêt de mission |
-| G10 | Relecture complète, régressions Colony/Research, docs/passation et CI exacte | Tests requis réellement exécutés, CI finale verte, PR Ready après livraison réelle ; attendre instruction distincte de merge |
+| G02 | Générateur pur versionné et données strictes ; profil proposé 40 systèmes, bornes 30–50 | Déterminisme canonique/golden fixtures, seeds différentes, connexité/degrés/ponts/distances, géométrie, capacités et métriques d’équité ; aucun résultat revendiqué aujourd’hui ; **Réalisé : 1 000/1 000 standard, 4 × 100 bords, aucun assouplissement (progress)** |
+| G03 | Manifeste, positions/routes/mondes/sites et commande explicite de génération ; migration additive | PostgreSQL scopes/contraintes, génération atomique/rejeu/refus de remplacement, ancien Universe inchangé, upgrade/check/roundtrip et refus de downgrade peuplé ; **Réalisé : migration 0008, génération explicite/atomique, rejeu/refus, génération concurrente unique, downgrade protégé** |
+| G04 | Knowledge Empire typée et observations datées ; initialisation limitée explicite | UNKNOWN absent, DETECTED approximatif sans détail, MAPPED durable, MONITORED limité puis retour MAPPED, snapshots de rapport et non-partage ; **Réalisé : Knowledge typée, CHECK de structure, non-fuite exhaustive testée, MONITORED → MAPPED** |
+| G05 | Exploration indépendante de Fleet, réservation/snapshot/stream/handler | Rattrapage, coût exact, capacité unique, crash/retry/rejeu, application unique et découverte atomique ; aucun autre scheduler ; **Réalisé : coût/durée/capacité/idempotence/concurrence, handler unique, corruption snapshot et chemin** |
+| G06 | API Game sous GameSession et permissions explicites, contrat/Portal/CHECK/migration | Chaîne d’autorisation, CSRF, droits distincts, accès direct UNKNOWN indistinguable de l’inexistant, deux participants/Empires/Universes ; **Réalisé : routes Game, 9 permissions propagées (Game/schéma/Portal/CHECK), refus 401/403/404/409** |
+| G07 | Galaxy SVG/HTML réelle et liste équivalente dans le shell existant | Pan/zoom, sélection tactile/clavier, légende textuelle, panneau de connaissance et mission datée ; aucune fixture runtime, aucune System View étape 8 ; **Réalisé : carte SVG/HTML connectée, liste, détail, devis, confirmation, missions/rapports** |
+| G08 | Concurrence, non-fuite, responsive/accessibilité | 320/390/768/1440, focus/zoom/pan/détail adaptatif, courses lectures/worker/participants/dépenses/révocation, erreurs/logs sans secrets cachés ; **Réalisé : Chromium 320/390/768/1440, clavier/touch/pan/zoom, StrictMode, réponses tardives, courses** |
+| G09 | Recette HTTPS réelle sur projet/bases/volumes jetables *_test | Login/handoff, carte limitée, lancement/page fermée, redémarrage worker, découverte observée en base avant réouverture, Portal arrêté/session encore valide, expiration sans arrêt de mission ; **Réalisé : smoke_galaxy_compose réel, preuve DB avant réouverture, Portal coupé, expiration** |
+| G10 | Relecture complète, régressions Colony/Research, docs/passation et CI exacte | Tests requis réellement exécutés, CI finale verte, PR Ready après livraison réelle ; attendre instruction distincte de merge ; **Réalisé : revue complète, corrections, docs/passation ; Ready après CI 5/5, merge non autorisé** |
 
 ## Audit technique sur master 437844e4
 
@@ -194,3 +194,10 @@ et limites dans progress. Script opérateur `PYTHONPATH=backend python3 scripts/
 Gate indépendante de la construction et tests de corruption, golden/cross-process/variabilité.
 Zones initiales aux budgets structurels corrélés égaux, positions/connexions/noms seedés ; aucune
 réservation gameplay. G03–G10 restent à réaliser, aucune API/UI livrée par ce ticket.
+
+## G03–G10 — réalisés, 31/10/2026
+
+Travail local Codex non commité (G03–G05, ébauche G06/G07) récupéré, sauvegardé puis audité par
+Claude Code ; corrections et compléments consignés dans [progress](../../progress.md). Contrat
+technique livré : [Galaxie/Exploration](../03-technical/galaxy-api-ui.md). Les preuves chiffrées
+(suites, Chromium, smokes, CI) sont dans progress et sur la PR, pas déduites de ce plan.

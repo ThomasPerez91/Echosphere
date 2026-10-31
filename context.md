@@ -129,6 +129,8 @@ G02–G10 autorisés après correctif CI Ubuntu 24.04 et cinq jobs verts ; aucun
 ticket sauf incompatibilité mesurée ou nouvel arbitrage produit. Quatre sites candidats par défaut,
 aucune réservation gameplay ; robustesse standard 1 000 seeds sans échec, quatre bords ×100.
 Q08 inchangée, Q04/Q07 hors portée et Q09 ouverte ; étape 8 non commencée, aucun merge autorisé.
+G03–G10 réalisés sur PR #10 (reprise Claude Code du travail local Codex) : migration 0008, Knowledge
+typée, Exploration abstraite, API/permissions, UI Galaxie et smoke réel ; [technique](docs/03-technical/galaxy-api-ui.md).
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.

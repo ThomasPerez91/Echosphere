@@ -86,7 +86,8 @@ package Game ; la recette HTTP valide l’interopérabilité réelle des deux ap
 
 États active/suspended/revoked. Permissions distinctes colony.read/colony.construct/colony.cancel,
 étendues explicitement par étape 6/PR #9 à research.read/research.start/research.cancel
-([portée financière](research-api-ui.md)),
+([portée financière](research-api-ui.md)), puis par étape 7/PR #10 à galaxy.read/exploration.read/
+exploration.start ([Galaxie](galaxy-api-ui.md)) ; DTO et schéma v1 admettent ces neuf droits,
 aucun droit implicite d’administrateur/créateur ; liste vide sans Empire signifie aucun droit Colony.
 Game vérifie chaque Empire dans le même univers ; FK composites GameAccess/univers et Empire/univers
 sur EmpireBinding. Pas de Empire.owner_user_id ni contrainte fermant Q21.

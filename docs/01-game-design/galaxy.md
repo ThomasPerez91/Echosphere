@@ -1,6 +1,6 @@
 # Galaxie
 
-**Statut : Q06 close produit pour étape 7, validation utilisateur explicite du 31/10/2026 avec amendements ; implémentation G02 à réaliser.**
+**Statut : Q06 close produit pour étape 7, validation utilisateur explicite du 31/10/2026 avec amendements ; implémentée sur PR #10 (G02–G10), [contrat technique](../03-technical/galaxy-api-ui.md).**
 
 
 La galaxie est un graphe de systèmes stellaires et routes, pas une grille de coordonnées à la OGame.

@@ -1,6 +1,6 @@
 # Exploration
 
-**Statut : contrat minimal étape 7 validé explicitement le 31/10/2026 ; implémentation à réaliser. Q09 reste totalement ouverte.**
+**Statut : contrat minimal étape 7 validé explicitement le 31/10/2026 ; implémenté sur PR #10, [contrat technique](../03-technical/galaxy-api-ui.md). Q09 reste totalement ouverte.**
 
 
 Explorer transforme l'incertitude en information utile : routes, systèmes, planètes, traits,

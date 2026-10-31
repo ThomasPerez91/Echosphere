@@ -161,6 +161,9 @@ Ne pas élargir le périmètre sur la seule base de la passation.
   à l’acceptation sans recalcul ultérieur, annulation 100/80 plafonnée/cascade dépendante.
   Lock Research avant Colony, sources triées, handler sans second stream. v0.2 explicite,
   v0.1 inchangée. [Contrat technique](docs/03-technical/research-api-ui.md).
+- Étape 7 : UNKNOWN = absence de Knowledge, projections Galaxy depuis la Knowledge seule ;
+  Exploration abstraite 1 active/Empire sans Fleet, chemin sur routes connues, lock
+  Exploration → Research → Colony. [Contrat technique](docs/03-technical/galaxy-api-ui.md).
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède

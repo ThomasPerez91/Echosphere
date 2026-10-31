@@ -18,7 +18,7 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 5C | Portal Account/Lobby foundation — intégré | Fondation minimale compte/lobby selon cadrage 5B | Comptes globaux et accès aux parties sécurisés ; pas de Portal complet/multijoueur anticipé |
 | 5D | Secure Colony API + interactive Colony UI | APIs protégées appelant les services 5A et UI réelle | Session/autorisation/fog/idempotence contrôlés et résilience Portal/Game testée |
 | 6 | Research — intégré via PR #9, Q05 close | Recherche globale et programmation suivante | Prérequis et application unique à échéance |
-| 7 | Galaxy + Exploration — lot courant, G00/G01 | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
+| 7 | Galaxy + Exploration — lot courant, G00–G10 réalisés sur PR #10 | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
 | 8 | System View | Lecture des mondes et présences connues | Détails datés selon connaissances, mobile utilisable |
 | 9 | Fleets | Petit catalogue et missions asynchrones | Unités engagées une seule fois et arrivées récupérables |
 | 10 | Colonization | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |

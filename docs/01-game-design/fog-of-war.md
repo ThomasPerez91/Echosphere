@@ -1,6 +1,6 @@
 # Brouillard de guerre
 
-**Statut : décision produit Q08 close le 31/10/2026 ; fog non implémenté en 5D.**
+**Statut : décision produit Q08 close le 31/10/2026 ; implémentée pour Galaxie/Exploration à l’étape 7 (PR #10, [technique](../03-technical/galaxy-api-ui.md)).**
 Provenance : arbitrage utilisateur explicite de finalisation de PR #8.
 
 | État canonique | Sens validé |
