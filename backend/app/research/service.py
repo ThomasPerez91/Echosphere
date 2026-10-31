@@ -10,7 +10,7 @@ from uuid import UUID
 from pydantic import Field
 from sqlalchemy import select
 
-from app.colony.rules import Positive, ResearchRules, StrictModel, Technology
+from app.colony.rules import Nonnegative, Positive, Ratio, ResearchRules, StrictModel, Technology
 from app.colony.service import (
     ColonyError,
     catch_up_owned,
@@ -41,10 +41,11 @@ class Snapshot(StrictModel):
     technology_id: str
     technology: Technology
     colony_id: str
-    cost: dict[str, int]
+    cost: dict[str, Nonnegative]
     base_duration_us: Positive
     duration_us: Positive
-    bonuses: dict[str, int]
+    research_speed: Ratio
+    bonuses: dict[str, Nonnegative]
     refund_queued_bps: int = Field(strict=True, ge=0, le=10000)
     refund_active_bps: int = Field(strict=True, ge=0, le=10000)
 
@@ -147,6 +148,7 @@ def quote(session, universe_id, empire_id, technology_id, colony_id):
         base_duration_us=base,
         duration_us=duration,
         bonuses=bonus,
+        research_speed=speed,
         refund_queued_bps=cat.refund_queued_bps,
         refund_active_bps=cat.refund_active_bps,
     )

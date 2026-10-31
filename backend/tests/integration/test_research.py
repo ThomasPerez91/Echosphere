@@ -342,3 +342,110 @@ def test_migration_head_matches_metadata_and_populated_downgrade_refused(world, 
     with pytest.raises(RuntimeError, match="populated Research"):
         command.downgrade(migration_config, "0006_game_sessions")
     command.upgrade(migration_config, "head")
+
+
+def test_same_key_concurrent_acceptance_is_one_debit(world):
+    w = make(world)
+    barrier = Barrier(2)
+
+    def submit(_):
+        barrier.wait()
+        return start(w, key="simultaneous").id
+
+    with ThreadPoolExecutor(2) as pool:
+        ids = list(pool.map(submit, range(2)))
+    assert ids[0] == ids[1]
+    assert w.stock("data") == 550_000_000
+
+
+def test_research_and_colony_concurrent_spending_share_one_locked_balance(world):
+    w = make(world)
+    with w.game.factory.begin() as s:
+        s.get(ResourceBalance, (w.colony, "alloys")).stock = 250_000_000
+    barrier = Barrier(2)
+
+    def submit(kind):
+        barrier.wait()
+        try:
+            if kind == "research":
+                start(w)
+            else:
+                with w.game.factory.begin() as s:
+                    enqueue(
+                        s,
+                        TimeEngine(w.game.factory, w.app.state.clock),
+                        w.universe,
+                        w.empire,
+                        w.colony,
+                        key="race",
+                        kind="data_node",
+                        sector=5,
+                        target_level=1,
+                        at=w.game.clock(),
+                    )
+            return "accepted"
+        except r.ColonyError as exc:
+            return exc.code
+
+    with ThreadPoolExecutor(2) as pool:
+        results = list(pool.map(submit, ["research", "colony"]))
+    assert sorted(results) == ["accepted", "insufficient_resources"]
+    assert w.stock("alloys") in (0, 150_000_000)
+
+
+def test_new_research_cost_only_receives_acquired_xenoscience_and_queue_never_reprices(world):
+    w = make(world)
+    other = second_colony(w)
+    a = start(w, "xenoscience_1")
+    b = start(w, "energy_1", colony=other)
+    assert b.snapshot["cost"]["data"] == 200_000_000
+    w.advance(seconds=120)
+    assert read(w).status_code == 200
+    with w.game.factory() as s:
+        assert s.get(ResearchOrder, a.id).status == "completed"
+        assert s.get(ResearchOrder, b.id).snapshot["cost"]["data"] == 200_000_000
+    new = start(w, "engineering_1")
+    assert new.snapshot["cost"]["data"] == 190_000_000
+
+
+def test_two_workers_acquire_exactly_once_and_deadline_cancel_refused(world):
+    w = make(world)
+    a = start(w)
+    w.advance(seconds=120)
+    barrier = Barrier(2)
+
+    def worker(_):
+        barrier.wait()
+        return TimeEngine(w.game.factory, w.app.state.clock).process_next()
+
+    with ThreadPoolExecutor(2) as pool:
+        list(pool.map(worker, range(2)))
+    with w.game.factory() as s:
+        assert s.scalar(select(func.count()).select_from(AcquiredTechnology)) == 1
+        assert s.get(ResearchOrder, a.id).completed_at == a.due_at
+    with pytest.raises(r.ResearchError, match="Completed"):
+        cancel(w, a.id)
+
+
+def test_two_shared_participants_observe_same_queue_and_distinct_http_keys(world):
+    from test_colony_api import enter
+
+    from app.access.http import cookie_name
+
+    w = make(world)
+    participant, membership = uuid4(), uuid4()
+    set_access(
+        w.game,
+        participant,
+        w.universe,
+        membership,
+        [{"empire_id": str(w.empire), "permissions": ALL}],
+    )
+    raw, _, _ = enter(w.game, (participant, w.universe, membership))
+    response = send(w, key="shared_intention")
+    assert response.status_code == 200
+    w.client.cookies.set(cookie_name(w.universe), raw)
+    assert len(read(w).json()["queue"]) == 1
+    response = send(w, key="shared_intention", tech="energy_1")
+    # New participant's identically named intention is not another participant's replay.
+    assert response.status_code == 200 and response.json()["order"]["status"] == "queued"

@@ -18,44 +18,61 @@ def upgrade():
         "uq_colonies_research_scope", "colonies", ["id", "empire_id", "universe_id"]
     )
     op.execute(
-        "CREATE TABLE empire_research (\n\tempire_id UUID NOT NULL, \n\tuniver"
-        "se_id UUID NOT NULL, \n\tstream_id UUID NOT NULL, \n\tnext_sequence B"
-        "IGINT NOT NULL, \n\tCONSTRAINT pk_empire_research PRIMARY KEY (empi"
-        "re_id), \n\tCONSTRAINT fk_empire_research_empire_id_empires FOREIGN"
-        " KEY(empire_id, universe_id) REFERENCES empires (id, universe_id)"
-        ", \n\tCONSTRAINT fk_empire_research_stream_id_event_streams FOREIGN"
-        " KEY(stream_id, universe_id) REFERENCES event_streams (id, univer"
-        "se_id), \n\tCONSTRAINT uq_research_scope UNIQUE (empire_id, univers"
-        "e_id), \n\tCONSTRAINT uq_research_stream UNIQUE (stream_id), \n\tCONS"
-        "TRAINT ck_empire_research_sequence CHECK (next_sequence > 0)\n)"
+        """
+        CREATE TABLE empire_research (
+        empire_id UUID NOT NULL,
+        universe_id UUID NOT NULL,
+        stream_id UUID NOT NULL,
+        next_sequence BIGINT NOT NULL,
+        CONSTRAINT pk_empire_research PRIMARY KEY (empire_id),
+        CONSTRAINT fk_empire_research_empire_id_empires FOREIGN KEY(empire_id, universe_id)
+        REFERENCES empires (id, universe_id),
+        CONSTRAINT fk_empire_research_stream_id_event_streams FOREIGN KEY(stream_id,
+        universe_id) REFERENCES event_streams (id, universe_id),
+        CONSTRAINT uq_research_scope UNIQUE (empire_id, universe_id),
+        CONSTRAINT uq_research_stream UNIQUE (stream_id),
+        CONSTRAINT ck_empire_research_sequence CHECK (next_sequence > 0)
+        )
+        """
     )
     op.execute(
-        "CREATE TABLE research_orders (\n\tempire_id UUID NOT NULL, \n\tuniver"
-        "se_id UUID NOT NULL, \n\tcolony_id UUID NOT NULL, \n\tsequence BIGINT"
-        " NOT NULL, \n\tidempotency_key VARCHAR(160) NOT NULL, \n\ttechnology_"
-        "id VARCHAR(64) NOT NULL, \n\tstatus VARCHAR(12) NOT NULL, \n\tsnapsho"
-        "t JSONB NOT NULL, \n\tblocked_reason VARCHAR(64), \n\tstarted_at TIME"
-        "STAMP WITH TIME ZONE, \n\tdue_at TIMESTAMP WITH TIME ZONE, \n\tcomple"
-        "ted_at TIMESTAMP WITH TIME ZONE, \n\tcancelled_at TIMESTAMP WITH TI"
-        "ME ZONE, \n\trefunded JSONB, \n\tid UUID DEFAULT gen_random_uuid() NO"
-        "T NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT N"
-        "ULL, \n\tCONSTRAINT pk_research_orders PRIMARY KEY (id), \n\tCONSTRAI"
-        "NT fk_research_orders_empire_id_empire_research FOREIGN KEY(empir"
-        "e_id, universe_id) REFERENCES empire_research (empire_id, univers"
-        "e_id), \n\tCONSTRAINT fk_research_orders_colony_id_colonies FOREIGN"
-        " KEY(colony_id, empire_id, universe_id) REFERENCES colonies (id, "
-        "empire_id, universe_id), \n\tCONSTRAINT uq_research_key UNIQUE (emp"
-        "ire_id, idempotency_key), \n\tCONSTRAINT uq_research_sequence UNIQU"
-        "E (empire_id, sequence), \n\tCONSTRAINT ck_research_orders_sequence"
-        " CHECK (sequence > 0), \n\tCONSTRAINT ck_research_orders_status CHE"
-        "CK (status IN ('queued','active','blocked','completed','cancelled"
-        "')), \n\tCONSTRAINT ck_research_orders_completion CHECK ((status = "
-        "'completed') = (completed_at IS NOT NULL)), \n\tCONSTRAINT ck_resea"
-        "rch_orders_cancellation CHECK ((status = 'cancelled') = (cancelle"
-        "d_at IS NOT NULL)), \n\tCONSTRAINT ck_research_orders_schedule CHEC"
-        "K ((started_at IS NULL) = (due_at IS NULL)), \n\tCONSTRAINT ck_rese"
-        "arch_orders_active_start CHECK (status != 'active' OR started_at "
-        "IS NOT NULL)\n)"
+        """
+        CREATE TABLE research_orders (
+        empire_id UUID NOT NULL,
+        universe_id UUID NOT NULL,
+        colony_id UUID NOT NULL,
+        sequence BIGINT NOT NULL,
+        idempotency_key VARCHAR(160) NOT NULL,
+        technology_id VARCHAR(64) NOT NULL,
+        status VARCHAR(12) NOT NULL,
+        snapshot JSONB NOT NULL,
+        blocked_reason VARCHAR(64),
+        started_at TIMESTAMP WITH TIME ZONE,
+        due_at TIMESTAMP WITH TIME ZONE,
+        completed_at TIMESTAMP WITH TIME ZONE,
+        cancelled_at TIMESTAMP WITH TIME ZONE,
+        refunded JSONB,
+        id UUID DEFAULT gen_random_uuid() NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+        CONSTRAINT pk_research_orders PRIMARY KEY (id),
+        CONSTRAINT fk_research_orders_empire_id_empire_research FOREIGN KEY(empire_id,
+        universe_id) REFERENCES empire_research (empire_id, universe_id),
+        CONSTRAINT fk_research_orders_colony_id_colonies FOREIGN KEY(colony_id, empire_id,
+        universe_id) REFERENCES colonies (id, empire_id, universe_id),
+        CONSTRAINT uq_research_key UNIQUE (empire_id, idempotency_key),
+        CONSTRAINT uq_research_sequence UNIQUE (empire_id, sequence),
+        CONSTRAINT ck_research_orders_sequence CHECK (sequence > 0),
+        CONSTRAINT ck_research_orders_status CHECK (status IN
+        ('queued','active','blocked','completed','cancelled')),
+        CONSTRAINT ck_research_orders_completion CHECK ((status = 'completed') = (completed_at
+        IS NOT NULL)),
+        CONSTRAINT ck_research_orders_cancellation CHECK ((status = 'cancelled') = (cancelled_at
+        IS NOT NULL)),
+        CONSTRAINT ck_research_orders_schedule CHECK ((started_at IS NULL) = (due_at IS NULL)),
+        CONSTRAINT ck_research_orders_active_start CHECK (status != 'active' OR started_at IS
+        NOT NULL)
+        )
+        """
     )
     op.execute(
         "CREATE UNIQUE INDEX ix_research_active ON research_orders (empire"
@@ -70,15 +87,21 @@ def upgrade():
         "e_id) WHERE status IN ('queued','blocked')"
     )
     op.execute(
-        "CREATE TABLE acquired_technologies (\n\tempire_id UUID NOT NULL, \n\t"
-        "technology_id VARCHAR(64) NOT NULL, \n\tuniverse_id UUID NOT NULL, "
-        "\n\tacquired_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\teffect VARCHAR"
-        "(32) NOT NULL, \n\treduction_bps INTEGER NOT NULL, \n\tCONSTRAINT pk_"
-        "acquired_technologies PRIMARY KEY (empire_id, technology_id), \n\tC"
-        "ONSTRAINT fk_acquired_technologies_empire_id_empire_research FORE"
-        "IGN KEY(empire_id, universe_id) REFERENCES empire_research (empir"
-        "e_id, universe_id), \n\tCONSTRAINT ck_acquired_technologies_reducti"
-        "on CHECK (reduction_bps >= 0 AND reduction_bps < 10000)\n)"
+        """
+        CREATE TABLE acquired_technologies (
+        empire_id UUID NOT NULL,
+        technology_id VARCHAR(64) NOT NULL,
+        universe_id UUID NOT NULL,
+        acquired_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        effect VARCHAR(32) NOT NULL,
+        reduction_bps INTEGER NOT NULL,
+        CONSTRAINT pk_acquired_technologies PRIMARY KEY (empire_id, technology_id),
+        CONSTRAINT fk_acquired_technologies_empire_id_empire_research FOREIGN KEY(empire_id,
+        universe_id) REFERENCES empire_research (empire_id, universe_id),
+        CONSTRAINT ck_acquired_technologies_reduction CHECK (reduction_bps >= 0 AND
+        reduction_bps < 10000)
+        )
+        """
     )
     op.drop_constraint(
         op.f("ck_empire_bindings_binding_permissions"), "empire_bindings", type_="check"

@@ -38,6 +38,9 @@ export function useResearch(universe: string | null, enabled: boolean, csrf: str
   const fail = useCallback((error: unknown) => {
     if (error instanceof ApiError && error.status === 401) lost.current();
     const code = error instanceof ApiError ? error.code : 'unavailable';
+    if (error instanceof ApiError && [401, 403, 404].includes(error.status)) {
+      setState(old => ({ ...old, phase: 'error', projection: null, error: code })); return;
+    }
     setState(old => old.projection ? { ...old, error: code } : { ...old, phase: 'error', error: code });
   }, []);
 
@@ -92,6 +95,7 @@ export function useResearch(universe: string | null, enabled: boolean, csrf: str
     if (!universe || !projection || !csrf || busy.current) return;
     const signature = JSON.stringify(value);
     if (intent.current?.signature !== signature) intent.current = { signature, key: newKey() };
+    generation.current += 1; reads.current?.abort();
     busy.current = true; setPending(signature); setFeedback(null);
     const controller = new AbortController(); const timer = window.setTimeout(() => controller.abort(), 15000);
     const observed = generation.current;
