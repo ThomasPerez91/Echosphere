@@ -71,6 +71,9 @@ Local Work : 63 tests Game réussis, intégrations ignorées faute de PostgreSQL
 intégrées issues de CI. **Recette locale WSL2/Docker/Codex non effectuée dans ce lot.** Aucun chiffre
 de charge garanti. Aucun laboratoire, IA, étape 7, migration silencieuse de ruleset, dépendance ou
 changement Docker/Compose ajouté. Les fichiers v0.1 et migrations 0001–0006 publiées sont inchangés.
+La dernière relecture a aussi corrigé un report documentaire erroné sur les pages Colony et contrôle
+Portal/Game : contenu antérieur rétabli depuis ff95c13, seuls les ajouts Research prévus conservés.
+Leur diff final a été relu contre cette version et les titres des documents existants contrôlés.
 
 Après fusion #9 seulement : master synchronisée et recette locale WSL2/Docker/Codex ; pas de reprise
 ou recréation de branche #9 fusionnée. Prochain développement fonctionnel uniquement sur instruction.

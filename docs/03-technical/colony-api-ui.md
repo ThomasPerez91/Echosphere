@@ -1,122 +1,164 @@
-# Scheduler générique et règlement économique
+# 5D — API Colony sécurisée et UI Colony
 
-**Statut : Implémenté depuis PR #3 fusionnée, avec construction 5A sur PR #5 ; scheduler Game extensible.**
+**Statut : 5D terminée et intégrée à master via PR #8, merge `0e2ca11` vérifié le 31/10/2026, Q39 comprise.**
+[Plan 5D](../05-project/step-5d-plan.md) · [contrats 5B](identity-contracts.md) ·
+[handoff C07](game-handoff.md) · [économie v0.1](../01-game-design/colony-economy-v0.1.md) ·
+[ADR 0007](../adr/0007-colony-economy.md) · [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
 
-## Deux responsabilités explicites
+## Principes
 
-EventStream(universe_id, cursor_at, next_sequence) → ScheduledEvent(stream_id, universe_id).
-Le module scheduler.py ne référence ni Colony ni ResourceBalance. Un stream est un scope d'ordre,
-de verrouillage et d'idempotence appartenant à une instance Universe ; ce n'est pas un pointeur
-owner_kind/owner_id sans intégrité référentielle.
+Le backend Game reste l’autorité : stocks, production, coûts, durées, niveaux, capacités, ordre de
+la file, droits et échéances viennent du serveur et du ruleset épinglé à l’univers. Les routes
+authentifient, autorisent puis délèguent aux services 5A (`enqueue`, `cancel`, `catch_up_owned`).
+Aucune règle n’est recalculée dans un handler HTTP ou dans React. Aucun appel Portal pendant une
+requête gameplay : une GameSession valide suffit tant que ses échéances 5B ne sont pas atteintes.
 
-ColonyTimeline(colony_id, universe_id, stream_id unique, settled_at) → ResourceBalance.
-Ses FK composites garantissent que colonie et stream sont dans le même univers. service.py est
-l'adaptateur économique : le handler RESOURCE_RATE_CHANGE règle les ressources jusqu'à due_at avant
-le changement de taux ; catch_up termine le règlement économique jusqu'à la cible si complete=True.
-Un événement non économique peut avancer cursor_at sans modifier settled_at : aucun calcul de
-production n'est imposé au scheduler générique. Un future adaptateur pourra faire de même pour un
-empire, une flotte ou un univers, sans implémenter ces domaines actuellement.
+Validation et prévisualisation partagent les mêmes fonctions du service : `plan_order` (secteur,
+file, contiguïté, unicité, prérequis, ressources), `cancellation_plan`/`recoverable_refunds` (cascade,
+remboursements théoriques 100/80, plafonnement et pertes Q39) et `effective_duration_us`. La projection appelle ces fonctions
+sur l’état chargé ; la commande les rappelle sous verrou avant de dépenser.
 
-## Planifier et contrôler le scope
+## Chaîne d’autorisation
 
-Les fonctions génériques create_stream/lock_stream/schedule/catch_up_stream utilisent universe_id
-explicitement. Un stream absent ou d'un autre univers donne la même erreur de scope ; les FK
-composites interdisent aussi les événements incohérents même si un service omet une validation.
-Les helpers internes de colonie infèrent leur scope depuis le lien DB ; ils ne sont pas des endpoints
-authentifiés et ne remplacent pas Membership/permissions d'une future API.
+Chaque requête, dans une seule transaction Game :
 
-Une clé idempotente est unique par stream : même clé/type/date/payload renvoie l'événement existant,
-y compris terminé ; un contenu différent produit IdempotencyConflict. Les payloads sont copiés JSON
-et les timestamps UTC. Planifier avant cursor_at est refusé. Les futurs services joueurs devront
-rattraper le scope à l'instant de commande avant de planifier leur action, sans antidater depuis le client.
+1. cookie `__Host-game-session-<univers>` → GameSession vivante (8 h absolues, 2 h d’inactivité,
+   au plus `access_valid_until`), verrou du principal (même verrou que les révocations C06) ;
+2. GameAccess actif et epochs compte/appareil/accès cohérents ;
+3. colonie de cet univers → EmpireBinding de la participation sur l’Empire propriétaire ;
+4. sans `colony.read` sur cet Empire, réponse identique à un identifiant inconnu (404
+   `colony_not_found`) : un UUID connu ne donne aucun droit et ne révèle pas l’existence ;
+5. permission de l’opération : `colony.read`, `colony.construct` ou `colony.cancel` (403
+   `permission_denied`). Un administrateur plateforme n’a aucun droit gameplay implicite.
 
-## Ordre et concurrence
+Les commandes revérifient ces droits dans la transaction qui les accepte, puis verrouillent le stream
+de la colonie (ordre : principal puis EventStream, comme le contrat 5B). Une commande acceptée est
+une activité explicite : `last_activity_at` avance, jamais l’échéance absolue ni `valid_until`.
+Une lecture, un timer ou un rafraîchissement automatique ne comptent pas comme activité.
 
-Ordre déterministe par stream : due_at puis séquence allouée sous verrou. Les événements enfants
-créés au même instant logique reçoivent une séquence supérieure. Aucun ordre global entre streams
-n'est promis ; opérations impliquant plusieurs agrégats restent Q13.
+## Routes (origine Game, préfixe `/api` retiré par le proxy)
 
-La requête LATERAL sélectionne chaque tête, puis FOR UPDATE OF event_streams SKIP LOCKED réserve
-un stream sans bloquer les autres. La tête est relue après verrouillage sous READ COMMITTED.
-Une tête blocked ou en backoff ne laisse jamais passer ses successeurs. Un worker peut traiter
-plusieurs univers ; aucune variable globale ne sélectionne un univers unique pour tout le processus.
+| Méthode et chemin | Permission | Effet |
+| --- | --- | --- |
+| GET `/game/{univers}/colonies` | `colony.read` par Empire lié | Liste des colonies lisibles, sans autre donnée |
+| GET `/game/{univers}/colonies/{colonie}` | `colony.read` | Rattrapage paresseux puis projection |
+| POST `/game/{univers}/colonies/{colonie}/construction-orders` | `colony.construct` | Construction ou amélioration réservée |
+| POST `/game/{univers}/colonies/{colonie}/construction-orders/{ordre}/cancel` | `colony.cancel` | Annulation 100/80 avec cascade |
 
-## Atomicité et reprise
+Lectures : header `X-Game-Request: bootstrap`, origine absente ou Game, aucune query string.
+Commandes : `Origin` exacte Game, `Content-Type: application/json`, `X-CSRF-Token` dérivé de la
+session (vérifié avant tout accès DB), corps strict sans champ supplémentaire ni coercition :
 
-Transaction par événement : compteur de tentative, SAVEPOINT, avancement cursor à due_at, handler,
-completed et enfants. Si le handler échoue, rollback du curseur, des stocks et enfants ; la transaction
-conserve seulement attempts/next_attempt_at/code générique, sans payload ou détail d'exception en log.
-Après trois échecs par défaut, état blocked ; retry différé de 30 secondes et reprise explicite après
-correction. Une interruption avant commit annule tout ; après commit l'effet ne se répète pas.
-Pas de réservation persistée séparée, pas de bail orphelin ni queue mémoire comme autorité.
-
-Le calcul des stocks utilise la date logique, pas l'heure tardive du poll. completed_at est la date
-de traitement effective. Les handlers ne commitent pas, n'appellent aucun service externe et ne
-prennent pas un second stream ; ajouter un domaine futur nécessitera de documenter ses verrous.
-Leur code est serveur de confiance, pas un sandbox de plugins tiers.
-
-## Rattrapage borné et économie
-
-Scheduler.catch_up_stream(session, stream_id, universe_id, until, limit=100) traite les événements dus
-puis avance le curseur. Limite ou tête en erreur/backoff : complete=False, sans dépassement d'échéance.
-L'horloge injectable interdit un avancement futur ; un retour dans le passé est refusé.
-TimeEngine.catch_up(session, colony_id, until) utilise ce contrat et règle les ressources uniquement
-si le stream est complet. Un service de dépense futur exigera cette complétude sous le même verrou
-avant coûts et écritures dans sa transaction ; aucun tel endpoint public n'est exposé maintenant.
-
-Les handlers livrés sont RESOURCE_RATE_CHANGE (alloys/flux/data, taux entier non négatif) et
-CONSTRUCTION_COMPLETE en 5A. RESEARCH_COMPLETE est implémenté en étape 6 sur PR #9. Les exemples AI_TURN, FLEET_ARRIVAL/RETURN,
-EXPLORATION_COMPLETE sont des extensions documentées, pas des handlers factices ou features implémentés.
-Un type inconnu suit la politique retry/blocked, jamais une réussite silencieuse.
-
-## Migration et exploitation
-
-0003 préserve l'historique 0002 et extrait ses streams ; 0001/0002 inchangées. Downgrade refusé si
-un stream n'a pas d'adaptateur colonie ou si son curseur économique ne permet pas le retour sans
-perte (cursor_at != settled_at). Vérification en ligne avant tout DDL ; roundtrip peuplé en CI.
-
-Compose exécute migrate puis API/worker du même monolithe. Le worker traite par lots de 50 et attend
-une seconde entre lots ; ce n'est pas un tick qui simule toutes les planètes. CLI bornée :
-
-```bash
-docker compose exec worker python -m app.simulation.worker --once --limit 50
-docker compose exec worker python -m app.simulation.worker --blocked --limit 50
-# Après correction, uniquement pour l'UUID réellement listé :
-docker compose exec worker python -m app.simulation.worker --retry UUID_DU_EVENT
+```json
+{"idempotency_key": "16–64 caractères [A-Za-z0-9_-]", "infrastructure_type": "extraction_complex",
+ "sector_index": 5, "target_level": 1}
 ```
 
-La CLI opérateur peut inspecter plusieurs univers ; elle n'est pas une API joueur. Retry conserve
-identité/date/payload et remet le compteur de tentatives à zéro. Polling/retries sont techniques,
-pas des paramètres de vitesse gameplay. Archivage/versionnement des payloads et métriques de charge
-restent futurs. Aucun WebSocket/Redis, aucune présence de navigateur comme condition de progression.
+L’annulation exige un corps `{}` exact. Les réponses de commande renvoient l’ordre et la projection
+à jour issus de la même transaction.
 
-[Calcul](resource-calculation.md) · [ADR 0005](../adr/0005-colony-time-engine.md) · [Instance](../adr/0006-universe-game-instance.md)
+## Idempotence et concurrence
 
-## Construction Étape 5A
+La clé client est préfixée par la participation (`http:<membership>:<clé>`) avant d’atteindre la
+contrainte unique 5A par colonie : même clé et même contenu → même ordre sans second prélèvement,
+même clé et contenu différent → 409 `idempotency_conflict`, même clé chez un autre participant →
+commande indépendante. Un retry après timeout réutilise la clé de l’intention : jamais de second
+ordre. L’annulation est idempotente par identité d’ordre. Les courses (double clic, dernier slot de
+file, amélioration concurrente du même bâtiment, annulations simultanées) sont sérialisées par le
+verrou du principal puis du stream et testées.
 
-TimeEngine enregistre CONSTRUCTION_COMPLETE. Le handler vérifie order_id/univers/stream/clé,
-règle les ressources à due_at, applique le niveau une seule fois et active le prochain ordre à la
-même date logique. Effets et événement suivant sont dans la transaction du scheduler ; pas de commit
-ou autre lock de stream. Annulation sous le même lock après catch-up ; échéance annulée acquittée
-avec error_code cancelled, sans modifier sa date ni terminer le chantier métier. Le worker reprend
-les événements persistants sans joueur connecté. Voir [ADR 0007](../adr/0007-colony-economy.md).
+## Projection
 
-## Autonomie de Game, cible future
+Montants en micro-unités entières sérialisées en chaînes décimales (précision exacte, aucun float
+navigateur), durées en microsecondes (chaînes), dates UTC ISO-8601 avec offset, `server_time` de la
+lecture. Contenu : identité colonie/planète/système/Empire/univers, secteurs (capacité, construits,
+réservés, libres), stocks/capacités/taux horaires, infrastructures et niveaux, file (statut, coûts
+snapshot, `started_at`/`due_at`, bonus appliqué, prévisualisation d’annulation avec remboursement,
+cascade et raison), options de construction/amélioration (coût, durée de base, durée effective
+estimée seulement si l’ordre démarrerait immédiatement, production/capacité/bonus du niveau cible,
+disponibilité et raison). La projection ne contient que la colonie autorisée ; elle reste
+compatible avec un futur filtrage par fog of war (aucune donnée d’autre Empire/univers).
 
-Les workers et échéances appartiennent à Game DB et au Game Backend ; ils ne doivent pas attendre
-le Portal/auth/lobby ni une session joueur. La séparation [ADR 0008](../adr/0008-control-plane-game-data-plane.md)
-ne change pas ce scheduler ou ses transactions. Provision/grant/revoke internes futurs ne doivent
-pas ajouter d’appels réseau Portal dans un handler ou une dépense. Aucun nouveau scheduler ici.
+La lecture applique le rattrapage déterministe de 5A sous verrou (mêmes événements que le worker) :
+la colonie progresse sans navigateur ni lecture, et une lecture tardive voit l’état exact.
 
-## Research étape 6 — PR #9
+## Erreurs
 
-RESEARCH_COMPLETE acquiert une technologie et active la suivante à sa date logique ; durée figée
-à l’acceptation, aucun recalcul/débit. EventStream unique par Empire, même TimeEngine/worker.
-Le handler n’acquiert jamais un second stream. Les transactions de dépense/remboursement et les
-nouveaux devis Colony coordonnent Research avant Colony ; sources triées et rattrapages complets.
-Erreur technique vers retry/opérateur, refus métier de démarrage vers ordre bloqué explicable.
-[Contrat technique](research-api-ui.md), [preuves](../../progress.md). Autonomie Portal recettée
-pour Colony et Research ; aucune présence/session nécessaire à l’achèvement worker.
+Corps `{"error": {"code": ...}, "portal_url": ...}`, `Cache-Control: no-store`.
+
+| Code | Statut | Cas |
+| --- | --- | --- |
+| `authentication_required` | 401 | Cookie absent/inconnu, session expirée/révoquée, accès suspendu |
+| `origin_denied`, `csrf_denied` | 403 | Origine, header bootstrap ou preuve CSRF invalides |
+| `permission_denied` | 403 | Lecture permise mais opération non accordée |
+| `colony_not_found`, `order_not_found` | 404 | Hors scope, sans lecture ou inconnu |
+| `invalid_request` | 415/422 | Type de contenu, corps, champ ou infrastructure inconnus |
+| `queue_full`, `sector_unavailable`, `unique_limit`, `prerequisites_unmet`, `insufficient_resources` | 409 | Règles 5A |
+| `order_completed`, `idempotency_conflict` | 409 | Annulation tardive, clé réutilisée |
+| `colony_busy`, `temporarily_unavailable` | 503 | Événement bloqué/budget de rattrapage, base indisponible |
+
+Q39, arbitrage du 31/10/2026 : l’annulation reste possible ; crédit plafonné par ressource, excédent
+perdu définitivement. La projection `cancel.refund` contient le théorique agrégé, `recoverable` le
+crédit possible et `lost` la perte (chaînes de micro-unités), avec `also_cancels` pour toute la cascade.
+Même calcul pur en projection et commande ; application sous verrou après rattrapage, reçus
+`order.refunded` contenant le réel, replay par identité d’ordre sans second crédit. L’annulation
+n’utilise pas de nouvelle clé client : un retry après réponse perdue vise le même ordre.
+
+## UI Colony (frontend Game)
+
+`useColony` lit la liste puis la projection de la colonie (GET, jamais activité), applique
+seulement des réponses plus récentes (`server_time` monotone, générations, abort) et n’envoie une
+commande que sur clic explicite, une à la fois. Clé d’intention conservée après une issue inconnue
+(timeout, réseau, 5xx) pour qu’un retry ne crée jamais un second ordre ; un refus 4xx clôt
+l’intention puis relit la colonie. Un 401 relit la session C07, qui affiche l’expiration et le retour
+lobby. La barre d’avancement est une projection visuelle des dates serveur ; à l’échéance, une
+lecture légère est déclenchée (puis 3/10/30 s si le worker tarde, ensuite bouton explicite) : jamais
+d’achèvement côté client ni de polling permanent.
+
+Sous-navigation Vue d’ensemble / Infrastructures / Orbite / Défense. Vue d’ensemble : stocks et
+capacités, production, alertes dérivées des valeurs serveur (stock ≥ 90 %, file pleine, aucun
+secteur libre), file et résumé tabulaire. Infrastructures : file avec avancement et annulation
+confirmée (théorique, récupérable, perte définitive et liste détaillée de la cascade affichés), infrastructures existantes avec
+amélioration, nouvelles infrastructures avec coût, durée de base/effective, secteur libre choisi,
+bouton désactivé et raison serveur si indisponible. Orbite et Défense restent des états futurs
+explicites, sans bouton ni donnée inventée. Top bar : stocks et production de la colonie ; Empire
+affiche la colonie réelle et sa construction en cours. Aucun élément illustratif des mockups
+(population, défenses, accélération, bâtiments hors catalogue) n’est implémenté.
+
+Responsive vérifié 320/390/768/1440 en Chromium : pas de débordement horizontal, boutons ≥ 44 px,
+centre de chaque bouton réellement atteignable dans le viewport (barre mobile fixe compensée par
+`scroll-padding-bottom`), clavier sur construction/annulation et sous-navigation.
+
+## Recette réelle et résilience Portal (D08)
+
+`python3 scripts/smoke_colony_compose.py` (après build des images de l’arbre courant ; job CI
+compose-smoke) crée un projet Compose aléatoire sans port hôte, bases `echosphere_colony_*_test`,
+puis : compte de test et Universe provisionné par Portal via mTLS, graphe Colony de référence par
+`scripts/colony_game_fixture.py` (refusé hors de sa base dédiée ; vitesse de construction ×60 de
+l’instance pour finir en secondes, règles v0.1 sinon identiques), binding Empire par
+`SetUniverseAccess`. Chromium réel 390 px (`scripts/colony_browser.mjs`, sans interception) :
+
+1. login Portal → lobby → handoff signé → shell Game ;
+2. construction d’un Nœud de données : ordre réel, Alliages réservés immédiatement ;
+3. page fermée ; le coordinateur constate en base que le worker termine l’ordre ;
+4. nouvelle page : niveau/production mis à jour (Données 120/h), action suivante acceptée ;
+5. arrêt réel de Portal API et du worker de contrôle (`/api/ready` Portal ≥ 500) : colonie relue,
+   nouvelle construction acceptée, worker qui achève amélioration et réacteur, aucune requête
+   vers l’origine Portal pendant la séquence ;
+6. Q39 : worker arrêté et stockage rempli uniquement dans la base jetable, nouvel ordre puis
+   saturation ; UI théorique/récupérable/perte avant confirmation, annulation à capacité et replay
+   de l’ordre sans nouveau crédit ; aucun appel Portal ;
+7. échéance de session atteinte (échéance absolue ramenée juste après la dernière activité dans la
+   base de test) : commande refusée, UI d’expiration, lecture 401.
+
+Le projet et ses volumes sont supprimés ; la pile conservée n’est pas touchée.
+
+## Données de partie et tests
+
+Aucun parcours produit ne crée encore une partie : les tests et recettes créent Universe (provision
+C06), économie, Empire, planète et colonie de référence uniquement dans des bases `*_test`, puis
+lient l’Empire par `SetUniverseAccess`. Tests : `backend/tests/integration/test_colony_api.py`,
+`frontend/src/Colony.test.tsx`, `frontend/e2e/colony.spec.ts` (API interceptée).
 
 ## Effets Research — étape 6 / PR #9
 
