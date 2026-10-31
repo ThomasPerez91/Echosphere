@@ -18,8 +18,8 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 5C | Portal Account/Lobby foundation — intégré | Fondation minimale compte/lobby selon cadrage 5B | Comptes globaux et accès aux parties sécurisés ; pas de Portal complet/multijoueur anticipé |
 | 5D | Secure Colony API + interactive Colony UI | APIs protégées appelant les services 5A et UI réelle | Session/autorisation/fog/idempotence contrôlés et résilience Portal/Game testée |
 | 6 | Research — intégré via PR #9, Q05 close | Recherche globale et programmation suivante | Prérequis et application unique à échéance |
-| 7 | Galaxy + Exploration — lot courant, G00–G10 réalisés sur PR #10 | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
-| 8 | System View | Lecture des mondes et présences connues | Détails datés selon connaissances, mobile utilisable |
+| 7 | Galaxy + Exploration — intégré via PR #10 (`773e05c`) | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
+| 8 | System View — lot courant, PR #11 | Lecture des mondes et présences connues | Détails datés selon connaissances, mobile utilisable |
 | 9 | Fleets | Petit catalogue et missions asynchrones | Unités engagées une seule fois et arrivées récupérables |
 | 10 | Colonization | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
 | 11 | Première AI | Utility/Goals et profils simples | Services communs, décisions reproductibles, connaissance limitée |
@@ -65,7 +65,7 @@ D00–D09, [API/UI Colony](../03-technical/colony-api-ui.md), Q39 et recette Por
 Q05 close ; catalogue v0.2, persistance, services/worker et API/UI réellement livrés.
 [Plan historique R00–R09](step-6-plan.md), [contrat Q05](../01-game-design/research.md),
 [Research technique](../03-technical/research-api-ui.md).
-**Lot courant : étape 7 Galaxy + Exploration**, branche unique `work/step-7-galaxy-exploration`.
+**Historique étape 7 (intégrée via PR #10) : Galaxy + Exploration**, branche unique `work/step-7-galaxy-exploration`.
 G00/G01 autorisés par instruction du 31/10/2026 ; Q06 et contrat Exploration à proposer puis
 faire valider avant implémentation engageante. Étape 8 non commencée.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
@@ -125,7 +125,7 @@ premier checkpoint documentaire ; implémentation conditionnée à Q05 validée.
 [research-view](../visual-reference/research-view.png) et [design-system](../visual-reference/design-system.png).
 La condition de fusion est satisfaite et Q05 a ensuite été validée explicitement ; voir le lot courant.
 
-Cadrage courant : [plan étape 7](step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.
+Plan historique : [plan étape 7](step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.
 
 ## État post-merge étape 7 — 31/10/2026
 

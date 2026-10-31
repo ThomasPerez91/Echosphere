@@ -132,6 +132,8 @@ S00–S09 autorisés par instruction du 31/10/2026, sans validation intermédiai
 produit nouvelle. Vue détaillée depuis Knowledge, permission galaxy.read, données datées ; aucun
 nouveau gameplay, scheduler, droit system.read, huitième domaine ou migration sans besoin démontré.
 DETECTED reste limité, structure MAPPED durable et observations MONITORED propres seulement.
+Implémentation et recette réelle sur [PR #11](https://github.com/ThomasPerez91/Echosphere/pull/11) ;
+[contrat System View](docs/03-technical/system-view.md), validations et gate CI dans progress.
 Étape 9 non commencée ; Q04/Q07/Q09 inchangées, aucun merge autorisé.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)

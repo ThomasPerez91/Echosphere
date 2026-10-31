@@ -1,5 +1,9 @@
 # Étape 7 — Galaxie procédurale, exploration et connaissance
 
+**État actuel : intégré via PR #10, merge `773e05c`, CI post-merge 41220568486 success (5/5),
+vérifiée le 31/10/2026. Le lot courant est [étape 8](step-8-plan.md).**
+Les checkpoints et consignes de branche ci-dessous décrivent la livraison avant fusion.
+
 **Statut au 31/10/2026 : G00–G10 réalisés sur PR #10 (G03–G10 repris et terminés par Claude Code après le travail local Codex) ; Q06 et Exploration validées avec amendements ; aucun merge.**
 Instruction utilisateur : commencer effectivement étape 7, présenter Q06 + Exploration minimale,
 puis attendre validation avant générateur/game_data définitifs, migration ou métier Exploration.

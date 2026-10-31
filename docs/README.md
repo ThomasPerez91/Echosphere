@@ -46,8 +46,8 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   **implémentées dans leur périmètre 5C (C02–C08), fusionnées via PR #7** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. 5C
   terminé et fusionné (`ff6ef89`), 5D intégrée via #8 (`0e2ca11`). Lot courant :
-  étape 7 Galaxy + Exploration sur PR #10 (Q06/Exploration validées, G02–G10 réalisés ; [technique](03-technical/galaxy-api-ui.md)).
-  [Research](05-project/step-6-plan.md) intégrée via PR #9 (`437844e4`), Q05 close ; [API/UI](03-technical/research-api-ui.md). Étape 8 non commencée.
+  étape 8 System View sur PR #11 ; étape 7 Galaxy + Exploration intégrée via PR #10 (`773e05c`), [technique](03-technical/galaxy-api-ui.md).
+  [Research](05-project/step-6-plan.md) intégrée via PR #9 (`437844e4`), Q05 close ; [API/UI](03-technical/research-api-ui.md). Étape 9 non commencée.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
@@ -57,7 +57,7 @@ sur les conversations Space Game qui n’ont pas pu être consultées.
 Compléments actuels sur PR #7 : [C08 parcours et shell](03-technical/portal-game-ui.md),
 [C09 recette et opérations](03-technical/portal-operations.md). 5D intégrée via #8 ; Research intégrée via PR #9, aucune exposition production.
 
-Cadrage courant : [plan étape 7](05-project/step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.
+Plan historique : [plan étape 7](05-project/step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.
 
 ## État post-merge étape 7 — 31/10/2026
 

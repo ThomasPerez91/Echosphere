@@ -4,17 +4,35 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — S01–S07 |
+| Champ | État au 31/10/2026 — S00–S08 réalisés, S09 publication/CI |
 | --- | --- |
 | Objectif | Étape 8 System View : projection depuis Knowledge existante, sans nouvelle mécanique |
-| Branche / base / PR | work/step-8-system-view ; PR #11 brouillon ; master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 |
-| Tête | S00 740dd8dd888ce8c32c771283e7afa238edbca710 publié avant code ; présent commit = checkpoint S01–S07 |
+| Branche / base / PR | work/step-8-system-view ; PR #11 brouillon jusqu’à CI exacte verte ; master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 |
+| Tête | S00 740dd8d publié avant code ; fonctionnel 67345aa, correction Colony bc8cb47 ; présent commit = revue/passation S09 |
 | Agent | Codex local, seul écrivain autorisé ; précédent travail étape 7 consigné Claude Code |
-| Réalisé | Contrats/plan, projection détail sans rattrapage/avancement de stream, routes Knowledge et observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ciblé |
-| Fichiers | app/galaxy/system_view.py et api.py, composants/hooks/client/navigation/CSS/tests UI ; nouveau test_system_view.py ; trois docs canoniques et smoke Galaxy étendu |
-| Validation locale | PostgreSQL dédiée echosphere_system_test : 275 Game réussis, dont 10 System View ; Ruff et Alembic sans dérive ; frontend lint 0 erreur (warning préexistant useGameSession), 50 Vitest, build, 21 Chromium dont 4 System View 320/390/768/1440 ; captures 320/1440 examinées |
-| CI | Post-merge 41220568486 success 5/5 vérifié ; CI de ce checkpoint à observer après publication |
-| Limites / suite | S08 recette HTTPS réelle et régressions Chromium complètes puis S09 revue/CI/passation ; Portal inchangé ; zéro migration/grant/game_data ; étape 9 non commencée ; aucun merge |
+| Réalisé | Contrats/plan, détail sans rattrapage/avancement du stream, routes Knowledge et observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ciblé ; recette réelle réussie |
+| Fichiers | app/galaxy/system_view.py et api.py, composants/hooks/client/navigation/CSS/tests UI ; test_system_view.py ; docs canoniques/statuts et smoke Galaxy étendu |
+| Validation locale | PostgreSQL dédiée echosphere_system_test : 275 Game réussis, dont 10 System View ; Ruff et Alembic sans dérive ; frontend lint 0 erreur (warning préexistant useGameSession), 50 Vitest, build ; Chromium quatre largeurs et revue captures ; recette HTTPS réelle deux fois réussie, dont images finales fonctionnelles |
+| CI | Post-merge 41220568486 success 5/5 vérifié ; 67345aa et bc8cb47 : frontend KO à 320 px sur nowrap hérité ; correction ciblée incluse, CI exacte à relire après publication avant Ready |
+| Limites / suite | Finir S09 par vérification du SHA distant et des cinq jobs CI, puis Ready sans merge ; résultats exacts dans PR #11. Portal/contrats inchangés ; zéro migration/grant/game_data ; étape 9 non commencée. Chromium émulé, aucun appareil physique/production recetté |
+
+## S08/S09 — recette finale, revue et passation, 31/10/2026
+
+Recette HTTPS réelle réussie une seconde fois avec l’image incluant le correctif Colony : système
+MONITORED propre et lien ; Exploration/page fermée/worker redémarré, preuve DB MAPPED avant GET,
+planètes/capacités identiques à Knowledge ; Portal coupé, zéro appel Portal et refus 401 détail
+après expiration. Projet/bases/volumes jetables supprimés, pile conservée intacte.
+
+La CI frontend a révélé à 320 px une légende et une date non repliables à cause du white-space
+nowrap global de panel-meta. Reproduit localement avec diagnostic des rectangles texte ; override
+System View seulement, sans masquer le débordement. Les exécutions locales antérieures réussies
+ne suffisaient pas à écarter ce défaut. Les 21 Chromium complets ont ensuite réussi (12,4 s). CI du
+SHA de publication nécessaire ; ne pas confondre CI configurée et CI réussie.
+
+Revue du diff : structure depuis snapshots, requête Colony propre seulement pour lien autorisé,
+aucun rapport figé enrichi, aucun nouveau scheduler ni GET de rattrapage. Aucun changement Portal,
+contrat partagé, migration, game_data, dépendance ou grant. Statuts canoniques/roadmap/passation
+alignés, checkpoint historique étape 7 conservé. Q04/Q07/Q09 ouvertes, étape 9 non commencée.
 
 ## S07/S08 — renforcement de reprise, 31/10/2026
 

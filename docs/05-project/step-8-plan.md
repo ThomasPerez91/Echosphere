@@ -38,7 +38,7 @@ que le deep-link demeure autonome après refresh. Le hook Colony sélectionne au
 première colonie : cibler explicitement la vraie Colony du lien et effacer la projection précédente
 avant toute lecture de sélection, pour ne pas afficher un ancien scope après refus.
 
-## Validation à exécuter
+## Critères de validation
 
 PostgreSQL : UNKNOWN/étranger/inexistant identiques ; DETECTED minimal ; MAPPED structure copiée,
 aucun Planet live supplémentaire ; MONITORED propre/daté ; perte de monitoring et ancien last_seen ;
@@ -61,3 +61,20 @@ Zéro migration/permission supplémentaire. Validation locale : 275 tests Game P
 Alembic check ; 48 Vitest, lint sans erreur (seul warning préexistant useGameSession), build et
 4 Chromium System View aux largeurs requises. Captures 320/1440 examinées ; aucun fake runtime.
 S08 recette réelle et S09 CI/passation restent à terminer.
+
+## S08/S09 — recette finale et passation
+
+Recette HTTPS réelle réussie avec les images finales : système propre MONITORED, présence et lien,
+retour, Exploration acceptée puis page fermée/redémarrage worker, preuve DB MAPPED avant GET détail,
+planètes/capacités comparées exactement à Knowledge ; nouvelle lecture Portal arrêté et refus 401
+après expiration. Projet/bases/volumes dédiés supprimés, pile conservée intacte.
+
+Régression finale locale : 50 Vitest et 21 Chromium complets réussis ; 275 Game PostgreSQL,
+Ruff/Alembic sans dérive, zéro migration/grant. Correction de réponse Colony tardive couverte par
+deux tests. CI exacte et verdict Ready à vérifier après publication, consignés dans la PR ; aucun
+merge ni démarrage étape 9. Limites : Chromium émulé, pas de recette sur appareil physique ni de
+validation de production. Warning ESLint useGameSession préexistant conservé.
+
+Correction S09 : nowrap hérité des métadonnées neutralisé dans System View ; légende/date
+repliables à 320 px, 21 Chromium complets réussis après correction. CI des premières têtes
+fonctionnelles frontend KO pour ce défaut ; seul le SHA final vert autorise Ready.

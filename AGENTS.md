@@ -144,7 +144,8 @@ Lot courant : **étape 8 System View**, branche `work/step-8-system-view` depuis
 S00–S09 autorisés sans validation intermédiaire : lecture des Knowledge existantes, galaxy.read,
 pas de huitième domaine, zéro migration préférée. DETECTED sans détail, MAPPED structure durable,
 MONITORED observations propres réellement autorisées et datées. Aucun GET ne termine une mission.
-Q04/Q07/Q09 hors portée ; étape 9 non commencée. Aucun merge autorisé.
+Implémentation et recette réelle sur PR #11 ; [contrat](docs/03-technical/system-view.md),
+validation/CI de tête dans progress. Q04/Q07/Q09 hors portée ; étape 9 non commencée. Aucun merge autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver

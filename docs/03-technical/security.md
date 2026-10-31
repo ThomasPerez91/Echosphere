@@ -166,3 +166,10 @@ nettoyage à recetter en C09 ; commandes sécurisées réservées à 5D.
 
 Compléments actuels sur PR #7 : [C08 parcours et shell](portal-game-ui.md),
 [C09 recette et opérations](portal-operations.md). Aucun début de 5D ni exposition production.
+
+## System View étape 8
+
+Projection des Knowledge existantes, sans migration ni nouveau droit. Autorisation galaxy.read,
+structure snapshotée et présence propre datée ; liens Colony uniquement sous colony.read et
+vérification actuelle de la colonie propre. DETECTED limité, UNKNOWN non-fuyant, aucun achèvement
+au GET détail. [Contrat System View](system-view.md).

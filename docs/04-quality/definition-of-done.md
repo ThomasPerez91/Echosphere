@@ -111,3 +111,12 @@ vers master laissée non fusionnée. Un refus d'accès GitHub doit être rapport
 bundle local ne vaut ni push ni PR. La CI configurée n'est pas une CI passée tant qu'elle n'a pas tourné.
 
 Voir [stratégie de tests](testing-strategy.md) et [contribution](../../CONTRIBUTING.md).
+
+## Étape 8 — System View
+
+Knowledge autorisée avant projection, UNKNOWN/étranger non distinguables et DETECTED sans détail.
+Structure durable, anciennes observations datées sans enrichissement omniscient, liens Colony
+sous droit séparé et scopes vérifiés. GET détail sans effet de scheduler/activité session.
+Sous-route Galaxy et deep-links natifs, retour au contexte, lecture clavier/tactile et quatre
+largeurs ; aucune donnée fictive, migration ou mécanique ajoutée. Tests/scénario réel worker fermé,
+Portal coupé, expiration et CI de tête verte avant Ready ; étape 9 non commencée et aucun merge.

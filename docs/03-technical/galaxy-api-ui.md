@@ -109,3 +109,10 @@ sur commande pendant qu’une expédition déjà acceptée se termine. Résultat
 Pas de Fleet, IA, colonisation, combat, capteurs, anomalies ni System View. Création complète de
 partie et affectation multi-Empires des sites candidats hors lot. Noms générés provisoires
 (« System NNNNNN », « World n »). Aucune garantie de charge au-delà des mesures G02.
+
+## Extension System View — étape 8 / PR #11
+
+Le GET détail réutilisé lit désormais la Knowledge persistée sous verrou Exploration **sans
+catch_up ni avancement de stream** ; DETECTED reste minimal. Détail MAPPED/MONITORED enrichi par
+composition : dates, routes connues, présence propre observée et liens Colony sous colony.read.
+Aucun rapport figé ni API générale Galaxy modifié ; [contrat technique System View](system-view.md).
