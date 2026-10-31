@@ -1,5 +1,6 @@
 """Fleet state scoped by Universe/Empire. A unit exists only as a count in one Fleet stack.
 
+A merged Fleet keeps its row (status MERGED, no location) so mission history stays intact.
 Engagement invariant enforced in the database: a stack belongs to one Fleet, a Fleet has at most
 one open mission (`active_mission_id` unique + partial index), and MOVING ⇔ open mission. Stacks
 and cargo change only while STATIONED, under the Empire Operations stream lock.
@@ -97,7 +98,7 @@ class Fleet(Record, Base):
         UniqueConstraint("id", "empire_id", "universe_id", name="uq_fleet_scope"),
         UniqueConstraint("active_mission_id", name="uq_fleet_active_mission"),
         CheckConstraint("kind IN ('GARRISON','TASK')", name="kind"),
-        CheckConstraint("status IN ('STATIONED','MOVING')", name="status"),
+        CheckConstraint("status IN ('STATIONED','MOVING','MERGED')", name="status"),
         CheckConstraint("(status = 'STATIONED') = (system_id IS NOT NULL)", name="location"),
         CheckConstraint("(status = 'MOVING') = (active_mission_id IS NOT NULL)", name="engagement"),
         CheckConstraint("kind <> 'GARRISON' OR status = 'STATIONED'", name="garrison"),

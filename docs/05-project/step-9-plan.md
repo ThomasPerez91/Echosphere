@@ -12,10 +12,10 @@ brouillon. Aucun merge autorisé ; étape 10 Colonisation non commencée. Propos
 | F01 | Réalisé : audit ci-dessous et proposition Q09, validée avec amendements |
 | F02 | Réalisé : ruleset complet v0.4 (`fleets.json`, exploration `fleet-survey-v1`), validation stricte, v0.1–v0.3 intactes |
 | F03 | Réalisé : migration 0009 : tables Fleet, contraintes d’invariant, permissions 12, downgrade sûr ; inventaire de tables |
-| F04 | Production (file dédiée, réservation, annulation Q39 explicite), garnisons, division/fusion stationnées |
-| F05 | Missions DEPLOY/SURVEY/RETURN, chemins snapshotés, `FLEET_ARRIVAL`, rapports, reprise worker |
-| F06 | Cargo CHARGER/DÉCHARGER, rappel `FLEET_RETURN`, idempotence ; transport selon arbitrage A9 |
-| F07 | API Game + permissions propagées (DTO, schéma partagé, Portal, CHECK, tests), CSRF/idempotence |
+| F04 | Réalisé : production (file dédiée, réservation, annulation Q39 explicite), garnisons, division/fusion stationnées |
+| F05 | Réalisé : missions DEPLOY/SURVEY/RETURN, chemins snapshotés, `FLEET_ARRIVAL`, rapports, reprise worker |
+| F06 | Réalisé : cargo CHARGER/DÉCHARGER, rappel `FLEET_RETURN`, idempotence ; transport selon arbitrage A9 |
+| F07 | Réalisé : API Game + permissions propagées (DTO, schéma partagé, Portal, CHECK, tests), CSRF/idempotence |
 | F08 | UI Flottes réelle ; lien depuis Galaxy/System View vers un envoi prérempli, sans pollution |
 | F09 | Concurrence/deadlocks, non-fuite, responsive 320/390/768/1440, accessibilité |
 | F10 | Recette réelle Compose jetable (*_test) : production, SURVEY page fermée, worker, Portal coupé, expiration |
