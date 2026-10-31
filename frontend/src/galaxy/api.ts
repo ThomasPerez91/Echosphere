@@ -135,6 +135,8 @@ export function validProjection(value: unknown, empire: string): value is Projec
     typeof value.empire.name !== "string" ||
     !list(value.permissions, (p) => typeof p === "string") ||
     !list(value.systems, validKnownSystem) ||
+    // Colony identifiers belong to colony.read: refuse them instead of hiding them.
+    (!(value.permissions as string[]).includes("colony.read") && (value.systems as KnownSystem[]).some((s) => s.observation)) ||
     !list(value.routes, route) ||
     !list(value.sources, (s) => object(s) && id(s.id) && typeof s.name === "string" && amounts(s.stocks)) ||
     !list(
@@ -238,6 +240,7 @@ export function validSystemDetail(value: unknown, empire: string, systemId: stri
     && v.planets!.some(p => p.id === c.planet_id);
   return v.empire_id === empire && date(v.server_time)
     && list(v.permissions, p => typeof p === "string") && v.permissions!.includes("galaxy.read")
+    && (v.permissions!.includes("colony.read") || !v.observation)
     && list(v.routes, r => object(r) && id(r.id) && object(r.neighbor) && id(r.neighbor.id)
       && (r.neighbor.state === "DETECTED" ? !("name" in r.neighbor)
         : ["MAPPED", "MONITORED"].includes(String(r.neighbor.state)) && typeof r.neighbor.name === "string"))

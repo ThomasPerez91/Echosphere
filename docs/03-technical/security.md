@@ -171,5 +171,6 @@ Compléments actuels sur PR #7 : [C08 parcours et shell](portal-game-ui.md),
 
 Projection des Knowledge existantes, sans migration ni nouveau droit. Autorisation galaxy.read,
 structure snapshotée et présence propre datée ; liens Colony uniquement sous colony.read et
-vérification actuelle de la colonie propre. DETECTED limité, UNKNOWN non-fuyant, aucun achèvement
+vérification actuelle de la colonie propre ; sans colony.read, aucun identifiant de colonie émis
+(observation `null`, Galaxy comprise) et refus client d’une réponse qui en porterait. DETECTED limité, UNKNOWN non-fuyant, aucun achèvement
 au GET détail. [Contrat System View](system-view.md).

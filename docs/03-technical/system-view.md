@@ -18,11 +18,16 @@ Observation source = own_colony_ids existants. MAPPED conserve l’ancien snapsh
 via Colony live. MONITORED + colony.read : seules colonies propres encore présentes, observées,
 dans les planètes connues du système ; leur nom vient de PlanetKnowledge. Cette requête sert à
 vérifier le lien d’accès actuel, jamais à découvrir une colonie étrangère ou enrichir le monde.
-Sans colony.read : présence générique, aucun détail/lien Colony supplémentaire.
+Sans colony.read : présence générique, aucun détail/lien Colony supplémentaire, et `observation`
+vaut `null` (aucun identifiant de colonie émis, carte Galaxy comprise) ; le client refuse une réponse
+qui en porterait plutôt que de la masquer. Revue Claude Code du 31/10/2026 : identifiants auparavant
+émis puis seulement non affichés, corrigé sans migration.
 
 Frontend : fragment `#universe/{universe}/galaxy/system/{empire}/{system}`. Vue dédiée avec GET
 détail seulement, annulable/timeout, identité scope vérifiée dans le DTO, réponse tardive ignorée,
-pas de mutation au montage/StrictMode ni polling. Galaxy mémorise Empire/sélection/cadrage dans
+pas de mutation au montage/StrictMode ni polling. Le monde de la colonie propre liée est
+présélectionné, et son lien est repris dans Présences : l’action n’est jamais cachée derrière
+un choix de planète. Seul écart d’écriture d’un GET détail : refresh de monitoring étape 7. Galaxy mémorise Empire/sélection/cadrage dans
 le shell en mémoire pour le retour ; aucune carte cachée ni cache autoritaire. Deep-link Colony
 `#universe/{universe}/colony/overview/{colony}` appelle la lecture autorisée réelle.
 

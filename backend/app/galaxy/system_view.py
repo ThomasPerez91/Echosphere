@@ -10,7 +10,7 @@ from app.persistence.models import Colony
 
 
 def project(session, known, permissions, at):
-    result = project_system(session, known)
+    result = project_system(session, known, "colony.read" in permissions)
     if known.state == "DETECTED":
         return result
     result.update(

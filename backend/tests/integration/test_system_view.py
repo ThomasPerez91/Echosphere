@@ -19,13 +19,25 @@ from app.galaxy.models import (
     ExplorationReport,
     GalaxySystem,
     PlanetKnowledge,
+    RouteKnowledge,
     SystemKnowledge,
 )
 from app.persistence.models import Planet, StellarSystem
-from app.simulation.models import EventStream, ScheduledEvent
+from app.simulation.models import EventStream, ResourceBalance, ScheduledEvent
 from app.simulation.service import TimeEngine
 
 pytestmark = pytest.mark.integration
+
+
+def durable(s, w):
+    """Knowledge rows and stored stocks a hidden lazy completion would change."""
+    return [
+        s.scalar(select(func.count()).select_from(model).where(model.empire_id == w.empire))
+        for model in (SystemKnowledge, PlanetKnowledge, RouteKnowledge)
+    ] + sorted(
+        (b.resource, b.stock, b.remainder, b.updated_at)
+        for b in s.scalars(select(ResourceBalance).where(ResourceBalance.colony_id == w.colony))
+    )
 
 
 def origin(w):
@@ -77,12 +89,17 @@ def test_current_own_presence_has_snapshot_structure_and_authorized_colony_link(
 
 def test_without_colony_read_observation_is_generic_and_has_no_protected_links(galaxy):
     w = galaxy(permissions=["galaxy.read"])
-    body = read(w, origin(w)).json()
+    response = read(w, origin(w))
+    body = response.json()
+    assert body["state"] == "MONITORED" and body["observation"] is None
     assert body["presences"] and body["presences"][0]["kind"] == "own_colony"
     assert body["presences"][0]["colony"] is None
     assert body["colony_links"] == [] and body["permissions"] == ["galaxy.read"]
-    # Only the pre-existing own_colony_ids observation is exposed, never a Colony record.
-    assert not any(p.get("colony") for p in body["presences"])
+    # Never sent then hidden by the client: no Colony identifier anywhere, map included.
+    galaxy_map = read(w)
+    assert galaxy_map.status_code == 200
+    assert not any(s.get("observation") for s in galaxy_map.json()["systems"])
+    assert str(w.colony) not in response.text + galaxy_map.text
 
 
 def test_overdue_detail_get_cannot_finish_mission_or_advance_cursor(galaxy):
@@ -92,6 +109,7 @@ def test_overdue_detail_get_cannot_finish_mission_or_advance_cursor(galaxy):
     with w.game.factory() as s:
         state = s.get(EmpireExploration, w.empire)
         cursor = s.get(EventStream, state.stream_id).cursor_at
+        before = durable(s, w)
     w.advance(minutes=60)
     detail = read(w, target).json()
     assert detail["state"] == "DETECTED"
@@ -106,6 +124,7 @@ def test_overdue_detail_get_cannot_finish_mission_or_advance_cursor(galaxy):
             )
             == "pending"
         )
+        assert durable(s, w) == before
     assert TimeEngine(w.game.factory, w.app.state.clock).process_next().status == "completed"
     mapped = read(w, target).json()
     assert mapped["state"] == "MAPPED" and mapped["planets"]

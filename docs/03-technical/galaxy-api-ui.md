@@ -41,7 +41,9 @@ MAPPED/MONITORED = nom, position exacte et `mapped_at` copiés au moment de la c
 jointure vers le monde réel pour enrichir une réponse, aucun filtrage Python/React d’un monde complet.
 
 Surveillance : seul le système contenant une colonie propre devient MONITORED (observation =
-identifiants de ses propres colonies), rafraîchi à la lecture sous le stream Exploration, sans timer.
+identifiants de ses propres colonies, projetée `null` sans colony.read ; le marqueur « votre colonie »
+du client dérive de MONITORED seul, une ancienne observation MAPPED n’est plus présentée comme la
+vôtre), rafraîchi à la lecture sous le stream Exploration, sans timer.
 Sans présence réelle : MONITORED → MAPPED, structure et `last_seen_at` conservés. Aucun partage
 entre Empires. `initialize_empire` (explicite, après la vraie colonie) : origine cartographiée puis
 surveillée, voisins directs DETECTED et routes incidentes ; Research initialisé avant le stream

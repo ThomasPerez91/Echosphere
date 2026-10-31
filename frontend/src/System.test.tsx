@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { SystemView } from './components/SystemView';
 import { validSystemDetail } from './galaxy/api';
-import { detail, empire, origin, otherEmpire, near, universe } from '../tests/systemFixture';
+import { detail, empire, origin, otherEmpire, near, universe, withoutColonyRead } from '../tests/systemFixture';
 import { projection } from '../tests/galaxyFixture';
 
 const json = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body });
@@ -18,9 +18,13 @@ function setup(body: unknown = detail(), status = 200) {
 
 test('MONITORED shows dated actual presence and authorized Colony link; StrictMode sends GET only', async () => {
   const { fetcher } = setup();
-  expect(await screen.findByRole('heading', { name: 'Système Système d’origine' })).toBeVisible();
-  expect(screen.getByRole('link', { name: 'Voir ma colonie' })).toHaveAttribute('href',
-    `#universe/${universe}/colony/overview/${detail().colony_links![0].colony_id}`);
+  expect(await screen.findByRole('heading', { name: 'Système d’origine' })).toBeVisible();
+  // The own world is third in server order, yet opens selected so its action is not hidden.
+  expect(screen.getByRole('heading', { name: 'Nouvelle Aube' })).toBeVisible();
+  expect(screen.getByRole('button', { name: /3 · Nouvelle Aube/ })).toHaveAttribute('aria-pressed', 'true');
+  const target = `#universe/${universe}/colony/overview/${detail().colony_links![0].colony_id}`;
+  expect(screen.getByRole('link', { name: 'Voir ma colonie' })).toHaveAttribute('href', target);
+  expect(screen.getByRole('link', { name: 'Ouvrir la colonie Nouvelle Aube →' })).toHaveAttribute('href', target);
   expect(screen.getByText(/Présence propre observée : Nouvelle Aube/)).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Mondes connus' })).toBeVisible();
   expect(screen.getByText(/Cartographié/)).toBeVisible();
@@ -34,7 +38,7 @@ test('MONITORED shows dated actual presence and authorized Colony link; StrictMo
 
 test('MAPPED shows durable structure and says presence information unavailable', async () => {
   setup(detail('MAPPED'));
-  await screen.findByRole('heading', { name: 'Système Système d’origine' });
+  await screen.findByRole('heading', { name: 'Système d’origine' });
   expect(screen.getByText('Aucune donnée de présence disponible.')).toBeVisible();
   expect(screen.queryByRole('link', { name: 'Voir ma colonie' })).not.toBeInTheDocument();
   expect(screen.queryByText('Aucune présence dans ce système')).not.toBeInTheDocument();
@@ -51,11 +55,19 @@ test('old observations stay explicitly old and never provide a Colony action', a
 });
 
 test('without colony.read presence is generic and protected links are absent', async () => {
-  const value = detail(); value.permissions = ['galaxy.read']; value.colony_links = [];
-  value.presences![0].colony = null;
-  setup(value);
+  setup(withoutColonyRead());
   expect(await screen.findByText('Présence propre observée')).toBeVisible();
   expect(screen.queryByRole('link', { name: 'Voir ma colonie' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: /Ouvrir la colonie/ })).not.toBeInTheDocument();
+});
+
+test('a response carrying Colony identifiers without colony.read is refused, not hidden', async () => {
+  const leaked = withoutColonyRead(); leaked.observation = { own_colony_ids: [detail().colony_links![0].colony_id] };
+  expect(validSystemDetail(withoutColonyRead(), empire, origin)).toBe(true);
+  expect(validSystemDetail(leaked, empire, origin)).toBe(false);
+  setup(leaked);
+  expect(await screen.findByRole('alert')).toHaveTextContent('momentanément indisponible');
+  expect(screen.queryByText('Nouvelle Aube')).not.toBeInTheDocument();
 });
 
 test('DETECTED is limited and never displays full structure', async () => {
@@ -85,9 +97,9 @@ test.each(['empire', 'universe'])('late response from another %s never replaces 
   const view = render(<SystemView universe={universe} empire={empire} system={origin} onSessionLost={lost} />);
   view.rerender(<SystemView universe={changed === 'universe' ? otherEmpire : universe}
     empire={changed === 'empire' ? otherEmpire : empire} system={origin} onSessionLost={lost} />);
-  expect(await screen.findByRole('heading', { name: 'Système Current scope' })).toBeVisible();
+  expect(await screen.findByRole('heading', { name: 'Current scope' })).toBeVisible();
   resolveOld(json(detail()));
-  await waitFor(() => expect(screen.queryByRole('heading', { name: 'Système Système d’origine' })).not.toBeInTheDocument());
+  await waitFor(() => expect(screen.queryByRole('heading', { name: 'Système d’origine' })).not.toBeInTheDocument());
 });
 
 test('detail validator refuses hidden DETECTED structure and foreign scope', () => {

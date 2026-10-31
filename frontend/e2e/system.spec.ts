@@ -23,7 +23,8 @@ for (const width of [320, 390, 768, 1440]) {
     const open = page.getByRole('link', { name: 'Voir le système', exact: true });
     await open.focus(); await page.keyboard.press('Enter');
     await expect(page).toHaveURL(new RegExp(`galaxy/system/${empire}/${origin}$`));
-    const heading = page.getByRole('heading', { name: 'Système Système d’origine', exact: true });
+    // Scoped: the Galaxy detail panel carries the same system name.
+    const heading = page.locator('.system-heading').getByRole('heading', { name: 'Système d’origine', exact: true });
     await expect(heading).toBeFocused();
     await expect(page.getByText('Présence propre observée : Nouvelle Aube')).toBeVisible();
     const overflow = await page.evaluate(() => ({
@@ -36,6 +37,11 @@ for (const width of [320, 390, 768, 1440]) {
       })),
     }));
     expect(overflow.scrollWidth, JSON.stringify(overflow)).toBeLessThanOrEqual(overflow.width);
+    // Own world is preselected even though it is not first in server order.
+    await expect(page.getByRole('link', { name: 'Voir ma colonie', exact: true })).toBeVisible();
+    const other = page.getByRole('button', { name: 'Sélectionner Rocher Pâle' });
+    await other.tap();
+    await expect(page.getByRole('link', { name: 'Voir ma colonie', exact: true })).toHaveCount(0);
     const planet = page.getByRole('button', { name: 'Sélectionner Nouvelle Aube' });
     await planet.scrollIntoViewIfNeeded();
     const rect = (await planet.boundingBox())!;

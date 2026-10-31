@@ -31,7 +31,14 @@ async function openSystem(page, snapshot, { own = false } = {}) {
   const select = page.locator('.galaxy-list').getByRole('button', { name: new RegExp(`^${snapshot.name} `) });
   await select.click();
   await page.getByRole('link', { name: 'Voir le système', exact: true }).click();
-  await page.getByRole('heading', { name: `Système ${snapshot.name}`, exact: true }).waitFor();
+  // The Galaxy detail panel shows the same name: wait for the System View header itself.
+  const title = page.locator('.system-heading').getByRole('heading', { name: snapshot.name, exact: true });
+  await page.waitForURL(new RegExp(`/galaxy/system/${empire}/${snapshot.id}$`));
+  await title.waitFor().catch(async error => {
+    await page.screenshot({ path: '/artifacts/system-failure.png', fullPage: true });
+    console.error(await page.locator('main').innerText());
+    throw error;
+  });
   const detail = await read(page, `${root}/systems/${snapshot.id}`);
   if (detail.status !== 200 || JSON.stringify(detail.body.planets) !== JSON.stringify(snapshot.planets)) throw new Error('System View must match stored PlanetKnowledge');
   if (detail.body.state === 'DETECTED') throw new Error('Detailed System View must require mapped structure');
@@ -41,6 +48,15 @@ async function openSystem(page, snapshot, { own = false } = {}) {
   }
   if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)) throw new Error('System View horizontal overflow');
   await page.screenshot({ path: `/artifacts/system-${own ? 'own' : 'mapped'}-${page.viewportSize().width}.png`, fullPage: true });
+  const colonyLink = page.getByRole('link', { name: 'Voir ma colonie', exact: true });
+  if (own) {
+    // The own world opens preselected; its link leads to the real Colony screen of that colony.
+    await colonyLink.click();
+    await page.waitForURL(new RegExp(`/colony/overview/${colony}$`));
+    await page.getByRole('heading', { name: 'Constructions en cours' }).waitFor();
+    await page.goBack();
+    await title.waitFor();
+  } else if (await colonyLink.count()) throw new Error('No Colony action on a system without own presence');
   await page.getByRole('link', { name: '← Retour à la Galaxie', exact: true }).click();
   await page.getByRole('heading', { name: 'Carte des connaissances' }).waitFor();
 }

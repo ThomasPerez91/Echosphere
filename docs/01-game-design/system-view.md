@@ -18,7 +18,7 @@ La structure connue perdure après perte de surveillance et last_seen_at est con
 
 Présence propre déjà autorisée par Knowledge : mention générique possible avec galaxy.read.
 Nom, rattachement à une planète et lien vers Colony exigent colony.read et vérification actuelle
-Empire/Universe/colonie observée ; sans ce droit, aucun enrichissement Colony. Une ancienne
+Empire/Universe/colonie observée ; sans ce droit, aucun enrichissement Colony ni identifiant de colonie transmis. Une ancienne
 observation reste ancienne et ne fournit aucun lien d’action présenté comme actuel.
 
 Navigation interne à Galaxy : sélectionner MAPPED/MONITORED → Voir le système. Deep-link avec

@@ -116,6 +116,7 @@ export default function App() {
           <h1 ref={heading} tabIndex={-1}>{systemMatch ? 'Vue du système' : section?.title ?? 'Page introuvable'}</h1>
           <p>{universe && destination === 'colony' && section ? 'Stocks, secteurs, infrastructures et file de construction de votre colonie, calculés et confirmés par le serveur.'
             : universe && destination === 'empire' && section ? 'Situation de votre colonie et constructions en cours, selon le serveur Game.'
+            : systemMatch && section ? 'Structure, mondes et présences propres que votre Empire connaît de ce système, selon le serveur.'
             : section?.description ?? 'Cette destination n’existe pas. Retrouvez les sections dans la navigation.'}</p>
         </div>
         {universe && (destination === 'empire' || access.phase !== 'active') && <GameAccess access={access} />}

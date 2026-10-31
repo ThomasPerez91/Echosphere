@@ -182,7 +182,7 @@ export function GalaxyView({
     setSelected((old) => {
       if (old && p.systems.some((s) => s.id === old)) return old;
       // Default to the Empire's own monitored system, never to a guessed target.
-      return p.systems.find((s) => s.observation?.own_colony_ids.length)?.id ?? "";
+      return p.systems.find((s) => s.state === "MONITORED")?.id ?? "";
     });
   }, [p]);
 
@@ -234,7 +234,8 @@ export function GalaxyView({
 
   const system = p.systems.find((s) => s.id === selected);
   const active = p.missions.find((m) => m.status === "active");
-  const own = (s: KnownSystem) => !!s.observation?.own_colony_ids.length;
+  // Only an Empire's own current colony makes a system MONITORED; old observations are not "yours".
+  const own = (s: KnownSystem) => s.state === "MONITORED";
   const choices = p.options.filter((o) => o.destination_id === selected);
   const option = choices.find((o) => o.colony_id === source) ?? choices[0];
   const sourceName = (id: string) => p.sources.find((s) => s.id === id)?.name ?? "Colonie";

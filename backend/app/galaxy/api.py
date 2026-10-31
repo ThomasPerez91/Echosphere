@@ -145,7 +145,9 @@ class Galaxy(Colonies):
             "server_time": at.isoformat(),
             "empire": {"id": str(empire_id), "name": session.get(Empire, empire_id).name},
             "permissions": permissions,
-            "systems": [service.project_system(session, k) for k in knowledge],
+            "systems": [
+                service.project_system(session, k, "colony.read" in permissions) for k in knowledge
+            ],
             "routes": [
                 {"id": str(r.route_id), "a_id": str(r.a_id), "b_id": str(r.b_id)} for r in routes
             ],

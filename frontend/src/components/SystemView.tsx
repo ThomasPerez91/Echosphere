@@ -53,13 +53,15 @@ export function SystemView({ universe, empire, system, onSessionLost, onColony }
     <p>La vue détaillée devient disponible après cartographie. Retrouvez le signal et les possibilités d’exploration sur la Galaxie.</p>
     <a className="button" href={back}>Retour à la Galaxie</a></Panel>;
   const planets = data.planets!;
-  const selected = planets.find(p => p.id === (selection.scope === scope ? selection.planet : '')) ?? planets[0];
+  // Open on the Empire's own world when one is linked, so its action is never hidden behind a pick.
+  const preferred = selection.scope === scope ? selection.planet : data.colony_links?.[0]?.planet_id;
+  const selected = planets.find(p => p.id === preferred) ?? planets[0];
   const choose = (id: string) => setSelection({ scope, planet: id });
   const link = data.colony_links?.find(c => c.planet_id === selected?.id);
   return <div className="system-screen">
     <header className="system-heading panel">
       <a className="text-link" href={back}>← Retour à la Galaxie</a>
-      <div className="panel-head"><h2 ref={heading} tabIndex={-1}>Système {data.name}</h2>
+      <div className="panel-head"><div><p className="eyebrow">Système</p><h2 ref={heading} tabIndex={-1}>{data.name}</h2></div>
         <Badge tone="accent">{data.state === 'MONITORED' ? 'Surveillé' : 'Cartographié'}</Badge></div>
       <p>Cartographié : <time dateTime={data.mapped_at}>{time(data.mapped_at!)}</time></p>
       {data.last_seen_at && <p>{data.state === 'MONITORED' ? 'Observation locale' : 'Dernière observation, ancienne'} : <time dateTime={data.last_seen_at}>{time(data.last_seen_at)}</time></p>}
@@ -90,6 +92,8 @@ export function SystemView({ universe, empire, system, onSessionLost, onColony }
             <strong>{presence.current ? 'Présence propre observée' : 'Ancienne présence propre observée'}{presence.colony ? ` : ${presence.colony.name}` : ''}</strong>
             {presence.observed_at && <p>Observation : <time dateTime={presence.observed_at}>{time(presence.observed_at)}</time></p>}
             {!presence.current && <p>Cette observation ancienne ne décrit pas la situation actuelle.</p>}
+            {presence.colony && <a className="text-link" onClick={onColony}
+              href={`#universe/${universe}/colony/overview/${presence.colony.colony_id}`}>Ouvrir la colonie {presence.colony.name} →</a>}
           </li>)}</ul>}
       </section>
       <section className="panel" aria-labelledby="system-routes-title"><h2 id="system-routes-title">Routes connues</h2>

@@ -312,7 +312,8 @@ html { scroll-padding-bottom: 24px; }
 
 /* System View: known structure only. Graphic positions are layout, never simulation. */
 .system-screen { display: grid; gap: var(--space); min-width: 0; }
-.system-screen .panel-meta { white-space: normal; overflow-wrap: anywhere; }
+/* Galaxy/System metadata carries names and dates: let it wrap instead of widening the page. */
+.galaxy-screen .panel-meta, .system-screen .panel-meta { white-space: normal; overflow-wrap: anywhere; }
 .system-heading h2 { font-size: clamp(1.35rem, 3vw, 2rem); overflow-wrap: anywhere; }
 .system-heading .panel-head { margin-top: 20px; }
 .system-heading p { margin-bottom: 8px; font-size: .85rem; }
@@ -327,6 +328,8 @@ html { scroll-padding-bottom: 24px; }
 .system-world text { fill: #e6f2ff; font-size: 18px; }
 .system-world-shortcuts { display: flex; flex-wrap: wrap; gap: 8px; }
 .system-world-shortcuts button, .system-world-list button { color: inherit; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; min-height: 44px; padding: 10px 14px; overflow-wrap: anywhere; max-width: 100%; }
+/* Break between words only: `anywhere` lets flex shrink a shortcut to one letter per line. */
+.system-world-shortcuts button { overflow-wrap: break-word; }
 .system-world-shortcuts button[aria-pressed=true], .system-world-list button[aria-pressed=true] { border-color: var(--accent); background: #153038; }
 .system-capacities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .system-capacities > div { border: 1px solid var(--border); padding: 12px; border-radius: 8px; }
@@ -337,6 +340,8 @@ html { scroll-padding-bottom: 24px; }
 .system-world-list span { color: var(--muted); font-size: .8rem; }
 .system-information { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space); }
 .system-information li { margin-bottom: 12px; overflow-wrap: anywhere; }
+.system-information li p { margin: 4px 0; color: var(--muted); font-size: .85rem; }
+.system-heading .eyebrow { margin: 0 0 4px; }
 .system-world-detail p { font-size: .85rem; }
 @media (max-width: 1000px) {
   .system-layout { grid-template-columns: minmax(0, 1fr); }
