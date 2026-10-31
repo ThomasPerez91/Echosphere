@@ -44,6 +44,7 @@ class OrderSnapshot(StrictModel):
     construction_speed: Ratio
     refund_queued_bps: int = Field(strict=True, ge=0, le=10000)
     refund_active_bps: int = Field(strict=True, ge=0, le=10000)
+    research_bonuses: dict[str, int] = Field(default_factory=dict)
 
 
 def configure_universe(session: Session, universe_id: UUID, rules: Ruleset) -> None:
@@ -154,18 +155,34 @@ class ColonyState:
     infrastructures: list[ColonyInfrastructure]
     queue: list[ConstructionOrder]
     balances: dict[str, ResourceBalance]
+    research_bonuses: dict[str, int]
 
 
 def colony_state(session: Session, colony: Colony) -> ColonyState:
     balances = {r: session.get(ResourceBalance, (colony.id, r)) for r in sorted(RESOURCES)}
     if any(row is None for row in balances.values()):
         raise ColonyError("Missing resource balance")
+    from app.research.service import bonuses
+
     return ColonyState(
         session.get(Planet, colony.planet_id),
         infrastructure_rows(session, colony.id),
         queue_rows(session, colony.id),
         balances,
+        bonuses(session, colony.empire_id),
     )
+
+
+def construction_quote(rules, state, kind, level):
+    from app.research.service import discounted
+
+    quote = rules.quote(kind, level)
+    cost = dict(quote.cost)
+    for resource in ("alloys", "flux"):
+        cost[resource] = discounted(
+            cost[resource], state.research_bonuses.get(f"colony_{resource}", 0)
+        )
+    return quote.model_copy(update={"cost": cost})
 
 
 def plan_order(
@@ -173,7 +190,7 @@ def plan_order(
 ) -> Quote:
     """Validate a construction against completed and reserved state; shared by commands/reads."""
     try:
-        quote = rules.quote(kind, target_level)
+        quote = construction_quote(rules, state, kind, target_level)
     except ValueError as error:
         raise ColonyError(str(error), "invalid_request") from None
     planet = state.planet
@@ -347,6 +364,9 @@ def catch_up_owned(
     colony_id: UUID,
     at: datetime,
 ) -> Ruleset:
+    from app.research.service import coordinate_colony
+
+    coordinate_colony(session, engine, universe_id, empire_id, at)
     owned_colony(session, universe_id, empire_id, colony_id)
     timeline = lock_timeline(session, colony_id)
     # Ownership may have changed while waiting for the lock; re-read under the stream lock.
@@ -374,6 +394,9 @@ def enqueue(
     with session.begin_nested():
         # Scope is checked before looking up/replaying a key, even for completed orders.
         owned_colony(session, universe_id, empire_id, colony_id)
+        from app.research.service import coordinate_colony
+
+        coordinate_colony(session, engine, universe_id, empire_id, at)
         lock_timeline(session, colony_id)
         owned_colony(session, universe_id, empire_id, colony_id)
         if not key or len(key) > 160:
@@ -408,6 +431,7 @@ def enqueue(
             construction_speed=rules.colony.speeds["construction"],
             refund_queued_bps=rules.colony.refund_queued_bps,
             refund_active_bps=rules.colony.refund_active_bps,
+            research_bonuses=state.research_bonuses,
         )
         order = ConstructionOrder(
             colony_id=colony_id,
@@ -482,6 +506,9 @@ def cancel(
 ) -> ConstructionOrder:
     with session.begin_nested():
         owned_colony(session, universe_id, empire_id, colony_id)
+        from app.research.service import coordinate_colony
+
+        coordinate_colony(session, engine, universe_id, empire_id, at)
         lock_timeline(session, colony_id)
         owned_colony(session, universe_id, empire_id, colony_id)
         order = session.scalar(

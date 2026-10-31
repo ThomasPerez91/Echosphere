@@ -37,7 +37,7 @@ Les sources S1–S5 ci-dessus restent le relevé historique de passation du 28/1
 | Ressources, niveaux, coûts et stockage | [Économie v0.1](../01-game-design/colony-economy-v0.1.md), [game_data](../../game_data/rulesets/v0.1/colony.json), [catalogue](../../game_data/rulesets/v0.1/infrastructures.json) | Implémenté sur #5 / Balance provisoire ; brief 5A S2, S3/S4 |
 | Règles de construction, arrondis, snapshots | [ADR 0007](../adr/0007-colony-economy.md), [calcul](../03-technical/resource-calculation.md) | Implémenté ; décisions techniques retrouvées via GitHub, pas une validation de toutes les politiques produit |
 | Taille des planètes et spécialisation | [Planètes](../01-game-design/planets-colonies.md), [modèle](../03-technical/data-model.md) | Décision validée : 12/2 = départ de référence seulement, variation future ; S1 et brief 5A |
-| Recherche, galaxie, exploration, flottes, colonisation | [Recherche](../01-game-design/research.md), [galaxie](../01-game-design/galaxy.md), [exploration](../01-game-design/exploration.md), [flottes](../01-game-design/fleets.md), [colonisation](../01-game-design/colonization.md) | Futur ; contraintes confirmées S1, valeurs/domaines proposés qualifiés dans les docs |
+| Recherche, galaxie, exploration, flottes, colonisation | [Recherche](../01-game-design/research.md), [galaxie](../01-game-design/galaxy.md), [exploration](../01-game-design/exploration.md), [flottes](../01-game-design/fleets.md), [colonisation](../01-game-design/colonization.md) | Recherche implémentée étape 6 sur PR #9 après Q05 validée ; autres domaines futurs, contraintes S1 et paramètres qualifiés dans les docs |
 | AI | [IA produit](../01-game-design/artificial-intelligence.md), [moteur IA](../03-technical/ai-engine.md) | Orientation validée, non implémentée ; S1 et docs PR #1 |
 | Solo, multijoueur privé, persistant, late join | [Modes](../01-game-design/game-modes.md), [ADR 0006](../adr/0006-universe-game-instance.md) | Décisions de compatibilité, modes futurs ; S1, PR #3 et S3/S4 |
 | Défense et renseignement | [Défense planétaire](../01-game-design/planetary-defense.md), [fog](../01-game-design/fog-of-war.md), [combat](../01-game-design/combat.md) | Orientation validée, systèmes futurs ; brief 5A/S1, PR #5 |
@@ -61,3 +61,8 @@ Les sources S1–S5 ci-dessus restent le relevé historique de passation du 28/1
 Aucune proposition d’une ancienne description de PR n’est promue automatiquement en validation
 produit. Les décisions nouvelles de S1 priment sur les anciens textes incompatibles, avec renvoi
 vers l’ADR qui les affine ; leur présence en documentation ne signifie pas qu’elles sont codées.
+
+Validation Research/Q05 du 31/10/2026 : instruction utilisateur explicite après R01, synthétisée dans
+[recherche](../01-game-design/research.md) et [registre](../05-project/open-questions.md), sans transcript.
+Implémentation et preuves distinctes de la décision produit : [plan](../05-project/step-6-plan.md),
+[progress](../../progress.md). La CI ne vaut jamais autorisation de fusion.

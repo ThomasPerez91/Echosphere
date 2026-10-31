@@ -6,6 +6,7 @@ from app.control import models as control_models  # noqa: F401
 from app.core.config import Settings
 from app.persistence.database import create_database_engine
 from app.persistence.models import Base
+from app.research import models as research_models  # noqa: F401
 from app.simulation import models as simulation_models  # noqa: F401
 
 if context.is_offline_mode():

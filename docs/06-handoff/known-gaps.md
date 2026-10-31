@@ -1,5 +1,11 @@
 # Lacunes, contradictions et risques à reprendre
 
+Actualisation étape 6/PR #9 : Q05 validée puis Research implémentée et recettée ; les mentions
+historiques « recherche future » ci-dessous n’en décrivent pas l’état actuel. [Contrat/API](../03-technical/research-api-ui.md),
+[preuves et limites](../../progress.md). Création de partie produit et adoption v0.2 des anciens
+univers restent hors lot ; aucune recette WSL2 supplémentaire ou capacité de charge démontrée.
+
+
 ## Complément courant — 31/10/2026
 
 Q39 et cascade Q01 validées par l’utilisateur : ancien refus de stockage remplacé dans PR #8

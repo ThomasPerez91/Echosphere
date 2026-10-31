@@ -1,6 +1,6 @@
 # 5D — API Colony sécurisée et UI Colony
 
-**Statut : en cours sur `work/step-5d-secure-colony-ui` (PR #8), non intégré à master.**
+**Statut : 5D terminée et intégrée à master via PR #8, merge `0e2ca11` vérifié le 31/10/2026, Q39 comprise.**
 [Plan 5D](../05-project/step-5d-plan.md) · [contrats 5B](identity-contracts.md) ·
 [handoff C07](game-handoff.md) · [économie v0.1](../01-game-design/colony-economy-v0.1.md) ·
 [ADR 0007](../adr/0007-colony-economy.md) · [ADR 0008](../adr/0008-control-plane-game-data-plane.md).
@@ -159,3 +159,10 @@ Aucun parcours produit ne crée encore une partie : les tests et recettes créen
 C06), économie, Empire, planète et colonie de référence uniquement dans des bases `*_test`, puis
 lient l’Empire par `SetUniverseAccess`. Tests : `backend/tests/integration/test_colony_api.py`,
 `frontend/src/Colony.test.tsx`, `frontend/e2e/colony.spec.ts` (API interceptée).
+
+## Effets Research — étape 6 / PR #9
+
+Univers v0.2 seulement : coordination du stream Research avant Colony pour les lectures/commandes,
+quote métier commune avec réduction Alliages/Flux acquise à l’acceptation et conservée dans le snapshot.
+Aucun repricing d’un chantier déjà réservé ; bonus industriel fixé au démarrage comme avant.
+v0.1 et handlers Colony indépendants conservés. [Contrat et locks](research-api-ui.md).

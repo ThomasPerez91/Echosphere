@@ -107,7 +107,7 @@ n’est jamais une décision validée ; documentation canonique et ADR priment e
 Actuel : backend Game FastAPI modulaire, worker du même code, PostgreSQL, SQLAlchemy/Alembic,
 frontend React/TypeScript/Vite. backend/app/persistence, simulation et colony portent les domaines ;
 backend/migrations les révisions, game_data les rulesets, frontend/src les vues. API Colony 5D
-(lecture/construction/annulation sous GameSession) sur PR #8, [canonique](docs/03-technical/colony-api-ui.md).
+(lecture/construction/annulation sous GameSession) intégrée à master via PR #8 (`0e2ca11`), [canonique](docs/03-technical/colony-api-ui.md).
 
 **Décision validée future** : [ADR 0008](docs/adr/0008-control-plane-game-data-plane.md), deux backends
 isolables chacun monolithe modulaire : Portal Accounts/Auth/Lobby → Accounts DB ; Game gameplay →
@@ -134,7 +134,16 @@ Q16 a son cadrage 5B couvert ; détails délégués et reports Q48/Q49/Q55 au re
 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats implémentés dans leur périmètre 5C par C02–C08, fusionnés via PR #7 (`ff6ef89`).
 Lot précédent 5C compte/lobby, terminé : C01 implémenté,
 C02/C03 comptes/vérification/sessions, C04 opérations sensibles et C05 MFA implémentés ; C06 lobby/S2S implémenté ; C07 handoff/GameSession est implémenté ; C08 livré et recette de clôture C09 réalisée : 5C fusionné. Migrations Accounts séparées, pas de SQL Portal→Game.
-Lot courant autorisé : 5D API Colony sécurisée et UI Colony ([plan](docs/05-project/step-5d-plan.md)) ; étape 6 hors lot.
+5D terminée et intégrée via PR #8, y compris Q39 ; [plan historique](docs/05-project/step-5d-plan.md).
+Lot courant : **étape 6 Recherche globale d’Empire**, work/step-6-research depuis master `0e2ca11`.
+Q05 est **Clos produit — implémentation étape 6**, validée explicitement par l’utilisateur.
+R02–R09 sont autorisés sans validation intermédiaire dans la même branche/PR #9 ;
+le [contrat canonique](docs/01-game-design/research.md) et le [plan](docs/05-project/step-6-plan.md)
+s’appliquent. Ready for review seulement après critères réels de sortie et CI verte.
+Si #9 est ouverte et la mission porte dessus : reprendre cette branche. Après fusion #9,
+considérer ce lot intégré et ses consignes de branche historiques ; nouveau lot autorisé depuis
+master synchronisée, nouvelle branche work/.... L’état GitHub réel prévaut sur tout checkpoint.
+Aucune étape 7 ni fusion sans instruction distincte. Ne pas réutiliser une branche fusionnée.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver
@@ -148,6 +157,10 @@ Ne pas élargir le périmètre sur la seule base de la passation.
 - 5A : trois ordres actif inclus, un actif ; réservation immédiate, snapshots par univers/ordre,
   bonus industriel au démarrage du suivant. Annulation 100/80 théoriques idempotente ; Q39 validée : crédit plafonné par ressource,
   excédent perdu définitivement, preview complète et cascade Q01 validée.
+- Research étape 6 : 1 active + 1 suivante/Empire ; source Colony explicite, snapshot complet
+  à l’acceptation sans recalcul ultérieur, annulation 100/80 plafonnée/cascade dépendante.
+  Lock Research avant Colony, sources triées, handler sans second stream. v0.2 explicite,
+  v0.1 inchangée. [Contrat technique](docs/03-technical/research-api-ui.md).
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède

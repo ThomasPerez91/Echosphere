@@ -1,0 +1,440 @@
+{
+  "version": "v0.2",
+  "infrastructures": {
+    "extraction_complex": {
+      "max_per_colony": null,
+      "requires": {},
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 250,
+            "flux": 120,
+            "data": 0
+          },
+          "duration_seconds": 120,
+          "production": {
+            "alloys": 120
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 800,
+            "flux": 350,
+            "data": 50
+          },
+          "duration_seconds": 900,
+          "production": {
+            "alloys": 210
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 2600,
+            "flux": 1100,
+            "data": 250
+          },
+          "duration_seconds": 5400,
+          "production": {
+            "alloys": 360
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 8500,
+            "flux": 3600,
+            "data": 1000
+          },
+          "duration_seconds": 21600,
+          "production": {
+            "alloys": 600
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 28000,
+            "flux": 12000,
+            "data": 4000
+          },
+          "duration_seconds": 64800,
+          "production": {
+            "alloys": 960
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 5,
+      "scaling": {
+        "cost": {
+          "numerator": 138,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 128,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 112,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    },
+    "flux_reactor": {
+      "max_per_colony": null,
+      "requires": {},
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 250,
+            "flux": 120,
+            "data": 0
+          },
+          "duration_seconds": 120,
+          "production": {
+            "flux": 100
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 800,
+            "flux": 350,
+            "data": 50
+          },
+          "duration_seconds": 900,
+          "production": {
+            "flux": 175
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 2600,
+            "flux": 1100,
+            "data": 250
+          },
+          "duration_seconds": 5400,
+          "production": {
+            "flux": 300
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 8500,
+            "flux": 3600,
+            "data": 1000
+          },
+          "duration_seconds": 21600,
+          "production": {
+            "flux": 500
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 28000,
+            "flux": 12000,
+            "data": 4000
+          },
+          "duration_seconds": 64800,
+          "production": {
+            "flux": 800
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 5,
+      "scaling": {
+        "cost": {
+          "numerator": 138,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 128,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 112,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    },
+    "data_node": {
+      "max_per_colony": null,
+      "requires": {},
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 250,
+            "flux": 120,
+            "data": 0
+          },
+          "duration_seconds": 120,
+          "production": {
+            "data": 60
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 800,
+            "flux": 350,
+            "data": 50
+          },
+          "duration_seconds": 900,
+          "production": {
+            "data": 105
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 2600,
+            "flux": 1100,
+            "data": 250
+          },
+          "duration_seconds": 5400,
+          "production": {
+            "data": 180
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 8500,
+            "flux": 3600,
+            "data": 1000
+          },
+          "duration_seconds": 21600,
+          "production": {
+            "data": 300
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 28000,
+            "flux": 12000,
+            "data": 4000
+          },
+          "duration_seconds": 64800,
+          "production": {
+            "data": 480
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 5,
+      "scaling": {
+        "cost": {
+          "numerator": 138,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 128,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 112,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    },
+    "industrial_complex": {
+      "max_per_colony": 1,
+      "requires": {},
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 400,
+            "flux": 250,
+            "data": 75
+          },
+          "duration_seconds": 480,
+          "production": {},
+          "construction_bonus_bps": 1000,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 1000,
+            "flux": 600,
+            "data": 150
+          },
+          "duration_seconds": 1200,
+          "production": {},
+          "construction_bonus_bps": 2000,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 3200,
+            "flux": 1800,
+            "data": 600
+          },
+          "duration_seconds": 7200,
+          "production": {},
+          "construction_bonus_bps": 3500,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 11000,
+            "flux": 6000,
+            "data": 2000
+          },
+          "duration_seconds": 28800,
+          "production": {},
+          "construction_bonus_bps": 5500,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 36000,
+            "flux": 20000,
+            "data": 7000
+          },
+          "duration_seconds": 86400,
+          "production": {},
+          "construction_bonus_bps": 8000,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 5,
+      "scaling": {
+        "cost": {
+          "numerator": 140,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 130,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 500
+      }
+    },
+    "logistics_center": {
+      "max_per_colony": 1,
+      "requires": {},
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 500,
+            "flux": 250,
+            "data": 50
+          },
+          "duration_seconds": 300,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 20000
+        },
+        {
+          "cost": {
+            "alloys": 1400,
+            "flux": 700,
+            "data": 150
+          },
+          "duration_seconds": 1800,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 35000
+        },
+        {
+          "cost": {
+            "alloys": 4200,
+            "flux": 2200,
+            "data": 600
+          },
+          "duration_seconds": 9000,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 60000
+        },
+        {
+          "cost": {
+            "alloys": 13000,
+            "flux": 7000,
+            "data": 2200
+          },
+          "duration_seconds": 32400,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 100000
+        },
+        {
+          "cost": {
+            "alloys": 40000,
+            "flux": 22000,
+            "data": 8000
+          },
+          "duration_seconds": 100800,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 160000
+        }
+      ],
+      "scaling_after_level": 5,
+      "scaling": {
+        "cost": {
+          "numerator": 140,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 130,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 118,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    }
+  }
+}

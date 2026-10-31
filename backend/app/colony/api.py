@@ -26,6 +26,9 @@ router = APIRouter(prefix="/game/{universe_id}/colonies")
 
 STATUS = {
     "colony_not_found": 404,
+    "empire_not_found": 404,
+    "technology_not_found": 404,
+    "research_busy": 503,
     "order_not_found": 404,
     "invalid_request": 422,
     "colony_busy": 503,

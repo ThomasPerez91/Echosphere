@@ -8,7 +8,16 @@ from uuid import UUID
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StrictInt, model_validator
 
-PERMISSIONS = frozenset(("colony.read", "colony.construct", "colony.cancel"))
+PERMISSIONS = frozenset(
+    (
+        "colony.read",
+        "colony.construct",
+        "colony.cancel",
+        "research.read",
+        "research.start",
+        "research.cancel",
+    )
+)
 
 
 class Wire(BaseModel):
@@ -17,9 +26,16 @@ class Wire(BaseModel):
 
 class Binding(Wire):
     empire_id: UUID
-    permissions: list[Literal["colony.read", "colony.construct", "colony.cancel"]] = Field(
-        min_length=1, max_length=3
-    )
+    permissions: list[
+        Literal[
+            "colony.read",
+            "colony.construct",
+            "colony.cancel",
+            "research.read",
+            "research.start",
+            "research.cancel",
+        ]
+    ] = Field(min_length=1, max_length=6)
 
     @model_validator(mode="after")
     def unique(self):

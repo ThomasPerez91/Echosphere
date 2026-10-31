@@ -4,6 +4,140 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 31/10/2026 |
+| --- | --- |
+| Branche / PR / base | work/step-6-research, unique PR #9, base master 0e2ca11322a85452ad6860a4a35099bbc22a4689 ; GitHub réel prioritaire |
+| Tête fonctionnelle auditée | d958661299ad8fe54a6bac590fbd2ecbb017de39 ; ce checkpoint final ne modifie que la documentation, tête/CI exacte à relire dans PR #9 |
+| Dernier agent | ChatGPT Work, seul écrivain de ce checkout ; aucune branche ou PR supplémentaire |
+| Décisions | Q05 **Clos produit — implémentation étape 6**, validation explicite utilisateur ; autres Qxx conservées |
+| Réalisé | R02–R07 : catalogue complet v0.2, migration 0007, stream/file/acquis Empire, réservations/snapshots/annulations/effets, API/permissions Game et Portal, UI connectée responsive/clavier ; R08 recette réelle réussie, R09 relecture/CI/passation réalisés |
+| Références | [Contrat](docs/01-game-design/research.md), [plan](docs/05-project/step-6-plan.md), [API/UI/recette](docs/03-technical/research-api-ui.md) |
+| Validation locale | Ruff Game/scripts et docs OK ; 63 tests unitaires Game réussis, intégrations ignorées (PostgreSQL absent) ; frontend lint sans erreur (warning préexistant useGameSession), 31 Vitest et 13 Chromium réussis, build OK |
+| CI observée | Tête fonctionnelle d958661 : [CI PR 41149331793](https://github.com/ThomasPerez91/Echosphere/actions/runs/41149331793) success, cinq jobs ; 226 tests Game, 119 Portal, 31 Vitest Game/13 Chromium et 30 Vitest Portal/14 Chromium ; smokes complets dont Research et Portal coupé. CI du checkpoint documentaire à vérifier sur sa tête avant Ready |
+| Limites | Docker/PostgreSQL absents localement : intégrations/smokes via CI, aucune recette WSL2 déclarée faite. Création complète de partie, adoption v0.2 d’univers existants, laboratoires/IA/étape 7 hors lot |
+| Prochaine action si #9 ouverte | Relire tête/CI et revue ; R09 terminé, Ready for review après CI verte du checkpoint final. Ne merger que sur autorisation explicite |
+| Prochaine action si #9 fusionnée | Synchroniser master, recette locale WSL2/Docker/Codex ; ne pas recréer #9 ni reprendre sa branche fusionnée. Nouveau développement/étape 7 seulement sur instruction |
+
+## Validation Q05 et réalisation R02–R09 — 31/10/2026
+
+Contrat validé : file Empire 1+1 ; colonie payeuse explicite ; débit complet à l’acceptation même
+pour la suivante ; refunds queued 100 % / active 80 % théoriques, capacité plafonnée, excédent perdu,
+cascade dépendante. Catalogue 8 technologies I/II, bonus 5/10 % net par effet. Snapshot complet coût,
+durée effective, source et règles figé à l’acceptation : aucune acquisition ne modifie une réservation.
+Pas de laboratoire. Droits read/start/cancel distincts, colony.read pour financement/remboursement,
+aucun besoin de construct ou privilège admin implicite. R02–R09 autorisés sans arrêt intermédiaire.
+
+Implémentation dans backend/app/research, migration additive 0007 et game_data/rulesets/v0.2 ;
+coordination de devis Colony, TimeEngine existant et contrôle privé Game/Portal/schéma v1 étendus.
+Frontend Research dans le shell, source/Empire distincts, confirmations, preview complète,
+retry même intention ; rafraîchissement des stocks Colony après commande.
+Les fichiers v0.1 et migrations 0001–0006 sont inchangés ; aucune dépendance/Docker/Compose ajouté.
+
+Recette réelle ajoutée à CI : projet jetable *_test, HTTPS/login/handoff/permissions réels,
+réservation de deux recherches, navigateur fermé jusqu’aux acquis worker et effets Colony ; arrêt
+Portal API/contrôle, nouveau lancement puis page fermée jusqu’à l’achèvement worker observé en base,
+effets et expiration. Sans intercept, sans assimilation à un parcours produit de création de partie.
+
+Historique : R00/R01 ci-dessous ont respecté l’arrêt Q05 avant code. Leurs mentions « Q05 ouverte »,
+« aucun Research livré » et « attendre validation » sont historiques depuis la validation utilisateur.
+
+## R09 — relecture et clôture de livraison sur PR #9, 31/10/2026
+
+R00–R09 réalisés après validation Q05. Relecture du domaine, des scopes/FK/permissions, ordre des
+locks, montants exacts/snapshots, cascade/refunds, handler sans second stream, UI et procédures.
+Corrections issues de revue : noms Alembic CHECK, inventaires de migration des smokes, CSRF du test
+second participant, protection contre réponses dépassées et snapshots incohérents. Une définition
+persistée incohérente relève du retry technique, jamais d’une annulation/blocage gameplay silencieux.
+
+Tête fonctionnelle **d958661299ad8fe54a6bac590fbd2ecbb017de39**, CI PR **41149331793 success**.
+Le checkpoint présent ajoute uniquement la passation finale ; sa CI et son SHA sont ceux affichés
+sur PR #9. Ready for review après ce dernier vert, comme autorisé par l’utilisateur ; aucune fusion.
+
+Preuves CI : 226 tests Game PostgreSQL, dont 25 intégrations Research et 10 tests de catalogue ;
+119 tests Portal. Frontend Game : lint sans erreur, 31 Vitest, build et 13 Chromium ; Portal :
+30 Vitest, build, lint et 14 Chromium. Alembic upgrade/idempotence/check, roundtrip à vide, refus de
+downgrade avec état/grants et scopes financiers testés. check_docs : 80 documents, liens locaux OK.
+Les avertissements FastAPI TestClient et useGameSession sont préexistants ; aucun échec masqué.
+
+Compose : smokes Game, Portal, contrôle mTLS, handoff/C09 avec backup/restore, Colony/Q39 et Research
+réussis. Research HTTPS réelle : deux réservations, navigateur fermé jusqu’aux deux acquis worker,
+durée suivante inchangée malgré Calcul I, coût Colony réduit par Ingénierie ; Portal API/contrôle
+arrêtés, lecture/lancement puis nouvelle fermeture jusqu’à l’acquisition **observée en base avant
+réouverture**, effet Énergétique réel et refus 401 après expiration simulée. Zéro appel gameplay
+Portal, pas d’intercept dans cette recette. Projets/bases/volumes jetables de recette supprimés.
+
+Local Work : 63 tests Game réussis, intégrations ignorées faute de PostgreSQL ; frontend Game
+31 Vitest/build/lint/13 Chromium exécutés. Docker/PostgreSQL non disponibles dans Work, donc preuves
+intégrées issues de CI. **Recette locale WSL2/Docker/Codex non effectuée dans ce lot.** Aucun chiffre
+de charge garanti. Aucun laboratoire, IA, étape 7, migration silencieuse de ruleset, dépendance ou
+changement Docker/Compose ajouté. Les fichiers v0.1 et migrations 0001–0006 publiées sont inchangés.
+La dernière relecture a aussi corrigé un report documentaire erroné sur les pages Colony et contrôle
+Portal/Game : contenu antérieur rétabli depuis ff95c13, seuls les ajouts Research prévus conservés.
+Leur diff final a été relu contre cette version et les titres des documents existants contrôlés.
+
+Après fusion #9 seulement : master synchronisée et recette locale WSL2/Docker/Codex ; pas de reprise
+ou recréation de branche #9 fusionnée. Prochain développement fonctionnel uniquement sur instruction.
+
+## R00 — synchronisation post-merge 5D, 31/10/2026
+
+Instruction utilisateur : reprendre master après fusion #8, créer work/step-6-research et une seule
+PR brouillon pour tout le lot ; publier ce premier checkpoint avant implémentation substantielle.
+GitHub contrôlé : #8 MERGED, ancienne tête d15dfda858cc829efa681572f420e9095fda5ace, merge/master
+0e2ca11322a85452ad6860a4a35099bbc22a4689. [CI post-merge 41144706921](https://github.com/ThomasPerez91/Echosphere/actions/runs/41144706921)
+observée completed/success avant publication du checkpoint. Aucun code métier commencé pendant
+l’attente. Liste des PR ouvertes vide ; branche étape 6 absente avant sa création depuis master.
+Fetch, master locale fast-forward, arbre propre puis branche étape 6 créée au SHA du merge :
+aucune reprise depuis la branche 5D, aucune divergence/travail local perdu ni branche supprimée.
+
+5D D00–D09 et Q39 intégrées à master : première boucle Colony jouable, preview des pertes/cascade,
+API sous GameSession, progression worker et panne Portal. Les preuves détaillées ci-dessous restent
+celles de leurs SHA ; leurs mentions « PR #8 non fusionnée » et « étape 6 non commencée » sont
+historiques. Étape 6 démarre **documentairement seulement** : Q05 doit être proposée et validée par
+l’utilisateur avant migration/backend/UI Research. Aucun autre arbitrage produit modifié.
+
+Validation du checkpoint : documents/liens et whitespace, diff Markdown uniquement, invariants Qxx
+conservés. Aucune suite fonctionnelle locale relancée pour ces statuts ; la CI de cette nouvelle
+tête devra être observée après publication et consignée dans l’unique PR du lot.
+
+## R01 — proposition Q05 et plan durables, 31/10/2026
+
+Premier checkpoint R00 **098ab078889ca7a41b5ed77055663a439670ccdf** publié avant cette préparation ;
+[PR #9](https://github.com/ThomasPerez91/Echosphere/pull/9) créée en brouillon, unique. Sa [CI 41145436851](https://github.com/ThomasPerez91/Echosphere/actions/runs/41145436851)
+est observée completed/success ; elle vérifie le code 5D inchangé, pas un système Research.
+
+Références demandées relues : AGENTS/CLAUDE/context/progress intégral, roadmap/registre,
+recherche/boucle/progression/balance, moteur temporel/modèle/sécurité/API Colony, code Empire/
+EventStream/ScheduledEvent/scheduler/worker/rulesets, GameSession/accès/bindings, frontend Game et
+patterns de tests 3/5A/5D. Guide visuel et images design-system/research-view inspectés ; aucun
+catalogue, technologie, valeur ou nombre de places du mockup promu en règle produit.
+
+Nouveau [plan étape 6](docs/05-project/step-6-plan.md) : R00–R09, critères/tests futurs, verrou Q05,
+modèle Empire et financement Colony séparés, compatibilité v0.1/nouveau ruleset sans migration
+silencieuse, extension ciblée des permissions 5C et ordre de verrous multi-stream à démontrer.
+**Points concrets** : stocks attachés à Colony ; seuls trois droits Colony acceptés dans les DTO,
+CHECK SQL, schéma JSON et allowlist Portal ; scheduler sans ordre global entre streams et handler
+sans second lock. Aucun de ces points n’est résolu par du code ou un backfill dans ce checkpoint.
+
+[Q05 dans research.md](docs/01-game-design/research.md) : proposition cohérente de 1 active + 1 suivante,
+paiement intégral depuis une colonie explicitement choisie, annulation théorique 100/80 avec crédit
+plafonné/perte et cascade dépendante, technologies uniques/non exclusives, snapshots à acceptation,
+blocage explicite d’une suivante invalide, permissions séparées et laboratoire futur sans cumul
+implicite. Huit technologies proposées avec modestes effets réellement applicables aux nouveaux
+ordres Colony/Research ; noms/chiffres à équilibrer, aucun game_data ajouté. La proposition ne
+modifie pas Q01/Q39 ni Q26 : **Q05 reste ouverte**, aucune validation déduite du code ou de la CI.
+
+Aucune migration, backend/API/UI Research, catalogue exécutable, effet runtime, test fonctionnel,
+dépendance ou Compose modifié. Les tests R02–R09 listés sont futurs et non exécutés. Contrôles locaux
+de ce diff : check_docs (79 documents/liens), git diff --check, Q01–Q56 uniques, seules les mentions
+Q05 et le statut de lot changés au registre ; autres arbitrages conservés. Suites fonctionnelles
+locales non relancées pour du Markdown ; CI complète propre à la tête publiée à observer dans PR #9.
+Aucun code métier avant arbitrage explicite. **Travail arrêté à Q05 comme demandé par l’utilisateur**,
+PR #9 maintenue en brouillon, aucune fusion ni étape 7.
+
+## Historique du lot 5D — intégré via PR #8
+
+### Ancien bloc de reprise 5D (historique, remplacé)
+
 | Champ | État |
 | --- | --- |
 | Branche / PR / base | work/step-5d-secure-colony-ui · PR #8 · base master ff6ef89 ; vérifier GitHub pour état brouillon/revue |
@@ -15,6 +149,7 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 | Tests réellement exécutés | Local Work : Ruff backend/scripts ; Game 53 passed / 138 skipped (pas de PostgreSQL), frontend lint 0 erreur (avertissement préexistant), 26 Vitest, build, 9 Chromium 320/390/768/1440 ; 78 documents/liens ; git diff --check. CI de72c18 : Game 191 passed, Portal 119 passed ; Game 26 Vitest/9 Chromium, Portal 30 Vitest/14 Chromium ; Alembic deux plans sans dérive et smokes Game/Portal/mTLS/handoff/Colony-Q39 verts. SQL/Alembic/smokes non exécutés localement |
 | Anomalies / corrections restantes | Pas de Bloquante/Majeure restante identifiée à la relecture et aux 5 jobs verts de de72c18 ; vérifier aussi la CI du présent checkpoint documentaire. Docker/PostgreSQL absents du Work courant ; limites navigateurs/charge/support/production conservées |
 | Prochaines tâches | Revue finale utilisateur de #8, Ready for review après CI verte de sa tête finale. Aucun merge sans instruction ; après fusion autorisée, vérifier master/CI puis checkpoint du lot Recherche sur nouvelle branche issue de master propre |
+
 
 ## Complément pré-revue Q39 et arbitrages — 31/10/2026
 
@@ -75,7 +210,7 @@ annulation à capacité et retry sans crédit, puis 401 à expiration. Relecture
 Bloquante/Majeure restante identifiée. Ce commit de checkpoint n’ajoute aucun changement fonctionnel ;
 vérifier sa propre CI dans la description PR avant passage en revue. Ne pas merger sans instruction.
 
-## Lot courant — 5D : API Colony sécurisée et UI Colony interactive
+## Historique 5D — API Colony sécurisée et UI Colony interactive
 
 **Statut : D00–D09 réalisés ; PR #8 prête pour revue finale (non fusionnée).** Instruction utilisateur du 2026-10-30 : réaliser 5D de bout
 en bout sur une seule branche/PR, sans merge, sans étape 6. Environnement : Claude Code local/WSL2.

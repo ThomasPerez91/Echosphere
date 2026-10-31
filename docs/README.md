@@ -1,7 +1,7 @@
 # Documentation Echosphere
 
 État intégré : étape 5A, domaine économique interne, scheduler et shell ; 5B contrats intégrés.
-Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; [C07 handoff/sessions Game](03-technical/game-handoff.md) livré, fusionnés via PR #7. Sur PR #8, non intégré :
+Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; [C07 handoff/sessions Game](03-technical/game-handoff.md) livré, fusionnés via PR #7. Intégrée via PR #8 (`0e2ca11`) :
 [API Colony sécurisée et UI Colony](03-technical/colony-api-ui.md), première boucle jouable. [Économie v0.1](01-game-design/colony-economy-v0.1.md) et
 [défense future](01-game-design/planetary-defense.md) distinguent règles implémentées et orientations.
 
@@ -39,13 +39,14 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
 
 - [Passation](06-handoff/README.md), [sources](06-handoff/source-map.md), [décisions](06-handoff/decision-status.md),
   [risques](06-handoff/known-gaps.md), [audit #5](06-handoff/pr-5-audit.md), [collaboration Work/Codex/Claude Code](06-handoff/work-codex-handoff.md).
-- [Portal/Game ADR 0008](adr/0008-control-plane-game-data-plane.md) : décision cible **auth future**, socle C01 sur PR #7 ;
+- [Portal/Game ADR 0008](adr/0008-control-plane-game-data-plane.md) : frontières validées et socle 5C intégré via PR #7, sans certification production ;
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
 - [Contrats 5B](03-technical/identity-contracts.md) : décisions validées et consolidées le 2026-10-29,
   **implémentées dans leur périmètre 5C (C02–C08), fusionnées via PR #7** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. 5C
-  terminé et fusionné (`ff6ef89`). Lot courant : [5D API/UI Colony](05-project/step-5d-plan.md) ; étape 6 non commencée.
+  terminé et fusionné (`ff6ef89`), 5D intégrée via #8 (`0e2ca11`). Lot courant :
+  [étape 6 Recherche](05-project/step-6-plan.md), Q05 validée et implémentation sur PR #9 ; [API/UI](03-technical/research-api-ui.md).
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
@@ -53,4 +54,4 @@ sur les conversations Space Game qui n’ont pas pu être consultées.
 
 
 Compléments actuels sur PR #7 : [C08 parcours et shell](03-technical/portal-game-ui.md),
-[C09 recette et opérations](03-technical/portal-operations.md). Aucun début de 5D ni exposition production.
+[C09 recette et opérations](03-technical/portal-operations.md). 5D intégrée via #8 ; Research sur PR #9, aucune exposition production.

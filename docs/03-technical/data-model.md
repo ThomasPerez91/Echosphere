@@ -1,6 +1,11 @@
 # Modèle de données conceptuel
 
-**Statut : Colony 5A intégré ; identité C02–C07 implémentée sur PR #7 ; autres domaines futurs.**
+**Statut : fondations, Colony 5A/5D et identité 5C intégrées à master via PR #8 (`0e2ca11`).**
+Les sections de migrations et extensions ci-dessous décrivent leur état à livraison ; leurs mentions
+« futures » de Membership/GameSession/5D sont historiques. Référence actuelle :
+[API Colony](colony-api-ui.md), [handoff](game-handoff.md) et [contrôle privé](portal-game-control.md).
+Research étape 6 sur PR #9, Q05 validée : [plan](../05-project/step-6-plan.md),
+[schéma/API](research-api-ui.md).
 
 
 | Concept | Responsabilité et relations proposées |
@@ -17,7 +22,7 @@
 | ScheduledEvent | Échéance persistante et référence métier |
 
 Le tableau distingue le modèle cible de la partie implémentée ci-dessous ; les autres concepts restent
-à concevoir aux étapes concernées. L'identité/authentification humaine n'est pas implémentée.
+à concevoir aux étapes concernées. L’identité/authentification humaine existe depuis 5C ; ce tableau n’est pas l’inventaire des tables livrées.
 
 ## Schéma livré (migration 0001_world_foundation)
 
@@ -172,3 +177,11 @@ nettoyage à recetter en C09 ; commandes sécurisées réservées à 5D.
 
 Compléments actuels sur PR #7 : [C08 parcours et shell](portal-game-ui.md),
 [C09 recette et opérations](portal-operations.md). Aucun début de 5D ni exposition production.
+
+## Extension étape 6 — PR #9
+
+Game 0007 ajoute EmpireResearch (FK Empire/Universe/EventStream), ResearchOrder (source Colony
+composite dans le même Empire/Universe, snapshots et reçus) et AcquiredTechnology unique.
+Index uniques actif/suivante/technologie non annulée et clés/séquences par Empire. Aucune caisse
+Empire, migration Accounts ou modification des anciennes migrations. Contrats et downgrade :
+[Research technique](research-api-ui.md). Les sections C01–C09 ci-dessus restent historiques.

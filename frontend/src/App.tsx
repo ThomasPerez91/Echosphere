@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ResearchView } from './components/ResearchView';
 import { GameAccess } from './components/GameAccess';
 import { useGameSession } from './hooks/useGameSession';
 import { useColony } from './hooks/useColony';
@@ -10,7 +11,7 @@ import { useReadiness } from './hooks/useReadiness';
 const sections = [
   { id: 'empire', label: 'Empire', symbol: '◈', title: 'Votre horizon commence ici.', description: 'Retrouvez ici le bilan de votre empire, ses priorités et ses prochaines échéances.' },
   { id: 'colony', label: 'Colonie', symbol: '◉', title: 'Vos colonies', description: 'Les stocks, secteurs, infrastructures et files de construction prendront place ici.' },
-  { id: 'research', label: 'Recherche', symbol: '⌘', title: 'La connaissance ouvre la voie.', description: 'Les technologies, prérequis et recherches programmées prendront place ici.' },
+  { id: 'research', label: 'Recherche', symbol: '⌘', title: 'La connaissance ouvre la voie.', description: 'Technologies acquises, recherche active et suivante programmée à l’échelle de votre Empire.' },
   { id: 'galaxy', label: 'Galaxie', symbol: '✧', title: 'Au-delà du connu.', description: 'Les systèmes découverts et vos missions d’exploration prendront place ici.' },
   { id: 'fleets', label: 'Flottes', symbol: '↗', title: 'Vos flottes', description: 'Les vaisseaux engagés, missions et arrivées prendront place ici.' },
   { id: 'reports', label: 'Rapports', symbol: '≡', title: 'La mémoire de votre empire.', description: 'Les résultats des missions et les événements importants prendront place ici.' },
@@ -133,11 +134,11 @@ export default function App() {
               <p>Cette vérification indique si les services sont joignables. Elle ne confirme pas qu’une partie est active.</p>
               <Button disabled={status === 'checking'} onClick={retry}>{status === 'checking' ? 'Vérification…' : 'Vérifier la connexion'}</Button>
             </Panel></div>
-        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : <section className="panel destination-panel"><Badge>À venir</Badge>
+        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : destination === 'research' && universe ? <ResearchView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'research' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la recherche de vos Empires.</p></Panel> : <section className="panel destination-panel"><Badge>À venir</Badge>
           <EmptyState title={`${section.label} : espace en préparation`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
           <a className="text-link" href={href('empire')}>← Retour à l’Empire</a>
         </section>}
-        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>{projection ? 'Colonie jouable · autres domaines en préparation' : 'Interface en préparation · Aucun gameplay jouable'}</span></footer>
+        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>{universe && access.phase === 'active' ? 'Colonie et Recherche · selon droits et ruleset de l’univers' : 'Interface en préparation · Aucun gameplay jouable'}</span></footer>
       </main>
     </div>
   </div>;
