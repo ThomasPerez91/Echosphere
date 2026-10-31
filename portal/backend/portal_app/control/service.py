@@ -13,7 +13,8 @@ from portal_app.control.models import ControlOutbox, UniverseMembership, Univers
 from portal_app.sessions.service import Sessions
 
 PERMISSIONS = frozenset(("colony.read", "colony.construct", "colony.cancel",
-    "research.read", "research.start", "research.cancel"))
+    "research.read", "research.start", "research.cancel",
+    "galaxy.read", "exploration.read", "exploration.start"))
 
 
 def digest(value):

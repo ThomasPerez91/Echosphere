@@ -290,7 +290,7 @@ assert done
             # Verify independent DB backup/restore on disposable databases only; never bring the
             # restored snapshots online as authenticated services without a recovery barrier.
             for service, version_table, expected in (
-                ("postgres", "alembic_version", "0007_empire_research"),
+                ("postgres", "alembic_version", "0008_galaxy_exploration"),
                 ("portal-postgres", "portal_alembic_version", "p0005_control"),
             ):
                 run(

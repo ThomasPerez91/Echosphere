@@ -16,6 +16,9 @@ PERMISSIONS = frozenset(
         "research.read",
         "research.start",
         "research.cancel",
+        "galaxy.read",
+        "exploration.read",
+        "exploration.start",
     )
 )
 
@@ -34,8 +37,11 @@ class Binding(Wire):
             "research.read",
             "research.start",
             "research.cancel",
+            "galaxy.read",
+            "exploration.read",
+            "exploration.start",
         ]
-    ] = Field(min_length=1, max_length=6)
+    ] = Field(min_length=1, max_length=9)
 
     @model_validator(mode="after")
     def unique(self):

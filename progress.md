@@ -4,18 +4,44 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — G02 livré localement |
+| Champ | État au 31/10/2026 — reprise Claude Code, G03–G06 backend audités |
 | --- | --- |
 | Branche / base / PR | work/step-7-galaxy-exploration ; PR #10 brouillon ; master 437844e4 |
-| Tête | Commit portant ce checkpoint G02 ; validation produit publiée 35ae06d ; SHA/CI de tête à relire après push |
-| Agent | Codex local, écrivain unique ; aucun travail concurrent observé |
-| Préalable CI | cfff5be : PR 41190831214 completed/success, cinq jobs réellement vérifiés avant tout code G02 |
-| Décisions | Q06/Exploration closes étape 7 avec amendements ; aucun assouplissement ; Q09 ouverte |
-| Réalisé | Générateur pur galaxy-v1, gate d’acceptation indépendante de construction, données strictes v0.3 complètes, coûts/durées exacts, golden hash et corpus fixe |
-| Validation | Ruff ciblé OK ; 29 tests générateur + Research rules réussis (16,98 s), dont 1 400 seeds et déterminisme inter-processus ; scripts/check_docs et diff OK |
-| Fichiers | app/galaxy/generator.py et rules.py, chargeur Colony, tests générateur, game_data/rulesets/v0.3 et scripts/measure_galaxy.py |
-| Limites | G03–G10 à réaliser ; aucune persistance/API/UI Galaxy ou Exploration livrée à ce checkpoint ; étape 8 non commencée |
-| Suite | G03 persistance/migration puis G04 connaissance et G05 Exploration, sans nouveau point d’arrêt produit |
+| Tête | Commit portant ce checkpoint ; dernier publié avant reprise e5d51ae (CI 41191503724 success) ; SHA/CI de tête à relire après push |
+| Agent | Claude Code local (WSL2), écrivain unique depuis la reprise ; Codex arrêté, aucun fichier modifié par lui après 11:12 |
+| Récupération | Travail Codex **non commité** trouvé sur disque (12 fichiers modifiés, 8 nouveaux) ; aucun commit local non poussé ; sauvegardé hors dépôt avant toute écriture puis relu entièrement |
+| Réalisé | G03 manifeste/monde généré/migration 0008, G04 Knowledge typée, G05 Exploration/handler, G06 API Game + permissions propagées ; corrections de revue ci-dessous |
+| Validation locale | PostgreSQL 17 jetable *_test : 265 tests Game (dont 20 Galaxy) ; 123 tests Portal ; ruff Game/scripts/Portal ; frontend lint (warning préexistant), 31 Vitest, build |
+| Limites | G07 UI non branchée (ébauche Codex conservée), G08–G10 à faire ; aucun smoke Galaxy ; étape 8 non commencée ; aucun merge |
+| Suite | G07 UI Galaxy connectée, G08 hardening, G09 smoke Compose, G10 revue complète puis Ready |
+
+## Reprise Claude Code — récupération Codex et revue G03–G06, 31/10/2026
+
+État trouvé : branche à jour avec origin (e5d51ae), aucune divergence ni commit local, mais
+modifications Codex non commitées : app/galaxy (models, world, service, api), migration 0008,
+tests d’intégration Galaxy, propagation des permissions (Game, schéma, Portal, CHECK), TimeEngine,
+smokes (révision Alembic) et ébauche frontend non branchée (GalaxyView, galaxy/api.ts).
+Ligne de base avant toute correction : ruff OK et 257 tests Game réussis sur PostgreSQL jetable.
+Ces éléments n’étaient pas validés avant cette revue ; ils le sont dans les limites ci-dessous.
+
+Anomalies trouvées et corrigées par Claude Code :
+
+- **Majeure** : DTO `Binding` (max_length) et schéma partagé (maxItems) bloqués à 6 droits pour
+  9 permissions possibles ; corrigés à 9, schéma toujours égal au modèle Pydantic (test existant).
+- **Majeure** : `map_system` flushait MAPPED avant la structure ; révélé par le nouveau CHECK
+  `ck_system_knowledge_structure` (DETECTED sans structure, MAPPED/MONITORED avec structure).
+- Handler : chemin persistant vérifié (contiguïté source → destination) ; corruption → retry, aucun effet.
+- Rapport figé enrichi : chemin, routes incidentes révélées, voisins (approximatifs, `new`).
+- `colony_id` des missions masqué sans colony.read (comme Research) ; nom d’Empire projeté.
+- Migration 0008 : colonnes Knowledge dans le DDL figé (plus d’add_column a posteriori), CHECK
+  capacités/traitement de rapport ; downgrade toujours refusé si données ou grants Galaxy.
+
+Tests ajoutés : non-fuite exhaustive (aucun id/nom UNKNOWN ou structure non cartographiée dans carte,
+liste, détail, missions, avant et après découverte), refus sans effet (MAPPED, chemin inconnu,
+colonie/Empire étrangers, fonds insuffisants, même clé autre corps), cookie d’un autre Universe,
+expiration sans arrêt de mission acceptée, deux participants (capacité partagée, clés séparées),
+dépenses Exploration/Research/Colony simultanées sans deadlock, génération concurrente unique,
+corruption de chemin et downgrade refusé par grants seuls ; test Portal de l’allowlist.
 
 ## G02 — générateur et corpus de robustesse, 31/10/2026
 

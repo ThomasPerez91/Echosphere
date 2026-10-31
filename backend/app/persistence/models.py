@@ -72,6 +72,7 @@ class StellarSystem(Record, Base):
 class Planet(Record, Base):
     __tablename__ = "planets"
     __table_args__ = (
+        UniqueConstraint("id", "system_id", "universe_id", name="uq_planets_galaxy_parent"),
         UniqueConstraint("id", "universe_id", name="uq_planets_id_universe"),
         ForeignKeyConstraint(
             ["system_id", "universe_id"],

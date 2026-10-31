@@ -4,6 +4,7 @@ from app.access import models as access_models  # noqa: F401
 from app.colony import models as colony_models  # noqa: F401
 from app.control import models as control_models  # noqa: F401
 from app.core.config import Settings
+from app.galaxy import models as galaxy_models  # noqa: F401
 from app.persistence.database import create_database_engine
 from app.persistence.models import Base
 from app.research import models as research_models  # noqa: F401

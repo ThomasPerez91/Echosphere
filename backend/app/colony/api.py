@@ -25,6 +25,9 @@ from app.simulation.service import TimeEngine
 router = APIRouter(prefix="/game/{universe_id}/colonies")
 
 STATUS = {
+    "system_not_found": 404,
+    "exploration_busy": 503,
+    "galaxy_unavailable": 409,
     "colony_not_found": 404,
     "empire_not_found": 404,
     "technology_not_found": 404,

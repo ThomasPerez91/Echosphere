@@ -78,7 +78,8 @@ class EmpireBinding(Base):
             "jsonb_typeof(permissions) = 'array' "
             "AND jsonb_array_length(permissions) > 0 "
             'AND permissions <@ \'["colony.read","colony.construct","colony.cancel",'
-            '"research.read","research.start","research.cancel"]\'::jsonb',
+            '"research.read","research.start","research.cancel",'
+            '"galaxy.read","exploration.read","exploration.start"]\'::jsonb',
             name="binding_permissions",
         ),
     )
