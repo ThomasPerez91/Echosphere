@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:17-alpine
@@ -38,7 +38,7 @@ jobs:
       - run: pytest -q
         working-directory: backend
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -61,7 +61,7 @@ jobs:
       - run: python scripts/check_docs.py
         working-directory: .
   portal-backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       accounts:
         image: postgres:17-alpine
@@ -93,7 +93,7 @@ jobs:
       - run: ruff check .
       - run: pytest -q
   portal-frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: portal/frontend
@@ -111,7 +111,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
   compose-smoke:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env

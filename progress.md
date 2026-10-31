@@ -2,6 +2,15 @@
 
 Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
+## Correctif CI préalable à G02 — 31/10/2026
+
+Validation utilisateur Q06/Exploration reçue avec amendements (4 sites candidats par défaut,
+aucune réservation gameplay, corpus 1 000 seeds standard et 100 par configuration de bord).
+Avant code substantiel : cinq runners CI épinglés ubuntu-24.04, sans modifier Playwright/dépendances.
+Logs G01 b55d54c vérifiés : seuls frontend/portal-frontend échouent à l’installation Chromium,
+Ubuntu 26.04 non supporté ; backend/portal-backend/compose-smoke réussis. Attendre 5/5 vert
+sur le correctif avant G02 ; validation produit à consolider pendant cette attente.
+
 ## Reprise rapide
 
 | Champ | État au 31/10/2026 — G01, arrêt produit |
