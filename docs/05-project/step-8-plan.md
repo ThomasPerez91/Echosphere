@@ -1,5 +1,6 @@
 # Étape 8 — Vue détaillée des systèmes connus
 
+**Historique : intégrée via PR #11, merge `e011fd3`, CI post-merge 41231820338 success (5/5).**
 **S00–S09 autorisés le 31/10/2026 sans validation intermédiaire**, sauf véritable arbitrage produit.
 Base master `773e05c0971a78719b5ba1d1baca05df3aa7fb12`, étape 7 intégrée via PR #10, CI post-merge
 41220568486 success cinq jobs. Branche unique work/step-8-system-view, [PR #11](https://github.com/ThomasPerez91/Echosphere/pull/11) brouillon.

@@ -140,12 +140,12 @@ Q05 close ; Research intégrée à master via PR #9, merge `437844e4`, CI post-m
 41152760101 success (5/5), vérifiée le 31/10/2026. Ses consignes R00–R09/branche sont historiques.
 Étape 7 intégrée via PR #10, merge `773e05c0971a78719b5ba1d1baca05df3aa7fb12` ;
 CI post-merge 41220568486 success (5/5), vérifiée le 31/10/2026. Q06/Q08 et Exploration livrées.
-Lot courant : **étape 8 System View**, branche `work/step-8-system-view` depuis master propre.
-S00–S09 autorisés sans validation intermédiaire : lecture des Knowledge existantes, galaxy.read,
-pas de huitième domaine, zéro migration préférée. DETECTED sans détail, MAPPED structure durable,
-MONITORED observations propres réellement autorisées et datées. Aucun GET ne termine une mission.
-Implémentation et recette réelle sur PR #11 ; [contrat](docs/03-technical/system-view.md),
-validation/CI de tête dans progress. Q04/Q07/Q09 hors portée ; étape 9 non commencée. Aucun merge autorisé.
+Étape 8 System View intégrée via PR #11, merge `e011fd3127c4888db551dd3792b347b1dc31b468` ;
+CI post-merge 41231820338 success (5/5), vérifiée le 31/10/2026 ; [contrat](docs/03-technical/system-view.md).
+Lot courant : **étape 9 Flottes**, branche `work/step-9-fleets` depuis master `e011fd3`, PR brouillon
+unique. Q09 ouverte : F00/F01 (checkpoint, audit, proposition) puis arrêt obligatoire avant F02 ;
+aucun schéma/migration/ruleset v0.4/gameplay Fleet sans validation explicite. Exploration v0.3
+inchangée, étape 10 non commencée, Q04/Q07/Q10 hors portée. Aucun merge autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver

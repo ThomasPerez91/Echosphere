@@ -4,16 +4,24 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — S00–S09 réalisés, revue indépendante Claude Code (S10) |
+| Champ | État au 31/10/2026 — étape 9 F00 réalisé, F01 en cours, arrêt avant F02 |
 | --- | --- |
-| Objectif | Étape 8 System View : projection depuis Knowledge existante, sans nouvelle mécanique |
-| Branche / base / PR | work/step-8-system-view ; PR #11 ; master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 ; aucun merge |
-| Tête | Revue sur f2688b2 (CI 41225197685 5/5) ; présent commit = corrections de revue + passation ; CI exacte de la nouvelle tête consignée dans PR #11 |
-| Agent | Codex local S00–S09 ; Claude Code local revue indépendante et corrections S10, seul écrivain pendant la revue |
-| Réalisé | Contrats/plan, détail sans rattrapage, routes Knowledge, observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ; revue : identifiants Colony retirés sans colony.read, monde propre présélectionné, titres et métadonnées Galaxy repliables |
-| Fichiers S10 | app/galaxy/service.py, api.py, system_view.py ; test_system_view.py ; client/validateurs, GalaxyView, SystemView, App, CSS, fixtures/tests UI ; galaxy_browser.mjs ; docs canoniques |
-| Validation locale S10 | PostgreSQL 17 jetable *_test : 275 Game réussis (10 System View), Ruff ; frontend lint 0 erreur (warning préexistant), 51 Vitest, build, 21 Chromium ; sonde textes longs 320 px ; recette HTTPS réelle réussie avec images de l’arbre courant ; check_docs et diff --check |
-| Limites / suite | Ready seulement après CI 5/5 de la tête finale ; merge sur autorisation explicite uniquement. Portal/contrats inchangés ; zéro migration/grant/game_data ; étape 9 non commencée. Chromium émulé, aucun appareil physique/production recetté |
+| Objectif | Étape 9 Flottes : proposer Q09 complète, puis attendre sa validation explicite avant tout code métier |
+| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR brouillon unique vers master ; aucun merge |
+| Post-merge #11 | PR #11 fusionnée (tête fc1f66d, merge e011fd3) ; CI post-merge 41231820338 terminée success 5/5, vérifiée avant toute écriture |
+| Agent | Claude Code local, unique écrivain du lot |
+| Réalisé | F00 : synchronisation ff-only, branche, statuts étape 8 intégrée / étape 9 lot courant |
+| Fichiers | progress, context, AGENTS, roadmap, passation, registre, plans étapes 8/9 |
+| Validation | check_docs et diff --check ; aucune suite applicative (aucun code modifié) |
+| Limites / suite | F01 audit + proposition Q09 dans fleets.md et step-9-plan ; aucun schéma, migration, ruleset v0.4 ou gameplay Fleet avant validation. Étape 10 non commencée |
+
+## F00 — synchronisation post-merge System View, 31/10/2026
+
+GitHub vérifié avant écriture : PR #11 fermée/fusionnée, tête fc1f66d, merge e011fd3 ; CI
+post-merge 41231820338 attendue terminée puis lue success sur les cinq jobs (backend, frontend,
+portal-backend, portal-frontend, compose-smoke). Arbre local propre, master avancée en ff-only,
+branche `work/step-9-fleets` créée depuis e011fd3. Anciennes branches préservées. Statuts
+canoniques actualisés ; historique conservé.
 
 ## S10 — revue indépendante Claude Code, 31/10/2026
 
