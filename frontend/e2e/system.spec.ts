@@ -26,7 +26,16 @@ for (const width of [320, 390, 768, 1440]) {
     const heading = page.getByRole('heading', { name: 'Système Système d’origine', exact: true });
     await expect(heading).toBeFocused();
     await expect(page.getByText('Présence propre observée : Nouvelle Aube')).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const overflow = await page.evaluate(() => ({
+      width: innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      elements: [...document.querySelectorAll('body *')].filter(element =>
+        element.getBoundingClientRect().right > innerWidth + 1).map(element => ({
+        tag: element.tagName, class: element.getAttribute('class'),
+        text: element.textContent?.slice(0, 80), right: element.getBoundingClientRect().right,
+      })),
+    }));
+    expect(overflow.scrollWidth, JSON.stringify(overflow)).toBeLessThanOrEqual(overflow.width);
     const planet = page.getByRole('button', { name: 'Sélectionner Nouvelle Aube' });
     await planet.scrollIntoViewIfNeeded();
     const rect = (await planet.boundingBox())!;
