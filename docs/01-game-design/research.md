@@ -1,6 +1,6 @@
 # Recherche
 
-**Statut : Q05 Clos produit — implémentation étape 6 sur PR #9.**
+**Statut : Q05 close ; étape 6 livrée et intégrée via PR #9, merge `437844e4`.**
 Contrat validé explicitement ; [réalisation et API](../03-technical/research-api-ui.md).
 
 

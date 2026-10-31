@@ -8,6 +8,9 @@ antérieures. PR #7 (5C) et #8 (5D, merge `0e2ca11`) sont fusionnées ; Research
 Lot courant étape 7 : G00/G01 autorisés, Q06 et Exploration à proposer puis valider ; étape 8 non commencée. Vérifier GitHub réel,
 [preuve et checkpoint](../../progress.md), [API/UI Research](../03-technical/research-api-ui.md).
 
+Cadrage G01 : [Q06 proposée](../01-game-design/galaxy.md), [engagement Exploration proposé](../01-game-design/exploration.md),
+[plan/audit étape 7](../05-project/step-7-plan.md). **Aucune validation produit déduite de cette publication.**
+
 | Décision complémentaire | Produit | État de réalisation et référence |
 | --- | --- | --- |
 | Q39 remboursement saturé | Validé : théorique 100/80, crédit limité à capacité, surplus perdu définitivement | Implémenté dans le correctif PR #8 ; [économie](../01-game-design/colony-economy-v0.1.md), [API/UI](../03-technical/colony-api-ui.md) |

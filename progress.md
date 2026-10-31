@@ -4,19 +4,37 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — G00 |
+| Champ | État au 31/10/2026 — G01, arrêt produit |
 | --- | --- |
-| Objectif | Étape 7 Galaxy + Exploration : sync post-merge Research, audit et proposition produit avant code |
-| Branche / base | `work/step-7-galaxy-exploration`, créée depuis master/origin/master `437844e4427122a1b8d0387271b5354deadfbe2e` après ff-only |
-| Tête / PR | Checkpoint G00 dans ce commit ; SHA distant et PR à relire après publication |
-| Dernier travail publié | Research via PR #9 MERGED, tête `02cae2762c24c9fef2963b99ba7b8bdd23a5395f`, merge `437844e4` ; dernier agent consigné : ChatGPT Work |
-| Agent actuel / protection | Codex local ; checkout initial propre, aucun diff/index/nouveau fichier ni commit inédit sur ancienne branche 5D ; un seul worktree, aucun autre processus agent observé |
-| CI observée | [Post-merge 41152760101](https://github.com/ThomasPerez91/Echosphere/actions/runs/41152760101) completed/success, cinq jobs ; aucune PR ouverte au contrôle initial |
-| Décisions | Q05 close et Research livrée ; Q06 ouverte, Q08 close inchangée ; étape 7 lot courant, étape 8 non commencée |
-| Fichiers G00 | AGENTS, context, progress, index docs/passation/décisions, roadmap/questions et statut du plan étape 6 |
-| Checks | check_docs : 80 documents/liens OK ; git diff --check OK ; suites fonctionnelles non relancées pour ce diff documentaire |
-| Limites | Aucun code Galaxy/Exploration livré, aucune migration/game_data/UI modifiés ; aucune nouvelle recette WSL2/Docker attestée |
-| Prochaine action | G01 : audit code/migrations/tests, plan G00–G10, proposition Q06 et contrat minimal Exploration ; présenter puis attendre validation utilisateur |
+| Objectif | Étape 7 Galaxy + Exploration : G00 publié, audit/plan/propositions G01 préparés et soumis à validation |
+| Branche / base / PR | `work/step-7-galaxy-exploration`, [PR #10](https://github.com/ThomasPerez91/Echosphere/pull/10) brouillon ; master/origin/master `437844e4427122a1b8d0387271b5354deadfbe2e` après ff-only |
+| Tête | G00 `aa9e259be7496faf3109542712daf68f019612e2` publié avant G01 ; tête G01 = commit portant ce checkpoint, SHA distant/CI consignés dans PR #10 après publication |
+| Dernier agent | Codex local, seul écrivain observé ; précédent travail Research consigné ChatGPT Work |
+| Dernière intégration | PR #9 MERGED, tête `02cae2762c24c9fef2963b99ba7b8bdd23a5395f`, merge `437844e4`, Q05 close et Research livrée |
+| CI observée | [Post-merge 41152760101](https://github.com/ThomasPerez91/Echosphere/actions/runs/41152760101) completed/success (5/5) ; G00 push 41189325505 et PR 41189338016 en cours au contrôle G01, aucune CI de tête G01 encore observée |
+| Décisions / risques | Q06 ouverte, proposition détaillée ; engagement Exploration abstrait proposé à approuver ; Q08 close inchangée, Q04/Q07/Q09 non fermées ; faisabilité conjointe des seuils Q06 non mesurée |
+| Références / fichiers | [Plan/audit G00–G10](docs/05-project/step-7-plan.md), [Q06](docs/01-game-design/galaxy.md), [Exploration](docs/01-game-design/exploration.md), registre et index/contexte/passation ; statuts Research actualisés |
+| Validation locale | check_docs : 81 documents/liens OK ; git diff --check OK ; périmètre documentaire et confidentialité relus ; aucun test fonctionnel/prototype/migration/smoke local exécuté pour G00/G01 |
+| Limites | Aucun code métier, game_data, migration ou UI modifiés ; aucune simulation de génération ni nouvelle recette Docker/WSL2 attestée ; étape 8 non commencée |
+| Prochaine action | Attendre validation explicite Q06 + Exploration ; consigner provenance et décisions, puis G02–G10 sur cette branche/PR sans nouvelle confirmation par ticket, sauf nouvelle décision produit |
+
+## G01 — audit et propositions avant implémentation, 31/10/2026
+
+Plan durable G00–G10 avec schéma préparatoire, dépendances, risques, matrice sécurité/concurrence/
+reprise et recette worker autonome/Portal arrêté. Q06 propose 40 systèmes (30–50), degrés 2–4,
+cycles sans pont, connexité et distances bornées, géométrie déterministe, mondes variés garantis,
+sites de départ comparables et version explicite. **Proposition non validée**, aucun algorithme
+final ni catalogue exécutable. Exploration propose une capacité d’expédition abstraite unique,
+financement Colony, échéance réelle et révélation structurelle locale sans catalogue Fleet.
+Coût/durée/rappel/frontière à valider explicitement ; aucun arbitrage Q09 implicite.
+
+Lectures : AGENTS/CLAUDE/context/progress, index/passation/protocole/roadmap/registre, tous les
+canoniques métier demandés, modèle/temps/sécurité, ADR pertinents, modèles Universe/Empire/System/
+Planet/EventStream/ScheduledEvent et patterns Colony/Research API/UI/idempotence/worker, migrations
+et tests PostgreSQL pertinents ; guide visuel et deux images examinés. Détails et emplacements dans
+le plan. Environnement WSL2 identifié par uname ; pas de test fonctionnel de pile déduit du noyau.
+Checks documentaires et diff réellement exécutés, suites fonctionnelles non relancées pour ce diff.
+Arrêt utilisateur respecté à G01 : validation nécessaire avant G02, aucune étape 8 et aucun merge.
 
 ## G00 — synchronisation post-merge Research, 31/10/2026
 

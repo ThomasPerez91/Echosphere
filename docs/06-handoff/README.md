@@ -57,3 +57,5 @@ transcript privé, secret, identifiant privé ou renseignement personnel n’est
 Une reprise fraîche doit pouvoir distinguer état implémenté, validation produit, balance provisoire,
 proposition et question ouverte. Une ambiguïté encore présente va dans known-gaps et le registre,
 sans transformer une suggestion d’assistant en décision validée.
+
+Cadrage courant : [plan étape 7](../05-project/step-7-plan.md), propositions Q06/Exploration non validées ; arrêt produit G01.

@@ -136,3 +136,5 @@ Les arbitrages du 31/10/2026 Q01 construction/Q08/Q17/Q19–Q39/Q55 restent inch
 partage produit et défense futurs, caps/pacing balançables et budgets de performance non démontrés.
 Aucun nouveau merge autorisé. Références UI Recherche : design-system.png et research-view.png,
 illustrations de composition seulement, jamais catalogue ou règles validés.
+
+Cadrage courant : [plan étape 7](docs/05-project/step-7-plan.md), propositions Q06/Exploration non validées ; arrêt produit G01.

@@ -56,3 +56,5 @@ sur les conversations Space Game qui n’ont pas pu être consultées.
 
 Compléments actuels sur PR #7 : [C08 parcours et shell](03-technical/portal-game-ui.md),
 [C09 recette et opérations](03-technical/portal-operations.md). 5D intégrée via #8 ; Research intégrée via PR #9, aucune exposition production.
+
+Cadrage courant : [plan étape 7](05-project/step-7-plan.md), propositions Q06/Exploration non validées ; arrêt produit G01.

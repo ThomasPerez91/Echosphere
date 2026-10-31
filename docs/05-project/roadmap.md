@@ -124,3 +124,5 @@ Après fusion de #8 vérifiée : master/CI relues et nouveau lot étape 6 depuis
 premier checkpoint documentaire ; implémentation conditionnée à Q05 validée. Références visuelles :
 [research-view](../visual-reference/research-view.png) et [design-system](../visual-reference/design-system.png).
 La condition de fusion est satisfaite et Q05 a ensuite été validée explicitement ; voir le lot courant.
+
+Cadrage courant : [plan étape 7](step-7-plan.md), propositions Q06/Exploration non validées ; arrêt produit G01.
