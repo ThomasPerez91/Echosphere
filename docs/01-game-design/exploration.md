@@ -1,6 +1,6 @@
 # Exploration
 
-**Statut : principe validé ; résolution ouverte.**
+**Statut : contrat minimal étape 7 validé explicitement le 31/10/2026 ; implémentation à réaliser. Q09 reste totalement ouverte.**
 
 
 Explorer transforme l'incertitude en information utile : routes, systèmes, planètes, traits,
@@ -33,9 +33,10 @@ d'une mission après redémarrage. Ne rien implémenter de ce domaine à l'étap
 
 ## Proposition Exploration minimale — G01, 31/10/2026
 
-**Proposition Codex non validée, non implémentée.** Le texte « réserver la flotte » ci-dessus
-exprime la cible avec Fleets. Pour étape 7, valider expressément l’alternative ci-dessous avant
-code ; elle ne ferme pas Q09. Le [plan étape 7](../05-project/step-7-plan.md) détaille la réalisation.
+**Contrat validé par l’utilisateur le 31/10/2026 avec amendements.** Le texte historique
+« réserver la flotte » ci-dessus décrit la cible Fleet, hors étape 7. L’intitulé G01 est conservé
+pour les liens. Le [plan étape 7](../05-project/step-7-plan.md) porte la réalisation G02–G10 autorisée
+après CI préalable verte, sans validation intermédiaire sauf nouvelle décision produit réelle.
 
 ### Moyen engagé et prix proposés
 
@@ -58,7 +59,7 @@ Humains et futures IA utiliseront ce même service/coût/capacité.
 | Risques/rappel | Succès déterministe si commande acceptée ; aucune perte aléatoire, annulation, rappel ou remboursement dans étape 7 |
 | Bonus/vitesse | Aucun bonus Research actuel appliqué implicitement ; profil initial 1x, coûts/durée issus des nouvelles données épinglées |
 
-Nouveau ruleset complet proposé `v0.3` avec Galaxy/Exploration, v0.1 et v0.2 immuables.
+Nouveau ruleset complet validé `v0.3` avec Galaxy/Exploration, v0.1 et v0.2 immuables.
 Micro-unités et microsecondes entières, dépassements refusés, dates UTC serveur ; aucun tarif
 copié en constante de service. Les vitesses accélérées de recette restent test-only.
 Les anciennes parties gardent leurs versions et ne reçoivent ni galaxie ni engagement gratuit.
@@ -72,7 +73,7 @@ voisins directs DETECTED avec identifiant opaque et position approximative ; rou
 connues uniquement entre l’origine connue et ces voisins. Tout le reste UNKNOWN, absent des réponses.
 Aucun autre site de départ, total de systèmes, seed ou paramètre de génération envoyé au client.
 
-Destination proposée : un système DETECTED atteint depuis une colonie de l’Empire par des routes
+Destination validée : un système DETECTED atteint depuis une colonie de l’Empire par des routes
 connues, avec tous les systèmes intermédiaires MAPPED ou MONITORED. UNKNOWN refusé comme identifiant
 inexistant, pas de recherche de chemin omnisciente. Système déjà MAPPED/MONITORED : pas de mission
 d’étude répétée dans cette étape ; les mécanismes de surveillance active future restent distincts.
@@ -110,7 +111,7 @@ mission + libération de capacité dans la transaction scheduler. Aucun commit i
 appel Portal ou second stream. Un crash avant commit ne produit aucun effet ; après commit, rejeu
 sans double rapport/découverte/coût. Navigateur fermé ou session expirée n’interrompt pas la mission.
 
-Ordre proposé des locks pour les commandes : principal Game → Exploration → Research → Colony
+Ordre validé des locks, sous réserve des tests pour les commandes : principal Game → Exploration → Research → Colony
 source (sources triées par UUID si plusieurs deviennent nécessaires). Initialisation des adaptateurs
 à sérialiser sur Empire avant tout stream ; préférer leur création explicite au provisionnement.
 Research précède toujours Colony comme aujourd’hui. Aucun chemin Research/Colony ne prend ensuite
@@ -124,16 +125,20 @@ terminée sans repayer ; contenu différent avec même clé → conflit. Deux pa
 Empire partagent la capacité mais ont des espaces de clés séparés. Un second Empire garde sa propre
 connaissance et sa propre capacité. Toute commande rejouée reste soumise aux droits/session actuels.
 
-Permissions proposées : `galaxy.read`, `exploration.read`, `exploration.start`, sans attribution aux
+Permissions validées : `galaxy.read`, `exploration.read`, `exploration.start`, sans attribution aux
 bindings existants. Lecture de carte/détail depuis la connaissance de l’Empire lié ; lecture des
 missions exige exploration.read ; démarrage exige ces trois droits et colony.read sur sa source.
 Ni colony.construct ni privilège plateforme implicite. GameSession/access/binding/universe,
 CSRF/origin, non-fuite et sérialisation révocation repris de 5D/Research. Worker sans session humaine.
 Les payloads internes/snapshots complets ne deviennent jamais des DTO publics.
 
-### Validation demandée
+### Amendements validés et portée
 
-Approuver ou amender cet engagement abstrait, son plafond unique, financement, coût/durée, absence
-de rappel, exploration des frontières et révélation d’un seul voisinage. Alternative : exiger une
-vraie unité d’exploration ; cela nécessite un contrat produit supplémentaire avant G05, sans autoriser
-un catalogue Fleet implicite. Aucun développement métier dépendant avant réponse explicite.
+Le système de sa propre colonie reste MONITORED tant qu’une présence propre légitime fournit
+l’observation locale ; aucun timer artificiel de dégradation. À disparition d’une vraie source,
+MONITORED → MAPPED avec structure/last_seen_at conservés. Aucun monitoring distant permanent.
+Débit une fois, durée snapshotée, aucun bonus implicite, aucune annulation/rappel/remboursement
+ou perte aléatoire. UNKNOWN = absence de Knowledge ; un rapport immuable par mission,
+observed_at = due_at et processed_at séparé. Relations typées et FK Universe/Empire cohérentes.
+Q04/Q07 hors portée et Q09 totalement ouverte ; pas de Fleet, IA, colonisation, combat, espionnage,
+anomalie avancée, capteur avancé ou System View complète. Étape 8 non commencée.

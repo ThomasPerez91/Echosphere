@@ -124,10 +124,11 @@ La création complète de partie reste hors produit ; aucune fixture runtime ajo
 vérifiée le 31/10/2026 ; aucune adoption silencieuse des univers v0.1.
 
 **Lot courant : étape 7 Galaxy + Exploration**, `work/step-7-galaxy-exploration` depuis ce master.
-Instruction utilisateur du 31/10/2026 : G00, audit, plan G00–G10 et proposition Q06/Exploration
-immédiatement autorisés. Validation explicite requise avant générateur/game_data définitifs,
-migration ou métier Exploration fondés sur ces choix. Q06 ouverte ; Q08 close inchangée.
-Étape 8 non commencée. Ni Fleet anticipée ni création de partie multijoueur ni merge autorisés.
+Q06 et Exploration validées avec amendements le 31/10/2026 ; canoniques Galaxy/Exploration.
+G02–G10 autorisés après correctif CI Ubuntu 24.04 et cinq jobs verts ; aucune confirmation par
+ticket sauf incompatibilité mesurée ou nouvel arbitrage produit. Quatre sites candidats par défaut,
+aucune réservation gameplay ; robustesse standard 1 000 seeds sans échec, quatre bords ×100.
+Q08 inchangée, Q04/Q07 hors portée et Q09 ouverte ; étape 8 non commencée, aucun merge autorisé.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.
@@ -137,4 +138,4 @@ partage produit et défense futurs, caps/pacing balançables et budgets de perfo
 Aucun nouveau merge autorisé. Références UI Recherche : design-system.png et research-view.png,
 illustrations de composition seulement, jamais catalogue ou règles validés.
 
-Cadrage courant : [plan étape 7](docs/05-project/step-7-plan.md), propositions Q06/Exploration non validées ; arrêt produit G01.
+Cadrage courant : [plan étape 7](docs/05-project/step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.

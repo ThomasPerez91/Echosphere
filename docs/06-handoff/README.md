@@ -58,4 +58,4 @@ Une reprise fraîche doit pouvoir distinguer état implémenté, validation prod
 proposition et question ouverte. Une ambiguïté encore présente va dans known-gaps et le registre,
 sans transformer une suggestion d’assistant en décision validée.
 
-Cadrage courant : [plan étape 7](../05-project/step-7-plan.md), propositions Q06/Exploration non validées ; arrêt produit G01.
+Cadrage courant : [plan étape 7](../05-project/step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.

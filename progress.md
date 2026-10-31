@@ -2,6 +2,20 @@
 
 Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
+## Reprise rapide
+
+| Champ | État au 31/10/2026 — validation et correctif CI préalable |
+| --- | --- |
+| Branche / base / PR | work/step-7-galaxy-exploration ; PR #10 brouillon ; master 437844e4 |
+| Tête publiée | cfff5beb45bccdfcec2164a1e268b64eb6f175e4 : cinq jobs Ubuntu 24.04, dépendances inchangées |
+| Agent / protection | Codex local ; checkout initial propre et synchronisé, un seul worktree ; aucun changement concurrent observé |
+| Décisions | Q06/Exploration validées explicitement avec amendements le 31/10/2026 ; 4 sites candidats, aucune réservation gameplay ; corpus standard 1 000 seeds / bords 4 × 100 ; Q09 ouverte |
+| CI observée | G01 b55d54c rouge : seuls deux jobs UI échouent à installer Chromium sous Ubuntu 26.04 ; correctif PR 41190831214 / push 41190827691 en cours au contrôle |
+| Travail actuel | Consignation des décisions canoniques et du plan ; aucun code substantiel avant cinq jobs verts du correctif |
+| Vérifications locales | check_docs 81 documents/liens ; git diff --check ; aucune suite fonctionnelle relancée pour ce correctif/documentation |
+| Prochaine action | Après CI 5/5 verte : G02 générateur/données/mesures, puis G03–G10 ; revenir avec métriques seulement si incompatibilité ou nouvelle décision produit |
+| Limites | Aucune Galaxy/Exploration livrée ; étape 8 non commencée ; aucun merge autorisé |
+
 ## Correctif CI préalable à G02 — 31/10/2026
 
 Validation utilisateur Q06/Exploration reçue avec amendements (4 sites candidats par défaut,
@@ -10,22 +24,6 @@ Avant code substantiel : cinq runners CI épinglés ubuntu-24.04, sans modifier 
 Logs G01 b55d54c vérifiés : seuls frontend/portal-frontend échouent à l’installation Chromium,
 Ubuntu 26.04 non supporté ; backend/portal-backend/compose-smoke réussis. Attendre 5/5 vert
 sur le correctif avant G02 ; validation produit à consolider pendant cette attente.
-
-## Reprise rapide
-
-| Champ | État au 31/10/2026 — G01, arrêt produit |
-| --- | --- |
-| Objectif | Étape 7 Galaxy + Exploration : G00 publié, audit/plan/propositions G01 préparés et soumis à validation |
-| Branche / base / PR | `work/step-7-galaxy-exploration`, [PR #10](https://github.com/ThomasPerez91/Echosphere/pull/10) brouillon ; master/origin/master `437844e4427122a1b8d0387271b5354deadfbe2e` après ff-only |
-| Tête | G00 `aa9e259be7496faf3109542712daf68f019612e2` publié avant G01 ; tête G01 = commit portant ce checkpoint, SHA distant/CI consignés dans PR #10 après publication |
-| Dernier agent | Codex local, seul écrivain observé ; précédent travail Research consigné ChatGPT Work |
-| Dernière intégration | PR #9 MERGED, tête `02cae2762c24c9fef2963b99ba7b8bdd23a5395f`, merge `437844e4`, Q05 close et Research livrée |
-| CI observée | [Post-merge 41152760101](https://github.com/ThomasPerez91/Echosphere/actions/runs/41152760101) completed/success (5/5) ; G00 push 41189325505 et PR 41189338016 en cours au contrôle G01, aucune CI de tête G01 encore observée |
-| Décisions / risques | Q06 ouverte, proposition détaillée ; engagement Exploration abstrait proposé à approuver ; Q08 close inchangée, Q04/Q07/Q09 non fermées ; faisabilité conjointe des seuils Q06 non mesurée |
-| Références / fichiers | [Plan/audit G00–G10](docs/05-project/step-7-plan.md), [Q06](docs/01-game-design/galaxy.md), [Exploration](docs/01-game-design/exploration.md), registre et index/contexte/passation ; statuts Research actualisés |
-| Validation locale | check_docs : 81 documents/liens OK ; git diff --check OK ; périmètre documentaire et confidentialité relus ; aucun test fonctionnel/prototype/migration/smoke local exécuté pour G00/G01 |
-| Limites | Aucun code métier, game_data, migration ou UI modifiés ; aucune simulation de génération ni nouvelle recette Docker/WSL2 attestée ; étape 8 non commencée |
-| Prochaine action | Attendre validation explicite Q06 + Exploration ; consigner provenance et décisions, puis G02–G10 sur cette branche/PR sans nouvelle confirmation par ticket, sauf nouvelle décision produit |
 
 ## G01 — audit et propositions avant implémentation, 31/10/2026
 

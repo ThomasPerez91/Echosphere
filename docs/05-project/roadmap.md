@@ -125,4 +125,4 @@ premier checkpoint documentaire ; implémentation conditionnée à Q05 validée.
 [research-view](../visual-reference/research-view.png) et [design-system](../visual-reference/design-system.png).
 La condition de fusion est satisfaite et Q05 a ensuite été validée explicitement ; voir le lot courant.
 
-Cadrage courant : [plan étape 7](step-7-plan.md), propositions Q06/Exploration non validées ; arrêt produit G01.
+Cadrage courant : [plan étape 7](step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.

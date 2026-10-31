@@ -1,6 +1,6 @@
 # Étape 7 — Galaxie procédurale, exploration et connaissance
 
-**Statut au 31/10/2026 : G00 publié, G01 préparé ; décisions produit en attente.**
+**Statut au 31/10/2026 : G00/G01 publiés ; Q06 et Exploration validées avec amendements.**
 Instruction utilisateur : commencer effectivement étape 7, présenter Q06 + Exploration minimale,
 puis attendre validation avant générateur/game_data définitifs, migration ou métier Exploration.
 Aucun code métier livré par G00/G01. Étape 8 System View non commencée.
@@ -13,17 +13,17 @@ commité/poussé avant G01. Aucune fusion, suppression de branche, release ou d�
 
 Références canoniques proposées : [Q06 complète](../01-game-design/galaxy.md#proposition-q06--g01-31102026-en-attente-de-validation),
 [Exploration minimale](../01-game-design/exploration.md#proposition-exploration-minimale--g01-31102026).
-Q06 reste ouverte ; Q08 déjà close n’est pas rouverte. Q04/Q07/Q09 gardent leurs sujets différés.
+Q06 close produit dans la portée étape 7 ; Q08 déjà close n’est pas rouverte. Q04/Q07/Q09 gardent leurs sujets différés.
 
 ## Plan et critères de sortie
 
-Les tickets G02–G10 ci-dessous sont **prévus après validation explicite**, pas commencés.
-Cette validation permettra leur enchaînement sans confirmation par ticket, sauf nouvelle décision produit.
+Les tickets G02–G10 sont **autorisés sans confirmation par ticket** après CI préalable 5/5 verte
+sur Ubuntu 24.04. Arrêt si contraintes non robustement satisfaisables ou nouvelle décision produit.
 
 | Ticket | Périmètre | Vérification requise et statut |
 | --- | --- | --- |
 | G00 | Fetch/master ff-only, branche courte, statuts Research historiques et checkpoint poussé | Réalisé ; arbre initial propre, aucune perte locale, post-merge #9 5/5 success |
-| G01 | Audit du dépôt, proposition Q06 et engagement Exploration sans Fleet, plan durable | Présent checkpoint documentaire ; arrêt produit avant G02 |
+| G01 | Audit du dépôt, proposition Q06 et engagement Exploration sans Fleet, plan durable | Cadrage publié puis validé explicitement avec amendements ; CI préalable requise |
 | G02 | Générateur pur versionné et données strictes ; profil proposé 40 systèmes, bornes 30–50 | Déterminisme canonique/golden fixtures, seeds différentes, connexité/degrés/ponts/distances, géométrie, capacités et métriques d’équité ; aucun résultat revendiqué aujourd’hui |
 | G03 | Manifeste, positions/routes/mondes/sites et commande explicite de génération ; migration additive | PostgreSQL scopes/contraintes, génération atomique/rejeu/refus de remplacement, ancien Universe inchangé, upgrade/check/roundtrip et refus de downgrade peuplé |
 | G04 | Knowledge Empire typée et observations datées ; initialisation limitée explicite | UNKNOWN absent, DETECTED approximatif sans détail, MAPPED durable, MONITORED limité puis retour MAPPED, snapshots de rapport et non-partage |
@@ -131,8 +131,8 @@ illustratifs du mockup ne créent aucune mécanique ou donnée runtime.
 ## Matrice de validation à réaliser G02–G10
 
 - Générateur : mêmes entrées complètes/sortie stricte ; seeds distinctes, chaînes Unicode, bornes,
-  versions et données modifiées ; sorties stables inter-processus ; 100 seeds fixes pour chaque
-  taille 30/40/50 avec 2 sites et variantes 1/4 sites ; métriques et échecs explicitement comptés.
+  versions et données modifiées ; sorties stables inter-processus ; 1 000 seeds fixes pour le profil standard 40/4 (0 échec), puis au moins 100 seeds pour chacun
+  des bords 30/1, 30/4, 50/1, 50/4 ; métriques et échecs explicitement comptés.
   Tous les succès satisfont chaque invariant ; ne pas ignorer les seeds difficiles pour déclarer
   l’équité. Mesurer temps/échecs avant d’affirmer la robustesse du profil.
 - Persistance : routes sans doublon/self-loop/cross-Universe, parent planète cohérent, scopes de
@@ -176,3 +176,12 @@ cela ne prouve pas une recette de la pile. Le résultat de CI propre à la tête
 
 Arrêt demandé : valider/amender Q06 et le contrat Exploration ; après réponse, consigner la
 provenance dans leurs canoniques/registre puis G02. Ni Fleet, ni étape 8, ni autres lots anticipés.
+
+## Validation utilisateur et amendements — 31/10/2026
+
+Q06/Exploration closes produit, non encore implémentées. Sites candidats : 4 par défaut, 1–4,
+aucune réservation gameplay ni création/affectation multi-Empires. Corpus de robustesse 1 000 +
+4 × 100 seeds comme ci-dessus ; aucune relaxation silencieuse. Surveillance locale propre sans
+timer artificiel. Coût/durée/engagement/permissions/rapport/stream/ruleset v0.3 validés ; Q09 ouverte.
+Correctif préalable cfff5be : cinq jobs ubuntu-24.04, Playwright inchangé. Attendre cinq verts
+avant code substantiel ; l’arrêt G01 décrit plus haut devient historique depuis cette validation.

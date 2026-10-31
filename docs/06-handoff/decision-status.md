@@ -5,11 +5,11 @@ Q17, Q19–Q39 et Q55 closes dans leur portée au [registre](../05-project/open-
 Les lignes anciennes sont des checkpoints ; ce complément prévaut sur les mentions « ouvert »
 antérieures. PR #7 (5C) et #8 (5D, merge `0e2ca11`) sont fusionnées ; Research intégrée via PR #9 (`437844e4`).
 **Q05 close produit, R00–R09 livrés et intégrés ; CI post-merge 41152760101 success (5/5).**
-Lot courant étape 7 : G00/G01 autorisés, Q06 et Exploration à proposer puis valider ; étape 8 non commencée. Vérifier GitHub réel,
+Lot courant étape 7 : Q06 et Exploration validées avec amendements, G02–G10 autorisés après CI préalable verte ; étape 8 non commencée. Vérifier GitHub réel,
 [preuve et checkpoint](../../progress.md), [API/UI Research](../03-technical/research-api-ui.md).
 
 Cadrage G01 : [Q06 proposée](../01-game-design/galaxy.md), [engagement Exploration proposé](../01-game-design/exploration.md),
-[plan/audit étape 7](../05-project/step-7-plan.md). **Aucune validation produit déduite de cette publication.**
+[plan/audit étape 7](../05-project/step-7-plan.md). **Validation utilisateur explicite reçue le 31/10/2026 : Q06/Exploration closes dans leur portée, amendements dans leurs canoniques.**
 
 | Décision complémentaire | Produit | État de réalisation et référence |
 | --- | --- | --- |

@@ -139,9 +139,11 @@ Lot précédent : **étape 6 Recherche globale d’Empire**, work/step-6-researc
 Q05 close ; Research intégrée à master via PR #9, merge `437844e4`, CI post-merge
 41152760101 success (5/5), vérifiée le 31/10/2026. Ses consignes R00–R09/branche sont historiques.
 Lot courant : **étape 7 Galaxy + Exploration**, branche `work/step-7-galaxy-exploration`
-depuis master propre. G00 et G01 (audit, plan, proposition Q06/Exploration) autorisés ; attendre
-la validation produit explicite avant de figer générateur/game_data/migration ou métier Exploration.
-Q06 reste ouverte, Q08 inchangée. Étape 8 non commencée ; aucune fusion autorisée.
+depuis master propre. Q06 et Exploration validées explicitement le 31/10/2026 avec amendements :
+4 sites candidats par défaut sans réservation gameplay ; corpus 1 000 seeds 40/4 sans échec et
+100 par bord 30/1, 30/4, 50/1, 50/4. G02–G10 autorisés après correctif runners Ubuntu 24.04 et
+CI préalable 5/5 verte. Aucun assouplissement silencieux ; revenir avec métriques si incompatibilité.
+Q08 inchangée, Q04/Q07 hors portée et Q09 ouverte. Étape 8 non commencée ; aucun merge autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver

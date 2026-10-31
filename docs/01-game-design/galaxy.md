@@ -1,6 +1,6 @@
 # Galaxie
 
-**Statut : graphe 2D et seed validés ; tailles orientatives.**
+**Statut : Q06 close produit pour étape 7, validation utilisateur explicite du 31/10/2026 avec amendements ; implémentation G02 à réaliser.**
 
 
 La galaxie est un graphe de systèmes stellaires et routes, pas une grille de coordonnées à la OGame.
@@ -14,8 +14,7 @@ générateur et de ses données ; une seed seule n'est pas une garantie entre ve
 
 ## Génération future
 
-Q06 doit fixer connexité, longueurs, impasses, nombre de planètes, contraintes des départs et critères
-d'équité. Vérifier chemins accessibles, absence d'isolats involontaires et répartition des occasions
+Q06 fixe désormais connexité, longueurs, impasses, mondes et équité dans le contrat ci-dessous. Vérifier chemins accessibles, absence d'isolats involontaires et répartition des occasions
 d'expansion. Ne pas imposer une topologie finale dans l'étape 0.
 
 Le serveur détient la carte complète ; les projections API respectent les connaissances de chaque
@@ -30,10 +29,11 @@ empire. Les coordonnées ou identifiants cachés ne doivent pas fuiter dans un p
 
 ## Proposition Q06 — G01, 31/10/2026, en attente de validation
 
-**Proposition de Codex, non décision validée, non implémentée.** L’instruction étape 7 autorise
-ce cadrage et impose un arrêt avant choix définitif du générateur/game_data/migration.
-Q06 reste ouverte. Les contraintes ci-dessous constituent un ensemble proposé ; les nombres
-sont des paramètres initiaux balançables d’un nouveau profil, pas des constantes métier.
+**Contrat validé par l’utilisateur le 31/10/2026 avec amendements**, issu de la proposition G01.
+L’intitulé de section est conservé pour les liens historiques. Q06 close dans cette portée ;
+les valeurs restent des paramètres de balance versionnés, pas des constantes métier.
+G02–G10 autorisés après correctif CI Ubuntu 24.04 et cinq jobs verts ; arrêt seulement si les
+mesures prouvent une incompatibilité ou si une nouvelle décision produit réelle est nécessaire.
 
 ### Taille et topologie proposées
 
@@ -105,9 +105,11 @@ Q07 n’est pas fermée.
 
 ### Départs préparant plusieurs Empires
 
-Paramètre `starting_site_count` : 2 par défaut (un seul affecté à l’humain étape 7), 1 à 4 supportés
-sous réserve de satisfaire tous les critères. Un site réservé n’est ni un Empire ni une colonie
-ni une IA créée gratuitement. Sites persistés côté serveur, jamais publiés dans la carte d’un autre.
+Paramètre `starting_site_count` : **4 par défaut**, 1 à 4 supportés. Un seul site affecté à
+l’humain étape 7. Les autres sont des **sites candidats de génération**, pas des réservations
+gameplay : aucun Empire/colonie/IA créé, aucune visibilité joueur, aucune interdiction cachée
+d’exploration ou de future colonisation. Ils démontrent des positions raisonnablement équitables.
+L’affectation multi-Empires est future et n’est pas développée maintenant.
 
 Chaque site a un degré 3 ou 4, un monde de référence 12/2 et au moins 7 systèmes distincts dans
 sa boule de rayon 2 (départ inclus). Deux chemins partant du site vers deux systèmes distincts
@@ -133,3 +135,12 @@ Une nouvelle version du générateur crée de nouveaux univers seulement.
 
 Plan, audit et critères de test : [étape 7](../05-project/step-7-plan.md).
 L’autre arbitrage indispensable est le [contrat Exploration proposé](exploration.md#proposition-exploration-minimale--g01-31102026).
+
+### Robustesse validée comme critère de sortie G02
+
+Profil standard 40 systèmes / 4 sites / galaxy-v1 : **1 000 seeds déterministes fixes minimum,
+0 échec**. Bords 30/1, 30/4, 50/1, 50/4 : au moins 100 seeds fixes chacun, succès vérifiés contre
+chaque invariant. Ne retirer aucune seed difficile. Mesurer échecs/seeds/taux, temps moyen/p95,
+tentatives et contraintes responsables. Le garde-fou 64 tentatives ne remplace pas cette preuve.
+Si la robustesse n’est pas atteignable dans un temps raisonnable, arrêter et présenter mesures
+et alternatives minimales avant tout assouplissement de degré/équité/distance/ponts/diamètre/zones.
