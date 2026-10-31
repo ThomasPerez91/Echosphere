@@ -59,3 +59,10 @@ proposition et question ouverte. Une ambiguïté encore présente va dans known-
 sans transformer une suggestion d’assistant en décision validée.
 
 Cadrage courant : [plan étape 7](../05-project/step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.
+
+## État post-merge étape 7 — 31/10/2026
+
+Étape 7 intégrée via PR #10, merge `773e05c`, CI post-merge 41220568486 success (5/5).
+Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
+Lot courant : étape 8 System View, branche `work/step-8-system-view`, S00–S09 autorisés.
+Étape 9 Fleets non commencée, aucun merge autorisé.

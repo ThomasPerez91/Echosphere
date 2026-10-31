@@ -123,14 +123,16 @@ La création complète de partie reste hors produit ; aucune fixture runtime ajo
 [API/UI/recette](docs/03-technical/research-api-ui.md). CI post-merge 41152760101 success (5/5)
 vérifiée le 31/10/2026 ; aucune adoption silencieuse des univers v0.1.
 
-**Lot courant : étape 7 Galaxy + Exploration**, `work/step-7-galaxy-exploration` depuis ce master.
-Q06 et Exploration validées avec amendements le 31/10/2026 ; canoniques Galaxy/Exploration.
-G02–G10 autorisés après correctif CI Ubuntu 24.04 et cinq jobs verts ; aucune confirmation par
-ticket sauf incompatibilité mesurée ou nouvel arbitrage produit. Quatre sites candidats par défaut,
-aucune réservation gameplay ; robustesse standard 1 000 seeds sans échec, quatre bords ×100.
-Q08 inchangée, Q04/Q07 hors portée et Q09 ouverte ; étape 8 non commencée, aucun merge autorisé.
-G03–G10 réalisés sur PR #10 (reprise Claude Code du travail local Codex) : migration 0008, Knowledge
-typée, Exploration abstraite, API/permissions, UI Galaxie et smoke réel ; [technique](docs/03-technical/galaxy-api-ui.md).
+**Étape 7 intégrée via PR #10**, tête finale `1bcb2ba`, merge
+`773e05c0971a78719b5ba1d1baca05df3aa7fb12` ; CI post-merge 41220568486 success (5/5),
+vérifiée le 31/10/2026. Q06/Q08 et Exploration livrées ; [technique](docs/03-technical/galaxy-api-ui.md).
+
+**Lot courant : étape 8 System View**, branche `work/step-8-system-view` depuis master propre.
+S00–S09 autorisés par instruction du 31/10/2026, sans validation intermédiaire sauf vraie décision
+produit nouvelle. Vue détaillée depuis Knowledge, permission galaxy.read, données datées ; aucun
+nouveau gameplay, scheduler, droit system.read, huitième domaine ou migration sans besoin démontré.
+DETECTED reste limité, structure MAPPED durable et observations MONITORED propres seulement.
+Étape 9 non commencée ; Q04/Q07/Q09 inchangées, aucun merge autorisé.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.
@@ -140,4 +142,4 @@ partage produit et défense futurs, caps/pacing balançables et budgets de perfo
 Aucun nouveau merge autorisé. Références UI Recherche : design-system.png et research-view.png,
 illustrations de composition seulement, jamais catalogue ou règles validés.
 
-Cadrage courant : [plan étape 7](docs/05-project/step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.
+Le plan étape 7 est historique depuis la fusion #10 ; System View est le lot courant.

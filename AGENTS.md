@@ -138,12 +138,13 @@ C02/C03 comptes/vérification/sessions, C04 opérations sensibles et C05 MFA imp
 Lot précédent : **étape 6 Recherche globale d’Empire**, work/step-6-research depuis master `0e2ca11`.
 Q05 close ; Research intégrée à master via PR #9, merge `437844e4`, CI post-merge
 41152760101 success (5/5), vérifiée le 31/10/2026. Ses consignes R00–R09/branche sont historiques.
-Lot courant : **étape 7 Galaxy + Exploration**, branche `work/step-7-galaxy-exploration`
-depuis master propre. Q06 et Exploration validées explicitement le 31/10/2026 avec amendements :
-4 sites candidats par défaut sans réservation gameplay ; corpus 1 000 seeds 40/4 sans échec et
-100 par bord 30/1, 30/4, 50/1, 50/4. G02–G10 autorisés après correctif runners Ubuntu 24.04 et
-CI préalable 5/5 verte. Aucun assouplissement silencieux ; revenir avec métriques si incompatibilité.
-Q08 inchangée, Q04/Q07 hors portée et Q09 ouverte. Étape 8 non commencée ; aucun merge autorisé.
+Étape 7 intégrée via PR #10, merge `773e05c0971a78719b5ba1d1baca05df3aa7fb12` ;
+CI post-merge 41220568486 success (5/5), vérifiée le 31/10/2026. Q06/Q08 et Exploration livrées.
+Lot courant : **étape 8 System View**, branche `work/step-8-system-view` depuis master propre.
+S00–S09 autorisés sans validation intermédiaire : lecture des Knowledge existantes, galaxy.read,
+pas de huitième domaine, zéro migration préférée. DETECTED sans détail, MAPPED structure durable,
+MONITORED observations propres réellement autorisées et datées. Aucun GET ne termine une mission.
+Q04/Q07/Q09 hors portée ; étape 9 non commencée. Aucun merge autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver

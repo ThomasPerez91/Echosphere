@@ -1,6 +1,6 @@
 # Galaxie et Exploration — contrat technique étape 7
 
-**Statut : implémenté sur PR #10 (brouillon puis Ready), non fusionné ; vérifier GitHub avant reprise.**
+**Statut : intégré via PR #10, merge `773e05c` ; CI post-merge 41220568486 success (5/5), vérifiée le 31/10/2026.**
 Contrats produit : [Galaxie/Q06](../01-game-design/galaxy.md), [Exploration](../01-game-design/exploration.md),
 [Fog/Q08](../01-game-design/fog-of-war.md). Plan et preuves : [étape 7](../05-project/step-7-plan.md),
 [progress](../../progress.md). Q09 (Fleet) reste ouverte ; étape 8 System View non commencée.

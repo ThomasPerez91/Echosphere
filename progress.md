@@ -4,6 +4,31 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 31/10/2026 — S00 |
+| --- | --- |
+| Objectif | Étape 8 System View, depuis Knowledge existante et sans nouvelle mécanique |
+| Branche / base | work/step-8-system-view depuis master/origin/master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 |
+| Tête / PR | S00 = commit portant ce checkpoint ; SHA distant/PR à consigner après publication |
+| État initial | Ancienne branche étape 7 sur tête finale 1bcb2baf8707fa54ab8d18fd9c7e0fb124dbb9c3, propre, aucun diff/index/nouveau fichier ni divergence ; un worktree |
+| Agent | Codex local, écrivain seul autorisé pour étape 8 ; dernière livraison publiée consignée Claude Code local |
+| CI vérifiée | PR #10 MERGED ; post-merge 41220568486 completed/success, cinq jobs sur 773e05c |
+| Réalisé | Master synchronisée ff-only, nouvelle branche courte ; statuts post-merge actualisés avant code |
+| Fichiers | AGENTS/context/progress, index docs/roadmap/passation et statut Galaxy technique |
+| Validation | check_docs et diff à exécuter avant commit ; aucune suite fonctionnelle relancée pour S00 documentaire |
+| Décisions | Contrat System View autorisé par instruction du 31/10/2026 ; galaxy.read, aucune donnée DETECTED détaillée, observations propres datées ; Q04/Q07/Q09 inchangées |
+| Suite | S01 audit et contrats/plan puis S02–S09 autonomes ; zéro migration préférée ; étape 9 non commencée ; aucun merge |
+
+## S00 — synchronisation après fusion étape 7, 31/10/2026
+
+GitHub réel vérifié : #10 MERGED, tête 1bcb2ba, merge master 773e05c, CI post-merge
+41220568486 success cinq jobs. Local propre et synchronisé, master ff-only puis création de
+work/step-8-system-view, sans réutiliser la branche fusionnée. Aucun travail local non publié.
+Premier checkpoint documentaire avant toute implémentation substantielle étape 8.
+
+## Checkpoints étape 7 avant fusion (historiques)
+
+### Ancienne reprise rapide étape 7
+
 | Champ | État au 31/10/2026 — étape 7 G02–G10 réalisés, PR #10 |
 | --- | --- |
 | Branche / base / PR | work/step-7-galaxy-exploration ; PR #10 ; master 437844e4 ; aucun merge |
