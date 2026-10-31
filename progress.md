@@ -4,17 +4,46 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — S00–S08 réalisés, S09 publication/CI |
+| Champ | État au 31/10/2026 — S00–S09 réalisés, revue indépendante Claude Code (S10) |
 | --- | --- |
 | Objectif | Étape 8 System View : projection depuis Knowledge existante, sans nouvelle mécanique |
-| Branche / base / PR | work/step-8-system-view ; PR #11 brouillon jusqu’à CI exacte verte ; master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 |
-| Tête | S00 740dd8d publié avant code ; fonctionnel 67345aa, correction Colony bc8cb47 ; présent commit = revue/passation S09 |
-| Agent | Codex local, seul écrivain autorisé ; précédent travail étape 7 consigné Claude Code |
-| Réalisé | Contrats/plan, détail sans rattrapage/avancement du stream, routes Knowledge et observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ciblé ; recette réelle réussie |
-| Fichiers | app/galaxy/system_view.py et api.py, composants/hooks/client/navigation/CSS/tests UI ; test_system_view.py ; docs canoniques/statuts et smoke Galaxy étendu |
-| Validation locale | PostgreSQL dédiée echosphere_system_test : 275 Game réussis, dont 10 System View ; Ruff et Alembic sans dérive ; frontend lint 0 erreur (warning préexistant useGameSession), 50 Vitest, build ; Chromium quatre largeurs et revue captures ; recette HTTPS réelle deux fois réussie, dont images finales fonctionnelles |
-| CI | Post-merge 41220568486 success 5/5 vérifié ; 67345aa et bc8cb47 : frontend KO à 320 px sur nowrap hérité ; correction ciblée incluse, CI exacte à relire après publication avant Ready |
-| Limites / suite | Finir S09 par vérification du SHA distant et des cinq jobs CI, puis Ready sans merge ; résultats exacts dans PR #11. Portal/contrats inchangés ; zéro migration/grant/game_data ; étape 9 non commencée. Chromium émulé, aucun appareil physique/production recetté |
+| Branche / base / PR | work/step-8-system-view ; PR #11 ; master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 ; aucun merge |
+| Tête | Revue sur f2688b2 (CI 41225197685 5/5) ; présent commit = corrections de revue + passation ; CI exacte de la nouvelle tête consignée dans PR #11 |
+| Agent | Codex local S00–S09 ; Claude Code local revue indépendante et corrections S10, seul écrivain pendant la revue |
+| Réalisé | Contrats/plan, détail sans rattrapage, routes Knowledge, observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ; revue : identifiants Colony retirés sans colony.read, monde propre présélectionné, titres et métadonnées Galaxy repliables |
+| Fichiers S10 | app/galaxy/service.py, api.py, system_view.py ; test_system_view.py ; client/validateurs, GalaxyView, SystemView, App, CSS, fixtures/tests UI ; galaxy_browser.mjs ; docs canoniques |
+| Validation locale S10 | PostgreSQL 17 jetable *_test : 275 Game réussis (10 System View), Ruff ; frontend lint 0 erreur (warning préexistant), 51 Vitest, build, 21 Chromium ; sonde textes longs 320 px ; recette HTTPS réelle réussie avec images de l’arbre courant ; check_docs et diff --check |
+| Limites / suite | Ready seulement après CI 5/5 de la tête finale ; merge sur autorisation explicite uniquement. Portal/contrats inchangés ; zéro migration/grant/game_data ; étape 9 non commencée. Chromium émulé, aucun appareil physique/production recetté |
+
+## S10 — revue indépendante Claude Code, 31/10/2026
+
+Revue en lecture d’abord sur f2688b2 (arbre propre, local = distant, CI 41225197685 5/5), sans
+reprendre les affirmations de passation comme preuves. Anomalies prouvées et corrigées :
+
+- **Majeure** — frontière colony.read : `observation.own_colony_ids` était émis sans colony.read,
+  dans le détail System View comme dans la carte Galaxy, puis seulement non affiché par React,
+  alors que la source Colony des missions est déjà masquée sans ce droit. Projection `null` sans
+  colony.read ; validateurs client qui refusent une réponse porteuse d’identifiants ; marqueur
+  « votre colonie » dérivé de MONITORED (une ancienne observation MAPPED n’est plus présentée
+  comme actuelle). Test PostgreSQL vérifié par mutation (échoue sans la correction).
+- **Mineure** — le premier monde par identifiant était sélectionné : sur données réelles, la
+  colonie propre (3ᵉ) n’affichait pas « Voir ma colonie » sans choix manuel. Monde propre
+  présélectionné et lien repris dans Présences ; fixture rendue réaliste (colonie non première).
+- **Mineure** — `.panel-meta` nowrap restant dans Galaxy : nom d’Empire long → page de 522 px à
+  320 px. Repli autorisé dans Galaxy/System View ; raccourcis de mondes coupés aux mots seulement.
+- **Cosmétique** — titre « Système System 668304 » doublé : nom seul sous un sur-titre ; description
+  de page propre à la vue ; tailles de texte des présences harmonisées.
+- **Recette** — test GET échu renforcé (Knowledge et stocks inchangés) ; recette réelle qui clique
+  le lien Colony jusqu’à l’écran Colonie et attend l’en-tête System View lui-même, avec capture
+  de diagnostic en cas d’échec. E2E System scopé de même (le panneau Galaxy porte le même nom).
+
+Point d’environnement constaté : le smoke Galaxy utilise les images déjà construites
+(`up --no-build`) ; deux premières exécutions locales tournaient sur les images f2688b2. Recette
+validée après `docker compose build backend frontend` (étiquettes seules, aucun conteneur ni
+volume de la pile conservée touché). Vérifié sans changement : GET détail sans catch_up ni
+avancement (seul le refresh de monitoring étape 7 écrit), 404 identique UNKNOWN/étranger/absent,
+DETECTED minimal, aucune jointure monde pour la structure, réponses tardives et StrictMode,
+navigation deep-link/refresh/back/forward, focus et cibles 44 px. Zéro migration.
 
 ## S08/S09 — recette finale, revue et passation, 31/10/2026
 

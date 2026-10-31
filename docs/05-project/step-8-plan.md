@@ -78,3 +78,10 @@ validation de production. Warning ESLint useGameSession préexistant conservé.
 Correction S09 : nowrap hérité des métadonnées neutralisé dans System View ; légende/date
 repliables à 320 px, 21 Chromium complets réussis après correction. CI des premières têtes
 fonctionnelles frontend KO pour ce défaut ; seul le SHA final vert autorise Ready.
+
+## S10 — revue indépendante Claude Code
+
+Revue de f2688b2 : une Majeure (identifiants Colony émis sans colony.read, Galaxy comprise),
+deux Mineures (lien Colony caché par la présélection, nowrap Galaxy à 320 px) et des
+cosmétiques, corrigées sur la même branche sans migration. Détail et preuves dans
+[progress](../../progress.md) ; CI exacte et verdict dans PR #11. Étape 9 non commencée.

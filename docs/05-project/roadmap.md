@@ -67,7 +67,7 @@ Q05 close ; catalogue v0.2, persistance, services/worker et API/UI réellement l
 [Research technique](../03-technical/research-api-ui.md).
 **Historique étape 7 (intégrée via PR #10) : Galaxy + Exploration**, branche unique `work/step-7-galaxy-exploration`.
 G00/G01 autorisés par instruction du 31/10/2026 ; Q06 et contrat Exploration à proposer puis
-faire valider avant implémentation engageante. Étape 8 non commencée.
+faire valider avant implémentation engageante. Étape 8 alors non commencée.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).
