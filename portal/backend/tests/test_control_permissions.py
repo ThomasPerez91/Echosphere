@@ -18,3 +18,16 @@ def test_galaxy_and_exploration_rights_are_explicit_never_implied():
 def test_unknown_or_duplicated_rights_are_refused(rights):
     with pytest.raises(PublicError):
         normalized_bindings([{"empire_id": EMPIRE, "permissions": rights}])
+
+
+def test_twelve_rights_including_fleet_accepted_thirteenth_refused():
+    from portal_app.control.service import PERMISSIONS
+
+    assert len(PERMISSIONS) == 12
+    (binding,) = normalized_bindings([{"empire_id": EMPIRE, "permissions": sorted(PERMISSIONS)}])
+    assert {"fleet.read", "fleet.build", "fleet.command"} <= set(binding["permissions"])
+    for extra in ["fleet.attack", "fleet.read"]:
+        with pytest.raises(PublicError):
+            normalized_bindings(
+                [{"empire_id": EMPIRE, "permissions": [*sorted(PERMISSIONS), extra]}]
+            )

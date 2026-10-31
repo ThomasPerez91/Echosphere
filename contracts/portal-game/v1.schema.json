@@ -101,11 +101,14 @@
               "research.cancel",
               "galaxy.read",
               "exploration.read",
-              "exploration.start"
+              "exploration.start",
+              "fleet.read",
+              "fleet.build",
+              "fleet.command"
             ],
             "type": "string"
           },
-          "maxItems": 9,
+          "maxItems": 12,
           "minItems": 1,
           "title": "Permissions",
           "type": "array"

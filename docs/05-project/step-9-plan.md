@@ -11,7 +11,7 @@ brouillon. Aucun merge autorisé ; étape 10 Colonisation non commencée. Propos
 | F00 | Réalisé : CI post-merge vérifiée terminée 5/5, master synchronisée ff-only, branche, statuts |
 | F01 | Réalisé : audit ci-dessous et proposition Q09, validée avec amendements |
 | F02 | Réalisé : ruleset complet v0.4 (`fleets.json`, exploration `fleet-survey-v1`), validation stricte, v0.1–v0.3 intactes |
-| F03 | Migration 0009 : tables Fleet, contraintes d’invariant, permissions 12, downgrade sûr ; inventaire de tables |
+| F03 | Réalisé : migration 0009 : tables Fleet, contraintes d’invariant, permissions 12, downgrade sûr ; inventaire de tables |
 | F04 | Production (file dédiée, réservation, annulation Q39 explicite), garnisons, division/fusion stationnées |
 | F05 | Missions DEPLOY/SURVEY/RETURN, chemins snapshotés, `FLEET_ARRIVAL`, rapports, reprise worker |
 | F06 | Cargo CHARGER/DÉCHARGER, rappel `FLEET_RETURN`, idempotence ; transport selon arbitrage A9 |

@@ -14,7 +14,8 @@ from portal_app.sessions.service import Sessions
 
 PERMISSIONS = frozenset(("colony.read", "colony.construct", "colony.cancel",
     "research.read", "research.start", "research.cancel",
-    "galaxy.read", "exploration.read", "exploration.start"))
+    "galaxy.read", "exploration.read", "exploration.start",
+    "fleet.read", "fleet.build", "fleet.command"))
 
 
 def digest(value):
