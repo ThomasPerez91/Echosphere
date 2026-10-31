@@ -80,7 +80,9 @@ def upgrade():
         "e_id, universe_id), \n\tCONSTRAINT ck_acquired_technologies_reducti"
         "on CHECK (reduction_bps >= 0 AND reduction_bps < 10000)\n)"
     )
-    op.drop_constraint("ck_empire_bindings_binding_permissions", "empire_bindings", type_="check")
+    op.drop_constraint(
+        op.f("ck_empire_bindings_binding_permissions"), "empire_bindings", type_="check"
+    )
     op.create_check_constraint(
         "binding_permissions",
         "empire_bindings",
@@ -107,7 +109,9 @@ def downgrade():
     op.drop_table("research_orders")
     op.drop_table("empire_research")
     op.drop_constraint("uq_colonies_research_scope", "colonies", type_="unique")
-    op.drop_constraint("ck_empire_bindings_binding_permissions", "empire_bindings", type_="check")
+    op.drop_constraint(
+        op.f("ck_empire_bindings_binding_permissions"), "empire_bindings", type_="check"
+    )
     op.create_check_constraint(
         "binding_permissions",
         "empire_bindings",
