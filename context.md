@@ -16,7 +16,7 @@ Universe = frontière d’instance, ni User ni processus ; late join et protecti
 Compte global multi-parties validé conceptuellement : User → UniverseMembership → Universe →
 éventuellement Empire/rôles/permissions ; pas de owner_user_id unique, empire partagé Q21 validé, UI de partage future.
 
-## Implémentation intégrée — jusqu’à 5D ; checkpoints antérieurs conservés
+## Implémentation intégrée — jusqu’à Research ; checkpoints antérieurs conservés
 
 PR #5 fusionnée le 2026-10-28 ; vérification GitHub/local le 2026-10-29 : master
 8214e0bd30a00bf0336264a428e6975d307350ba, CI 40765430216 verte. Recette locale WSL2/Compose
@@ -117,15 +117,17 @@ La [boucle Colony jouable](docs/03-technical/colony-api-ui.md) est livrée : lec
 annulation sécurisées, Q39 plafonnement/perte et cascade Q01, worker et recette Portal coupé.
 La création complète de partie reste hors produit ; aucune fixture runtime ajoutée.
 
-**Lot courant : étape 6 — Recherche globale d’Empire**, branche work/step-6-research depuis ce master.
-Q05 est **Clos produit — implémentation étape 6**, validation utilisateur explicite reçue.
-[Plan R00–R09](docs/05-project/step-6-plan.md) et [contrat canonique](docs/01-game-design/research.md).
-R02–R09 autorisés sur la même branche/PR #9 ; aucune étape 7, aucune fusion sans instruction.
-Catalogue complet v0.2 explicite, état/file/acquis par Empire, financement Colony et snapshots
-immuables à l’acceptation, permissions/API/UI/worker dans le monolithe existant :
-[Research technique](docs/03-technical/research-api-ui.md). Aucun Universe v0.1 adopté silencieusement.
-Vérifier GitHub : après fusion #9, considérer Research intégrée à master et ses consignes de branche
-comme historiques ; repartir de master synchronisée pour un nouveau lot autorisé.
+**Étape 6 intégrée à master via PR #9** : tête finale `02cae276`, merge
+`437844e4427122a1b8d0387271b5354deadfbe2e`. Q05 close et Research réellement livrée ;
+[contrat](docs/01-game-design/research.md), [plan historique](docs/05-project/step-6-plan.md),
+[API/UI/recette](docs/03-technical/research-api-ui.md). CI post-merge 41152760101 success (5/5)
+vérifiée le 31/10/2026 ; aucune adoption silencieuse des univers v0.1.
+
+**Lot courant : étape 7 Galaxy + Exploration**, `work/step-7-galaxy-exploration` depuis ce master.
+Instruction utilisateur du 31/10/2026 : G00, audit, plan G00–G10 et proposition Q06/Exploration
+immédiatement autorisés. Validation explicite requise avant générateur/game_data définitifs,
+migration ou métier Exploration fondés sur ces choix. Q06 ouverte ; Q08 close inchangée.
+Étape 8 non commencée. Ni Fleet anticipée ni création de partie multijoueur ni merge autorisés.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.

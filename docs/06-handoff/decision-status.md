@@ -3,8 +3,9 @@
 **Complément validé le 31/10/2026 (instruction utilisateur PR #8)** : Q01 construction, Q08,
 Q17, Q19–Q39 et Q55 closes dans leur portée au [registre](../05-project/open-questions.md).
 Les lignes anciennes sont des checkpoints ; ce complément prévaut sur les mentions « ouvert »
-antérieures. PR #7 (5C) et #8 (5D, merge `0e2ca11`) sont fusionnées ; étape 6 sur PR #9.
-**Q05 close produit après validation utilisateur explicite ; R02–R09 implémentés.** Vérifier GitHub réel,
+antérieures. PR #7 (5C) et #8 (5D, merge `0e2ca11`) sont fusionnées ; Research intégrée via PR #9 (`437844e4`).
+**Q05 close produit, R00–R09 livrés et intégrés ; CI post-merge 41152760101 success (5/5).**
+Lot courant étape 7 : G00/G01 autorisés, Q06 et Exploration à proposer puis valider ; étape 8 non commencée. Vérifier GitHub réel,
 [preuve et checkpoint](../../progress.md), [API/UI Research](../03-technical/research-api-ui.md).
 
 | Décision complémentaire | Produit | État de réalisation et référence |

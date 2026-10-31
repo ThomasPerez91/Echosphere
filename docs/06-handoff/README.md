@@ -22,7 +22,7 @@ Fusion vérifiée le 2026-10-29 : master 8214e0b, CI verte. L’ancien checkpoin
 décrivait #5 ouverte ; il reste historique. Vérifier GitHub réel avant d’agir.
 **Décisions validées, futures** : compte global, multi-parties, Portal/Game isolables,
 Accounts DB/Game DB séparées, interface interne contrôlée et GameSession autonome après handoff.
-**Sur PR #7, non intégré** : [socle Portal C01](../03-technical/portal-foundation.md), backend/frontend,
+**Intégré via PR #7 (`ff6ef89`)** : [socle Portal C01](../03-technical/portal-foundation.md), backend/frontend,
 Accounts DB et HTTPS local ; [C02](../03-technical/portal-registration.md) ajoute inscription,
 Argon2id, vérification et email durable local. [C03](../03-technical/portal-sessions.md) ajoute connexion/sessions Portal, CSRF et intentions de logout.
 [C04](../03-technical/portal-account-security.md) ajoute opérations sensibles sans MFA, step-up et logout global.
@@ -39,8 +39,11 @@ et marqueurs de révocation acquittés par Game.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1` le 2026-10-29.
 5C devient le lot courant sur work/step-5c-portal-account-lobby depuis ce merge : premier checkpoint
 documentaire et cadrage réalisés, puis C01–C08 autorisés et implémentés ; C08 livré, recette C09 réalisée, 5C fusionné via PR #7 (`ff6ef89`), puis 5D via PR #8 (`0e2ca11`).
-Lot courant : étape 6 sur work/step-6-research, Q05 validée explicitement et implémentation R02–R09
-réalisée sur PR #9 ; [API/UI Research](../03-technical/research-api-ui.md), état réel dans progress. Le [plan 5D](../05-project/step-5d-plan.md) est historique. Le
+Research est intégrée via PR #9 (`437844e4`), Q05 close ; CI post-merge 41152760101
+success (5/5), vérifiée le 31/10/2026. [API/UI Research](../03-technical/research-api-ui.md).
+Lot courant : étape 7 Galaxy + Exploration, branche unique `work/step-7-galaxy-exploration`.
+G00/G01 autorisés, validation Q06/Exploration requise avant code engageant ; étape 8 non commencée.
+État et prochain point d’arrêt dans progress ; les anciens checkpoints restent historiques. Le
 [registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
 délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
 ajout de facteur/régénération volontaire des secours avec step-up existant ; plafonds 10/10 configurables et sans effet sur

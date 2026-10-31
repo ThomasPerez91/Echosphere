@@ -4,6 +4,34 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 31/10/2026 — G00 |
+| --- | --- |
+| Objectif | Étape 7 Galaxy + Exploration : sync post-merge Research, audit et proposition produit avant code |
+| Branche / base | `work/step-7-galaxy-exploration`, créée depuis master/origin/master `437844e4427122a1b8d0387271b5354deadfbe2e` après ff-only |
+| Tête / PR | Checkpoint G00 dans ce commit ; SHA distant et PR à relire après publication |
+| Dernier travail publié | Research via PR #9 MERGED, tête `02cae2762c24c9fef2963b99ba7b8bdd23a5395f`, merge `437844e4` ; dernier agent consigné : ChatGPT Work |
+| Agent actuel / protection | Codex local ; checkout initial propre, aucun diff/index/nouveau fichier ni commit inédit sur ancienne branche 5D ; un seul worktree, aucun autre processus agent observé |
+| CI observée | [Post-merge 41152760101](https://github.com/ThomasPerez91/Echosphere/actions/runs/41152760101) completed/success, cinq jobs ; aucune PR ouverte au contrôle initial |
+| Décisions | Q05 close et Research livrée ; Q06 ouverte, Q08 close inchangée ; étape 7 lot courant, étape 8 non commencée |
+| Fichiers G00 | AGENTS, context, progress, index docs/passation/décisions, roadmap/questions et statut du plan étape 6 |
+| Checks | check_docs : 80 documents/liens OK ; git diff --check OK ; suites fonctionnelles non relancées pour ce diff documentaire |
+| Limites | Aucun code Galaxy/Exploration livré, aucune migration/game_data/UI modifiés ; aucune nouvelle recette WSL2/Docker attestée |
+| Prochaine action | G01 : audit code/migrations/tests, plan G00–G10, proposition Q06 et contrat minimal Exploration ; présenter puis attendre validation utilisateur |
+
+## G00 — synchronisation post-merge Research, 31/10/2026
+
+Instruction utilisateur : synchroniser le clone puis commencer étape 7, avec arrêt produit explicite
+après G00/G01. PR #9/base/head/merge et CI post-merge vérifiés réellement ; fetch effectué.
+Ancienne branche locale 5D `b9425ce` en retard de deux commits, aucun commit non publié.
+Master locale `ff6ef89` avancée en fast-forward à `437844e4`, identique à origin/master ;
+branche étape 7 créée depuis cet arbre propre. Branches anciennes préservées, aucun reset/force/merge.
+Restriction sandbox initiale sur .git/réseau résolue par exécution autorisée ; aucune donnée perdue.
+Les statuts d’étape 6 deviennent historiques sans réécrire leurs preuves de livraison.
+
+## Checkpoint Research antérieur à la fusion #9 (historique)
+
+### Reprise rapide Research avant fusion
+
 | Champ | État au 31/10/2026 |
 | --- | --- |
 | Branche / PR / base | work/step-6-research, unique PR #9, base master 0e2ca11322a85452ad6860a4a35099bbc22a4689 ; GitHub réel prioritaire |
