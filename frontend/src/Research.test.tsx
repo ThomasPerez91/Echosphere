@@ -74,8 +74,7 @@ async function start() {
       name: "Rechercher Fabrication modulaire I",
     }),
   );
-  // Role queries over the full catalogue are slow on CI runners: wait longer, same assertion.
-  fireEvent.click(await screen.findByRole("button", { name: "Confirmer" }, { timeout: 5000 }));
+  fireEvent.click(await screen.findByRole("button", { name: "Confirmer" }));
 }
 
 test("no runtime mutation on StrictMode mount, explicit source and prerequisites", async () => {
@@ -138,8 +137,7 @@ test("refund confirmation exposes destination, theory, recoverable, lost and cas
   expect(screen.getByText(/Perte définitive/)).toHaveTextContent("77 Alliages");
   expect(screen.getByText(/Cascade : aucune/)).toBeVisible();
   expect(posts(f)).toHaveLength(0);
-  // Role queries over the full catalogue are slow on CI runners: wait longer, same assertion.
-  fireEvent.click(await screen.findByRole("button", { name: "Confirmer" }, { timeout: 5000 }));
+  fireEvent.click(await screen.findByRole("button", { name: "Confirmer" }));
   await waitFor(() => expect(posts(f)).toHaveLength(1));
 });
 test("malformed monetary projections refused before render", () => {

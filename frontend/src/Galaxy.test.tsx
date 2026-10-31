@@ -59,7 +59,7 @@ async function prepare() {
   node.focus();
   fireEvent.keyDown(node, { key: "Enter" });
   fireEvent.click(await screen.findByRole("button", { name: "Préparer l’expédition" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Confirmer l’expédition" }, { timeout: 5000 }));
+  fireEvent.click(await screen.findByRole("button", { name: "Confirmer l’expédition" }));
 }
 
 test("StrictMode mount sends no command and shows only server knowledge", async () => {
