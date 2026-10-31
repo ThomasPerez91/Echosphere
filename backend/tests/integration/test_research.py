@@ -244,6 +244,7 @@ def test_technical_corruption_retries_without_partial_acquisition(world, corrupt
             snapshot = dict(row.snapshot)
             snapshot["technology"] = {**snapshot["technology"], "requires": ["xenoscience_1"]}
             row.snapshot = snapshot
+    assert read(w).status_code == 503  # Technical refusal even before the event is due.
     w.advance(minutes=3)
     engine = TimeEngine(w.game.factory, w.app.state.clock)
     assert engine.process_next()

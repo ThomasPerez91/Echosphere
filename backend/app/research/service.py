@@ -7,7 +7,7 @@ No Portal, implicit identity, cross-stream handler, second debit or retrospectiv
 from datetime import timedelta
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 from sqlalchemy import select
 
 from app.colony.rules import Nonnegative, Positive, Ratio, ResearchRules, StrictModel, Technology
@@ -169,7 +169,10 @@ def pending(session, empire_id):
 
 
 def read_snapshot(session, order):
-    snap = Snapshot.model_validate(order.snapshot)
+    try:
+        snap = Snapshot.model_validate(order.snapshot)
+    except ValidationError:
+        raise TimelineError("Invalid persisted Research snapshot") from None
     if snap.technology_id != order.technology_id or snap.colony_id != str(order.colony_id):
         raise TimelineError("Research snapshot identity mismatch")
     rules = rules_for(session, order.universe_id)
