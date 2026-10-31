@@ -74,7 +74,7 @@ async function start() {
       name: "Rechercher Fabrication modulaire I",
     }),
   );
-  fireEvent.click(screen.getByRole("button", { name: "Confirmer" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Confirmer" }));
 }
 
 test("no runtime mutation on StrictMode mount, explicit source and prerequisites", async () => {
@@ -137,7 +137,7 @@ test("refund confirmation exposes destination, theory, recoverable, lost and cas
   expect(screen.getByText(/Perte définitive/)).toHaveTextContent("77 Alliages");
   expect(screen.getByText(/Cascade : aucune/)).toBeVisible();
   expect(posts(f)).toHaveLength(0);
-  fireEvent.click(screen.getByRole("button", { name: "Confirmer" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Confirmer" }));
   await waitFor(() => expect(posts(f)).toHaveLength(1));
 });
 test("malformed monetary projections refused before render", () => {
