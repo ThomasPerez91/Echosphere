@@ -22,6 +22,7 @@ REQUIRED = {
             "buildings",
             "research",
             "galaxy",
+            "system-view",
             "exploration",
             "fleets",
             "combat",
@@ -54,6 +55,7 @@ REQUIRED = {
             "resource-calculation",
             "api",
             "frontend",
+            "system-view",
             "backend",
             "ai-engine",
             "security",
@@ -77,7 +79,7 @@ REQUIRED = {
     ],
     *[
         f"docs/05-project/{name}.md"
-        for name in ("roadmap", "backlog", "releases", "open-questions")
+        for name in ("roadmap", "backlog", "releases", "open-questions", "step-8-plan")
     ],
     *[
         f"docs/adr/{name}.md"

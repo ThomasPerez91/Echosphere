@@ -1,6 +1,6 @@
 # Galaxie et Exploration — contrat technique étape 7
 
-**Statut : implémenté sur PR #10 (brouillon puis Ready), non fusionné ; vérifier GitHub avant reprise.**
+**Statut : intégré via PR #10, merge `773e05c` ; CI post-merge 41220568486 success (5/5), vérifiée le 31/10/2026.**
 Contrats produit : [Galaxie/Q06](../01-game-design/galaxy.md), [Exploration](../01-game-design/exploration.md),
 [Fog/Q08](../01-game-design/fog-of-war.md). Plan et preuves : [étape 7](../05-project/step-7-plan.md),
 [progress](../../progress.md). Q09 (Fleet) reste ouverte ; étape 8 System View non commencée.
@@ -41,7 +41,9 @@ MAPPED/MONITORED = nom, position exacte et `mapped_at` copiés au moment de la c
 jointure vers le monde réel pour enrichir une réponse, aucun filtrage Python/React d’un monde complet.
 
 Surveillance : seul le système contenant une colonie propre devient MONITORED (observation =
-identifiants de ses propres colonies), rafraîchi à la lecture sous le stream Exploration, sans timer.
+identifiants de ses propres colonies, projetée `null` sans colony.read ; le marqueur « votre colonie »
+du client dérive de MONITORED seul, une ancienne observation MAPPED n’est plus présentée comme la
+vôtre), rafraîchi à la lecture sous le stream Exploration, sans timer.
 Sans présence réelle : MONITORED → MAPPED, structure et `last_seen_at` conservés. Aucun partage
 entre Empires. `initialize_empire` (explicite, après la vraie colonie) : origine cartographiée puis
 surveillée, voisins directs DETECTED et routes incidentes ; Research initialisé avant le stream
@@ -109,3 +111,10 @@ sur commande pendant qu’une expédition déjà acceptée se termine. Résultat
 Pas de Fleet, IA, colonisation, combat, capteurs, anomalies ni System View. Création complète de
 partie et affectation multi-Empires des sites candidats hors lot. Noms générés provisoires
 (« System NNNNNN », « World n »). Aucune garantie de charge au-delà des mesures G02.
+
+## Extension System View — étape 8 / PR #11
+
+Le GET détail réutilisé lit désormais la Knowledge persistée sous verrou Exploration **sans
+catch_up ni avancement de stream** ; DETECTED reste minimal. Détail MAPPED/MONITORED enrichi par
+composition : dates, routes connues, présence propre observée et liens Colony sous colony.read.
+Aucun rapport figé ni API générale Galaxy modifié ; [contrat technique System View](system-view.md).

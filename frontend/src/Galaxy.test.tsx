@@ -149,4 +149,10 @@ test("fog leaks and dangling references are refused before render", () => {
   expect(validProjection(dangling, empire)).toBe(false);
   expect(validProjection(projection(), otherEmpire)).toBe(false);
   expect(validProjection(projection(), empire)).toBe(true);
+  // Without colony.read the server sends no Colony identifier; one present is a leak.
+  const reader = projection();
+  reader.permissions = ["galaxy.read"];
+  expect(validProjection(reader, empire)).toBe(false);
+  reader.systems[0].observation = null;
+  expect(validProjection(reader, empire)).toBe(true);
 });

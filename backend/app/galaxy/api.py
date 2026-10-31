@@ -12,11 +12,12 @@ from app.colony.api import Colonies, Empty, bootstrap, call, command
 from app.colony.projection import amounts
 from app.colony.service import catch_up_owned, rules_for
 from app.control.models import EmpireBinding
-from app.galaxy import service
+from app.galaxy import service, system_view
 from app.galaxy.models import ExplorationMission, ExplorationReport, RouteKnowledge, SystemKnowledge
 from app.persistence.models import Colony, Empire, Planet
 from app.research import service as research
 from app.simulation.models import ResourceBalance
+from app.simulation.scheduler import lock_stream
 
 router = APIRouter(prefix="/game/{universe_id}")
 
@@ -144,7 +145,9 @@ class Galaxy(Colonies):
             "server_time": at.isoformat(),
             "empire": {"id": str(empire_id), "name": session.get(Empire, empire_id).name},
             "permissions": permissions,
-            "systems": [service.project_system(session, k) for k in knowledge],
+            "systems": [
+                service.project_system(session, k, "colony.read" in permissions) for k in knowledge
+            ],
             "routes": [
                 {"id": str(r.route_id), "a_id": str(r.a_id), "b_id": str(r.b_id)} for r in routes
             ],
@@ -197,6 +200,15 @@ class Galaxy(Colonies):
                 "exploration.read" if missions else "galaxy.read",
             )
             at = self.clock.now()
+            if system_id is not None:
+                # System View reads persisted knowledge only, even when a mission is overdue.
+                state = service.state_for(session, universe_id, empire_id)
+                lock_stream(session, state.stream_id, universe_id)
+                known = session.get(SystemKnowledge, (empire_id, system_id))
+                if known is None or known.universe_id != universe_id:
+                    raise AccessError("system_not_found", 404)
+                service.refresh_monitoring(session, universe_id, empire_id, at)
+                return system_view.project(session, known, permissions, at)
             service.catch_up(session, self.engine, universe_id, empire_id, at)
             if missions:
                 return {
@@ -204,12 +216,6 @@ class Galaxy(Colonies):
                         session, universe_id, empire_id, permissions
                     )
                 }
-            if system_id is not None:
-                known = session.get(SystemKnowledge, (empire_id, system_id))
-                if known is None or known.universe_id != universe_id:
-                    raise AccessError("system_not_found", 404)
-                service.refresh_monitoring(session, universe_id, empire_id, at)
-                return service.project_system(session, known)
             return self.projection(session, universe_id, empire_id, permissions, at)
 
     def start(self, raw, universe_id, empire_id, body):

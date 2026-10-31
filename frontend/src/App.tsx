@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ResearchView } from './components/ResearchView';
 import { GalaxyView } from './components/GalaxyView';
+import type { GalaxyContext } from './components/GalaxyView';
+import { SystemView } from './components/SystemView';
 import { GameAccess } from './components/GameAccess';
 import { useGameSession } from './hooks/useGameSession';
 import { useColony } from './hooks/useColony';
@@ -33,6 +35,9 @@ export default function App() {
   const segments = route.split('/');
   const universe = segments[0] === 'universe' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(segments[1] ?? '') ? segments[1] : null;
   const localRoute = universe ? segments.slice(2).join('/') || 'empire' : route;
+  const systemMatch = localRoute.match(/^galaxy\/system\/([a-f0-9-]{36})\/([a-f0-9-]{36})$/i);
+  const systemEmpire = systemMatch?.[1], systemId = systemMatch?.[2];
+  const galaxyContexts = useRef<Record<string, GalaxyContext>>({});
   const access = useGameSession(universe);
   const colony = useColony(universe, access.phase === 'active', access.session?.csrf_token, access.retry);
   const projection = universe && access.phase === 'active' ? colony.projection : null;
@@ -40,7 +45,18 @@ export default function App() {
   const href = (section: string) => universe ? `#universe/${universe}/${section}` : `#${section}`;
   const navigation = () => { if (universe && access.phase === 'active' && !access.busy) void access.refresh(); };
   const [destination, colonyView = 'overview'] = localRoute.split('/');
-  const section = sections.find(item => item.id === destination && (item.id === 'colony' || !localRoute.includes('/')));
+  const section = sections.find(item => item.id === destination && (item.id === 'colony' || !!systemMatch || !localRoute.includes('/')));
+  const requestedColony = localRoute.match(/^colony\/overview\/([a-f0-9-]{36})$/i)?.[1];
+  const selectColony = colony.select;
+  useEffect(() => {
+    if (requestedColony && access.phase === 'active') selectColony(requestedColony);
+  }, [requestedColony, access.phase, selectColony]);
+  useEffect(() => {
+    if (universe && systemEmpire && systemId) {
+      const previous = galaxyContexts.current[universe];
+      galaxyContexts.current[universe] = { empire: systemEmpire, selected: systemId, view: previous?.empire === systemEmpire ? previous.view : null };
+    }
+  }, [universe, systemEmpire, systemId]);
 
   useEffect(() => {
     const navigate = () => { setRoute(currentRoute()); setMoreOpen(false); };
@@ -97,9 +113,10 @@ export default function App() {
       </header>
       <main id="main-content" tabIndex={-1}>
         <div className="page-heading"><p className="eyebrow">{section?.label ?? 'Navigation'} / APERÇU</p>
-          <h1 ref={heading} tabIndex={-1}>{section?.title ?? 'Page introuvable'}</h1>
+          <h1 ref={heading} tabIndex={-1}>{systemMatch ? 'Vue du système' : section?.title ?? 'Page introuvable'}</h1>
           <p>{universe && destination === 'colony' && section ? 'Stocks, secteurs, infrastructures et file de construction de votre colonie, calculés et confirmés par le serveur.'
             : universe && destination === 'empire' && section ? 'Situation de votre colonie et constructions en cours, selon le serveur Game.'
+            : systemMatch && section ? 'Structure, mondes et présences propres que votre Empire connaît de ce système, selon le serveur.'
             : section?.description ?? 'Cette destination n’existe pas. Retrouvez les sections dans la navigation.'}</p>
         </div>
         {universe && (destination === 'empire' || access.phase !== 'active') && <GameAccess access={access} />}
@@ -135,7 +152,7 @@ export default function App() {
               <p>Cette vérification indique si les services sont joignables. Elle ne confirme pas qu’une partie est active.</p>
               <Button disabled={status === 'checking'} onClick={retry}>{status === 'checking' ? 'Vérification…' : 'Vérifier la connexion'}</Button>
             </Panel></div>
-        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : destination === 'research' && universe ? <ResearchView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'research' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la recherche de vos Empires.</p></Panel> : destination === 'galaxy' && universe ? <GalaxyView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'galaxy' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la carte de vos Empires.</p></Panel> : <section className="panel destination-panel"><Badge>À venir</Badge>
+        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : destination === 'research' && universe ? <ResearchView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'research' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la recherche de vos Empires.</p></Panel> : destination === 'galaxy' && universe && systemEmpire && systemId ? <SystemView universe={universe} empire={systemEmpire} system={systemId} onSessionLost={access.retry} onColony={navigation} /> : destination === 'galaxy' && universe ? <GalaxyView initialContext={galaxyContexts.current[universe]} onContextChange={context => { galaxyContexts.current[universe] = context; }} universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'galaxy' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la carte de vos Empires.</p></Panel> : <section className="panel destination-panel"><Badge>À venir</Badge>
           <EmptyState title={`${section.label} : espace en préparation`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
           <a className="text-link" href={href('empire')}>← Retour à l’Empire</a>
         </section>}

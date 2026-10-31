@@ -192,7 +192,7 @@ def refresh_monitoring(session, universe_id, empire_id, at):
             known.state = "MAPPED"  # preserve structure and the dated observation
 
 
-def project_system(session, known):
+def project_system(session, known, colony_read=True):
     result = {
         "id": str(known.system_id),
         "state": known.state,
@@ -207,7 +207,8 @@ def project_system(session, known):
             y=known.known_y,
             mapped_at=known.mapped_at.isoformat(),
             last_seen_at=known.last_seen_at.isoformat() if known.last_seen_at else None,
-            observation=known.observation,
+            # Colony identifiers stay behind colony.read, like mission funding sources.
+            observation=known.observation if colony_read else None,
             planets=[
                 {
                     "id": str(p.planet_id),

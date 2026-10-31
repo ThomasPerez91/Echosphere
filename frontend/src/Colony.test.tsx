@@ -191,3 +191,42 @@ test('refund presentation never hides a fractional loss or rounds large integer 
   expect(exactUnits('199999999')).toBe('199,999999');
   expect(exactUnits('18446744073709551614').replace(/\s/g, ' ')).toBe('18 446 744 073 709,551614');
 });
+
+test.each([false, true])('explicit Colony deep-link targets its source and ignores an old response (refused=%s)', async refused => {
+  const target = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const first = projection();
+  const second = projection({ colony: { ...first.colony, id: target, name: 'Linked source' } });
+  let oldReads = 0;
+  let resolveOld!: (value: unknown) => void;
+  const reply = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body });
+  const fetcher = vi.fn(async (url: string) => {
+    if (url === '/api/ready') return reply({ status: 'ready' });
+    if (url.endsWith('/session')) return reply(session);
+    if (url.endsWith('/colonies')) return reply({ colonies: [
+      { id: colonyId, name: first.colony.name, empire: first.colony.empire },
+      { id: target, name: second.colony.name, empire: first.colony.empire },
+    ] });
+    if (url.endsWith(`/${target}`)) return refused ? reply({ error: { code: 'colony_not_found' } }, 404) : reply(second);
+    if (url.endsWith(`/${colonyId}`)) {
+      oldReads++;
+      if (oldReads === 2) return new Promise(resolve => { resolveOld = resolve; });
+      return reply(first);
+    }
+    throw new Error('Unexpected request');
+  });
+  vi.stubGlobal('fetch', fetcher);
+  window.history.replaceState(null, '', `#universe/${universe}/colony/overview`);
+  render(<App />);
+  await screen.findByRole('heading', { name: 'Kepler Test' });
+  fireEvent.click(screen.getByRole('button', { name: 'Actualiser la colonie' }));
+  await waitFor(() => expect(oldReads).toBe(2));
+  await act(async () => {
+    window.location.hash = `#universe/${universe}/colony/overview/${target}`;
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  });
+  if (!refused) await screen.findByRole('heading', { name: 'Linked source' });
+  else await screen.findByRole('alert');
+  await act(async () => { resolveOld(reply(first)); });
+  expect(screen.queryByRole('heading', { name: 'Kepler Test' })).not.toBeInTheDocument();
+  if (!refused) expect(screen.getByRole('heading', { name: 'Linked source' })).toBeVisible();
+});

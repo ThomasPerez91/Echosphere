@@ -41,8 +41,8 @@ et marqueurs de révocation acquittés par Game.
 documentaire et cadrage réalisés, puis C01–C08 autorisés et implémentés ; C08 livré, recette C09 réalisée, 5C fusionné via PR #7 (`ff6ef89`), puis 5D via PR #8 (`0e2ca11`).
 Research est intégrée via PR #9 (`437844e4`), Q05 close ; CI post-merge 41152760101
 success (5/5), vérifiée le 31/10/2026. [API/UI Research](../03-technical/research-api-ui.md).
-Lot courant : étape 7 Galaxy + Exploration, branche unique `work/step-7-galaxy-exploration`.
-Q06/Exploration validées ; G02–G10 réalisés sur PR #10 ([technique](../03-technical/galaxy-api-ui.md)) ; étape 8 non commencée.
+Historique étape 7 (intégrée via #10) : Galaxy + Exploration, branche unique `work/step-7-galaxy-exploration`.
+Q06/Exploration validées ; G02–G10 réalisés sur PR #10 ([technique](../03-technical/galaxy-api-ui.md)) ; étape 8 alors non commencée.
 État et prochain point d’arrêt dans progress ; les anciens checkpoints restent historiques. Le
 [registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
 délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
@@ -58,4 +58,11 @@ Une reprise fraîche doit pouvoir distinguer état implémenté, validation prod
 proposition et question ouverte. Une ambiguïté encore présente va dans known-gaps et le registre,
 sans transformer une suggestion d’assistant en décision validée.
 
-Cadrage courant : [plan étape 7](../05-project/step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.
+Plan historique : [plan étape 7](../05-project/step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.
+
+## État post-merge étape 7 — 31/10/2026
+
+Étape 7 intégrée via PR #10, merge `773e05c`, CI post-merge 41220568486 success (5/5).
+Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
+Lot courant : étape 8 System View, branche `work/step-8-system-view`, S00–S09 autorisés.
+Étape 9 Fleets non commencée, aucun merge autorisé.

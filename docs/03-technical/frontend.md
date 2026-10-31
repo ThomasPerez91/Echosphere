@@ -1,6 +1,8 @@
 # Frontend
 
-**Statut : shell responsive implémenté à l’étape 4 ; aucune API de gameplay.**
+**Statut actuel : shell et APIs/UI Colony/Research/Galaxy intégrés ; System View étape 8 sur PR #11.**
+Les sections bootstrap/étape 4 ci-dessous sont historiques. Référence actuelle System View :
+[projection/navigation](system-view.md), sous-route de Galaxy, sans huitième domaine ni commande.
 
 React + TypeScript strict + Vite. Navigation par fragments natifs `#empire`, `#colony`, `#research`,
 `#galaxy`, `#fleets`, `#reports`, `#relations` ; liens directs, rechargement et précédent/suivant

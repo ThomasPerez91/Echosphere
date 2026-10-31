@@ -26,6 +26,40 @@ async function open(page) {
   await page.goto(`${game}/#universe/${universe}/galaxy`);
   await page.getByRole('heading', { name: 'Carte des connaissances' }).waitFor();
 }
+async function openSystem(page, snapshot, { own = false } = {}) {
+  // Enter through the real Galaxy action, then verify the dedicated projection against Knowledge.
+  const select = page.locator('.galaxy-list').getByRole('button', { name: new RegExp(`^${snapshot.name} `) });
+  await select.click();
+  await page.getByRole('link', { name: 'Voir le système', exact: true }).click();
+  // The Galaxy detail panel shows the same name: wait for the System View header itself.
+  const title = page.locator('.system-heading').getByRole('heading', { name: snapshot.name, exact: true });
+  await page.waitForURL(new RegExp(`/galaxy/system/${empire}/${snapshot.id}$`));
+  await title.waitFor().catch(async error => {
+    await page.screenshot({ path: '/artifacts/system-failure.png', fullPage: true });
+    console.error(await page.locator('main').innerText());
+    throw error;
+  });
+  const detail = await read(page, `${root}/systems/${snapshot.id}`);
+  if (detail.status !== 200 || JSON.stringify(detail.body.planets) !== JSON.stringify(snapshot.planets)) throw new Error('System View must match stored PlanetKnowledge');
+  if (detail.body.state === 'DETECTED') throw new Error('Detailed System View must require mapped structure');
+  if (own && (!detail.body.colony_links.some(c => c.colony_id === colony) || !detail.body.presences.some(p => p.current && p.colony?.colony_id === colony))) throw new Error('Own Colony link and dated presence expected');
+  for (const planet of detail.body.planets) {
+    if (!await page.locator('.system-world-list').getByRole('button', { name: new RegExp(planet.name) }).count()) throw new Error('Known planet missing from text list');
+  }
+  if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)) throw new Error('System View horizontal overflow');
+  await page.screenshot({ path: `/artifacts/system-${own ? 'own' : 'mapped'}-${page.viewportSize().width}.png`, fullPage: true });
+  const colonyLink = page.getByRole('link', { name: 'Voir ma colonie', exact: true });
+  if (own) {
+    // The own world opens preselected; its link leads to the real Colony screen of that colony.
+    await colonyLink.click();
+    await page.waitForURL(new RegExp(`/colony/overview/${colony}$`));
+    await page.getByRole('heading', { name: 'Constructions en cours' }).waitFor();
+    await page.goBack();
+    await title.waitFor();
+  } else if (await colonyLink.count()) throw new Error('No Colony action on a system without own presence');
+  await page.getByRole('link', { name: '← Retour à la Galaxie', exact: true }).click();
+  await page.getByRole('heading', { name: 'Carte des connaissances' }).waitFor();
+}
 function audit(p) {
   // Only legitimate knowledge: never the 40-system world, never structure for DETECTED.
   const ids = new Set(p.systems.map(s => s.id));
@@ -63,6 +97,8 @@ try {
   audit(initial);
   const detected = initial.systems.filter(s => s.state === 'DETECTED');
   if (initial.systems.filter(s => s.state === 'MONITORED').length !== 1 || !detected.length) throw new Error('One monitored origin and its detected neighbours expected');
+  const ownSystem = initial.systems.find(s => s.state === 'MONITORED');
+  await openSystem(page, ownSystem, { own: true });
   const first = await launch(page, initial);
   const engaged = (await read(page)).body;
   const mission = engaged.missions.find(m => m.status === 'active');
@@ -83,7 +119,8 @@ try {
   if (done.status !== 'completed' || done.report.observed_at !== done.due_at) throw new Error('Immutable report observed at due_at expected');
   if (mapped.systems.length < initial.systems.length) throw new Error('Knowledge must be monotonic');
   await page.getByText('Terminée').first().waitFor();
-  console.log(`Galaxy: limited map (${initial.systems.length} known), exact debit, page closed, worker restart, MAPPED + report then reopened`);
+  await openSystem(page, destination);
+  console.log(`Galaxy/System View: own presence/link, detailed Knowledge, limited map (${initial.systems.length} known), exact debit, page closed, worker restart, MAPPED + report then reopened`);
 
   await marker('portal-stop'); await waitMarker('portal-stopped');
   const probe = await context.newPage(); const down = await probe.goto(`${portal}/api/ready`);
@@ -98,10 +135,13 @@ try {
   const outage = (await read(page)).body;
   audit(outage);
   if (outage.systems.find(s => s.id === second.destination_id)?.state !== 'MAPPED') throw new Error('Knowledge must progress with Portal down');
+  await openSystem(page, outage.systems.find(s => s.id === second.destination_id));
   const third = await launch(page, outage);
   const csrf = (await read(page, `/api/game/${universe}/session`)).body.csrf_token;
   await marker('expire'); await waitMarker('expired');
   if ((await read(page)).status !== 401) throw new Error('Expired session must refuse reads');
+  const expiredSystem = await read(page, `${root}/systems/${ownSystem.id}`);
+  if (expiredSystem.status !== 401 || 'planets' in expiredSystem.body) throw new Error('Expired System deep-link must not leak structure');
   const refused = await call(page, `/api/game/${universe}/exploration/${empire}/missions`,
     { idempotency_key: 'expired_recipe_intention', colony_id: colony, destination_id: third.destination_id }, csrf);
   if (refused.status !== 401) throw new Error('Expired session must refuse new commands');

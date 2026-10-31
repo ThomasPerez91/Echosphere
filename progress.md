@@ -4,6 +4,113 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 31/10/2026 — S00–S09 réalisés, revue indépendante Claude Code (S10) |
+| --- | --- |
+| Objectif | Étape 8 System View : projection depuis Knowledge existante, sans nouvelle mécanique |
+| Branche / base / PR | work/step-8-system-view ; PR #11 ; master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 ; aucun merge |
+| Tête | Revue sur f2688b2 (CI 41225197685 5/5) ; présent commit = corrections de revue + passation ; CI exacte de la nouvelle tête consignée dans PR #11 |
+| Agent | Codex local S00–S09 ; Claude Code local revue indépendante et corrections S10, seul écrivain pendant la revue |
+| Réalisé | Contrats/plan, détail sans rattrapage, routes Knowledge, observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ; revue : identifiants Colony retirés sans colony.read, monde propre présélectionné, titres et métadonnées Galaxy repliables |
+| Fichiers S10 | app/galaxy/service.py, api.py, system_view.py ; test_system_view.py ; client/validateurs, GalaxyView, SystemView, App, CSS, fixtures/tests UI ; galaxy_browser.mjs ; docs canoniques |
+| Validation locale S10 | PostgreSQL 17 jetable *_test : 275 Game réussis (10 System View), Ruff ; frontend lint 0 erreur (warning préexistant), 51 Vitest, build, 21 Chromium ; sonde textes longs 320 px ; recette HTTPS réelle réussie avec images de l’arbre courant ; check_docs et diff --check |
+| Limites / suite | Ready seulement après CI 5/5 de la tête finale ; merge sur autorisation explicite uniquement. Portal/contrats inchangés ; zéro migration/grant/game_data ; étape 9 non commencée. Chromium émulé, aucun appareil physique/production recetté |
+
+## S10 — revue indépendante Claude Code, 31/10/2026
+
+Revue en lecture d’abord sur f2688b2 (arbre propre, local = distant, CI 41225197685 5/5), sans
+reprendre les affirmations de passation comme preuves. Anomalies prouvées et corrigées :
+
+- **Majeure** — frontière colony.read : `observation.own_colony_ids` était émis sans colony.read,
+  dans le détail System View comme dans la carte Galaxy, puis seulement non affiché par React,
+  alors que la source Colony des missions est déjà masquée sans ce droit. Projection `null` sans
+  colony.read ; validateurs client qui refusent une réponse porteuse d’identifiants ; marqueur
+  « votre colonie » dérivé de MONITORED (une ancienne observation MAPPED n’est plus présentée
+  comme actuelle). Test PostgreSQL vérifié par mutation (échoue sans la correction).
+- **Mineure** — le premier monde par identifiant était sélectionné : sur données réelles, la
+  colonie propre (3ᵉ) n’affichait pas « Voir ma colonie » sans choix manuel. Monde propre
+  présélectionné et lien repris dans Présences ; fixture rendue réaliste (colonie non première).
+- **Mineure** — `.panel-meta` nowrap restant dans Galaxy : nom d’Empire long → page de 522 px à
+  320 px. Repli autorisé dans Galaxy/System View ; raccourcis de mondes coupés aux mots seulement.
+- **Cosmétique** — titre « Système System 668304 » doublé : nom seul sous un sur-titre ; description
+  de page propre à la vue ; tailles de texte des présences harmonisées.
+- **Recette** — test GET échu renforcé (Knowledge et stocks inchangés) ; recette réelle qui clique
+  le lien Colony jusqu’à l’écran Colonie et attend l’en-tête System View lui-même, avec capture
+  de diagnostic en cas d’échec. E2E System scopé de même (le panneau Galaxy porte le même nom).
+
+Point d’environnement constaté : le smoke Galaxy utilise les images déjà construites
+(`up --no-build`) ; deux premières exécutions locales tournaient sur les images f2688b2. Recette
+validée après `docker compose build backend frontend` (étiquettes seules, aucun conteneur ni
+volume de la pile conservée touché). Vérifié sans changement : GET détail sans catch_up ni
+avancement (seul le refresh de monitoring étape 7 écrit), 404 identique UNKNOWN/étranger/absent,
+DETECTED minimal, aucune jointure monde pour la structure, réponses tardives et StrictMode,
+navigation deep-link/refresh/back/forward, focus et cibles 44 px. Zéro migration.
+
+## S08/S09 — recette finale, revue et passation, 31/10/2026
+
+Recette HTTPS réelle réussie une seconde fois avec l’image incluant le correctif Colony : système
+MONITORED propre et lien ; Exploration/page fermée/worker redémarré, preuve DB MAPPED avant GET,
+planètes/capacités identiques à Knowledge ; Portal coupé, zéro appel Portal et refus 401 détail
+après expiration. Projet/bases/volumes jetables supprimés, pile conservée intacte.
+
+La CI frontend a révélé à 320 px une légende et une date non repliables à cause du white-space
+nowrap global de panel-meta. Reproduit localement avec diagnostic des rectangles texte ; override
+System View seulement, sans masquer le débordement. Les exécutions locales antérieures réussies
+ne suffisaient pas à écarter ce défaut. Les 21 Chromium complets ont ensuite réussi (12,4 s). CI du
+SHA de publication nécessaire ; ne pas confondre CI configurée et CI réussie.
+
+Revue du diff : structure depuis snapshots, requête Colony propre seulement pour lien autorisé,
+aucun rapport figé enrichi, aucun nouveau scheduler ni GET de rattrapage. Aucun changement Portal,
+contrat partagé, migration, game_data, dépendance ou grant. Statuts canoniques/roadmap/passation
+alignés, checkpoint historique étape 7 conservé. Q04/Q07/Q09 ouvertes, étape 9 non commencée.
+
+## S07/S08 — renforcement de reprise, 31/10/2026
+
+Relecture : une sélection Colony doit invalider aussi la génération des lectures précédentes,
+pas seulement leur AbortController. Correction ciblée et deux tests réussis : deep-link vers une
+autre colonie et refus 404, ancienne réponse reçue ensuite ignorée. Frontend : 50 Vitest/build/lint
+réussis ; 21 Chromium complets réussis (dont 4 System View). Le test backend de permissions a été
+renforcé avec une nouvelle session valide au nouvel epoch, pour distinguer refus d’accès et simple
+session révoquée : 10 System View réussis après correction du ticket de test (epoch initial erroné).
+Aucun défaut runtime d’autorisation démontré par cet échec de fixture.
+
+Première recette locale HTTPS Galaxy/System réussie : connaissance propre/lien, planètes comparées
+à Knowledge, page fermée et preuve DB avant nouvelle vue, Portal arrêté et refus 401 détail ; projet
+jetable supprimé. Nouvelle image finale et recette en cours pour inclure le dernier correctif Colony.
+CI de tête fonctionnelle 67345aa en cours ; aucun Ready ni succès CI final présumé.
+
+## S01–S07 — projection, navigation et UI System View, 31/10/2026
+
+Audit des modèles Knowledge/API/fog/permissions, docs/ADR et références visuelles demandé effectué.
+Schéma existant suffisant, zéro migration. Nouveau contrat métier/technique et plan S00–S09.
+GET détail sépare l’accès System View du catch_up Galaxy : sous stream verrouillé, lecture des
+snapshots autorisés seulement ; test prouve qu’une mission échue reste active sans rapport jusqu’au
+worker et que le curseur n’avance pas. Refresh monitoring existant conservé. DETECTED minimal,
+UNKNOWN/étranger/absent 404 identique, anciennes observations conservées sans enrichissement live.
+Liens Colony : uniquement observation actuelle + colony.read + colonie propre dans planète connue ;
+sinon présence générique, aucun détail Colony ajouté. Routes depuis Knowledge du même Empire.
+
+Sous-route native Galaxy Universe/Empire/System, aucun huitième domaine. SVG illustratif avec
+liste équivalente, sélection/clavier/tactile, dates complètes et panneaux empilés mobile. Retour
+conservant Empire/sélection/cadrage en mémoire ; deep-links autonomes après reload/historique.
+Le lien Colony sélectionne explicitement la bonne colonie, et une sélection efface l’ancien scope
+avant lecture pour éviter une ancienne projection après refus. Aucun POST au montage System View.
+
+Validation réellement exécutée en conteneurs isolés : 275 Game PostgreSQL / Ruff / Alembic check,
+48 Vitest, lint sans erreur, build, 4 Chromium spécifiques dont historique/refresh/focus/tactile et
+absence de débordement. Pas de nouvelle suite Portal locale (code inchangé). Recette réelle S08
+et CI finale non encore obtenues à ce checkpoint, aucune clôture S09 revendiquée.
+
+## S00 — synchronisation après fusion étape 7, 31/10/2026
+
+GitHub réel vérifié : #10 MERGED, tête 1bcb2ba, merge master 773e05c, CI post-merge
+41220568486 success cinq jobs. Local propre et synchronisé, master ff-only puis création de
+work/step-8-system-view, sans réutiliser la branche fusionnée. Aucun travail local non publié.
+Premier checkpoint documentaire avant toute implémentation substantielle étape 8.
+
+## Checkpoints étape 7 avant fusion (historiques)
+
+### Ancienne reprise rapide étape 7
+
 | Champ | État au 31/10/2026 — étape 7 G02–G10 réalisés, PR #10 |
 | --- | --- |
 | Branche / base / PR | work/step-7-galaxy-exploration ; PR #10 ; master 437844e4 ; aucun merge |

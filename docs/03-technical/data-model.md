@@ -193,3 +193,10 @@ candidats internes), la connaissance typée par Empire (systèmes, planètes, ro
 absence de ligne) et l’Exploration (ancrage/stream, missions, étapes, rapports immuables). FK
 composites Universe partout, CHECK de cohérence d’état ; aucune migration Accounts ni réécriture
 0001–0007. Contrats et downgrade protégé : [Galaxie technique](galaxy-api-ui.md).
+
+## System View étape 8
+
+Projection des Knowledge existantes, sans migration ni nouveau droit. Autorisation galaxy.read,
+structure snapshotée et présence propre datée ; liens Colony uniquement sous colony.read et
+vérification actuelle de la colonie propre. DETECTED limité, UNKNOWN non-fuyant, aucun achèvement
+au GET détail. [Contrat System View](system-view.md).
