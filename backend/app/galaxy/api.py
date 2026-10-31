@@ -142,8 +142,12 @@ class Galaxy(Colonies):
                             "reason": reason,
                         }
                     )
+        pinned = rules_for(session, universe_id)
         return {
             "server_time": at.isoformat(),
+            "exploration": pinned.exploration.engagement_version
+            if pinned.exploration
+            else pinned.fleets.survey_version,
             "empire": {"id": str(empire_id), "name": session.get(Empire, empire_id).name},
             "permissions": permissions,
             "systems": [

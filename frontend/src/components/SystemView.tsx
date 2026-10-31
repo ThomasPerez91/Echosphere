@@ -66,7 +66,8 @@ export function SystemView({ universe, empire, system, onSessionLost, onColony }
       <p>Cartographié : <time dateTime={data.mapped_at}>{time(data.mapped_at!)}</time></p>
       {data.last_seen_at && <p>{data.state === 'MONITORED' ? 'Observation locale' : 'Dernière observation, ancienne'} : <time dateTime={data.last_seen_at}>{time(data.last_seen_at)}</time></p>}
       <p className="panel-meta">Connaissances lues au {time(data.server_time!)}</p>
-      <Button onClick={state.refresh}>Actualiser les connaissances</Button>
+      <div className="fleet-actions"><Button onClick={state.refresh}>Actualiser les connaissances</Button>
+        {data.permissions?.includes('fleet.command') && <a className="button" href={`#universe/${universe}/fleets/send/${empire}/${system}`}>Envoyer une flotte ici</a>}</div>
     </header>
     <div className="system-layout">
       <section className="panel system-map" aria-label="Vue des mondes">

@@ -404,10 +404,17 @@ export function GalaxyView({
                 <h2 id="galaxy-detail-title">{names.get(system.id)}</h2>
                 <Badge tone={system.state === "DETECTED" ? "neutral" : "accent"}>{stateLabels[system.state]}</Badge>
               </div>
+              {/* Shortcut only: the Fleet screen owns the flow, the server owns path and costs. */}
+              {p.permissions.includes("fleet.command") && (
+                <a className="button" href={`#universe/${universe}/fleets/send/${p.empire.id}/${system.id}`}>Envoyer une flotte ici</a>
+              )}
               {system.state === "DETECTED" ? (
                 <>
                   <p>Signal détecté le {time(system.discovered_at)}. Position approximative ; nom, planètes et capacités inconnus.</p>
                   {galaxy.pending ? <p role="status">Commande en cours…</p> : null}
+                  {p.exploration === "fleet-survey-v1" ? (
+                    <p>Dans cette partie, une flotte de sondes cartographie ce signal (mission Cartographie, écran Flottes).</p>
+                  ) : <>
                   {!canStart && <p className="reason">Droits Galaxie, Exploration et lecture Colonie requis pour lancer une expédition.</p>}
                   {choices.length > 1 && (
                     <label className="galaxy-field">
@@ -431,6 +438,7 @@ export function GalaxyView({
                   ) : (
                     canStart && <p>Aucun chemin connu depuis vos colonies autorisées.</p>
                   )}
+                  </>}
                 </>
               ) : (
                 <>
