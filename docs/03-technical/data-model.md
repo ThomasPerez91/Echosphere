@@ -200,3 +200,10 @@ Projection des Knowledge existantes, sans migration ni nouveau droit. Autorisati
 structure snapshotée et présence propre datée ; liens Colony uniquement sous colony.read et
 vérification actuelle de la colonie propre. DETECTED limité, UNKNOWN non-fuyant, aucun achèvement
 au GET détail. [Contrat System View](system-view.md).
+
+## Flottes étape 9
+
+Game 0009 : ordres de production, flottes (garnison/opérationnelle, STATIONED/MOVING/MERGED),
+stacks, cargo, missions, étapes, rapports et registre d’idempotence. Invariant d’engagement en
+base (mission ouverte unique, MOVING ⇔ mission, stationnement et trajets limités aux Knowledge),
+droits `fleet.*` dans le CHECK des bindings (12). [Contrat Flottes](fleets-api-ui.md).

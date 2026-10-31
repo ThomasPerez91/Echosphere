@@ -17,8 +17,8 @@ brouillon. Aucun merge autorisé ; étape 10 Colonisation non commencée. Propos
 | F06 | Réalisé : cargo CHARGER/DÉCHARGER, rappel `FLEET_RETURN`, idempotence ; transport selon arbitrage A9 |
 | F07 | Réalisé : API Game + permissions propagées (DTO, schéma partagé, Portal, CHECK, tests), CSRF/idempotence |
 | F08 | Réalisé : UI Flottes réelle ; lien depuis Galaxy/System View vers un envoi prérempli, sans pollution |
-| F09 | Concurrence/deadlocks, non-fuite, responsive 320/390/768/1440, accessibilité |
-| F10 | Recette réelle Compose jetable (*_test) : production, SURVEY page fermée, worker, Portal coupé, expiration |
+| F09 | Réalisé : concurrence/deadlocks, non-fuite, responsive 320/390/768/1440, accessibilité |
+| F10 | Réalisé : recette réelle Compose jetable (*_test) : production, SURVEY page fermée, worker, Portal coupé, expiration |
 | F11 | Revue indépendante, suites complètes, CI finale 5/5, passation, PR Ready sans merge |
 
 ## Audit du code existant (F01)

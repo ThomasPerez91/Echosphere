@@ -160,7 +160,7 @@ export default function App() {
           <EmptyState title={`${section.label} : espace en préparation`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
           <a className="text-link" href={href('empire')}>← Retour à l’Empire</a>
         </section>}
-        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>{universe && access.phase === 'active' ? 'Colonie, Recherche et Galaxie · selon droits et ruleset de l’univers' : 'Interface en préparation · Aucun gameplay jouable'}</span></footer>
+        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>{universe && access.phase === 'active' ? 'Colonie, Recherche, Galaxie et Flottes · selon droits et ruleset de l’univers' : 'Interface en préparation · Aucun gameplay jouable'}</span></footer>
       </main>
     </div>
   </div>;

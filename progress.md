@@ -4,16 +4,31 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — étape 9 F00/F01 réalisés, arrêt avant F02 (Q09 à valider) |
+| Champ | État au 31/10/2026 — étape 9 F02–F10 réalisés, F11 revue/CI en cours |
 | --- | --- |
-| Objectif | Étape 9 Flottes : proposer Q09 complète, puis attendre sa validation explicite avant tout code métier |
-| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 brouillon ; F00 7462a8c ; aucun merge |
-| Post-merge #11 | PR #11 fusionnée (tête fc1f66d, merge e011fd3) ; CI post-merge 41231820338 terminée success 5/5, vérifiée avant toute écriture |
+| Objectif | Étape 9 Flottes selon Q09 close avec amendements (31/10/2026) |
+| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 brouillon ; aucun merge |
 | Agent | Claude Code local, unique écrivain du lot |
-| Réalisé | F00 : synchronisation ff-only, branche, statuts. F01 : audit code + proposition Q09 complète (A1–A15) dans fleets.md, plan technique F02–F11 |
-| Fichiers | progress, context, AGENTS, roadmap, passation, registre, plans étapes 8/9, fleets.md, check_docs (plan étape 9 requis) |
-| Validation | check_docs et diff --check ; aucune suite applicative (aucun code modifié) |
-| Limites / suite | Attendre la validation explicite de Q09 (A1–A15, A9 structurant) ; aucun schéma, migration, ruleset v0.4 ou gameplay Fleet avant. Étape 10 non commencée |
+| Réalisé | v0.4 (sonde/cargo léger, sans expédition abstraite), migration 0009 + droits fleet.* (12), production batch, garnisons, DEPLOY/SURVEY/RETURN, rappel, cargo, division/fusion, API, écran Flottes, raccourcis Galaxy/System View, GET non mutatifs (Galaxy compris), recette réelle Fleet |
+| Fichiers | app/fleet/*, colony/rules, galaxy api/service/system_view, simulation/service, main, control contrats/modèle, schéma partagé, Portal, migration 0009, game_data/v0.4, frontend fleet/*, FleetView, useFleets, App, Galaxy/System View, CSS, tests, scripts smoke/fixture/browser Fleet, CI, docs |
+| Validation locale | Game PostgreSQL 17 *_test : 314 réussis (24 Fleet) ; Portal permissions 5 ; Ruff backend+scripts ; frontend lint 0 erreur, 58 Vitest, build, 25 Chromium (Flottes 4 largeurs) ; recette Compose Fleet réelle réussie ; check_docs, diff --check |
+| CI observée | fd12fe2/e5b7ad8/de1e81c : compose-smoke KO (révision Alembic 0008 attendue par deux smokes), corrigé ; fd12fe2 frontend KO intermittent sur un test Research existant, vert ensuite. CI de la tête finale à relire |
+| Limites / suite | F11 : revue indépendante, CI finale 5/5, PR Ready sans merge. Étape 10 non commencée. Chromium émulé seulement |
+
+## F02–F10 — Flottes, 31/10/2026
+
+Q09 close avec amendements (fleets.md). Ruleset v0.4 complet = v0.3 + fleets.json, v0.1–v0.3
+intacts. Migration 0009 depuis DDL généré des modèles : invariant d’engagement en base, statut
+MERGED pour l’historique. Services : production batch sur la chronologie d’opérations d’Empire,
+annulation Q39 explicite, missions à chemin serveur snapshoté, SURVEY en deux temps cartographiant
+à due_at, rappel symétrique acquittant l’arrivée, cargo plafonné sans perte, registre
+d’idempotence. Les GET (Flottes, Galaxy, System View) ne rattrapent plus cette chronologie.
+
+Recette réelle `smoke_fleet_compose.py` réussie localement après reconstruction des images Game,
+frontend et Portal de l’arbre courant (étiquettes seules ; la pile conservée et ses volumes
+intacts) : la première exécution échouait car l’image Portal antérieure refusait les droits fleet.*.
+Anomalies corrigées en route : smokes portal/handoff attendant la révision 0008 ; course mission
+contre chargement correctement refusée (`cargo_capacity`), test corrigé.
 
 ## F01 — audit et proposition Q09, 31/10/2026
 

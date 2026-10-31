@@ -652,3 +652,92 @@ def test_fleets_never_create_colonies(fleets):
     with w.game.factory() as s:
         assert s.scalar(select(func.count()).select_from(Colony)) == 1
         assert s.get(Planet, s.get(Colony, w.colony).planet_id) is not None
+
+
+def test_concurrent_orders_on_one_colony_keep_queue_and_sequences_consistent(fleets):
+    w = fleets()
+    barrier = Barrier(4)
+
+    def attempt(_):
+        barrier.wait()
+        return order(w, "probe", 1)
+
+    with ThreadPoolExecutor(4) as pool:
+        responses = list(pool.map(attempt, range(4)))
+    assert sorted(r.status_code for r in responses) == [200, 200, 200, 409]
+    with w.game.factory() as s:
+        rows = s.scalars(select(ShipOrder).order_by(ShipOrder.sequence)).all()
+        assert [r.sequence for r in rows] == [1, 2, 3]
+        assert [r.status for r in rows].count("active") == 1
+
+
+def test_mission_racing_a_load_never_moves_unloaded_cargo_or_duplicates_units(fleets):
+    w = fleets()
+    home = built(w, "freighter", 1)
+    probe, mapped = surveyed(w)
+    barrier = Barrier(2)
+
+    def load(_):
+        barrier.wait()
+        return post(
+            w,
+            f"/{home['id']}/load",
+            {"idempotency_key": uuid4().hex, "colony_id": str(w.colony), "cargo": {"flux": 100}},
+        )
+
+    def leave(_):
+        barrier.wait()
+        return launch(w, home["id"], "DEPLOY", mapped, units={"freighter": 1})
+
+    with ThreadPoolExecutor(2) as pool:
+        loaded, left = pool.map(lambda f: f(None), [load, leave])
+    # Serialized on the Operations stream: whichever runs second would strand cargo in a fleet
+    # without capacity, so it is refused atomically; units are never duplicated.
+    responses = sorted([loaded, left], key=lambda r: r.status_code)
+    assert [r.status_code for r in responses] == [200, 409]
+    assert responses[1].json()["error"]["code"] == "cargo_capacity"
+    with w.game.factory() as s:
+        freighters = select(func.sum(FleetStack.count)).where(FleetStack.ship_class == "freighter")
+        assert s.scalar(freighters) == 1
+
+
+def test_two_participants_of_one_empire_share_fleets_with_separate_intentions(fleets):
+    w = fleets()
+    user, membership = uuid4(), uuid4()
+    set_access(
+        w.game, user, w.universe, membership, [{"empire_id": str(w.empire), "permissions": FULL}]
+    )
+    raw, _, _ = enter(w.game, (user, w.universe, membership))
+    other = TestClient(w.app, base_url=w.game.settings.game_public_origin)
+    other.cookies.set(cookie_name(w.universe), raw)
+    key = uuid4().hex
+    mine = order(w, key=key).json()["result"]["order_id"]
+    theirs = other.post(
+        f"/game/{w.universe}/fleets/{w.empire}/orders",
+        headers=w.headers(raw),
+        json={
+            "idempotency_key": key,
+            "colony_id": str(w.colony),
+            "ship_class": "probe",
+            "quantity": 1,
+        },
+    ).json()["result"]["order_id"]
+    assert mine != theirs  # same client key, different membership namespaces
+    assert len(view(w).json()["colonies"][0]["orders"]) == 2
+
+
+def test_concurrent_workers_apply_an_arrival_exactly_once(fleets):
+    w = fleets()
+    home = built(w)
+    launch(w, home["id"], "SURVEY", detected(w))
+    w.advance(minutes=26)
+
+    def process(_):
+        return TimeEngine(w.game.factory, Clock(w.game)).process_next()
+
+    with ThreadPoolExecutor(3) as pool:
+        outcomes = list(pool.map(process, range(3)))
+    assert sum(1 for o in outcomes if o is not None) == 1
+    with w.game.factory() as s:
+        assert s.scalar(select(func.count()).select_from(FleetMission)) == 1
+        assert s.scalar(select(FleetMission.status)) == "completed"

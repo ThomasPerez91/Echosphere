@@ -35,3 +35,6 @@ Recette : étendre le smoke Galaxy existant (projet/bases/volumes jetables *_tes
 système de départ, revenir, lancer Exploration/page fermée, preuve DB MAPPED avant lecture,
 puis nouvelle System View, Portal coupé et expiration. Comparer planètes/capacités à Knowledge.
 Les tests UI interceptés sont distincts de cette recette réelle ; résultats et CI dans progress.
+
+Étape 9 : le détail transmet aussi `fleet.command` quand il est accordé, pour le seul raccourci
+« Envoyer une flotte ici » vers l’écran Flottes ; aucun état de flotte ni logique Fleet dans la vue.

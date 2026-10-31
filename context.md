@@ -132,12 +132,13 @@ vérifiée le 31/10/2026. Q06/Q08 et Exploration livrées ; [technique](docs/03-
 vérifiée le 31/10/2026. System View livrée depuis Knowledge, sans migration ;
 [contrat](docs/03-technical/system-view.md), [plan historique](docs/05-project/step-8-plan.md).
 
-**Lot courant : étape 9 Flottes**, branche `work/step-9-fleets` depuis master `e011fd3`, PR
-brouillon unique. F00 checkpoint puis F01 audit/proposition Q09 ; **arrêt obligatoire avant F02** :
-aucun schéma, migration, ruleset v0.4, catalogue exécutable ou gameplay Fleet avant validation
-explicite de Q09. Exploration v0.3 (`abstract-expedition-v1`) reste inchangée. Étape 10
-Colonisation non commencée ; Q04/Q07/Q10 ouvertes, aucun merge autorisé.
-[Plan étape 9](docs/05-project/step-9-plan.md).
+**Lot courant : étape 9 Flottes**, branche `work/step-9-fleets` depuis master `e011fd3`,
+[PR #12](https://github.com/ThomasPerez91/Echosphere/pull/12). Q09 close le 31/10/2026 avec
+amendements ; F02–F11 autorisés sans validation intermédiaire. Ruleset v0.4 (sondes/cargos,
+SURVEY remplace l’expédition abstraite pour les nouveaux univers seulement), migration 0009,
+chronologie d’opérations d’Empire, GET non mutatifs, droits `fleet.*` (12 au total).
+[Règles](docs/01-game-design/fleets.md), [technique](docs/03-technical/fleets-api-ui.md),
+[plan](docs/05-project/step-9-plan.md). Étape 10 non commencée ; Q04/Q07/Q10 ouvertes ; aucun merge.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.
