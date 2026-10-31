@@ -29,7 +29,7 @@ Le tableau Q40–Q56 distingue décisions closes, détails techniques délégué
 | Q06 | **Close produit étape 7 — validation explicite du 31/10/2026 avec amendements** : taille/topologie/connexité/géométrie, mondes, départs et version/reproductibilité ; contrat Exploration validé, 4 sites candidats et corpus 1 000 seeds standard ; Q09 ouverte | 7 avant G02 | [Galaxie/Q06](../01-game-design/galaxy.md), [Exploration](../01-game-design/exploration.md), [plan G00–G10](step-7-plan.md) |
 | Q07 | Coûts/limites d'expansion, habitabilité, contestation, transfert et abandon | 10 | [Colonisation](../01-game-design/colonization.md) |
 | Q08 | **Clos produit, futur** : UNKNOWN sans fuite ; DETECTED existence/position approximative ; MAPPED structure durable ; MONITORED dynamique actualisée ; perte MONITORED → MAPPED, last_seen_at et aucun partage automatique | 7/8 | [Fog](../01-game-design/fog-of-war.md) |
-| Q09 | Classes/stats, routes, vitesse, cargo, rappel et coût des missions | 9 | [Flottes](../01-game-design/fleets.md) |
+| Q09 | Classes/stats, routes, vitesse, cargo, rappel et coût des missions — **ouverte, proposition F01 du 31/10/2026 (A1–A15) en attente de validation** | 9 avant F02 | [Flottes/Q09](../01-game-design/fleets.md), [plan F00–F11](step-9-plan.md) |
 | Q10 | Résolution combat, aléatoire, ciblage, retraite, pertes et butin | 12 | [Combat](../01-game-design/combat.md) |
 | Q11 | Poids des profils, départs, fréquence et budget des IA | 11 | [IA](../03-technical/ai-engine.md) |
 | Q12 | Mesure du ratio 80/20, métriques et format validé de game_data | 5 puis 16 | [Balance](../01-game-design/balance-philosophy.md) |

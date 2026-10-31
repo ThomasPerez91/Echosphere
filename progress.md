@@ -4,16 +4,29 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — étape 9 F00 réalisé, F01 en cours, arrêt avant F02 |
+| Champ | État au 31/10/2026 — étape 9 F00/F01 réalisés, arrêt avant F02 (Q09 à valider) |
 | --- | --- |
 | Objectif | Étape 9 Flottes : proposer Q09 complète, puis attendre sa validation explicite avant tout code métier |
-| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR brouillon unique vers master ; aucun merge |
+| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 brouillon ; F00 7462a8c ; aucun merge |
 | Post-merge #11 | PR #11 fusionnée (tête fc1f66d, merge e011fd3) ; CI post-merge 41231820338 terminée success 5/5, vérifiée avant toute écriture |
 | Agent | Claude Code local, unique écrivain du lot |
-| Réalisé | F00 : synchronisation ff-only, branche, statuts étape 8 intégrée / étape 9 lot courant |
-| Fichiers | progress, context, AGENTS, roadmap, passation, registre, plans étapes 8/9 |
+| Réalisé | F00 : synchronisation ff-only, branche, statuts. F01 : audit code + proposition Q09 complète (A1–A15) dans fleets.md, plan technique F02–F11 |
+| Fichiers | progress, context, AGENTS, roadmap, passation, registre, plans étapes 8/9, fleets.md, check_docs (plan étape 9 requis) |
 | Validation | check_docs et diff --check ; aucune suite applicative (aucun code modifié) |
-| Limites / suite | F01 audit + proposition Q09 dans fleets.md et step-9-plan ; aucun schéma, migration, ruleset v0.4 ou gameplay Fleet avant validation. Étape 10 non commencée |
+| Limites / suite | Attendre la validation explicite de Q09 (A1–A15, A9 structurant) ; aucun schéma, migration, ruleset v0.4 ou gameplay Fleet avant. Étape 10 non commencée |
+
+## F01 — audit et proposition Q09, 31/10/2026
+
+Lectures obligatoires faites (règles produit Flottes/Exploration/Galaxie/System View/Fog/
+Colonisation/Combat/boucle/économie/équilibrage, moteur temporel, modèle, sécurité, contrats
+Galaxy/System View, migrations, services TimeEngine/Exploration/Colony/Research, GameSession/
+permissions, placeholder Flottes). Constats clés : stream Exploration par Empire réutilisable comme
+stream d’opérations ; `speeds.fleet` déjà réservé ; aucune infrastructure orbitale ; permissions
+au plafond exact de 9 ; une seule colonie possible par Empire avant l’étape 10. Proposition :
+deux classes (sonde, cargo léger), production dédiée par colonie, garnison + flottes
+opérationnelles, missions DEPLOY/SURVEY/RETURN, transport par CHARGER/DÉCHARGER sans perte,
+rappel symétrique en temps, transition Exploration option C (v0.3 inchangé, v0.4 sondes),
+permissions fleet.read/build/command (plafond 12). Rien d’implémenté ; arrêt avant F02.
 
 ## F00 — synchronisation post-merge System View, 31/10/2026
 
