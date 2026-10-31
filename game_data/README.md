@@ -16,7 +16,13 @@ outil d’édition et migration des anciennes timelines hors lot (Q12/Q13/Q26).
 
 Niveaux explicites 1–5 puis scaling configurable par infrastructure. Arrondis micro-unités et
 durées exactes, multiplicateurs rationnels ; valeurs v0.1 provisoires à rééquilibrer par simulation.
-Aucune limite de niveau 5. research/fleet speeds sont réservées, sans recherche/flotte implémentée.
+Aucune limite de niveau 5. En v0.1, research/fleet speeds restent réservées.
 
 - [Référence v0.1](../docs/01-game-design/colony-economy-v0.1.md)
 - [ADR 0007](../docs/adr/0007-colony-economy.md)
+
+Étape 6 : `rulesets/v0.2` complète avec `research.json`, huit technologies I/II, prérequis,
+coûts/durées/effets et annulation. Research utilise la vitesse dédiée ; fleet demeure réservée.
+Aucun fichier v0.1 ni Universe épinglé n’est réécrit. Arrondis/plafonds et snapshots documentés dans
+[Research technique](../docs/03-technical/research-api-ui.md). Le loader par défaut reste v0.1 :
+choisir explicitement v0.2 pour une nouvelle instance compatible, jamais à la lecture d’une ancienne.

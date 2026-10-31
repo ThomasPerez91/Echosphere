@@ -1,6 +1,7 @@
 # Recherche
 
-**Statut : Décision validée pour la recherche globale d’empire ; domaines provisoires, système futur.**
+**Statut : Q05 Clos produit — implémentation étape 6 sur PR #9.**
+Contrat validé explicitement ; [réalisation et API](../03-technical/research-api-ui.md).
 
 
 La recherche est globale à l’empire (précision validée dans la mission de passation du 2026-10-28). Quatre domaines de travail : Ingénierie,
@@ -12,18 +13,11 @@ Un arbre relativement court doit créer des orientations sans condamner un empir
 précoce. Éviter des centaines de technologies. Le joueur doit comprendre coût, durée et effet avant
 confirmation. Une recherche active et la programmation de la suivante font partie du parcours cible.
 
-## À décider avant implémentation
+## Autorité et échéances
 
-Q05 couvre parallélisme, dépendances, nombre de niveaux, interactions entre laboratoires et empire,
-recherche annulable et éventuel changement d'orientation. Les domaines ne deviennent pas quatre
-jauges de ressources supplémentaires.
-
-## Validation future
-
-Une même commande autoritaire est utilisée par humain et IA. Ressources, prérequis et propriété
-sont vérifiés dans la transaction. Le résultat s'applique une seule fois à l'échéance ; le navigateur
-peut estimer le temps restant mais ne valide pas la technologie.
-
+Les services Game sont communs aux humains et futures IA, sans bypass, technologie ou ressource
+gratuite. Ressources, prérequis et scopes sont vérifiés dans la transaction. Le résultat s’applique
+une seule fois à l’échéance ; le navigateur peut estimer le temps mais ne valide pas la technologie.
 
 ## Références
 
@@ -33,7 +27,7 @@ peut estimer le temps restant mais ne valide pas la technologie.
 
 ## Q05 — contrat validé, 31/10/2026
 
-**Statut : Q05 Close produit — implémentation étape 6.** Validation explicite utilisateur reçue
+**Statut : Q05 Clos produit — implémentation étape 6.** Validation explicite utilisateur reçue
 après la proposition du 31/10/2026. R02–R09 autorisés sur PR #9 sans nouvel arrêt intermédiaire,
 sauf arbitrage produit non couvert. Aucun merge ni étape 7 autorisé.
 
@@ -42,7 +36,7 @@ entre-temps ne réduit jamais sa durée. Bonus applicables seulement aux nouveau
 Même règle pour Ingénierie/Énergétique/Xénoscience ; II remplace I (10 % net, jamais 15 %).
 
 
-### File et orientation proposées
+### File et orientation validées
 
 | Sujet | Contrat Q05 |
 | --- | --- |
@@ -60,7 +54,7 @@ trois places illustrées par research-view.png. Les domaines restent des catégo
 jamais quatre ressources ou jauges à récolter. À échéance exacte, traiter la fin avant une annulation :
 une technologie déjà acquise ne redevient pas annulable.
 
-### Coût et financement proposés
+### Coût et financement validés
 
 Le code actuel conserve les stocks dans ResourceBalance **par Colony** ; il n’existe aucune caisse
 Empire. Pour la première boucle, choisir explicitement **une colonie de financement par ordre**,
@@ -79,7 +73,7 @@ Empire ; changer de colonie affichée ne change ni file, ni connaissances, ni or
 Sans colonie de financement autorisée, le catalogue et les acquis restent consultables sous leurs
 droits, mais aucun lancement n’est possible ; pas de crédit gratuit de démarrage.
 
-### Annulation et remboursement proposés
+### Annulation et remboursement validés
 
 - En attente : **100 % théorique** du coût réservé. Active : **80 % théorique**, progression abandonnée.
 - Retour à la **colonie payeuse de chaque ordre**, plafonné par ressource à sa capacité ; surplus
@@ -98,7 +92,7 @@ Le cycle futur de conquête/abandon/destruction de la colonie payeuse relève de
 aucun remboursement vers un autre Empire par défaut. Si cette appartenance est incohérente, refus
 atomique et investigation, sans crédit dans une caisse de remplacement inventée.
 
-### Snapshot, validité et acquis proposés
+### Snapshot, validité et acquis validés
 
 À l’acceptation, conserver identifiant/version de technologie, définition des effets/prérequis,
 coûts réellement prélevés, colonie payeuse, durée de base **et durée effective**, vitesse/bonus
@@ -123,13 +117,13 @@ et même contenu : rejouer le reçu existant, même après fin/annulation, sans 
 même clé avec contenu différent : conflit, jamais remplacement implicite. Un rejeu du même événement
 de fin ne doit ni ajouter un second acquis ni appliquer deux fois son effet.
 
-### Petit catalogue et effets proposés pour le premier lot
+### Petit catalogue et effets validés pour le premier lot
 
 Recommandation : **huit technologies, deux nœuds distincts par domaine**, sans reprise du contenu
-illustratif du mockup. Les noms suivants et valeurs 5/10 sont des propositions/paramètres de balance,
-valeurs initiales validées et balançables dans game_data. R02 précisera identifiants, coûts/durées et validation stricte.
+illustratif du mockup. Les noms restent balançables et les valeurs initiales 5/10 validées sont versionnées dans game_data.
+R02 définit les identifiants, coûts/durées et validation stricte.
 
-| Domaine provisoire | Deux paliers distincts proposés | Effet concret, net au palier I / II |
+| Domaine provisoire | Deux paliers distincts validés | Effet concret, net au palier I / II |
 | --- | --- | --- |
 | Ingénierie | Fabrication modulaire I / II | Réduction du coût Alliages des nouveaux ordres de construction Colony : 5 % / 10 % |
 | Énergétique | Gestion énergétique I / II | Réduction du coût Flux des nouveaux ordres de construction Colony : 5 % / 10 % |
@@ -144,22 +138,22 @@ dans Colony/Research sans modifier rétroactivement la production de plusieurs s
 Le calcul reste serveur en fractions/micro-unités, avec arrondis explicités en R02.
 Aucun bonus de production continue, nouveau slot, déblocage de système futur ou bouton inopérant.
 
-### Laboratoires et plusieurs colonies proposés
+### Laboratoires et plusieurs colonies validés
 
 **Aucun laboratoire requis ou construit dans l’étape 6**, vitesse de base instance 1x ; le champ
 research_speed réservé ne constitue pas un laboratoire existant. Ne pas réutiliser le bonus industriel
 de construction comme bonus Research sans règle spécifique.
 
-Orientation proposée pour le futur lot Laboratoires : le meilleur laboratoire opérationnel de
+Orientation retenue pour le futur lot Laboratoires : le meilleur laboratoire opérationnel de
 l’Empire peut fournir un bonus de vitesse global (pas la somme automatique de toutes les colonies),
 sans ajouter de recherche simultanée. Valeur appliquée et snapshotée à l’acceptation des nouveaux
 ordres ; une amélioration/perte ultérieure ne change pas les ordres déjà acceptés. Aucun laboratoire,
 scan de capacités runtime ou bonus fictif ajouté avant ce lot ; ses chiffres resteront dans game_data.
 L’état autoritaire et les technologies restent sur Empire, même si la colonie payeuse/laboratoire change.
 
-### Droits et future IA proposés
+### Droits et future IA validés
 
-Permissions explicites suggérées : research.read / research.start / research.cancel, séparées.
+Permissions explicites validées : research.read / research.start / research.cancel, séparées.
 L’API applique GameSession → GameAccess/membership → Universe → EmpireBinding → permission → Empire.
 Sans lecture autorisée, même réponse qu’un Empire inconnu, sans fuite ; mutations requièrent aussi
 research.read. Les mutations de financement/remboursement exigent colony.read sur chaque colonie source,
@@ -174,7 +168,7 @@ pour les humains. Choix de domaine/source financière par ses futurs objectifs, 
 La révocation/expiration interdit les nouvelles commandes humaines, pas l’achèvement des ordres
 acceptés ; le worker n’a besoin ni de session, ni de présence, ni de Portal.
 
-### Décision attendue
+### Provenance et suite
 
 Validation utilisateur reçue : contrat clos côté produit, implémentation R02–R09 autorisée.
 Laboratoires hors étape 6. Future IA soumise aux mêmes services et limites d’information.

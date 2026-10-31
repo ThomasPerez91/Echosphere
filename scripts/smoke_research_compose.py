@@ -180,6 +180,8 @@ def main():
                 "completed",
                 "portal-stop",
                 "portal-stopped",
+                "outage-built",
+                "outage-completed",
                 "expire",
                 "expired",
             )
@@ -252,6 +254,24 @@ def main():
                         )
                         (artifacts / "portal-stopped").write_text("ready")
                         done.add("portal")
+                    if (artifacts / "outage-built").exists() and "outage" not in done:
+                        for _ in range(60):
+                            rows = json.loads(
+                                game(
+                                    f"research_orders({created['empire_id']!r})"
+                                ).splitlines()[-1]
+                            )
+                            if len(rows) == 3 and all(
+                                row[2] == "completed" for row in rows
+                            ):
+                                break
+                            time.sleep(1)
+                        else:
+                            raise RuntimeError(
+                                "Worker did not finish Research with Portal stopped"
+                            )
+                        (artifacts / "outage-completed").write_text("ready")
+                        done.add("outage")
                     if (artifacts / "expire").exists() and "expire" not in done:
                         game(f"expire({universe!r})")
                         (artifacts / "expired").write_text("ready")
@@ -262,8 +282,9 @@ def main():
                     Path("/tmp/echosphere-research-failure.log").write_text(
                         redacted(stdout + stderr)
                     )
+                    print(redacted(stdout + stderr)[-12000:], flush=True)
                     raise RuntimeError("Research real browser scenario failed")
-                assert done == {"built", "portal", "expire"}
+                assert done == {"built", "portal", "outage", "expire"}
                 print(stdout)
         finally:
             if started:

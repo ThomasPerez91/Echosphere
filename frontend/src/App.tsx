@@ -134,11 +134,11 @@ export default function App() {
               <p>Cette vérification indique si les services sont joignables. Elle ne confirme pas qu’une partie est active.</p>
               <Button disabled={status === 'checking'} onClick={retry}>{status === 'checking' ? 'Vérification…' : 'Vérifier la connexion'}</Button>
             </Panel></div>
-        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : destination === 'research' && universe ? <ResearchView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} /> : <section className="panel destination-panel"><Badge>À venir</Badge>
+        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : destination === 'research' && universe ? <ResearchView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : <section className="panel destination-panel"><Badge>À venir</Badge>
           <EmptyState title={`${section.label} : espace en préparation`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
           <a className="text-link" href={href('empire')}>← Retour à l’Empire</a>
         </section>}
-        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>{projection ? 'Colonie jouable · autres domaines en préparation' : 'Interface en préparation · Aucun gameplay jouable'}</span></footer>
+        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>{universe && access.phase === 'active' ? 'Colonie et Recherche · selon droits et ruleset de l’univers' : 'Interface en préparation · Aucun gameplay jouable'}</span></footer>
       </main>
     </div>
   </div>;

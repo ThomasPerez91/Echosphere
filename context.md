@@ -118,9 +118,14 @@ annulation sécurisées, Q39 plafonnement/perte et cascade Q01, worker et recett
 La création complète de partie reste hors produit ; aucune fixture runtime ajoutée.
 
 **Lot courant : étape 6 — Recherche globale d’Empire**, branche work/step-6-research depuis ce master.
-Q05 est **Close produit — implémentation étape 6**, validation utilisateur explicite reçue.
+Q05 est **Clos produit — implémentation étape 6**, validation utilisateur explicite reçue.
 [Plan R00–R09](docs/05-project/step-6-plan.md) et [contrat canonique](docs/01-game-design/research.md).
 R02–R09 autorisés sur la même branche/PR #9 ; aucune étape 7, aucune fusion sans instruction.
+Catalogue complet v0.2 explicite, état/file/acquis par Empire, financement Colony et snapshots
+immuables à l’acceptation, permissions/API/UI/worker dans le monolithe existant :
+[Research technique](docs/03-technical/research-api-ui.md). Aucun Universe v0.1 adopté silencieusement.
+Vérifier GitHub : après fusion #9, considérer Research intégrée à master et ses consignes de branche
+comme historiques ; repartir de master synchronisée pour un nouveau lot autorisé.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.

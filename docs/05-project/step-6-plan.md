@@ -1,178 +1,82 @@
 # Étape 6 — Recherche globale d’Empire
 
-**Statut au 31/10/2026 : R00 publié ; R01 validé explicitement ; R02–R09 non commencés.**
-Une seule branche `work/step-6-research`, une seule [PR #9](https://github.com/ThomasPerez91/Echosphere/pull/9)
-en brouillon. Base master `0e2ca11322a85452ad6860a4a35099bbc22a4689`, fusion #8/5D vérifiée ;
-[CI post-merge 41144706921](https://github.com/ThomasPerez91/Echosphere/actions/runs/41144706921) success.
-Premier checkpoint **098ab078889ca7a41b5ed77055663a439670ccdf** publié avant ce plan et avant code.
-L’état GitHub réel prévaut toujours sur les anciens checkpoints.
+**Statut au 31/10/2026 : Q05 close produit ; R02–R07 implémentés ; R08/R09 en validation finale.**
+Une seule branche `work/step-6-research`, une seule [PR #9](https://github.com/ThomasPerez91/Echosphere/pull/9),
+base master `0e2ca11322a85452ad6860a4a35099bbc22a4689` (fusion #8, CI post-merge 41144706921 success).
+R00 **098ab078889ca7a41b5ed77055663a439670ccdf** publié avant plan et code, puis R01 proposition
+**4b74dabbccd028480f58aea4c58106573ba35043**, arrêt respecté jusqu’à validation utilisateur.
 
-**Autorisation utilisateur reçue : Q05 close produit, implémentation étape 6.**
-R02–R09 autorisés sans validation intermédiaire, sauf véritable arbitrage non couvert.
-Le contrat canonique inclut les snapshots complets dès acceptation, sans recalcul des suivants.
-Aucune fusion ni étape 7 autorisée.
+Q05 ensuite validée explicitement : [contrat canonique](../01-game-design/research.md),
+**Clos produit — implémentation étape 6**. R02–R09 autorisés sans validation intermédiaire, sauf
+arbitrage non couvert. Aucun merge ni étape 7. État GitHub réel prioritaire sur ce checkpoint :
+si #9 ouverte et mission dessus, reprendre cette branche ; après fusion, considérer Research
+intégrée à master et repartir de master synchronisée pour un nouveau lot autorisé.
 
-## Contrat déjà validé et sortie cible
+## Réalisation et critères
 
-Recherche globale à l’Empire, quatre domaines provisoires Ingénierie/Énergétique/Calcul/Xénoscience,
-arbre court, orientations sans enfermement précoce. Coût/durée/effets/prérequis lisibles avant
-confirmation, active et suivante programmée, effet unique à l’échéance. Même service métier humain/
-future IA, vérifications dans la transaction et backend Game autoritaire. Réutiliser EventStream,
-ScheduledEvent et worker ; aucun deuxième scheduler ou nouvelle ressource.
-
-Sortie future : login → lobby → handoff → GameSession → Empire → recherche disponible avec coût/
-prérequis réels → réservation → échéance persistée → navigateur fermé → achèvement worker une seule
-fois → suivante activée selon Q05 → effets visibles dans l’état réel. Même lecture/lancement/file/
-achèvement avec Portal arrêté et session encore valide ; refus à ses échéances 5B/5C.
-Les smokes/fixtures ne remplacent pas un parcours produit de création de partie, toujours hors lot.
-
-## Références relues
-
-- AGENTS/CLAUDE/context/progress, roadmap et registre Q01–Q56.
-- [Recherche/Q05](../01-game-design/research.md), [boucle](../01-game-design/core-loop.md),
-  [progression](../01-game-design/progression.md), [balance](../01-game-design/balance-philosophy.md).
-- [Moteur temporel](../03-technical/event-engine.md), [modèle](../03-technical/data-model.md),
-  [sécurité](../03-technical/security.md), [API Colony](../03-technical/colony-api-ui.md).
-- [Guide visuel](../visual-reference/README.md), [design-system.png](../visual-reference/design-system.png),
-  [research-view.png](../visual-reference/research-view.png) inspectés : composition seulement.
-  Les trois places, grandes listes, laboratoires, flottes et technologies dessinées ne sont pas validés.
-
-## Découpage et critères futurs
-
-| Ticket | Portée | Critère de sortie et statut actuel |
+| Ticket | Résultat | Validation |
 | --- | --- | --- |
-| R00 | Vérifier #8/master/CI, synchroniser master, créer branche, publier checkpoint post-merge | Fait : 098ab07 ; 5D intégrée et aucune Research livrée |
-| R01 | Proposition produit Q05 et contrat canonique | Contrat validé explicitement dans research.md ; clos produit |
-| R02 | Petit catalogue/version/ruleset, quotes et validation stricte | Futur après Q05 ; noms/chiffres balançables, effets réels, prérequis connus/acycliques et tests de données ; aucune modification silencieuse des univers |
-| R03 | Persistance et migration additive Game | Futur ; état Empire, ordres/acquis/effets/stream avec FK/scopes/uniqueness/index et upgrade/check/roundtrip/refus de downgrade peuplé |
-| R04 | Services métier et handler du moteur existant | Futur ; paiements/rattrapages/idempotence, file, annulation, acquisition/effet uniques, rollback et concurrence ; petits effets Colony seulement si Q05 les valide |
-| R05 | Projection/API Game et droits explicites | Futur ; chaîne session→accès→binding→Empire, non-fuite, CSRF/enveloppes strictes, extension explicite des permissions de contrôle, aucun accès automatique |
-| R06 | Recherche connectée dans le shell existant | Futur ; acquis/active/suivante/options/verrous, paiement explicite, coûts/effets/prérequis et preview d’annulation selon Q05 ; aucune donnée runtime fictive |
-| R07 | Refus, responsive, accessibilité et concurrence | Futur ; tests intégrés des cas ci-dessous, clavier/320/390/768/1440, confirmation dans le viewport, retry même intention |
-| R08 | Recette réelle worker hors connexion et Portal coupé | Futur ; scénario complet HTTPS et bases jetables, effets visibles réels et deadline refusée ; aucune API interceptée dans cette recette |
-| R09 | Relecture complète, validations, CI et passation | Futur ; SHA final vert, docs/checkpoint/description PR, Ready for review si réellement prêt ; aucun merge automatique |
+| R00 | #8/master/CI vérifiés, branche/checkpoint publiés avant code | Historique 098ab07 et CI PR 41145436851 success |
+| R01 | Q05 proposée puis validée explicitement par utilisateur | File 1+1, paiement Colony, 100/80 plafonné, 8 techs, snapshots sans recalcul, pas de laboratoire |
+| R02 | Ruleset complet v0.2 et catalogue strict, aucune réécriture v0.1 | Tests de données/versions/coûts/effets/prérequis/cycles/bornage |
+| R03 | Migration additive 0007, état/ordres/acquis/stream Empire, FK financières | Upgrade/check/roundtrip ; refus de downgrade peuplé/grants ; tests de scopes/index |
+| R04 | Services communs et handler TimeEngine, financement/refund coordonnés, effets Colony | Tests PostgreSQL : file, snapshots, débit unique, plafonnement/cascade, worker, rollback/retry, concurrence |
+| R05 | API Game sécurisée et permissions distinctes, allowlists Game/Portal/schéma | Sessions/CSRF/enveloppes/scopes/read/start/cancel et deux participants du même Empire |
+| R06 | Écran Research connecté au shell, source explicite, acquis/file/options, confirmations | Vitest et Chromium ; aucun ordre au montage/StrictMode, retry même intention |
+| R07 | Mobile/clavier/confirmation/reçus et courses métier | 320/390/768/1440, Escape/focus/viewport, course Research/Colony et workers |
+| R08 | Recette HTTPS réelle, navigateur fermé et Portal coupé | `smoke_research_compose.py`, exécution CI en cours ; ne pas déduire son succès de sa présence |
+| R09 | Relecture, docs/passation/PR, validations finales | En cours ; Ready for review seulement après tous les critères/CI verte, jamais merge automatique |
 
-Les colonnes de sortie sont des critères **non exécutés** pour Research. Les succès des étapes
-3/5A/5D et de la CI du présent diff documentaire ne prouvent aucun de ces mécanismes futurs.
+## Architecture livrée
 
-## Constats du code et décisions techniques à appliquer après Q05
+[Contrat technique complet/API/UI/recette](../03-technical/research-api-ui.md).
+Pas de second scheduler : `RESEARCH_COMPLETE` s’inscrit dans TimeEngine et ScheduledEvent.
+État autoritaire par Empire et Universe, EventStream dédié unique, acquis uniques et ordre financier
+attaché à sa Colony ; aucune trésorerie Empire ou source automatique. Modèles/FK composites assurent
+les scopes, index un actif/un suivant, une technologie non annulée et une clé par Empire.
 
-### État et financement distincts
+Transactions : principal Game → Research → sources Colony triées. Les services Colony compatibles
+coordonnent Research avant leur propre stream ; la quote métier partagée reçoit les effets acquis.
+Le handler Research ne verrouille jamais Colony et ne modifie aucun stock : acquisition unique et
+activation de la suivante selon sa durée figée. Les handlers Colony conservent leur indépendance.
+Annulation coordonnée, reçus réels, capacité allouée une seule fois, cascade dépendante uniquement.
 
-Empire existe dans app/persistence/models.py ; aucun état Research. ResourceBalance est attaché
-à ColonyTimeline (colony_id/resource). Q05 propose une colonie payeuse explicite sans créer de caisse
-Empire. Ne pas déplacer l’autorité Research sur Colony ou injecter un stock/Empire gratuit.
+Ruleset v0.2 complet, v0.1 inchangée et jouable sans Research. Aucun backfill/adoption d’univers actif,
+pas de laboratoire/slot supplémentaire ni changement de production continue. Bonus I/II maximum
+par effet, coûts et durée effective pris à l’acceptation. Speed/bonus/règles de remboursement
+snapshotés ; aucune acquisition ultérieure ne reprice/rechronomètre un ordre accepté.
 
-R03 devra définir un adaptateur typé Research d’Empire (noms de tables à préciser), un stream unique
-référencé par FK composite avec universe_id, des acquis uniques Empire/technologie et ordres/reçus
-idempotents. Aucun owner_kind/owner_id polymorphe sans FK. Pas de seed d’acquis à chaque démarrage ;
-lire un Empire sans ordre doit produire un vrai état vide, pas un catalogue simulé.
+Permissions `research.read/start/cancel` étendues explicitement dans contrats Game, CHECK SQL,
+schéma privé v1 et allowlist Portal ; anciens grants sans nouveaux droits. `colony.read` requis pour
+chaque source financière. Aucun besoin de construct, aucun droit admin implicite. Même verrou
+principal que les révocations C06 et aucune dépendance HTTP Portal pendant le gameplay.
 
-### Coordination des verrous et effets, point d’attention R04
+## Validation et preuves
 
-Le scheduler actuel ordonne due_at/séquence **par stream**, pas entre streams. Ses handlers ne
-commitent pas et ne verrouillent pas un second stream. Garder cette contrainte ; un simple ajout
-RESEARCH_COMPLETE ne résout pas une dépense de ressources Colony ni une annulation multi-colonies.
+Local Work : Ruff Game/scripts, suites unitaires, frontend lint/Vitest/build/Chromium et docs exécutés.
+PostgreSQL et Docker absents : intégrations et smokes exécutés via CI, aucun succès WSL2 revendiqué.
+La CI complète conserve les cinq jobs Game, frontend Game, Portal backend/frontend, Compose.
+Recettes antérieures Game/Portal/control/handoff/Colony (dont Q39) conservées et recette Research ajoutée.
+Le SHA, runs, nombres et limites réellement observés sont dans [progress](../../progress.md).
 
-Proposition technique à détailler et tester avant implémentation des commandes R04 :
+Couverture Research : refus de versions/catalogues invalides ; file/duplicates/prérequis ; coûts,
+durées et bonus I/II ; source étrangère, source commune et deux sources ; caps et reçu rejouable ;
+activation logique et effet unique ; erreur technique sans acquisition partielle ; état métier bloqué
+annulable ; même clé concurrente, dernière place et dépense Colony concurrente ; deux workers ;
+sessions/CSRF/droits séparés, aucune activité à la lecture et partage Empire sans partage de clé HTTP.
+Migration vérifiée sur base jetable, ancienne économie/snapshots préservés.
 
-1. Adapter HTTP : verrou du principal Game (comme révocation C06), contrôles GameSession/accès/binding.
-2. Coordination métier : stream Research de l’Empire, puis streams des colonies de financement
-   nécessaires, dans un ordre total stable. Initialisation de l’ancrage Empire sérialisée.
-3. Rattraper les échéances Research et la production des sources avant réservation/remboursement ;
-   exiger catch-up complet, aucun état projeté au-delà d’une tête bloquée. Même transaction/SAVEPOINT.
-4. Le handler de fin ne touche que les acquis/effets/file de l’Empire, et planifie le suivant depuis
-   sa durée snapshotée ; **pas de remboursement ou écriture de stocks Colony dans ce handler**.
-   Une incompatibilité métier de la suivante suspend son démarrage selon la proposition Q05 ;
-   son annulation explicite coordonne ensuite les verrous/sources de remboursement.
-5. Les effets initiaux proposés sont appliqués aux nouveaux devis acceptés, pas à la production
-   continue ou aux ordres déjà réservés. Pour les réductions de coût Colony, ses routes de lecture/
-   commande devront coordonner Research avant Colony sur les univers compatibles, puis déléguer
-   à la quote métier commune ; ne jamais prendre un verrou Research après avoir pris Colony.
-   Les handlers Colony existants restent indépendants et n’ont pas à verrouiller Research.
+R08 : projet Compose aléatoire sans ports hôte, bases strictement *_test, droits par contrôle réel,
+login/handoff HTTPS. Deux réservations et page fermée jusqu’aux deux achèvements worker ; vérifier
+la durée du suivant figée et les effets sur devis Colony. Arrêter Portal API/contrôle, lire et lancer
+Research, refermer la page, vérifier acquis/effets puis refuser une session expirée. Aucun intercept.
+Fixtures/vitesses de recette strictement test, jamais runtime ou capacité produit de créer une partie.
 
-Documenter les interactions avec API Colony, worker et accès partagés par plusieurs participants :
-le verrou d’un principal utilisateur seul ne sérialise pas deux participants du même Empire.
-La matrice de concurrence doit couvrir Research contre dépenses/annulations Colony, sources de
-financement différentes, demandes croisées et deux workers. S’il faut étendre le moteur générique,
-le faire minimalement sous tests sans changer ses invariants ni créer une seconde ordonnance.
+## Hors lot et sortie
 
-### Rulesets et compatibilité — Q26 préservée
-
-Le loader v0.1 est strict, ses trois JSON sont déjà copiés dans UniverseEconomy. Le champ vitesse
-research réservé ne signifie pas qu’un catalogue Research est présent. Ajouter une clé obligatoire
-ou un défaut silencieux à tous les anciens snapshots casserait le contrat de version.
-
-Recommandation technique R02 : nouveau ruleset complet compatible Colony (par exemple v0.2),
-avec catalogue Research et lecture explicite de v0.1 conservée. Ne pas réécrire les JSON v0.1, ni
-leur snapshot en base pour activer la Recherche à l’insu du joueur. Les instances v0.1 continuent
-leur boucle Colony et affichent honnêtement Research indisponible pour leur version. Les nouvelles
-instances/recettes compatibles épinglent explicitement la nouvelle version. Une adoption d’un
-univers déjà actif nécessitera une procédure explicite, jamais backfill opportuniste à la lecture.
-La création complète de partie produit et une migration générale de ruleset restent hors lot.
-
-Quotes/effets/prérequis/durées versionnés et partagés par services, projection et future IA.
-Arrondis entiers/rationnels, coûts non négatifs et au moins un coût positif, bornage BIGINT/date,
-aucun float économique ni constantes dispersées dans HTTP/React. Refaire la matrice 5A/Q39 pour
-préserver snapshots, remboursements et niveaux continus de la construction avec les effets validés.
-
-### Permissions : extension du contrôle privé nécessaire, pas nouvelle identité
-
-Les seules permissions acceptées actuellement sont colony.read/construct/cancel :
-app/control/contracts.py, CHECK SQL EmpireBinding dans Game 0005, schéma
-contracts/portal-game/v1.schema.json et allowlist Portal control/service.py. Le max de trois du
-Binding est aussi à adapter. Les payloads GameSession reflètent le snapshot d’accès courant.
-
-R05 devra propager les droits Research validés dans tous ces validateurs et une migration additive
-pour le CHECK **sans réécrire 0005 publiée**. Relire aussi les tests/contrats de contrôle et la
-compatibilité de livraison pendant un déploiement. Aucun droit Research ajouté aux anciens grants
-par défaut ; attribution explicite, confirmation Portal et limites de validité inchangées.
-Ceci est une extension ciblée aux services/contrats 5C, pas une refonte de Portal/auth/membership.
-Aucun secret Accounts, SQL Portal→Game ou requête gameplay vers Portal.
-
-### Interface et vision
-
-Research appartient à l’Empire courant autorisé ; si plusieurs bindings Empire, sélection explicite,
-pas l’hypothèse un compte = un Empire. Sélection de colonie payeuse distincte du scope Research.
-Quatre cartes/domaines provisoires, panneaux active/suivante/acquis/disponible/verrouillé suivant le
-vrai catalogue ; reprendre palette navy/cyan et composants du shell. Afficher la portée Empire et
-la colonie financée sans présenter une caisse globale inexploitable. Aucun compteur 8/24 fictif,
-tech de flotte/défense, popup d’accélération ou laboratoire absent pour remplir le mockup.
-Temps restant = projection de dates serveur ; pas d’achèvement client, présence ou polling qui
-prolonge la session. Reprendre générations/abort/retry de 5D et ne jamais envoyer une mutation
-sur montage React/StrictMode. Aucune UI fonctionnelle Research dans le checkpoint actuel.
-
-## Matrice de tests futurs obligatoires
-
-| Groupe | Cas à prouver après validation Q05 |
-| --- | --- |
-| Idempotence | Double clic ; même clé/contenu avant/après fin/annulation ; même clé/payload différent ; retry après timeout/réponse perdue ; anti-rejeu d’événement et acquis/effet uniques |
-| File | Deux demandes, dernière place, technologie déjà acquise/active/queued, prérequis manquant, suivante dépendante/indépendante, annulation/cascade, incompatibilité au démarrage expliquée |
-| Ressources | Financement explicite même Empire, insuffisance, rattrapage, saturation mono/multi lors remboursement, deux ordres/même source et sources différentes, construction concurrente, stock/capacité exacts et rollback |
-| Temps | due_at exact, worker tardif/hors connexion, lecture paresseuse, fin vs commande, enfant activé à date logique, crash avant/après commit, tête blocked et reprise |
-| Scopes/droits | Autre Empire/autre Universe, deux participants même Empire, lecture sans mutation, start ≠ cancel, colonie payeuse étrangère/invisible, aucune autorité admin implicite |
-| Sessions | Absente/expirée/révoquée/suspendue, révocation concurrente, aucune activité des lectures/timers, aucun report de l’absolu ou valid_until, worker sans utilisateur connecté |
-| Données | Pré-requis inconnus/cycles, effets non supportés, doublons, versions mixtes, coûts/durées invalides/overflow, v0.1 inchangée et pas de migration silencieuse des univers |
-| UI | Acquis/active/suivante/effets réels, coûts/durée/prérequis/financement avant confirmation, annulation complète, erreurs sans fuite, retry même intention, quatre largeurs/clavier et état vide authentique |
-
-R08 : projet Compose aléatoire, bases strictement *_test, provisionnement et droits par le vrai
-contrôle privé, recherche par HTTP réel sous HTTPS et worker réel sans page. Montrer une conséquence
-réelle (quote de construction/recherche modifiée selon Q05) puis l’activation de la suivante.
-Arrêter Portal API/contrôle : lecture, lancement et fin autorisés dans les bornes de la GameSession,
-zéro appel gameplay Portal ; échéance atteinte = refus. Préserver les volumes conservés et secrets.
-
-## Validation et checkpoint de sortie futurs
-
-Game complet PostgreSQL, frontend Game lint/tests/build et Chromium, Alembic check/roundtrip,
-checks docs/diff et smokes Game/Portal/contrôle/handoff/Colony/Research selon les domaines affectés.
-L’extension des permissions/contrats 5C implique suites et smokes Portal/control/handoff ; la nouvelle
-quote Colony implique ses tests/smoke Q39. CI complète du SHA final, puis description PR/checkpoint
-réels, limites/anomalies et Ready for review si prêt, **sans merge**. Ne pas transformer une CI
-verte documentaire en validation de Research inexistante.
-
-## Hors lot
-
-Génération galaxie, exploration, vue système, flottes, colonisation, IA, combat, diplomatie, défense,
-multijoueur complet, modes PRIVATE/PERSISTENT, laboratoires, portefeuille global, création complète
-de partie produit, production continue modifiée par Research et étape 7. Aucun abonnement/service
-payant ou nouvel arbitrage Qxx pris pour faciliter le développement. Q05 validée ; poursuivre R02–R09.
+Génération/exploration/galaxie, flottes, colonisation, IA implémentée, combat/diplomatie/défense,
+multijoueur complet, laboratoires, portefeuille global, production continue modifiée par Research,
+création complète de partie produit et migration générale d’univers existants restent hors lot.
+Pas de nouvelle décision Qxx, dépendance ou abonnement nécessaire. Étape 7 seulement sur instruction.
+Après revue/CI réellement vertes, rendre PR #9 Ready for review comme autorisé et attendre le merge
+explicite. Après fusion, master synchronisée puis recette locale WSL2/Docker/Codex ; ne pas recréer #9.

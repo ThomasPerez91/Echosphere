@@ -39,8 +39,8 @@ et marqueurs de révocation acquittés par Game.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1` le 2026-10-29.
 5C devient le lot courant sur work/step-5c-portal-account-lobby depuis ce merge : premier checkpoint
 documentaire et cadrage réalisés, puis C01–C08 autorisés et implémentés ; C08 livré, recette C09 réalisée, 5C fusionné via PR #7 (`ff6ef89`), puis 5D via PR #8 (`0e2ca11`).
-Lot courant : étape 6 sur work/step-6-research, checkpoint/plan et Q05 à valider avant toute
-implémentation Research. Le [plan 5D](../05-project/step-5d-plan.md) est historique. Le
+Lot courant : étape 6 sur work/step-6-research, Q05 validée explicitement et implémentation R02–R09
+autorisée ; [API/UI Research](../03-technical/research-api-ui.md), état réel dans progress. Le [plan 5D](../05-project/step-5d-plan.md) est historique. Le
 [registre Q40–Q56](../05-project/open-questions.md) détaille les décisions closes, travaux techniques
 délégués et reports support/email/modes. Corrections finales : effets MFA ciblés sans global sur
 ajout de facteur/régénération volontaire des secours avec step-up existant ; plafonds 10/10 configurables et sans effet sur

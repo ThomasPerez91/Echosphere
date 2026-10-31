@@ -2,36 +2,44 @@
 
 Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
-## Checkpoint R02–R06 en cours — 31/10/2026
-
-Catalogue v0.2 complet (v0.1 inchangée), migration 0007 additive, stream/file/acquis Empire,
-snapshots à l’acceptation, financement/remboursements Colony coordonnés, effets sur nouveaux devis,
-permissions Game/Portal et API/UI connectées. Q05 close produit. Tests de données et PostgreSQL ajoutés.
-Local : Ruff Game, 63 tests unitaires réussis ; 154 intégrations ignorées faute de PostgreSQL.
-Frontend : 26 tests existants réussis, build réussi ; nouveaux tests UI/recette R07/R08 à terminer.
-Publication intermédiaire pour exécuter les intégrations CI ; PR #9 reste brouillon, aucun merge.
-
-## Validation Q05 reçue — reprise R02–R09
-
-Validation explicite utilisateur du contrat Research : **Clos produit — implémentation étape 6**.
-File Empire 1+1, financement explicite par Colony, remboursements 100/80 plafonnés, huit technologies,
-bonus I 5 % / II 10 % net et snapshot complet à l’acceptation, y compris suivante. Pas de laboratoires.
-R02–R09 autorisés sur work/step-6-research / PR #9 ; ne pas merger ni démarrer l’étape 7.
-Les checkpoints de proposition ci-dessous sont historiques et ne constituent plus un verrou Q05.
-
 ## Reprise rapide
 
-| Champ | État |
+| Champ | État au 31/10/2026 |
 | --- | --- |
-| Branche / PR / base | work/step-6-research depuis master 0e2ca11322a85452ad6860a4a35099bbc22a4689 ; PR #9 ouverte en brouillon, unique pour le lot |
-| Tête et CI | Base post-merge #8 : CI 41144706921 success ; premier checkpoint 098ab078889ca7a41b5ed77055663a439670ccdf, CI PR 41145436851 success. Le présent plan a sa propre tête/CI à relire dans PR #9 |
-| Dernier agent | ChatGPT Work, écrivain de ce checkout propre ; reprise des commits publiés 5D |
-| Travail réalisé | R00 publié puis R01 préparé : plan durable et recommandation Q05, références/visuels/code relus ; aucune fonctionnalité Research |
-| Décisions | Q01 construction/Q08/Q17/Q19–Q39/Q55 inchangées ; Recherche globale déjà validée, Q05 toujours ouverte |
-| Fichiers modifiés | Documents de reprise, research.md (proposition), step-6-plan.md et index/registre uniquement ; aucun backend/frontend/migration/game_data/dépendance/Docker/test fonctionnel |
-| Tests réellement exécutés | check_docs.py, git diff --check et périmètre documentaire ; CI post-merge observée. Aucune suite fonctionnelle locale relancée pour ce checkpoint |
-| Anomalies / limites | Aucune PR concurrente étape 6 au contrôle initial. Docker/PostgreSQL absents du Work courant ; aucune capacité de charge ou nouvelle recette WSL2 revendiquée |
-| Prochaines tâches | Arrêt pour arbitrage utilisateur Q05 sur le contrat proposé. Après validation explicite : intégrer la décision canonique, puis R02–R09 sur la même branche/PR brouillon, pas étape 7 ni merge |
+| Branche / PR / base | work/step-6-research, unique PR #9, base master 0e2ca11322a85452ad6860a4a35099bbc22a4689 ; GitHub réel prioritaire |
+| Dernier travail publié | de248ef9cfae9f3cb9d4b4b4d5d0db856f7c65d2 ; présente révision : revue et vérifications finales en cours |
+| Dernier agent | ChatGPT Work, seul écrivain de ce checkout ; aucune branche ou PR supplémentaire |
+| Décisions | Q05 **Clos produit — implémentation étape 6**, validation explicite utilisateur ; autres Qxx conservées |
+| Réalisé | R02–R07 : catalogue complet v0.2, migration 0007, stream/file/acquis Empire, réservations/snapshots/annulations/effets, API/permissions Game et Portal, UI connectée responsive/clavier ; R08 recette ajoutée, R09 en cours |
+| Références | [Contrat](docs/01-game-design/research.md), [plan](docs/05-project/step-6-plan.md), [API/UI/recette](docs/03-technical/research-api-ui.md) |
+| Validation locale | Ruff Game/scripts et docs OK ; 63 tests unitaires Game réussis, intégrations ignorées (PostgreSQL absent) ; frontend lint sans erreur (warning préexistant useGameSession), 31 Vitest et 13 Chromium réussis, build OK |
+| CI observée | aa8d779 : 216 tests Game réussis, inventaire ancien test corrigé ; de248ef : 221 tests réussis, dernier échec du nouveau test multi-participant corrigé (CSRF de la seconde session). Portal backend/frontend et frontend Game verts ; smokes antérieurs franchis, Research en cours |
+| Limites | Docker/PostgreSQL absents localement : intégrations/smokes via CI, aucune recette WSL2 déclarée faite. Création complète de partie, adoption v0.2 d’univers existants, laboratoires/IA/étape 7 hors lot |
+| Prochaine action si #9 ouverte | Attendre/relire tête et CI, corriger tout échec, terminer R09 ; Ready for review seulement si critères réellement atteints. Ne merger que sur autorisation explicite |
+| Prochaine action si #9 fusionnée | Synchroniser master, recette locale WSL2/Docker/Codex ; ne pas recréer #9 ni reprendre sa branche fusionnée. Nouveau développement/étape 7 seulement sur instruction |
+
+## Validation Q05 et réalisation R02–R09 — 31/10/2026
+
+Contrat validé : file Empire 1+1 ; colonie payeuse explicite ; débit complet à l’acceptation même
+pour la suivante ; refunds queued 100 % / active 80 % théoriques, capacité plafonnée, excédent perdu,
+cascade dépendante. Catalogue 8 technologies I/II, bonus 5/10 % net par effet. Snapshot complet coût,
+durée effective, source et règles figé à l’acceptation : aucune acquisition ne modifie une réservation.
+Pas de laboratoire. Droits read/start/cancel distincts, colony.read pour financement/remboursement,
+aucun besoin de construct ou privilège admin implicite. R02–R09 autorisés sans arrêt intermédiaire.
+
+Implémentation dans backend/app/research, migration additive 0007 et game_data/rulesets/v0.2 ;
+coordination de devis Colony, TimeEngine existant et contrôle privé Game/Portal/schéma v1 étendus.
+Frontend Research dans le shell, source/Empire distincts, confirmations, preview complète,
+retry même intention ; rafraîchissement des stocks Colony après commande.
+Les fichiers v0.1 et migrations 0001–0006 sont inchangés ; aucune dépendance/Docker/Compose ajouté.
+
+Recette réelle ajoutée à CI : projet jetable *_test, HTTPS/login/handoff/permissions réels,
+réservation de deux recherches, navigateur fermé jusqu’aux acquis worker et effets Colony ; arrêt
+Portal API/contrôle, nouveau lancement puis page fermée jusqu’à l’achèvement worker observé en base,
+effets et expiration. Sans intercept, sans assimilation à un parcours produit de création de partie.
+
+Historique : R00/R01 ci-dessous ont respecté l’arrêt Q05 avant code. Leurs mentions « Q05 ouverte »,
+« aucun Research livré » et « attendre validation » sont historiques depuis la validation utilisateur.
 
 ## R00 — synchronisation post-merge 5D, 31/10/2026
 

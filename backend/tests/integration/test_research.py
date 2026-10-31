@@ -445,7 +445,45 @@ def test_two_shared_participants_observe_same_queue_and_distinct_http_keys(world
     response = send(w, key="shared_intention")
     assert response.status_code == 200
     w.client.cookies.set(cookie_name(w.universe), raw)
+    w.raw = raw  # CSRF belongs to the newly selected participant session.
     assert len(read(w).json()["queue"]) == 1
     response = send(w, key="shared_intention", tech="energy_1")
     # New participant's identically named intention is not another participant's replay.
     assert response.status_code == 200 and response.json()["order"]["status"] == "queued"
+
+
+def test_cascade_same_source_allocates_capacity_only_once(world):
+    w = make(world)
+    a = start(w)
+    b = start(w, "engineering_2")
+    with w.game.factory.begin() as s:
+        bal = s.get(ResourceBalance, (w.colony, "data"))
+        bal.stock = bal.capacity - 200_000_000
+    receipt = cancel(w, a.id)
+    assert receipt.refunded["data"] == 160_000_000
+    with w.game.factory() as s:
+        assert s.get(ResearchOrder, b.id).refunded["data"] == 40_000_000
+        bal = s.get(ResourceBalance, (w.colony, "data"))
+        assert bal.stock == bal.capacity
+    assert cancel(w, a.id).refunded["data"] == 160_000_000
+
+
+def test_foreign_financing_refused_by_service_api_and_database(world):
+    from sqlalchemy.exc import IntegrityError
+
+    w = make(world)
+    foreign = world(permissions=ALL, rules=load_ruleset("v0.2"), universe=w.universe)
+    assert send(w, colony=foreign.colony).status_code == 404
+    with pytest.raises(r.ColonyError, match="Colony unavailable"):
+        start(w, colony=foreign.colony)
+    row = start(w)
+    with pytest.raises(IntegrityError), w.game.factory.begin() as s:
+        s.get(ResearchOrder, row.id).colony_id = foreign.colony
+        s.flush()
+
+
+def test_downgrade_refuses_research_grants_even_without_domain_rows(world, migration_config):
+    make(world)
+    with pytest.raises(RuntimeError, match="live Research grants"):
+        command.downgrade(migration_config, "0006_game_sessions")
+    command.upgrade(migration_config, "head")

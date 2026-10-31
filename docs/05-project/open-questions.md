@@ -177,5 +177,5 @@ Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B n’a été id
 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats partiellement implémentés par C02–C07 sur PR #7, handoff/GameSession C07 livrés sur PR #7.
 Historique 5B : seul le cadrage identité/autorisation Q16 avait été actualisé. Le complément
 utilisateur du 31/10/2026 clôt les décisions indiquées ci-dessous, sans renuméroter Q01–Q56 ;
-5D désormais intégrée via PR #8 (`0e2ca11`) ; lot courant étape 6 documentaire sur PR #9, Q05 avant code.
+5D désormais intégrée via PR #8 (`0e2ca11`) ; lot courant étape 6 sur PR #9, Q05 close produit et implémentation autorisée.
 5B n’a créé aucune table ; C02 ajoute les comptes côté Portal seulement, pas de membership.

@@ -66,13 +66,13 @@ try {
   const probe = await context.newPage(); const down = await probe.goto(`${portal}/api/ready`);
   if (!down || down.status() < 500) throw new Error('Portal must really be down'); await probe.close();
   const portalRequests = [];
-  page.on('request', req => { if (new URL(req.url()).host === new URL(portal).host) portalRequests.push(req.url()); });
+  context.on('request', req => { if (new URL(req.url()).host === new URL(portal).host) portalRequests.push(req.url()); });
   await page.reload(); await page.getByLabel('Colonie payeuse').selectOption(colony);
   await launch(page, 'Gestion énergétique I');
   let active = (await read(page)).body;
   if (active.queue[0]?.duration_us !== '11400000') throw new Error('New orders must receive Calcul I');
   await page.close(); // Again only the worker is able to finish, with Portal stopped.
-  await new Promise(r => setTimeout(r, 14000));
+  await marker('outage-built'); await waitMarker('outage-completed');
   page = await context.newPage(); await open(page);
   const finished = (await read(page)).body;
   if (finished.acquired.length !== 3 || finished.queue.length) throw new Error('Research must complete with Portal down');

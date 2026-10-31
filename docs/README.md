@@ -46,7 +46,7 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   **implémentées dans leur périmètre 5C (C02–C08), fusionnées via PR #7** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. 5C
   terminé et fusionné (`ff6ef89`), 5D intégrée via #8 (`0e2ca11`). Lot courant :
-  [étape 6 Recherche](05-project/step-6-plan.md), proposition Q05 avant code ; aucun Research livré.
+  [étape 6 Recherche](05-project/step-6-plan.md), Q05 validée et implémentation sur PR #9 ; [API/UI](03-technical/research-api-ui.md).
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
@@ -54,4 +54,4 @@ sur les conversations Space Game qui n’ont pas pu être consultées.
 
 
 Compléments actuels sur PR #7 : [C08 parcours et shell](03-technical/portal-game-ui.md),
-[C09 recette et opérations](03-technical/portal-operations.md). 5D intégrée via #8 ; aucun Research livré ni exposition production.
+[C09 recette et opérations](03-technical/portal-operations.md). 5D intégrée via #8 ; Research sur PR #9, aucune exposition production.

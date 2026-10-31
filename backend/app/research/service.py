@@ -237,10 +237,13 @@ def start(session, engine, universe_id, empire_id, colony_id, *, key, technology
         if any(balances[r].stock < snap.cost[r] for r in RESOURCES):
             raise ResearchError("Insufficient financing resources", "insufficient_resources")
         # Bound due dates before accepting any reservation.
-        utc(at) + timedelta(
-            microseconds=sum(read_snapshot(r).duration_us for r in pending(session, empire_id))
-            + snap.duration_us
-        )
+        try:
+            utc(at) + timedelta(
+                microseconds=sum(read_snapshot(r).duration_us for r in pending(session, empire_id))
+                + snap.duration_us
+            )
+        except OverflowError:
+            raise ResearchError("Research deadline exceeds datetime representation") from None
         for resource, value in snap.cost.items():
             balances[resource].stock -= value
         row = ResearchOrder(
