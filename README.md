@@ -167,8 +167,11 @@ PR #5 fusionnée sur master 8214e0b ; recette locale effectuée le 2026-10-29, l
 Les [contrats 5B](docs/03-technical/identity-contracts.md) sont validés et consolidés ; C02–C08 en implémentent les premiers sous-ensembles.
 5B documentaire terminé et intégré à master via PR #6, merge `63bb7d1`. Contrats implémentés dans la portée 5C/5D, limites production conservées. 5C (C01–C09) fusionné via PR #7 (`ff6ef89`). 5D API Colony sécurisée et UI
 Colony intégrée via PR #8 (`0e2ca11`). Lot courant : étape 6 Recherche sur `work/step-6-research`,
-checkpoint/plan et proposition Q05 seulement avant validation ; aucune fonctionnalité Research livrée.
-[Plan étape 6](docs/05-project/step-6-plan.md) et [proposition Q05](docs/01-game-design/research.md).
+Q05 close produit, Research implémentée sur PR #9 : ruleset v0.2 explicite, huit technologies,
+file Empire 1+1, financement Colony et snapshots sans recalcul. v0.1 inchangée.
+[Plan étape 6](docs/05-project/step-6-plan.md), [contrat Q05](docs/01-game-design/research.md),
+[API/UI/recette](docs/03-technical/research-api-ui.md). Vérifier GitHub : après fusion #9,
+considérer Research intégrée à master ; ne pas reprendre une branche déjà fusionnée.
 Le [registre Q40–Q56](docs/05-project/open-questions.md) distingue décisions closes, détails techniques
 délégués et reports support/email/modes. Aucun nouveau code d’authentification dans 5B. Sur PR #7, C01 ajoute le socle Portal et étend
 Compose ; [C02](docs/03-technical/portal-registration.md) ajoute inscription, Argon2id, vérification et livraison locale durable ; [C03](docs/03-technical/portal-sessions.md) ajoute connexion/sessions et CSRF ; [C04](docs/03-technical/portal-account-security.md) ajoute step-up, reset/changements sensibles et logout global sans MFA ; [C05](docs/03-technical/portal-mfa.md) ajoute TOTP/WebAuthn, secours et récupération limitée ; [C06](docs/03-technical/portal-game-control.md) livre lobby, synchronisation et révocations mTLS ; handoff/GameSession C07 livrés sur PR #7. [Recette C01](docs/03-technical/portal-foundation.md).

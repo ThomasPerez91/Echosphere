@@ -7,15 +7,15 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 | Champ | État au 31/10/2026 |
 | --- | --- |
 | Branche / PR / base | work/step-6-research, unique PR #9, base master 0e2ca11322a85452ad6860a4a35099bbc22a4689 ; GitHub réel prioritaire |
-| Dernier travail publié | de248ef9cfae9f3cb9d4b4b4d5d0db856f7c65d2 ; présente révision : revue et vérifications finales en cours |
+| Tête fonctionnelle auditée | d958661299ad8fe54a6bac590fbd2ecbb017de39 ; ce checkpoint final ne modifie que la documentation, tête/CI exacte à relire dans PR #9 |
 | Dernier agent | ChatGPT Work, seul écrivain de ce checkout ; aucune branche ou PR supplémentaire |
 | Décisions | Q05 **Clos produit — implémentation étape 6**, validation explicite utilisateur ; autres Qxx conservées |
-| Réalisé | R02–R07 : catalogue complet v0.2, migration 0007, stream/file/acquis Empire, réservations/snapshots/annulations/effets, API/permissions Game et Portal, UI connectée responsive/clavier ; R08 recette ajoutée, R09 en cours |
+| Réalisé | R02–R07 : catalogue complet v0.2, migration 0007, stream/file/acquis Empire, réservations/snapshots/annulations/effets, API/permissions Game et Portal, UI connectée responsive/clavier ; R08 recette réelle réussie, R09 relecture/CI/passation réalisés |
 | Références | [Contrat](docs/01-game-design/research.md), [plan](docs/05-project/step-6-plan.md), [API/UI/recette](docs/03-technical/research-api-ui.md) |
 | Validation locale | Ruff Game/scripts et docs OK ; 63 tests unitaires Game réussis, intégrations ignorées (PostgreSQL absent) ; frontend lint sans erreur (warning préexistant useGameSession), 31 Vitest et 13 Chromium réussis, build OK |
-| CI observée | aa8d779 : 216 tests Game réussis, inventaire ancien test corrigé ; de248ef : 221 tests réussis, dernier échec du nouveau test multi-participant corrigé (CSRF de la seconde session). Portal backend/frontend et frontend Game verts ; smokes antérieurs franchis, Research en cours |
+| CI observée | Tête fonctionnelle d958661 : [CI PR 41149331793](https://github.com/ThomasPerez91/Echosphere/actions/runs/41149331793) success, cinq jobs ; 226 tests Game, 119 Portal, 31 Vitest Game/13 Chromium et 30 Vitest Portal/14 Chromium ; smokes complets dont Research et Portal coupé. CI du checkpoint documentaire à vérifier sur sa tête avant Ready |
 | Limites | Docker/PostgreSQL absents localement : intégrations/smokes via CI, aucune recette WSL2 déclarée faite. Création complète de partie, adoption v0.2 d’univers existants, laboratoires/IA/étape 7 hors lot |
-| Prochaine action si #9 ouverte | Attendre/relire tête et CI, corriger tout échec, terminer R09 ; Ready for review seulement si critères réellement atteints. Ne merger que sur autorisation explicite |
+| Prochaine action si #9 ouverte | Relire tête/CI et revue ; R09 terminé, Ready for review après CI verte du checkpoint final. Ne merger que sur autorisation explicite |
 | Prochaine action si #9 fusionnée | Synchroniser master, recette locale WSL2/Docker/Codex ; ne pas recréer #9 ni reprendre sa branche fusionnée. Nouveau développement/étape 7 seulement sur instruction |
 
 ## Validation Q05 et réalisation R02–R09 — 31/10/2026
@@ -40,6 +40,40 @@ effets et expiration. Sans intercept, sans assimilation à un parcours produit d
 
 Historique : R00/R01 ci-dessous ont respecté l’arrêt Q05 avant code. Leurs mentions « Q05 ouverte »,
 « aucun Research livré » et « attendre validation » sont historiques depuis la validation utilisateur.
+
+## R09 — relecture et clôture de livraison sur PR #9, 31/10/2026
+
+R00–R09 réalisés après validation Q05. Relecture du domaine, des scopes/FK/permissions, ordre des
+locks, montants exacts/snapshots, cascade/refunds, handler sans second stream, UI et procédures.
+Corrections issues de revue : noms Alembic CHECK, inventaires de migration des smokes, CSRF du test
+second participant, protection contre réponses dépassées et snapshots incohérents. Une définition
+persistée incohérente relève du retry technique, jamais d’une annulation/blocage gameplay silencieux.
+
+Tête fonctionnelle **d958661299ad8fe54a6bac590fbd2ecbb017de39**, CI PR **41149331793 success**.
+Le checkpoint présent ajoute uniquement la passation finale ; sa CI et son SHA sont ceux affichés
+sur PR #9. Ready for review après ce dernier vert, comme autorisé par l’utilisateur ; aucune fusion.
+
+Preuves CI : 226 tests Game PostgreSQL, dont 25 intégrations Research et 10 tests de catalogue ;
+119 tests Portal. Frontend Game : lint sans erreur, 31 Vitest, build et 13 Chromium ; Portal :
+30 Vitest, build, lint et 14 Chromium. Alembic upgrade/idempotence/check, roundtrip à vide, refus de
+downgrade avec état/grants et scopes financiers testés. check_docs : 80 documents, liens locaux OK.
+Les avertissements FastAPI TestClient et useGameSession sont préexistants ; aucun échec masqué.
+
+Compose : smokes Game, Portal, contrôle mTLS, handoff/C09 avec backup/restore, Colony/Q39 et Research
+réussis. Research HTTPS réelle : deux réservations, navigateur fermé jusqu’aux deux acquis worker,
+durée suivante inchangée malgré Calcul I, coût Colony réduit par Ingénierie ; Portal API/contrôle
+arrêtés, lecture/lancement puis nouvelle fermeture jusqu’à l’acquisition **observée en base avant
+réouverture**, effet Énergétique réel et refus 401 après expiration simulée. Zéro appel gameplay
+Portal, pas d’intercept dans cette recette. Projets/bases/volumes jetables de recette supprimés.
+
+Local Work : 63 tests Game réussis, intégrations ignorées faute de PostgreSQL ; frontend Game
+31 Vitest/build/lint/13 Chromium exécutés. Docker/PostgreSQL non disponibles dans Work, donc preuves
+intégrées issues de CI. **Recette locale WSL2/Docker/Codex non effectuée dans ce lot.** Aucun chiffre
+de charge garanti. Aucun laboratoire, IA, étape 7, migration silencieuse de ruleset, dépendance ou
+changement Docker/Compose ajouté. Les fichiers v0.1 et migrations 0001–0006 publiées sont inchangés.
+
+Après fusion #9 seulement : master synchronisée et recette locale WSL2/Docker/Codex ; pas de reprise
+ou recréation de branche #9 fusionnée. Prochain développement fonctionnel uniquement sur instruction.
 
 ## R00 — synchronisation post-merge 5D, 31/10/2026
 

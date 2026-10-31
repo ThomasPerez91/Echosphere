@@ -1,6 +1,6 @@
 # Étape 6 — Recherche globale d’Empire
 
-**Statut au 31/10/2026 : Q05 close produit ; R02–R07 implémentés ; R08/R09 en validation finale.**
+**Statut au 31/10/2026 : Q05 close produit ; R00–R09 réalisés sur PR #9, sans merge.**
 Une seule branche `work/step-6-research`, une seule [PR #9](https://github.com/ThomasPerez91/Echosphere/pull/9),
 base master `0e2ca11322a85452ad6860a4a35099bbc22a4689` (fusion #8, CI post-merge 41144706921 success).
 R00 **098ab078889ca7a41b5ed77055663a439670ccdf** publié avant plan et code, puis R01 proposition
@@ -24,8 +24,8 @@ intégrée à master et repartir de master synchronisée pour un nouveau lot aut
 | R05 | API Game sécurisée et permissions distinctes, allowlists Game/Portal/schéma | Sessions/CSRF/enveloppes/scopes/read/start/cancel et deux participants du même Empire |
 | R06 | Écran Research connecté au shell, source explicite, acquis/file/options, confirmations | Vitest et Chromium ; aucun ordre au montage/StrictMode, retry même intention |
 | R07 | Mobile/clavier/confirmation/reçus et courses métier | 320/390/768/1440, Escape/focus/viewport, course Research/Colony et workers |
-| R08 | Recette HTTPS réelle, navigateur fermé et Portal coupé | `smoke_research_compose.py`, exécution CI en cours ; ne pas déduire son succès de sa présence |
-| R09 | Relecture, docs/passation/PR, validations finales | En cours ; Ready for review seulement après tous les critères/CI verte, jamais merge automatique |
+| R08 | Recette HTTPS réelle, navigateur fermé et Portal coupé | `smoke_research_compose.py`, succès CI observé : worker hors page, Portal coupé et effets réels, preuve dans progress |
+| R09 | Relecture, docs/passation/PR, validations finales | Relecture/tests/passation réalisés ; Ready for review après CI de tête verte, statut réel dans GitHub ; jamais merge automatique |
 
 ## Architecture livrée
 
