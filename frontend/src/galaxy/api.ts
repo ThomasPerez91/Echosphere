@@ -75,7 +75,7 @@ const list = (v: unknown, item: (x: unknown) => boolean) => Array.isArray(v) && 
 const route = (v: unknown) => object(v) && id(v.id) && id(v.a_id) && id(v.b_id);
 const STRUCTURE = ["name", "mapped_at", "last_seen_at", "observation", "planets"];
 
-function system(v: unknown): boolean {
+export function validKnownSystem(v: unknown): v is KnownSystem {
   if (!object(v) || !id(v.id) || !integer(v.x) || !integer(v.y) || !date(v.discovered_at))
     return false;
   // A DETECTED payload with structure would be a fog leak: refuse it instead of hiding it.
@@ -105,7 +105,7 @@ function report(v: unknown) {
   const d = v.discoveries;
   return (
     object(d) &&
-    system(d.system) &&
+    validKnownSystem(d.system) &&
     list(d.neighbors, (n) => object(n) && id(n.id) && integer(n.x) && integer(n.y)) &&
     list(d.routes, route) &&
     list(d.path, id)
@@ -134,7 +134,7 @@ export function validProjection(value: unknown, empire: string): value is Projec
     value.empire.id !== empire ||
     typeof value.empire.name !== "string" ||
     !list(value.permissions, (p) => typeof p === "string") ||
-    !list(value.systems, system) ||
+    !list(value.systems, validKnownSystem) ||
     !list(value.routes, route) ||
     !list(value.sources, (s) => object(s) && id(s.id) && typeof s.name === "string" && amounts(s.stocks)) ||
     !list(
@@ -220,4 +220,34 @@ export async function startExpedition(
   if (!object(body) || !id(body.mission_id) || !validProjection(body.galaxy, empire))
     throw new ApiError("invalid_response", 0);
   return { mission: body.mission_id, galaxy: body.galaxy };
+}
+
+
+export type ColonyLink = { colony_id: string; planet_id: string; name: string };
+export type SystemDetail = KnownSystem & {
+  server_time?: string; empire_id?: string; permissions?: string[];
+  routes?: { id: string; neighbor: { id: string; state: KnowledgeState; name?: string } }[];
+  presences?: { kind: "own_colony"; current: boolean; observed_at: string | null; colony: ColonyLink | null }[];
+  colony_links?: ColonyLink[];
+};
+export function validSystemDetail(value: unknown, empire: string, systemId: string): value is SystemDetail {
+  if (!validKnownSystem(value) || value.id !== systemId) return false;
+  const v = value as SystemDetail;
+  if (v.state === "DETECTED") return ["routes", "presences", "colony_links", "permissions", "server_time", "empire_id"].every(k => !(k in v));
+  const link = (c: unknown) => object(c) && id(c.colony_id) && typeof c.name === "string"
+    && v.planets!.some(p => p.id === c.planet_id);
+  return v.empire_id === empire && date(v.server_time)
+    && list(v.permissions, p => typeof p === "string") && v.permissions!.includes("galaxy.read")
+    && list(v.routes, r => object(r) && id(r.id) && object(r.neighbor) && id(r.neighbor.id)
+      && (r.neighbor.state === "DETECTED" ? !("name" in r.neighbor)
+        : ["MAPPED", "MONITORED"].includes(String(r.neighbor.state)) && typeof r.neighbor.name === "string"))
+    && list(v.presences, p => object(p) && p.kind === "own_colony" && typeof p.current === "boolean"
+      && (p.observed_at === null || date(p.observed_at)) && (!p.current || v.state === "MONITORED")
+      && (p.colony === null || p.current && v.permissions!.includes("colony.read") && link(p.colony)))
+    && list(v.colony_links, c => v.permissions!.includes("colony.read") && link(c));
+}
+export async function readSystem(universe: string, empire: string, systemId: string, signal: AbortSignal) {
+  const body = await request(`/api/game/${universe}/galaxy/${empire}/systems/${systemId}`, bootstrap, signal);
+  if (!validSystemDetail(body, empire, systemId)) throw new ApiError("invalid_response", 0);
+  return body;
 }

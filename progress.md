@@ -4,19 +4,39 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — S00 |
+| Champ | État au 31/10/2026 — S01–S07 |
 | --- | --- |
-| Objectif | Étape 8 System View, depuis Knowledge existante et sans nouvelle mécanique |
-| Branche / base | work/step-8-system-view depuis master/origin/master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 |
-| Tête / PR | S00 = commit portant ce checkpoint ; SHA distant/PR à consigner après publication |
-| État initial | Ancienne branche étape 7 sur tête finale 1bcb2baf8707fa54ab8d18fd9c7e0fb124dbb9c3, propre, aucun diff/index/nouveau fichier ni divergence ; un worktree |
-| Agent | Codex local, écrivain seul autorisé pour étape 8 ; dernière livraison publiée consignée Claude Code local |
-| CI vérifiée | PR #10 MERGED ; post-merge 41220568486 completed/success, cinq jobs sur 773e05c |
-| Réalisé | Master synchronisée ff-only, nouvelle branche courte ; statuts post-merge actualisés avant code |
-| Fichiers | AGENTS/context/progress, index docs/roadmap/passation et statut Galaxy technique |
-| Validation | check_docs et diff à exécuter avant commit ; aucune suite fonctionnelle relancée pour S00 documentaire |
-| Décisions | Contrat System View autorisé par instruction du 31/10/2026 ; galaxy.read, aucune donnée DETECTED détaillée, observations propres datées ; Q04/Q07/Q09 inchangées |
-| Suite | S01 audit et contrats/plan puis S02–S09 autonomes ; zéro migration préférée ; étape 9 non commencée ; aucun merge |
+| Objectif | Étape 8 System View : projection depuis Knowledge existante, sans nouvelle mécanique |
+| Branche / base / PR | work/step-8-system-view ; PR #11 brouillon ; master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 |
+| Tête | S00 740dd8dd888ce8c32c771283e7afa238edbca710 publié avant code ; présent commit = checkpoint S01–S07 |
+| Agent | Codex local, seul écrivain autorisé ; précédent travail étape 7 consigné Claude Code |
+| Réalisé | Contrats/plan, projection détail sans rattrapage/avancement de stream, routes Knowledge et observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ciblé |
+| Fichiers | app/galaxy/system_view.py et api.py, composants/hooks/client/navigation/CSS/tests UI ; nouveau test_system_view.py ; trois docs canoniques et smoke Galaxy étendu |
+| Validation locale | PostgreSQL dédiée echosphere_system_test : 275 Game réussis, dont 10 System View ; Ruff et Alembic sans dérive ; frontend lint 0 erreur (warning préexistant useGameSession), 48 Vitest, build, 4 Chromium System View 320/390/768/1440 ; captures 320/1440 examinées |
+| CI | Post-merge 41220568486 success 5/5 vérifié ; CI de ce checkpoint à observer après publication |
+| Limites / suite | S08 recette HTTPS réelle et régressions Chromium complètes puis S09 revue/CI/passation ; Portal inchangé ; zéro migration/grant/game_data ; étape 9 non commencée ; aucun merge |
+
+## S01–S07 — projection, navigation et UI System View, 31/10/2026
+
+Audit des modèles Knowledge/API/fog/permissions, docs/ADR et références visuelles demandé effectué.
+Schéma existant suffisant, zéro migration. Nouveau contrat métier/technique et plan S00–S09.
+GET détail sépare l’accès System View du catch_up Galaxy : sous stream verrouillé, lecture des
+snapshots autorisés seulement ; test prouve qu’une mission échue reste active sans rapport jusqu’au
+worker et que le curseur n’avance pas. Refresh monitoring existant conservé. DETECTED minimal,
+UNKNOWN/étranger/absent 404 identique, anciennes observations conservées sans enrichissement live.
+Liens Colony : uniquement observation actuelle + colony.read + colonie propre dans planète connue ;
+sinon présence générique, aucun détail Colony ajouté. Routes depuis Knowledge du même Empire.
+
+Sous-route native Galaxy Universe/Empire/System, aucun huitième domaine. SVG illustratif avec
+liste équivalente, sélection/clavier/tactile, dates complètes et panneaux empilés mobile. Retour
+conservant Empire/sélection/cadrage en mémoire ; deep-links autonomes après reload/historique.
+Le lien Colony sélectionne explicitement la bonne colonie, et une sélection efface l’ancien scope
+avant lecture pour éviter une ancienne projection après refus. Aucun POST au montage System View.
+
+Validation réellement exécutée en conteneurs isolés : 275 Game PostgreSQL / Ruff / Alembic check,
+48 Vitest, lint sans erreur, build, 4 Chromium spécifiques dont historique/refresh/focus/tactile et
+absence de débordement. Pas de nouvelle suite Portal locale (code inchangé). Recette réelle S08
+et CI finale non encore obtenues à ce checkpoint, aucune clôture S09 revendiquée.
 
 ## S00 — synchronisation après fusion étape 7, 31/10/2026
 

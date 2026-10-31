@@ -24,6 +24,7 @@ export function useGalaxy(
   enabled: boolean,
   csrf: string | undefined,
   onSessionLost: () => void,
+  initialEmpire?: string,
 ) {
   const [state, setState] = useState<State>({
     phase: "idle",
@@ -37,6 +38,7 @@ export function useGalaxy(
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [awaiting, setAwaiting] = useState(false);
   const selected = useRef<string | null>(null);
+  const preferred = useRef(initialEmpire);
   const active = useRef(false);
   const generation = useRef(0);
   const reads = useRef<AbortController | null>(null);
@@ -87,7 +89,7 @@ export function useGalaxy(
             return;
           }
           setState((old) => ({ ...old, empires }));
-          target = empires[0].id;
+          target = empires.find(e => e.id === preferred.current)?.id ?? empires[0].id;
         }
         selected.current = target;
         setSelectedEmpire(target);

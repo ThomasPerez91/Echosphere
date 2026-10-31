@@ -118,7 +118,9 @@ export function useColony(universe: string | null, enabled: boolean, csrf: strin
   }, [universe, csrf, accept, read]);
 
   const select = useCallback((colony: string) => {
-    late.current = 0; setFeedback(null); void read(colony);
+    late.current = 0; setFeedback(null);
+    setState(old => ({ ...old, phase: 'loading', projection: null, error: null }));
+    void read(colony);
   }, [read]);
 
   return { ...state, pending, feedback, awaiting, refresh: () => { late.current = 0; void read(); }, command, select,

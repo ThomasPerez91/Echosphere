@@ -65,3 +65,5 @@ Cadrage courant : [plan étape 7](05-project/step-7-plan.md), Q06/Exploration va
 Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
 Lot courant : étape 8 System View, branche `work/step-8-system-view`, S00–S09 autorisés.
 Étape 9 Fleets non commencée, aucun merge autorisé.
+
+Étape 8 : [contrat System View](01-game-design/system-view.md), [projection/navigation](03-technical/system-view.md), [plan S00–S09](05-project/step-8-plan.md).

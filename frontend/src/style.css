@@ -309,3 +309,42 @@ html { scroll-padding-bottom: 24px; }
   .galaxy-controls .button { flex: 1; }
   .galaxy-detail .button { width: 100%; }
 }
+
+/* System View: known structure only. Graphic positions are layout, never simulation. */
+.system-screen { display: grid; gap: var(--space); min-width: 0; }
+.system-heading h2 { font-size: clamp(1.35rem, 3vw, 2rem); overflow-wrap: anywhere; }
+.system-heading .panel-head { margin-top: 20px; }
+.system-heading p { margin-bottom: 8px; font-size: .85rem; }
+.system-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr); gap: var(--space); }
+.system-layout > *, .system-information > * { min-width: 0; }
+.system-map { background: radial-gradient(ellipse at center, #233a46 0, #0a1624 65%); }
+.system-illustration svg { width: 100%; min-height: 240px; display: block; }
+.system-orbit { fill: none; stroke: #34516a; stroke-width: 1; stroke-dasharray: 3 6; }
+.system-world-surface { fill: #284a66; stroke: #87a9c4; stroke-width: 2; }
+.system-world-ring { fill: transparent; stroke: transparent; stroke-width: 2; }
+.system-world.is-selected .system-world-ring { stroke: var(--accent); }
+.system-world text { fill: #e6f2ff; font-size: 18px; }
+.system-world-shortcuts { display: flex; flex-wrap: wrap; gap: 8px; }
+.system-world-shortcuts button, .system-world-list button { color: inherit; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; min-height: 44px; padding: 10px 14px; overflow-wrap: anywhere; max-width: 100%; }
+.system-world-shortcuts button[aria-pressed=true], .system-world-list button[aria-pressed=true] { border-color: var(--accent); background: #153038; }
+.system-capacities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.system-capacities > div { border: 1px solid var(--border); padding: 12px; border-radius: 8px; }
+.system-capacities dt { color: var(--muted); font-size: .8rem; }
+.system-capacities dd { margin: 8px 0 0; font-size: 1.7rem; }
+.system-world-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 12px; }
+.system-world-list button { width: 100%; text-align: left; display: grid; gap: 5px; }
+.system-world-list span { color: var(--muted); font-size: .8rem; }
+.system-information { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space); }
+.system-information li { margin-bottom: 12px; overflow-wrap: anywhere; }
+.system-world-detail p { font-size: .85rem; }
+@media (max-width: 1000px) {
+  .system-layout { grid-template-columns: minmax(0, 1fr); }
+  .system-world-detail { border-left: 3px solid var(--accent); }
+}
+@media (max-width: 600px) {
+  .system-screen { gap: 16px; }
+  .system-information { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .system-heading .panel-head { display: block; }
+  .system-capacities > div { padding: 9px; }
+  .system-world-shortcuts button { flex: 1 1 110px; }
+}

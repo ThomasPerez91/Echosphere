@@ -28,6 +28,7 @@ const messages: Record<string, string> = {
 const message = (code: string) => messages[code] ?? "Action indisponible pour le moment.";
 
 type Box = { x: number; y: number; width: number; height: number };
+export type GalaxyContext = { empire: string; selected: string; view: Box | null };
 const MIN_SIZE = 150;
 const MAX_SIZE = 2400;
 
@@ -133,14 +134,18 @@ export function GalaxyView({
   csrf,
   onSessionLost,
   onEconomyChanged,
+  initialContext,
+  onContextChange,
 }: {
   universe: string;
   enabled: boolean;
   csrf?: string;
   onSessionLost: () => void;
   onEconomyChanged?: () => void;
+  initialContext?: GalaxyContext;
+  onContextChange?: (context: GalaxyContext) => void;
 }) {
-  const galaxy = useGalaxy(universe, enabled, csrf, onSessionLost);
+  const galaxy = useGalaxy(universe, enabled, csrf, onSessionLost, initialContext?.empire);
   const p = galaxy.projection;
   const [selected, setSelected] = useState("");
   const [source, setSource] = useState("");
@@ -154,13 +159,22 @@ export function GalaxyView({
   viewRef.current = view;
   const drag = useRef<{ pointer: number; x: number; y: number; box: Box } | null>(null);
 
+  const contextChanged = useRef(onContextChange);
+  contextChanged.current = onContextChange;
+  const initial = useRef(initialContext);
   const empireId = p?.empire.id;
   useEffect(() => {
-    setSelected("");
+    if (!empireId) return;
+    const saved = initial.current?.empire === empireId ? initial.current : undefined;
+    setSelected(saved?.selected ?? "");
     setSource("");
-    setView(null);
+    setView(saved?.view ?? null);
     setConfirming(null);
   }, [empireId]);
+
+  useEffect(() => {
+    if (p && selected && view) contextChanged.current?.({ empire: p.empire.id, selected, view });
+  }, [p, selected, view]);
 
   useEffect(() => {
     if (!p) return;
@@ -427,6 +441,7 @@ export function GalaxyView({
                         : `Structure cartographiée le ${time(system.mapped_at!)} ; aucune surveillance actuelle.`}
                   </p>
                   {own(system) && <p><Badge tone="accent">Votre colonie</Badge></p>}
+                  <a className="button button--primary" href={`#universe/${universe}/galaxy/system/${p.empire.id}/${system.id}`}>Voir le système</a>
                   <h3 className="galaxy-subtitle">Planètes connues ({system.planets!.length})</h3>
                   <ul className="galaxy-planets">
                     {system.planets!.map((planet) => (
