@@ -4,7 +4,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -110,10 +110,67 @@ class Quote(StrictModel):
     capacity: Positive | None  # micro-units per resource
 
 
+class Technology(StrictModel):
+    name: str = Field(min_length=1, max_length=120)
+    domain: Literal["engineering", "energy", "computation", "xenoscience"]
+    tier: Literal[1, 2]
+    requires: list[str]
+    cost: dict[str, Nonnegative]
+    duration_seconds: Positive
+    effect: Literal["colony_alloys", "colony_flux", "research_duration", "research_data"]
+    reduction_bps: Annotated[int, Field(strict=True, ge=0, lt=10000)]
+
+
+class ResearchRules(StrictModel):
+    version: str
+    queue_limit: Literal[2]
+    refund_queued_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
+    refund_active_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
+    technologies: dict[str, Technology] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def valid_catalogue(self):
+        catalogue = self.technologies
+        seen = set()
+        for key, tech in catalogue.items():
+            if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", key):
+                raise ValueError("Invalid technology identifier")
+            if set(tech.cost) != RESOURCES or not any(tech.cost.values()):
+                raise ValueError("Technology requires three resources and a positive cost")
+            for value in tech.cost.values():
+                amount(value * MICRO_UNITS)
+            amount(tech.duration_seconds * MICRO_UNITS)
+            if (
+                len(set(tech.requires)) != len(tech.requires)
+                or not set(tech.requires) <= catalogue.keys()
+            ):
+                raise ValueError("Unknown or duplicate prerequisite")
+            if (tech.domain, tech.tier) in seen:
+                raise ValueError("Duplicate domain tier")
+            seen.add((tech.domain, tech.tier))
+        visiting, visited = set(), set()
+
+        def visit(key):
+            if key in visiting:
+                raise ValueError("Cyclic technology prerequisites")
+            if key in visited:
+                return
+            visiting.add(key)
+            for required in catalogue[key].requires:
+                visit(required)
+            visiting.remove(key)
+            visited.add(key)
+
+        for key in catalogue:
+            visit(key)
+        return self
+
+
 class Ruleset(StrictModel):
     resources: ResourceRules
     colony: ColonyRules
     catalogue: InfrastructureRules
+    research: ResearchRules | None = None
 
     @property
     def version(self) -> str:
@@ -127,6 +184,12 @@ class Ruleset(StrictModel):
             raise ValueError("Mixed ruleset versions")
         if set(self.resources.resources) != RESOURCES or len(self.resources.resources) != 3:
             raise ValueError("Exactly three distinct resources required")
+        if self.version == "v0.1" and self.research is not None:
+            raise ValueError("Research is unavailable in v0.1")
+        if self.version != "v0.1" and (
+            self.research is None or self.research.version != self.version
+        ):
+            raise ValueError("Missing or mixed Research version")
         c, catalogue = self.colony, self.catalogue.infrastructures
         if set(c.initial_stocks) != RESOURCES or set(c.speeds) != {
             "economy",
@@ -212,6 +275,11 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
                 ("catalogue", "infrastructures"),
             ]
         }
+        if version != "v0.1":
+            parts["research"] = json.loads(
+                (location / "rulesets" / version / "research.json").read_text(),
+                object_pairs_hook=_unique_object,
+            )
         rules = Ruleset.model_validate(parts)
         if rules.version != version:
             raise ValueError("Directory/version mismatch")

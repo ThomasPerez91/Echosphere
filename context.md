@@ -118,11 +118,10 @@ annulation sécurisées, Q39 plafonnement/perte et cascade Q01, worker et recett
 La création complète de partie reste hors produit ; aucune fixture runtime ajoutée.
 
 **Lot courant : étape 6 — Recherche globale d’Empire**, branche work/step-6-research depuis ce master.
-Premier checkpoint documentaire publié avant implémentation substantielle. Q05 reste ouverte :
-[plan durable R00–R09](docs/05-project/step-6-plan.md) et [recommandation Q05](docs/01-game-design/research.md)
-publiés, puis attendre la validation produit explicite avant
-migration, backend Research, catalogue exécutable ou UI fonctionnelle. **Aucune recherche livrée** à ce
-checkpoint. Après Q05 validée, R02–R09 sont autorisés sur cette seule branche/PR ; aucune étape 7.
+Q05 est **Close produit — implémentation étape 6**, validation utilisateur explicite reçue.
+[Plan R00–R09](docs/05-project/step-6-plan.md) et [contrat canonique](docs/01-game-design/research.md).
+R02–R09 autorisés sur la même branche/PR #9 ; aucune étape 7, aucune fusion sans instruction.
+
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.
 

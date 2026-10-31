@@ -14,6 +14,7 @@ from app.api.probes import router
 from app.colony.api import router as colony_router
 from app.core.config import Settings
 from app.persistence.database import create_database_engine, create_session_factory
+from app.research.api import router as research_router
 from app.simulation.clock import SystemClock
 
 
@@ -71,6 +72,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     application.include_router(access_router)
     application.include_router(colony_router)
+    application.include_router(research_router)
     application.state.database_engine = engine
     application.state.session_factory = create_session_factory(engine)
     application.include_router(router)

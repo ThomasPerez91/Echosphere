@@ -31,16 +31,20 @@ peut estimer le temps restant mais ne valide pas la technologie.
 - [Boucle](core-loop.md) · [Équilibrage](balance-philosophy.md)
 - [Temps serveur](../03-technical/event-engine.md)
 
-## Q05 — recommandation soumise à validation, 31/10/2026
+## Q05 — contrat validé, 31/10/2026
 
-**Statut : proposition produit uniquement ; Q05 reste ouverte. Aucun élément de cette section
-n’est implémenté ni validé par la simple ouverture de PR #9.** Source : demande utilisateur de
-préparer l’étape 6 après fusion de 5D. Le [plan durable](../05-project/step-6-plan.md) décrit les
-travaux futurs conditionnés à une validation explicite de cette proposition.
+**Statut : Q05 Close produit — implémentation étape 6.** Validation explicite utilisateur reçue
+après la proposition du 31/10/2026. R02–R09 autorisés sur PR #9 sans nouvel arrêt intermédiaire,
+sauf arbitrage produit non couvert. Aucun merge ni étape 7 autorisé.
+
+Les durées et coûts sont **figés à l’acceptation**, même pour la suivante : acquérir Calcul I
+entre-temps ne réduit jamais sa durée. Bonus applicables seulement aux nouveaux ordres acceptés.
+Même règle pour Ingénierie/Énergétique/Xénoscience ; II remplace I (10 % net, jamais 15 %).
+
 
 ### File et orientation proposées
 
-| Sujet | Recommandation Q05 |
+| Sujet | Contrat Q05 |
 | --- | --- |
 | Parallélisme | **Une recherche active par Empire**, tous domaines confondus ; les constructions Colony continuent indépendamment |
 | Programmation | **Deux ordres au total : un actif + un suivant**, jamais deux actifs ni une file par colonie/domaine/joueur |
@@ -51,7 +55,7 @@ travaux futurs conditionnés à une validation explicite de cette proposition.
 | Exclusivité | Aucune technologie mutuellement exclusive MVP, aucun choix qui retire des connaissances déjà acquises |
 | Orientation | Changer librement de domaine pour les prochains ordres ; les connaissances restent acquises. L’orientation vient du temps et des ressources investis, sans respec ni effacement de branche |
 
-La limite de deux est une recommandation propre à Q05, **pas** la règle Colony 3/1 et **pas** les
+La limite de deux est validée pour Q05, **pas** la règle Colony 3/1 et **pas** les
 trois places illustrées par research-view.png. Les domaines restent des catégories de technologies,
 jamais quatre ressources ou jauges à récolter. À échéance exacte, traiter la fin avant une annulation :
 une technologie déjà acquise ne redevient pas annulable.
@@ -88,7 +92,7 @@ droits, mais aucun lancement n’est possible ; pas de crédit gratuit de démar
   de l’ancienne échéance dans une transaction. Répartir la place disponible une seule fois par
   colonie/ressource si plusieurs ordres retournent vers la même colonie.
 
-Ces 100/80 et le plafonnement sont proposés pour **Research** par Q05. Q01/Q39 déjà validées ne sont
+Ces 100/80 et le plafonnement sont validés pour **Research** par Q05. Q01/Q39 déjà validées ne sont
 ni rouvertes ni étendues implicitement : leur application actuelle reste celle de la construction.
 Le cycle futur de conquête/abandon/destruction de la colonie payeuse relève de Q07, hors étape 6 ;
 aucun remboursement vers un autre Empire par défaut. Si cette appartenance est incohérente, refus
@@ -123,7 +127,7 @@ de fin ne doit ni ajouter un second acquis ni appliquer deux fois son effet.
 
 Recommandation : **huit technologies, deux nœuds distincts par domaine**, sans reprise du contenu
 illustratif du mockup. Les noms suivants et valeurs 5/10 sont des propositions/paramètres de balance,
-pas des entrées game_data déjà validées. R02 précisera identifiants, coûts/durées et validation stricte.
+valeurs initiales validées et balançables dans game_data. R02 précisera identifiants, coûts/durées et validation stricte.
 
 | Domaine provisoire | Deux paliers distincts proposés | Effet concret, net au palier I / II |
 | --- | --- | --- |
@@ -172,7 +176,5 @@ acceptés ; le worker n’a besoin ni de session, ni de présence, ni de Portal.
 
 ### Décision attendue
 
-Valider ou corriger ce **contrat Q05 cohérent dans son ensemble**, y compris financement Colony,
-annulation/cascade, effets initiaux et rôle futur des laboratoires. Les chiffres/noms précis restent
-balançables ; une variante ne sera ajoutée que si l’utilisateur en demande une. Tant que cet arbitrage
-n’est pas reçu, arrêter R01 à la proposition : aucune migration ni implémentation R02–R09.
+Validation utilisateur reçue : contrat clos côté produit, implémentation R02–R09 autorisée.
+Laboratoires hors étape 6. Future IA soumise aux mêmes services et limites d’information.

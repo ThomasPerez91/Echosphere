@@ -1,17 +1,16 @@
 # Étape 6 — Recherche globale d’Empire
 
-**Statut au 31/10/2026 : R00 publié ; R01 proposition à arbitrer ; R02–R09 non commencés.**
+**Statut au 31/10/2026 : R00 publié ; R01 validé explicitement ; R02–R09 non commencés.**
 Une seule branche `work/step-6-research`, une seule [PR #9](https://github.com/ThomasPerez91/Echosphere/pull/9)
 en brouillon. Base master `0e2ca11322a85452ad6860a4a35099bbc22a4689`, fusion #8/5D vérifiée ;
 [CI post-merge 41144706921](https://github.com/ThomasPerez91/Echosphere/actions/runs/41144706921) success.
 Premier checkpoint **098ab078889ca7a41b5ed77055663a439670ccdf** publié avant ce plan et avant code.
 L’état GitHub réel prévaut toujours sur les anciens checkpoints.
 
-**Verrou produit explicite :** l’utilisateur demande de présenter Q05 puis de s’arrêter pour son
-arbitrage avant migration, backend Research, catalogue exécutable ou UI fonctionnelle. La portée
-validée ci-dessous est distincte de la [recommandation Q05 non validée](../01-game-design/research.md).
-Une fois Q05 validée explicitement, R02–R09 seront autorisés sans confirmation par détail technique.
-Aucune fusion ni étape 7 sur la seule base de ce plan.
+**Autorisation utilisateur reçue : Q05 close produit, implémentation étape 6.**
+R02–R09 autorisés sans validation intermédiaire, sauf véritable arbitrage non couvert.
+Le contrat canonique inclut les snapshots complets dès acceptation, sans recalcul des suivants.
+Aucune fusion ni étape 7 autorisée.
 
 ## Contrat déjà validé et sortie cible
 
@@ -43,7 +42,7 @@ Les smokes/fixtures ne remplacent pas un parcours produit de création de partie
 | Ticket | Portée | Critère de sortie et statut actuel |
 | --- | --- | --- |
 | R00 | Vérifier #8/master/CI, synchroniser master, créer branche, publier checkpoint post-merge | Fait : 098ab07 ; 5D intégrée et aucune Research livrée |
-| R01 | Proposition produit Q05 et contrat canonique | Proposition complète dans research.md, attente validation utilisateur ; ne pas marquer clos avant réponse |
+| R01 | Proposition produit Q05 et contrat canonique | Contrat validé explicitement dans research.md ; clos produit |
 | R02 | Petit catalogue/version/ruleset, quotes et validation stricte | Futur après Q05 ; noms/chiffres balançables, effets réels, prérequis connus/acycliques et tests de données ; aucune modification silencieuse des univers |
 | R03 | Persistance et migration additive Game | Futur ; état Empire, ordres/acquis/effets/stream avec FK/scopes/uniqueness/index et upgrade/check/roundtrip/refus de downgrade peuplé |
 | R04 | Services métier et handler du moteur existant | Futur ; paiements/rattrapages/idempotence, file, annulation, acquisition/effet uniques, rollback et concurrence ; petits effets Colony seulement si Q05 les valide |
@@ -176,4 +175,4 @@ verte documentaire en validation de Research inexistante.
 Génération galaxie, exploration, vue système, flottes, colonisation, IA, combat, diplomatie, défense,
 multijoueur complet, modes PRIVATE/PERSISTENT, laboratoires, portefeuille global, création complète
 de partie produit, production continue modifiée par Research et étape 7. Aucun abonnement/service
-payant ou nouvel arbitrage Qxx pris pour faciliter le développement. Prochain échange demandé : Q05.
+payant ou nouvel arbitrage Qxx pris pour faciliter le développement. Q05 validée ; poursuivre R02–R09.

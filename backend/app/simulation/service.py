@@ -156,6 +156,7 @@ class TimeEngine(Scheduler):
 
     def __init__(self, *args, handlers=None, **kwargs):
         from app.colony.service import complete_construction
+        from app.research.service import complete_research
 
         super().__init__(
             *args,
@@ -164,6 +165,7 @@ class TimeEngine(Scheduler):
             else {
                 "RESOURCE_RATE_CHANGE": change_rate,
                 "CONSTRUCTION_COMPLETE": complete_construction,
+                "RESEARCH_COMPLETE": complete_research,
             },
             **kwargs,
         )

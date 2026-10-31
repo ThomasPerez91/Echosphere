@@ -77,7 +77,8 @@ class EmpireBinding(Base):
         CheckConstraint(
             "jsonb_typeof(permissions) = 'array' "
             "AND jsonb_array_length(permissions) > 0 "
-            'AND permissions <@ \'["colony.read","colony.construct","colony.cancel"]\'::jsonb',
+            'AND permissions <@ \'["colony.read","colony.construct","colony.cancel",'
+            '"research.read","research.start","research.cancel"]\'::jsonb',
             name="binding_permissions",
         ),
     )

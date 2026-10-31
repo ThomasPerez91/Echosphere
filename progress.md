@@ -2,6 +2,23 @@
 
 Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
+## Checkpoint R02–R06 en cours — 31/10/2026
+
+Catalogue v0.2 complet (v0.1 inchangée), migration 0007 additive, stream/file/acquis Empire,
+snapshots à l’acceptation, financement/remboursements Colony coordonnés, effets sur nouveaux devis,
+permissions Game/Portal et API/UI connectées. Q05 close produit. Tests de données et PostgreSQL ajoutés.
+Local : Ruff Game, 63 tests unitaires réussis ; 154 intégrations ignorées faute de PostgreSQL.
+Frontend : 26 tests existants réussis, build réussi ; nouveaux tests UI/recette R07/R08 à terminer.
+Publication intermédiaire pour exécuter les intégrations CI ; PR #9 reste brouillon, aucun merge.
+
+## Validation Q05 reçue — reprise R02–R09
+
+Validation explicite utilisateur du contrat Research : **Clos produit — implémentation étape 6**.
+File Empire 1+1, financement explicite par Colony, remboursements 100/80 plafonnés, huit technologies,
+bonus I 5 % / II 10 % net et snapshot complet à l’acceptation, y compris suivante. Pas de laboratoires.
+R02–R09 autorisés sur work/step-6-research / PR #9 ; ne pas merger ni démarrer l’étape 7.
+Les checkpoints de proposition ci-dessous sont historiques et ne constituent plus un verrou Q05.
+
 ## Reprise rapide
 
 | Champ | État |

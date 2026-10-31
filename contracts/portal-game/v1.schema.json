@@ -95,11 +95,11 @@
             "enum": [
               "colony.read",
               "colony.construct",
-              "colony.cancel"
+              "colony.cancel", "research.read", "research.start", "research.cancel"
             ],
             "type": "string"
           },
-          "maxItems": 3,
+          "maxItems": 6,
           "minItems": 1,
           "title": "Permissions",
           "type": "array"
