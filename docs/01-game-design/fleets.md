@@ -1,7 +1,8 @@
 # Flottes et missions
 
-**Statut : Q09 ouverte ; proposition F01 du 31/10/2026 ci-dessous, en attente de validation utilisateur.**
-Rien de cette proposition n’est implémenté ni validé ; aucun schéma, migration ou ruleset v0.4 avant arbitrage.
+**Statut : Q09 close produit pour l’étape 9 — validation utilisateur explicite du 31/10/2026 avec
+amendements** (section « Amendements validés », qui prime sur la proposition F01 en cas d’écart).
+Réalisation F02–F11 sur PR #12 ; valeurs = balance v0.4, modifiables seulement par nouveau ruleset.
 
 
 Peu de classes au MVP. Rôles envisagés : sonde, transport léger, transport lourd, unité légère de
@@ -30,7 +31,7 @@ continue de déplacement. Le client anime une projection et ne décide pas des a
 - [Boucle](core-loop.md) · [Équilibrage](balance-philosophy.md)
 - [Temps serveur](../03-technical/event-engine.md)
 
-## Proposition Q09 — F01, 31/10/2026, en attente de validation
+## Proposition Q09 — F01, 31/10/2026 (validée avec amendements ci-dessous)
 
 Provenance : instruction utilisateur du 31/10/2026 (étape 9, F00/F01 puis arrêt avant F02).
 Valeurs chiffrées = **balance provisoire** destinée au futur ruleset v0.4, jamais des constantes de
@@ -198,3 +199,33 @@ ne réserve aucune planète et ne résout aucune concurrence. L’étape 12 ajou
 | A13 | Un seul EventStream « opérations d’Empire » = stream Exploration existant, pour toutes les flottes et la production (voir plan) |
 | A14 | Permissions `fleet.read`, `fleet.build`, `fleet.command` (plafond du contrat porté de 9 à 12, aucune attribution automatique) |
 | A15 | Ruleset complet v0.4 pour les nouveaux univers seulement, aucune flotte de départ gratuite |
+
+## Amendements validés — 31/10/2026
+
+A1–A15 validés comme proposés, avec ces précisions qui font foi :
+
+- **Fabrication** : capacité de base du socle Colony / Command Core en v0.4 ; aucun secteur ni slot
+  orbital, pas de chantier caché ; remplaçable par une infrastructure future (Q04, nouveau ruleset).
+  `speeds.fleet` ne s’applique **qu’aux déplacements**, jamais à la fabrication ; aucun bonus.
+- **Batch atomique** : N unités apparaissent ensemble à `N × durée unitaire` ; annulation active =
+  aucun vaisseau partiel, 80 % théorique ; en attente 100 % ; crédit plafonné par ressource,
+  surplus perdu, preview (application explicite de Q39).
+- **Division/fusion avec cargo** : la division choisit unités **et** cargaison transférées, refus
+  atomique si une flotte résultante dépasse sa capacité ; la fusion additionne stacks et cargo ;
+  jamais de perte automatique ; opérations atomiques et idempotentes.
+- **SURVEY en deux temps** : `travel_arrival_at = started_at + travel`, `due_at = travel_arrival_at +
+  survey (15 min)` ; cartographie seulement à `due_at` ; flotte engagée jusque-là.
+- **Colonie payeuse** : la colonie d’attache (`home_colony_id`) de la flotte finance toujours ses
+  missions, même stationnée au loin ; aucun choix arbitraire de colonie par départ.
+- **Rappel** : DEPLOY tant que `now < arrival_at` ; SURVEY seulement pendant le voyage
+  (`now < travel_arrival_at`), jamais pendant l’analyse ; ni retour ni RETURN rappelables.
+- **Stream** : le stream existant `EmpireExploration` devient conceptuellement la **chronologie des
+  opérations d’Empire** (Exploration, flottes, production), sans renommage ni migration.
+- **GET non mutatif** : aucune projection (Galaxy, System View, Flottes) ne traite
+  `SHIP_ORDER_COMPLETE`, `FLEET_ARRIVAL` ou `FLEET_RETURN` ; seuls le worker et les commandes
+  (rattrapage transactionnel avant mutation) font avancer cette chronologie.
+- **Permissions** : `fleet.read` ; production = `fleet.read` + `fleet.build` + `colony.read` ;
+  commande = `fleet.read` + `fleet.command` (+ `galaxy.read` pour SURVEY, + `colony.read` pour
+  CHARGER/DÉCHARGER) ; 12 droits au total, aucune attribution automatique.
+- **A9 = oui** : cargo/transport livrés ; recettes avec seconde colonie strictement de test, l’UI
+  n’invente aucune colonie. Première boucle v0.4 : fabriquer une sonde → garnison → SURVEY.

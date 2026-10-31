@@ -8,6 +8,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.fleet.rules import FleetRules
 from app.galaxy.rules import ExplorationRules, GalaxyRules
 from app.simulation.production import MAX_AMOUNT, MICRO_UNITS, RESOURCES, amount
 
@@ -174,6 +175,7 @@ class Ruleset(StrictModel):
     research: ResearchRules | None = None
     galaxy: GalaxyRules | None = None
     exploration: ExplorationRules | None = None
+    fleets: FleetRules | None = None
 
     @property
     def version(self) -> str:
@@ -202,6 +204,17 @@ class Ruleset(StrictModel):
             or self.exploration.version != self.version
         ):
             raise ValueError("Missing or mixed Galaxy/Exploration version")
+        if self.version in {"v0.1", "v0.2", "v0.3"} and self.fleets is not None:
+            raise ValueError("Fleets unavailable in historical rulesets")
+        # From v0.4, exploration is a probe Fleet SURVEY: never two exploration means at once.
+        if self.version not in {"v0.1", "v0.2", "v0.3"} and (
+            self.galaxy is None
+            or self.fleets is None
+            or self.exploration is not None
+            or self.galaxy.version != self.version
+            or self.fleets.version != self.version
+        ):
+            raise ValueError("Missing or mixed Galaxy/Fleet version")
         c, catalogue = self.colony, self.catalogue.infrastructures
         if set(c.initial_stocks) != RESOURCES or set(c.speeds) != {
             "economy",
@@ -292,12 +305,14 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
                 (location / "rulesets" / version / "research.json").read_text(),
                 object_pairs_hook=_unique_object,
             )
-        if version == "v0.3":
-            for name in ("galaxy", "exploration"):
-                parts[name] = json.loads(
-                    (location / "rulesets" / version / f"{name}.json").read_text(),
-                    object_pairs_hook=_unique_object,
-                )
+        extensions = {"v0.3": ("galaxy", "exploration")}.get(
+            version, () if version in {"v0.1", "v0.2"} else ("galaxy", "fleets")
+        )
+        for name in extensions:
+            parts[name] = json.loads(
+                (location / "rulesets" / version / f"{name}.json").read_text(),
+                object_pairs_hook=_unique_object,
+            )
         rules = Ruleset.model_validate(parts)
         if rules.version != version:
             raise ValueError("Directory/version mismatch")

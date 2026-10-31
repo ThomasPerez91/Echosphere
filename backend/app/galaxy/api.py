@@ -87,7 +87,8 @@ class Galaxy(Colonies):
             )
         )
         sources, options = [], []
-        if "colony.read" in permissions:
+        # Abstract expedition quotes only where the pinned ruleset has it (v0.3).
+        if "colony.read" in permissions and rules_for(session, universe_id).exploration:
             research.catch_up(session, self.engine, universe_id, empire_id, at)
             colonies = list(
                 session.scalars(

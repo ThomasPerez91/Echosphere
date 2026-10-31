@@ -1,16 +1,16 @@
 # Étape 9 — Flottes et missions asynchrones
 
-**F00 réalisé et F01 publié le 31/10/2026 ; arrêt obligatoire avant F02 jusqu’à validation de Q09.**
+**Q09 validée le 31/10/2026 avec amendements ([Flottes](../01-game-design/fleets.md)) ; F02–F11 autorisés sans validation intermédiaire.**
 Base master `e011fd3127c4888db551dd3792b347b1dc31b468`, étape 8 intégrée via PR #11, CI post-merge
 41231820338 success (5/5). Branche unique `work/step-9-fleets`, [PR #12](https://github.com/ThomasPerez91/Echosphere/pull/12)
 brouillon. Aucun merge autorisé ; étape 10 Colonisation non commencée. Proposition produit :
-[Flottes — proposition Q09](../01-game-design/fleets.md). Tout ce qui suit est **proposé**, non validé.
+[Flottes — Q09](../01-game-design/fleets.md). La proposition technique ci-dessous est validée dans son principe.
 
 | Ticket | Travail et preuve attendue |
 | --- | --- |
 | F00 | Réalisé : CI post-merge vérifiée terminée 5/5, master synchronisée ff-only, branche, statuts |
-| F01 | Réalisé, en attente de validation : audit ci-dessous et proposition Q09 complète |
-| F02 | Ruleset complet v0.4 (`fleets.json`, exploration `fleet-survey-v1`), validation stricte, v0.1–v0.3 intactes |
+| F01 | Réalisé : audit ci-dessous et proposition Q09, validée avec amendements |
+| F02 | Réalisé : ruleset complet v0.4 (`fleets.json`, exploration `fleet-survey-v1`), validation stricte, v0.1–v0.3 intactes |
 | F03 | Migration 0009 : tables Fleet, contraintes d’invariant, permissions 12, downgrade sûr ; inventaire de tables |
 | F04 | Production (file dédiée, réservation, annulation Q39 explicite), garnisons, division/fusion stationnées |
 | F05 | Missions DEPLOY/SURVEY/RETURN, chemins snapshotés, `FLEET_ARRIVAL`, rapports, reprise worker |

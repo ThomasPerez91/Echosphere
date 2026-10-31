@@ -30,3 +30,7 @@ choisir explicitement v0.2 pour une nouvelle instance compatible, jamais à la l
 Étape 7 : ruleset complet `v0.3` avec Galaxy/Exploration ; v0.1 et v0.2 immuables.
 `galaxy-v1` épinglé, 40 systèmes et 4 sites candidats par défaut ; coûts/durée Exploration
 versionnés, aucun bonus Research implicite. Aucune adoption d’ancien Universe à la lecture.
+
+Étape 9 : ruleset complet `v0.4` = v0.3 (versions seules changées) + `fleets.json` (sonde, cargo
+léger, file 3/1, batch 1–20, analyse SURVEY) ; aucune expédition abstraite dans v0.4. v0.1–v0.3
+immuables, univers existants jamais migrés. `speeds.fleet` ne touche que les déplacements.
