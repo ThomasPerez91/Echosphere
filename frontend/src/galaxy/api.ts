@@ -1,78 +1,223 @@
-import type { Amounts } from '../colony/api';
+import { ApiError } from "../colony/api";
+import type { Amounts } from "../colony/api";
+export { ApiError };
 
+export type Empire = { id: string; name: string };
+export type KnowledgeState = "DETECTED" | "MAPPED" | "MONITORED";
+export type KnownPlanet = {
+  id: string;
+  name: string;
+  sector_capacity: number;
+  orbital_capacity: number;
+};
+/** DETECTED carries only an opaque id and an approximate position; never a name or structure. */
 export type KnownSystem = {
-  id: string; state: 'DETECTED' | 'MAPPED' | 'MONITORED'; x: number; y: number;
-  discovered_at: string; name?: string; last_seen_at?: string | null;
-  planets?: { id: string; name: string; sector_capacity: number; orbital_capacity: number }[];
+  id: string;
+  state: KnowledgeState;
+  x: number;
+  y: number;
+  discovered_at: string;
+  name?: string;
+  mapped_at?: string;
+  last_seen_at?: string | null;
+  observation?: { own_colony_ids: string[] } | null;
+  planets?: KnownPlanet[];
+};
+export type Route = { id: string; a_id: string; b_id: string };
+export type Report = {
+  observed_at: string;
+  processed_at: string;
+  discoveries: {
+    system: KnownSystem;
+    neighbors: { id: string; x: number; y: number; new: boolean }[];
+    routes: Route[];
+    path: string[];
+  };
 };
 export type Mission = {
-  id: string; destination_id: string; colony_id: string; status: 'active' | 'completed';
-  started_at: string; due_at: string; cost: Amounts;
-  report: { observed_at: string; processed_at: string; discoveries: { system: KnownSystem } } | null;
+  id: string;
+  destination_id: string;
+  colony_id: string | null;
+  status: "active" | "completed";
+  started_at: string;
+  due_at: string;
+  cost: Amounts;
+  report: Report | null;
+};
+export type Option = {
+  colony_id: string;
+  destination_id: string;
+  hops: number;
+  cost: Amounts;
+  duration_us: string;
+  reason: string | null;
 };
 export type Projection = {
-  server_time: string; empire: { id: string }; permissions: string[]; systems: KnownSystem[];
-  routes: { id: string; a_id: string; b_id: string }[];
+  server_time: string;
+  empire: Empire;
+  permissions: string[];
+  systems: KnownSystem[];
+  routes: Route[];
   sources: { id: string; name: string; stocks: Amounts }[];
-  options: { colony_id: string; destination_id: string; hops: number; cost: Amounts;
-    duration_us: string; reason: string | null }[]; missions: Mission[];
+  options: Option[];
+  missions: Mission[];
 };
-export class GalaxyError extends Error {
-  constructor(public code: string, public status: number) { super(code); }
+
+type Value = Record<string, unknown>;
+const object = (v: unknown): v is Value => !!v && typeof v === "object" && !Array.isArray(v);
+const id = (v: unknown): v is string =>
+  typeof v === "string" && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(v);
+const date = (v: unknown) => typeof v === "string" && Number.isFinite(Date.parse(v));
+const integer = (v: unknown): v is number => typeof v === "number" && Number.isSafeInteger(v);
+const micro = (v: unknown) => typeof v === "string" && /^\d{1,20}$/.test(v);
+const amounts = (v: unknown) => object(v) && ["alloys", "flux", "data"].every((k) => micro(v[k]));
+const list = (v: unknown, item: (x: unknown) => boolean) => Array.isArray(v) && v.every(item);
+const route = (v: unknown) => object(v) && id(v.id) && id(v.a_id) && id(v.b_id);
+const STRUCTURE = ["name", "mapped_at", "last_seen_at", "observation", "planets"];
+
+function system(v: unknown): boolean {
+  if (!object(v) || !id(v.id) || !integer(v.x) || !integer(v.y) || !date(v.discovered_at))
+    return false;
+  // A DETECTED payload with structure would be a fog leak: refuse it instead of hiding it.
+  if (v.state === "DETECTED") return STRUCTURE.every((k) => !(k in v));
+  if (v.state !== "MAPPED" && v.state !== "MONITORED") return false;
+  return (
+    typeof v.name === "string" &&
+    date(v.mapped_at) &&
+    (v.last_seen_at === null || date(v.last_seen_at)) &&
+    (v.observation === null ||
+      (object(v.observation) && list(v.observation.own_colony_ids, id))) &&
+    list(
+      v.planets,
+      (p) =>
+        object(p) &&
+        id(p.id) &&
+        typeof p.name === "string" &&
+        integer(p.sector_capacity) &&
+        integer(p.orbital_capacity),
+    )
+  );
 }
-const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object';
-const identifier = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9-]{36}$/i.test(value);
-const date = (value: unknown) => typeof value === 'string' && Number.isFinite(Date.parse(value));
-const integer = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value);
-const micro = (value: unknown): value is string => typeof value === 'string' && /^\d+$/.test(value);
-function amounts(value: unknown) {
-  return object(value) && ['alloys', 'flux', 'data'].every(k => micro(value[k]));
+
+function report(v: unknown) {
+  if (v === null) return true;
+  if (!object(v) || !date(v.observed_at) || !date(v.processed_at)) return false;
+  const d = v.discoveries;
+  return (
+    object(d) &&
+    system(d.system) &&
+    list(d.neighbors, (n) => object(n) && id(n.id) && integer(n.x) && integer(n.y)) &&
+    list(d.routes, route) &&
+    list(d.path, id)
+  );
 }
-function known(value: unknown) {
-  if (!object(value) || !identifier(value.id) || !integer(value.x) || !integer(value.y)
-    || !date(value.discovered_at) || !['DETECTED', 'MAPPED', 'MONITORED'].includes(String(value.state))) return false;
-  if (value.state === 'DETECTED') return !('name' in value) && !('planets' in value);
-  return typeof value.name === 'string' && Array.isArray(value.planets) && value.planets.every(p =>
-    object(p) && identifier(p.id) && typeof p.name === 'string' && integer(p.sector_capacity)
-    && integer(p.orbital_capacity)) && (value.last_seen_at === null || date(value.last_seen_at));
+
+function mission(v: unknown) {
+  return (
+    object(v) &&
+    id(v.id) &&
+    id(v.destination_id) &&
+    (v.colony_id === null || id(v.colony_id)) &&
+    (v.status === "active" || v.status === "completed") &&
+    date(v.started_at) &&
+    date(v.due_at) &&
+    amounts(v.cost) &&
+    report(v.report)
+  );
 }
-export function projection(value: unknown): Projection {
-  if (!object(value) || !date(value.server_time) || !object(value.empire) || !identifier(value.empire.id)
-    || !Array.isArray(value.permissions) || !value.permissions.every(p => typeof p === 'string')
-    || !Array.isArray(value.systems) || !value.systems.every(known)
-    || !Array.isArray(value.routes) || !value.routes.every(r => object(r) && identifier(r.id)
-      && identifier(r.a_id) && identifier(r.b_id))
-    || !Array.isArray(value.sources) || !value.sources.every(s => object(s) && identifier(s.id)
-      && typeof s.name === 'string' && amounts(s.stocks))
-    || !Array.isArray(value.options) || !value.options.every(o => object(o) && identifier(o.colony_id)
-      && identifier(o.destination_id) && integer(o.hops) && o.hops > 0 && amounts(o.cost)
-      && micro(o.duration_us) && (o.reason === null || typeof o.reason === 'string'))
-    || !Array.isArray(value.missions) || !value.missions.every(m => object(m) && identifier(m.id)
-      && identifier(m.destination_id) && identifier(m.colony_id) && ['active', 'completed'].includes(String(m.status))
-      && date(m.started_at) && date(m.due_at) && amounts(m.cost) && (m.report === null
-        || object(m.report) && date(m.report.observed_at) && date(m.report.processed_at)
-        && object(m.report.discoveries) && known(m.report.discoveries.system)))) {
-    throw new GalaxyError('invalid_response', 0);
+
+export function validProjection(value: unknown, empire: string): value is Projection {
+  if (
+    !object(value) ||
+    !date(value.server_time) ||
+    !object(value.empire) ||
+    value.empire.id !== empire ||
+    typeof value.empire.name !== "string" ||
+    !list(value.permissions, (p) => typeof p === "string") ||
+    !list(value.systems, system) ||
+    !list(value.routes, route) ||
+    !list(value.sources, (s) => object(s) && id(s.id) && typeof s.name === "string" && amounts(s.stocks)) ||
+    !list(
+      value.options,
+      (o) =>
+        object(o) &&
+        id(o.colony_id) &&
+        id(o.destination_id) &&
+        integer(o.hops) &&
+        o.hops > 0 &&
+        amounts(o.cost) &&
+        micro(o.duration_us) &&
+        (o.reason === null || typeof o.reason === "string"),
+    ) ||
+    !list(value.missions, mission)
+  )
+    return false;
+  const p = value as Projection;
+  const known = new Set(p.systems.map((s) => s.id));
+  // Every route and destination must reference a system this projection legitimately shows.
+  return (
+    known.size === p.systems.length &&
+    p.routes.every((r) => known.has(r.a_id) && known.has(r.b_id)) &&
+    p.options.every((o) => known.has(o.destination_id)) &&
+    p.missions.every((m) => known.has(m.destination_id))
+  );
+}
+
+async function request(url: string, init: RequestInit, signal: AbortSignal): Promise<unknown> {
+  const response = await fetch(url, {
+    ...init,
+    signal,
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new ApiError("invalid_response", response.ok ? 0 : response.status);
   }
-  const result = value as Projection;
-  const ids = new Set(result.systems.map(s => s.id));
-  if (ids.size !== result.systems.length || result.routes.some(r => !ids.has(r.a_id) || !ids.has(r.b_id))) {
-    throw new GalaxyError('invalid_response', 0);
+  if (!response.ok) {
+    const error = body as { error?: { code?: string } };
+    throw new ApiError(error.error?.code ?? "unavailable", response.status);
   }
-  return result;
+  return body;
 }
-export async function request(path: string, signal: AbortSignal, body?: unknown, csrf?: string) {
-  const response = await fetch(path, { signal, credentials: 'same-origin', cache: 'no-store',
-    method: body === undefined ? 'GET' : 'POST', headers: body === undefined
-      ? { 'X-Game-Request': 'bootstrap' } : { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf ?? '' },
-    body: body === undefined ? undefined : JSON.stringify(body) });
-  const value: unknown = await response.json();
-  if (!response.ok) throw new GalaxyError(object(value) && object(value.error)
-    && typeof value.error.code === 'string' ? value.error.code : 'unavailable', response.status);
-  return value;
+
+const bootstrap = { headers: { "X-Game-Request": "bootstrap" } };
+
+export async function listEmpires(universe: string, signal: AbortSignal): Promise<Empire[]> {
+  const body = await request(`/api/game/${universe}/galaxy`, bootstrap, signal);
+  if (!object(body) || !list(body.empires, (e) => object(e) && id(e.id) && typeof e.name === "string"))
+    throw new ApiError("invalid_response", 0);
+  return body.empires as Empire[];
 }
-export function empires(value: unknown): {id: string; name: string}[] {
-  if (!object(value) || !Array.isArray(value.empires) || !value.empires.every(e => object(e)
-    && identifier(e.id) && typeof e.name === 'string')) throw new GalaxyError('invalid_response', 0);
-  return value.empires as {id: string; name: string}[];
+
+export async function readGalaxy(universe: string, empire: string, signal: AbortSignal) {
+  const body = await request(`/api/game/${universe}/galaxy/${empire}`, bootstrap, signal);
+  if (!validProjection(body, empire)) throw new ApiError("invalid_response", 0);
+  return body;
+}
+
+export type Expedition = { colony_id: string; destination_id: string };
+
+export async function startExpedition(
+  universe: string,
+  empire: string,
+  csrf: string,
+  expedition: Expedition,
+  key: string,
+  signal: AbortSignal,
+) {
+  const body = await request(
+    `/api/game/${universe}/exploration/${empire}/missions`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+      body: JSON.stringify({ idempotency_key: key, ...expedition }),
+    },
+    signal,
+  );
+  if (!object(body) || !id(body.mission_id) || !validProjection(body.galaxy, empire))
+    throw new ApiError("invalid_response", 0);
+  return { mission: body.mission_id, galaxy: body.galaxy };
 }
