@@ -8,7 +8,9 @@ import pytest
 from sqlalchemy import func, select
 from test_colony_api import game, set_access  # noqa: F401
 from test_galaxy import detected, galaxy, read, send  # noqa: F401
+from test_game_sessions import ticket
 
+from app.access.http import cookie_name
 from app.access.models import GameSession
 from app.galaxy import service
 from app.galaxy.models import (
@@ -202,6 +204,12 @@ def test_scope_and_session_refusals(galaxy, case):
             epoch=2,
             status="suspended" if case == "revoked" else "active",
         )
+        if case in {"no_read", "no_binding"}:
+            encoded, pre, _ = ticket(
+                w.game, (w.user, w.universe, w.membership), revision=2, access_epoch=2
+            )
+            raw, _ = w.game.exchange(encoded, pre, None, w.universe)
+            w.client.cookies.set(cookie_name(w.universe), raw)
     elif case == "expired":
         w.advance(hours=9)
     if case == "foreign_empire":
@@ -211,5 +219,5 @@ def test_scope_and_session_refusals(galaxy, case):
         )
     else:
         response = read(w, system_id)
-    assert response.status_code in (401, 404)
+    assert response.status_code == (401 if case in {"revoked", "expired"} else 404)
     assert "planets" not in response.json()

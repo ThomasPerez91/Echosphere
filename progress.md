@@ -12,9 +12,24 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 | Agent | Codex local, seul écrivain autorisé ; précédent travail étape 7 consigné Claude Code |
 | Réalisé | Contrats/plan, projection détail sans rattrapage/avancement de stream, routes Knowledge et observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ciblé |
 | Fichiers | app/galaxy/system_view.py et api.py, composants/hooks/client/navigation/CSS/tests UI ; nouveau test_system_view.py ; trois docs canoniques et smoke Galaxy étendu |
-| Validation locale | PostgreSQL dédiée echosphere_system_test : 275 Game réussis, dont 10 System View ; Ruff et Alembic sans dérive ; frontend lint 0 erreur (warning préexistant useGameSession), 48 Vitest, build, 4 Chromium System View 320/390/768/1440 ; captures 320/1440 examinées |
+| Validation locale | PostgreSQL dédiée echosphere_system_test : 275 Game réussis, dont 10 System View ; Ruff et Alembic sans dérive ; frontend lint 0 erreur (warning préexistant useGameSession), 50 Vitest, build, 21 Chromium dont 4 System View 320/390/768/1440 ; captures 320/1440 examinées |
 | CI | Post-merge 41220568486 success 5/5 vérifié ; CI de ce checkpoint à observer après publication |
 | Limites / suite | S08 recette HTTPS réelle et régressions Chromium complètes puis S09 revue/CI/passation ; Portal inchangé ; zéro migration/grant/game_data ; étape 9 non commencée ; aucun merge |
+
+## S07/S08 — renforcement de reprise, 31/10/2026
+
+Relecture : une sélection Colony doit invalider aussi la génération des lectures précédentes,
+pas seulement leur AbortController. Correction ciblée et deux tests réussis : deep-link vers une
+autre colonie et refus 404, ancienne réponse reçue ensuite ignorée. Frontend : 50 Vitest/build/lint
+réussis ; 21 Chromium complets réussis (dont 4 System View). Le test backend de permissions a été
+renforcé avec une nouvelle session valide au nouvel epoch, pour distinguer refus d’accès et simple
+session révoquée : 10 System View réussis après correction du ticket de test (epoch initial erroné).
+Aucun défaut runtime d’autorisation démontré par cet échec de fixture.
+
+Première recette locale HTTPS Galaxy/System réussie : connaissance propre/lien, planètes comparées
+à Knowledge, page fermée et preuve DB avant nouvelle vue, Portal arrêté et refus 401 détail ; projet
+jetable supprimé. Nouvelle image finale et recette en cours pour inclure le dernier correctif Colony.
+CI de tête fonctionnelle 67345aa en cours ; aucun Ready ni succès CI final présumé.
 
 ## S01–S07 — projection, navigation et UI System View, 31/10/2026
 
