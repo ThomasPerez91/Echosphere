@@ -4,7 +4,7 @@
 > côté produit, réalisation des parcours future. Les mentions ouvertes antérieures sont historiques.
 > Voir [modes](../01-game-design/game-modes.md) et [registre](../05-project/open-questions.md).
 
-**Statut : implémenté sur work/step-5c-portal-account-lobby / PR #7, non intégré à master.**
+**Statut : C06 implémenté puis intégré à master via PR #7 (merge `ff6ef89`) ; extension ciblée des permissions Research en étape 6 / PR #9, non fusionnée.**
 2026-10-30, Codex local ; instruction utilisateur « Continue » après C05.
 [Contrats 5B inchangés](identity-contracts.md) · [ADR 0008](../adr/0008-control-plane-game-data-plane.md) ·
 [Plan 5C](../05-project/step-5c-plan.md) · [MFA C05](portal-mfa.md).
@@ -30,7 +30,7 @@ avant **C07 handoff/GameSession**. Aucun endpoint Colony avant 5D.
 Pas de catalogue public, invitation, join/leave, démarrage jouable, Empire/monde/IA de démonstration
 ou règle de partage inventée. ProvisionUniverse crée seulement le conteneur Universe name/seed ;
 aucune galaxie, colonie ou économie implicite. L’interface peut référencer explicitement des empires
-existants, mais aucun parcours joueur de partage/spectateur n’est livré. Q21 et Q19–Q29 restent ouverts.
+existants, mais aucun parcours joueur de partage/spectateur n’est livré. Q21 et Q19–Q29 sont désormais clos côté produit ; leurs parcours restent futurs.
 
 ## Listener privé, mTLS et identité de service
 
@@ -101,13 +101,12 @@ Révision plus basse ignorée et résultat superseded avec état effectif ; rév
 refusée ; génération d’accès jamais abaissée. Changement d’état/bindings exige une génération supérieure,
 réactivation comprise. Renouvellement à droits identiques augmente seulement la révision de livraison,
 sans invalider les autres sessions futures. Tombstones/ledger/epochs ne sont pas purgés avec l’audit
-90 jours. À C07, sessions et tickets devront vérifier ces générations ; aucun ancien ticket restauré.
+90 jours. C07 a depuis livré sessions et tickets avec vérification de ces générations ; aucun ancien ticket restauré.
 
 portal_confirmed_at est une date serveur Portal, valid_until au plus huit heures après, jamais
 réception +8 h. Confirmation future refusée. Message retardé expiré peut être enregistré, sans rendre
 son accès temporel valide ; le lobby le marque expiré. Livraison/retry/lecture/réconciliation ne
-renouvellent aucune date. Les commandes et GameSessions ne sont pas encore implémentées : C07/5D
-devront appliquer ces bornes et générations localement, sans appel Portal par commande.
+renouvellent aucune date. À la livraison C06, commandes et GameSessions n’étaient pas encore implémentées. C07 puis 5D les ont depuis livrées en appliquant ces bornes et générations localement, sans appel Portal par commande.
 
 ## Intention, outbox, acquittement et réconciliation
 
@@ -190,9 +189,7 @@ livraison réelle provisionnement/accès, réponse perdue, résultat récupéré
 révocations et réconciliation. Retire uniquement ses bases/conteneur/réseau/volume de test, conserve
 les volumes courants. Smokes Game et Portal/TLS restent distincts. Résultats exacts dans progress/CI.
 
-Pas de handoff/GameSession, commande Colony, navigateur complet HTTPS→partie, PKI/rotation production,
-charge hostile ou reprise après perte physique de données attestés. C07 puis C08/C09 restent nécessaires ;
-Q48/Q49/Q55 et règles des modes/partage conservés. **5C non terminé, 5D non commencé, PR #7 non fusionnée.**
+Historique C06 : à ce stade, handoff/GameSession, commandes Colony et recette navigateur complète restaient à livrer. C07/C08/C09 puis 5D sont depuis intégrés à master. Restent hors preuve de ce document : PKI/rotation production, charge hostile et reprise après perte physique de données. Q48/Q49 conservent leurs reports ciblés ; Q55 et Q19–Q29 sont clos côté produit mais leurs parcours de modes/admission restent futurs. L’extension Research de PR #9 n’implique aucun nouveau parcours de mode.
 
 Références primaires : [Uvicorn TLS](https://www.uvicorn.org/settings/#https),
 [Python SSL](https://docs.python.org/3.12/library/ssl.html),
