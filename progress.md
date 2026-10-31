@@ -4,6 +4,143 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 31/10/2026 — étape 7 G02–G10 réalisés, PR #10 |
+| --- | --- |
+| Branche / base / PR | work/step-7-galaxy-exploration ; PR #10 ; master 437844e4 ; aucun merge |
+| Tête | Tête fonctionnelle 53a7657 ; ce commit ne modifie que progress, sa CI est à relire sur PR #10 |
+| Agent | Claude Code local (WSL2), écrivain unique depuis la reprise du travail local Codex |
+| Réalisé | G03 persistance/migration 0008, G04 Knowledge, G05 Exploration, G06 API/permissions, G07 UI Galaxie, G08 hardening, G09 smoke réel, G10 revue/docs |
+| Validation locale | PostgreSQL 17 jetables : 265 Game (dont 20 Galaxy), 123 Portal ; ruff ; frontend lint 0 erreur, 37 Vitest (aussi sous 0,3 CPU), build, 17 Chromium (Galaxy ×4 largeurs) ; smokes Galaxy, Colony et Research réels réussis |
+| CI | a3e7187 4/5 et acf5eb2 push 4/5 : frontend KO, timeouts jsdom sur runner lent (corrigé globalement) ; e307175 PR 5/5 ; **53a7657 push 41195739026 et PR 41195743056 : 5/5 success**, smoke Galaxy réussi en CI |
+| Limites | Smokes Compose sur projet par défaut (smoke_compose/portal/control/handoff) vérifiés par CI seulement, pour ne pas toucher la pile locale existante ; noms générés provisoires ; Q09 ouverte ; étape 8 non commencée |
+| Suite | PR #10 Ready for review ; attendre une autorisation explicite de merge ; étape 8 non commencée |
+
+## G07–G10 — UI, hardening, recette réelle et revue, 31/10/2026
+
+G07 : écran Galaxie branché dans le shell (remplace le placeholder), client API validant strictement
+la non-fuite (DETECTED sans structure, aucune référence orpheline), hook `useGalaxy` (générations,
+abort, clé conservée après résultat inconnu, relectures bornées à l’échéance), carte SVG + HTML
+(pan pointeur/tactile limité à la carte, zoom molette/boutons/clavier, recentrage, nœuds
+focusables), liste textuelle équivalente, détail par état, devis serveur, confirmation irrévocable,
+missions/rapports. L’ébauche Codex a été conservée dans l’historique (a3e7187) puis remplacée.
+
+G08 : Vitest (StrictMode sans commande, sélection clavier/commande CSRF unique, même clé après
+résultat inconnu et nouvelle clé après refus, 401, réponse tardive d’un autre Empire, validateur
+anti-fuite) et Chromium 320/390/768/1440 (clavier, pan souris/tactile CDP sans défilement de page,
+molette, cibles ≥ 44 px, liste, dialogue/Escape/focus, pas de défilement horizontal). Revue visuelle
+des captures : marqueurs DETECTED d’une même cellule écartés pour éviter le chevauchement.
+Côté serveur, les courses/participants/Universes/expiration/corruption sont couverts par G03–G06.
+
+G09 : `scripts/smoke_galaxy_compose.py` + `galaxy_game_fixture.py` + `galaxy_browser.mjs`, ajoutés
+à la CI. Exécution locale réelle réussie : carte limitée à 4 systèmes connus sur 40, débit exact,
+page fermée, redémarrage du worker, mission completed/MAPPED/rapport observés **en base avant
+réouverture**, Portal API/contrôle arrêtés, nouvelle expédition terminée page fermée, zéro requête
+Portal, puis expiration → 401 sur lecture et commande alors que l’expédition acceptée juste avant
+se termine. Projet/volumes jetables supprimés. Smokes Colony et Research locaux réussis ; en CI
+(53a7657), les sept smokes dont Galaxy sont verts.
+
+G10 : revue complète du diff (migration, modèle, générateur non modifié, Knowledge, non-fuite,
+Exploration, permissions, locks, UI, tests, docs). Anomalies corrigées listées dans l’entrée de
+reprise ci-dessous et dans les commits ; test Research Vitest rendu robuste au runner lent (même
+assertion). Docs : [contrat technique](docs/03-technical/galaxy-api-ui.md), plan, canoniques
+Galaxie/Exploration/Fog, modèle, temps, contrôle Portal/Game, index et passation.
+
+## Reprise Claude Code — récupération Codex et revue G03–G06, 31/10/2026 (checkpoint 603646c/a3e7187)
+
+État trouvé : branche à jour avec origin (e5d51ae), aucune divergence ni commit local, mais
+modifications Codex non commitées : app/galaxy (models, world, service, api), migration 0008,
+tests d’intégration Galaxy, propagation des permissions (Game, schéma, Portal, CHECK), TimeEngine,
+smokes (révision Alembic) et ébauche frontend non branchée (GalaxyView, galaxy/api.ts).
+Ligne de base avant toute correction : ruff OK et 257 tests Game réussis sur PostgreSQL jetable.
+Ces éléments n’étaient pas validés avant cette revue ; ils le sont dans les limites ci-dessous.
+
+Anomalies trouvées et corrigées par Claude Code :
+
+- **Majeure** : DTO `Binding` (max_length) et schéma partagé (maxItems) bloqués à 6 droits pour
+  9 permissions possibles ; corrigés à 9, schéma toujours égal au modèle Pydantic (test existant).
+- **Majeure** : `map_system` flushait MAPPED avant la structure ; révélé par le nouveau CHECK
+  `ck_system_knowledge_structure` (DETECTED sans structure, MAPPED/MONITORED avec structure).
+- Handler : chemin persistant vérifié (contiguïté source → destination) ; corruption → retry, aucun effet.
+- Rapport figé enrichi : chemin, routes incidentes révélées, voisins (approximatifs, `new`).
+- `colony_id` des missions masqué sans colony.read (comme Research) ; nom d’Empire projeté.
+- Migration 0008 : colonnes Knowledge dans le DDL figé (plus d’add_column a posteriori), CHECK
+  capacités/traitement de rapport ; downgrade toujours refusé si données ou grants Galaxy.
+
+Tests ajoutés : non-fuite exhaustive (aucun id/nom UNKNOWN ou structure non cartographiée dans carte,
+liste, détail, missions, avant et après découverte), refus sans effet (MAPPED, chemin inconnu,
+colonie/Empire étrangers, fonds insuffisants, même clé autre corps), cookie d’un autre Universe,
+expiration sans arrêt de mission acceptée, deux participants (capacité partagée, clés séparées),
+dépenses Exploration/Research/Colony simultanées sans deadlock, génération concurrente unique,
+corruption de chemin et downgrade refusé par grants seuls ; test Portal de l’allowlist.
+
+## G02 — générateur et corpus de robustesse, 31/10/2026
+
+Version galaxy-v1 : quatre lobes initiaux à distance protégée, réseau central seedé, positions
+entières avec jitter déterministe, tirages pondérés puis garanties des mondes ; budget structurel
+initial identique entre zones (tirages corrélés), sans réservation gameplay des candidats. Cette
+corrélation assure les quatre métriques d’équité sans prétendre à des planètes indépendantes.
+Variation des noms/mondes/positions/connexions entre seeds. SHA-256 compteur/rejection sampling,
+tri canonique, pas d’horloge/hash Python/UUID. Gate finale indépendante : connexité, degrés, ponts,
+distances, séparation/routes, mondes/capacités/sites/équité et deux sorties disjointes par max-flow.
+64 tentatives maximum, erreur explicite sans relâchement ; corpus intégral conservé dans les tests.
+
+Mesure locale conteneur Python 3.12, seeds `galaxy-v1-corpus-0000` à taille du corpus exclue :
+
+| Systèmes / sites | Seeds | Échecs | Moyenne ms | p95 ms | Tentatives max |
+| --- | --- | --- | --- | --- | --- |
+| 40 / 4 | 1 000 | 0 | 5,151 | 7,873 | 2 |
+| 30 / 1 | 100 | 0 | 2,019 | 2,555 | 6 |
+| 30 / 4 | 100 | 0 | 2,128 | 3,157 | 6 |
+| 50 / 1 | 100 | 0 | 32,741 | 82,735 | 6 |
+| 50 / 4 | 100 | 0 | 31,694 | 81,953 | 9 |
+
+Toutes les sorties satisfont Q06 ; aucune seed retirée, aucune relaxation. Diamètre maximal 10
+sur standard, moyenne des chemins maximale 4,489744 ; bords 50 maximum 4,499592. Aucun benchmark
+production revendiqué. Golden hash, inter-processus/PYTHONHASHSEED, variabilité, corruptions finales,
+bornes, versions inconnues et erreur après 64 essais testés. 29 tests ciblés réussis ; pas encore
+de migration ou intégration PostgreSQL pour le nouveau domaine. v0.1/v0.2 octets inchangés.
+
+## Correctif CI préalable à G02 — 31/10/2026
+
+Validation utilisateur Q06/Exploration reçue avec amendements (4 sites candidats par défaut,
+aucune réservation gameplay, corpus 1 000 seeds standard et 100 par configuration de bord).
+Avant code substantiel : cinq runners CI épinglés ubuntu-24.04, sans modifier Playwright/dépendances.
+Logs G01 b55d54c vérifiés : seuls frontend/portal-frontend échouent à l’installation Chromium,
+Ubuntu 26.04 non supporté ; backend/portal-backend/compose-smoke réussis. Attendre 5/5 vert
+sur le correctif avant G02 ; validation produit à consolider pendant cette attente.
+
+## G01 — audit et propositions avant implémentation, 31/10/2026
+
+Plan durable G00–G10 avec schéma préparatoire, dépendances, risques, matrice sécurité/concurrence/
+reprise et recette worker autonome/Portal arrêté. Q06 propose 40 systèmes (30–50), degrés 2–4,
+cycles sans pont, connexité et distances bornées, géométrie déterministe, mondes variés garantis,
+sites de départ comparables et version explicite. **Proposition non validée**, aucun algorithme
+final ni catalogue exécutable. Exploration propose une capacité d’expédition abstraite unique,
+financement Colony, échéance réelle et révélation structurelle locale sans catalogue Fleet.
+Coût/durée/rappel/frontière à valider explicitement ; aucun arbitrage Q09 implicite.
+
+Lectures : AGENTS/CLAUDE/context/progress, index/passation/protocole/roadmap/registre, tous les
+canoniques métier demandés, modèle/temps/sécurité, ADR pertinents, modèles Universe/Empire/System/
+Planet/EventStream/ScheduledEvent et patterns Colony/Research API/UI/idempotence/worker, migrations
+et tests PostgreSQL pertinents ; guide visuel et deux images examinés. Détails et emplacements dans
+le plan. Environnement WSL2 identifié par uname ; pas de test fonctionnel de pile déduit du noyau.
+Checks documentaires et diff réellement exécutés, suites fonctionnelles non relancées pour ce diff.
+Arrêt utilisateur respecté à G01 : validation nécessaire avant G02, aucune étape 8 et aucun merge.
+
+## G00 — synchronisation post-merge Research, 31/10/2026
+
+Instruction utilisateur : synchroniser le clone puis commencer étape 7, avec arrêt produit explicite
+après G00/G01. PR #9/base/head/merge et CI post-merge vérifiés réellement ; fetch effectué.
+Ancienne branche locale 5D `b9425ce` en retard de deux commits, aucun commit non publié.
+Master locale `ff6ef89` avancée en fast-forward à `437844e4`, identique à origin/master ;
+branche étape 7 créée depuis cet arbre propre. Branches anciennes préservées, aucun reset/force/merge.
+Restriction sandbox initiale sur .git/réseau résolue par exécution autorisée ; aucune donnée perdue.
+Les statuts d’étape 6 deviennent historiques sans réécrire leurs preuves de livraison.
+
+## Checkpoint Research antérieur à la fusion #9 (historique)
+
+### Reprise rapide Research avant fusion
+
 | Champ | État au 31/10/2026 |
 | --- | --- |
 | Branche / PR / base | work/step-6-research, unique PR #9, base master 0e2ca11322a85452ad6860a4a35099bbc22a4689 ; GitHub réel prioritaire |

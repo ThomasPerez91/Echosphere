@@ -3,9 +3,13 @@
 **Complément validé le 31/10/2026 (instruction utilisateur PR #8)** : Q01 construction, Q08,
 Q17, Q19–Q39 et Q55 closes dans leur portée au [registre](../05-project/open-questions.md).
 Les lignes anciennes sont des checkpoints ; ce complément prévaut sur les mentions « ouvert »
-antérieures. PR #7 (5C) et #8 (5D, merge `0e2ca11`) sont fusionnées ; étape 6 sur PR #9.
-**Q05 close produit après validation utilisateur explicite ; R02–R09 implémentés.** Vérifier GitHub réel,
+antérieures. PR #7 (5C) et #8 (5D, merge `0e2ca11`) sont fusionnées ; Research intégrée via PR #9 (`437844e4`).
+**Q05 close produit, R00–R09 livrés et intégrés ; CI post-merge 41152760101 success (5/5).**
+Lot courant étape 7 : Q06 et Exploration validées avec amendements, G02–G10 autorisés après CI préalable verte ; étape 8 non commencée. Vérifier GitHub réel,
 [preuve et checkpoint](../../progress.md), [API/UI Research](../03-technical/research-api-ui.md).
+
+Cadrage G01 : [Q06 proposée](../01-game-design/galaxy.md), [engagement Exploration proposé](../01-game-design/exploration.md),
+[plan/audit étape 7](../05-project/step-7-plan.md). **Validation utilisateur explicite reçue le 31/10/2026 : Q06/Exploration closes dans leur portée, amendements dans leurs canoniques.**
 
 | Décision complémentaire | Produit | État de réalisation et référence |
 | --- | --- | --- |
@@ -40,8 +44,8 @@ puis cadrage avant code substantiel ; aucun début de 5D ni nouvelle fusion auto
 | Cascade d’annulation dépendante | Implémenté / Décision validée le 31/10/2026 | Préserve la continuité des niveaux | [Audit #5](pr-5-audit.md), Q01 | Preview complète avant confirmation | Choix technique retrouvé via S3/S4 |
 | Recherche globale d’empire | Décision validée, implémentée PR #9 | Pas de centaines de technologies | [Recherche](../01-game-design/research.md) | Domaines/noms provisoires | S1 ; ancienne portée orientée précisée |
 | Contrat Q05 : file/financement/annulation/catalogue/effets | Clos produit — implémentation étape 6 sur PR #9 | Empire 1+1, source Colony, 100/80 plafonné, snapshots à l’acceptation, 8 technologies 5/10 % net | [Recherche/Q05](../01-game-design/research.md), [API/UI](../03-technical/research-api-ui.md) | R02–R09 autorisés sans validation intermédiaire ; pas de laboratoire ni étape 7 | Validation utilisateur explicite après proposition Q05, 31/10/2026 |
-| Graphe 2D, routes, seed | Décision validée, future | Choix de chemins plutôt que grille OGame | [Galaxie](../01-game-design/galaxy.md) | 30–50 prototype = repère, tailles configurables | S1, PR #1 |
-| Fog UNKNOWN/DETECTED/MAPPED/MONITORED | Orientation validée, future | Connaissance limitée aussi pour IA | [Fog](../01-game-design/fog-of-war.md) | Transitions Q08 validées, paramètres capteurs futurs | S1 ; aucun contrat final déduit |
+| Graphe 2D, routes, seed | Décision validée, implémentée étape 7 PR #10 (galaxy-v1) | Choix de chemins plutôt que grille OGame | [Galaxie](../01-game-design/galaxy.md) | 30–50 prototype = repère, tailles configurables | S1, PR #1 |
+| Fog UNKNOWN/DETECTED/MAPPED/MONITORED | Q08 close, implémentée étape 7 PR #10 ([technique](../03-technical/galaxy-api-ui.md)) | Connaissance limitée aussi pour IA | [Fog](../01-game-design/fog-of-war.md) | Transitions Q08 validées, paramètres capteurs futurs | S1 ; aucun contrat final déduit |
 | Flottes courtes et missions asynchrones | Orientation validée, future | Catalogue lisible, pas de designer complexe | [Flottes](../01-game-design/fleets.md) | Stats/routes/rappels Q09 | S1, docs initiales |
 | Combat automatisé et protections offline | Futur / Question ouverte | Équité et lisibilité avant code | [Combat](../01-game-design/combat.md), Q02/Q10 | Préconditions combat | S1, docs initiales |
 | Défense persistante à capacité limitée et modules | Orientation validée, future | Coût d’opportunité, dommages/réparation | [Défense](../01-game-design/planetary-defense.md) | Sous-vue Colony, Q30–Q38 closes produit / non implémentées | Brief 5A/S1, PR #5 |

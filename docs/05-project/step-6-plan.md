@@ -1,6 +1,10 @@
 # Étape 6 — Recherche globale d’Empire
 
-**Statut au 31/10/2026 : Q05 close produit ; R00–R09 réalisés sur PR #9, sans merge.**
+**Statut actuel au 31/10/2026 : intégré via PR #9, merge `437844e4`, Q05 close.**
+CI post-merge 41152760101 success (5/5) vérifiée. Les consignes de branche/revue ci-dessous
+sont historiques ; étape 7 devient le lot courant, étape 8 non commencée.
+
+**Checkpoint antérieur à la fusion : R00–R09 réalisés sur PR #9.**
 Une seule branche `work/step-6-research`, une seule [PR #9](https://github.com/ThomasPerez91/Echosphere/pull/9),
 base master `0e2ca11322a85452ad6860a4a35099bbc22a4689` (fusion #8, CI post-merge 41144706921 success).
 R00 **098ab078889ca7a41b5ed77055663a439670ccdf** publié avant plan et code, puis R01 proposition

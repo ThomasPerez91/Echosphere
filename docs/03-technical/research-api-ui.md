@@ -1,6 +1,6 @@
 # Research — contrat technique étape 6
 
-**Statut : implémenté et recetté sur PR #9 ; aucune fusion implicite.**
+**Statut : implémenté, recetté et intégré via PR #9, merge `437844e4` vérifié le 31/10/2026.**
 Contrat produit : [Recherche/Q05](../01-game-design/research.md). Plan et preuves :
 [étape 6](../05-project/step-6-plan.md), [progress](../../progress.md).
 Aucune fusion implicite ; vérifier GitHub avant reprise.

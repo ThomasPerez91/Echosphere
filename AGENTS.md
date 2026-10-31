@@ -135,15 +135,15 @@ Q16 a son cadrage 5B couvert ; détails délégués et reports Q48/Q49/Q55 au re
 Lot précédent 5C compte/lobby, terminé : C01 implémenté,
 C02/C03 comptes/vérification/sessions, C04 opérations sensibles et C05 MFA implémentés ; C06 lobby/S2S implémenté ; C07 handoff/GameSession est implémenté ; C08 livré et recette de clôture C09 réalisée : 5C fusionné. Migrations Accounts séparées, pas de SQL Portal→Game.
 5D terminée et intégrée via PR #8, y compris Q39 ; [plan historique](docs/05-project/step-5d-plan.md).
-Lot courant : **étape 6 Recherche globale d’Empire**, work/step-6-research depuis master `0e2ca11`.
-Q05 est **Clos produit — implémentation étape 6**, validée explicitement par l’utilisateur.
-R02–R09 sont autorisés sans validation intermédiaire dans la même branche/PR #9 ;
-le [contrat canonique](docs/01-game-design/research.md) et le [plan](docs/05-project/step-6-plan.md)
-s’appliquent. Ready for review seulement après critères réels de sortie et CI verte.
-Si #9 est ouverte et la mission porte dessus : reprendre cette branche. Après fusion #9,
-considérer ce lot intégré et ses consignes de branche historiques ; nouveau lot autorisé depuis
-master synchronisée, nouvelle branche work/.... L’état GitHub réel prévaut sur tout checkpoint.
-Aucune étape 7 ni fusion sans instruction distincte. Ne pas réutiliser une branche fusionnée.
+Lot précédent : **étape 6 Recherche globale d’Empire**, work/step-6-research depuis master `0e2ca11`.
+Q05 close ; Research intégrée à master via PR #9, merge `437844e4`, CI post-merge
+41152760101 success (5/5), vérifiée le 31/10/2026. Ses consignes R00–R09/branche sont historiques.
+Lot courant : **étape 7 Galaxy + Exploration**, branche `work/step-7-galaxy-exploration`
+depuis master propre. Q06 et Exploration validées explicitement le 31/10/2026 avec amendements :
+4 sites candidats par défaut sans réservation gameplay ; corpus 1 000 seeds 40/4 sans échec et
+100 par bord 30/1, 30/4, 50/1, 50/4. G02–G10 autorisés après correctif runners Ubuntu 24.04 et
+CI préalable 5/5 verte. Aucun assouplissement silencieux ; revenir avec métriques si incompatibilité.
+Q08 inchangée, Q04/Q07 hors portée et Q09 ouverte. Étape 8 non commencée ; aucun merge autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver
@@ -161,6 +161,9 @@ Ne pas élargir le périmètre sur la seule base de la passation.
   à l’acceptation sans recalcul ultérieur, annulation 100/80 plafonnée/cascade dépendante.
   Lock Research avant Colony, sources triées, handler sans second stream. v0.2 explicite,
   v0.1 inchangée. [Contrat technique](docs/03-technical/research-api-ui.md).
+- Étape 7 : UNKNOWN = absence de Knowledge, projections Galaxy depuis la Knowledge seule ;
+  Exploration abstraite 1 active/Empire sans Fleet, chemin sur routes connues, lock
+  Exploration → Research → Colony. [Contrat technique](docs/03-technical/galaxy-api-ui.md).
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède

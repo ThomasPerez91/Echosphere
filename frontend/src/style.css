@@ -255,3 +255,57 @@ html { scroll-padding-bottom: 24px; }
 .research-dialog::backdrop { background: #050d16cc; }
 @media (max-width: 1100px) { .research-domains { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .research-layout { grid-template-columns: minmax(0, 1fr); } .research-domains { grid-template-columns: minmax(0, 1fr); } }
+
+/* Étape 7 Galaxy — server knowledge only; state by shape and text, never colour alone. */
+.galaxy-screen { display: grid; gap: 20px; }
+.galaxy-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 20px; align-items: start; }
+.galaxy-field { display: grid; gap: 4px; font-size: .75rem; color: var(--muted); }
+.galaxy-field select { min-height: 44px; max-width: 100%; border-radius: 7px; border: 1px solid var(--border); background: #0b1726; color: #e6f2ff; padding: 0 10px; font: inherit; }
+.galaxy-controls { display: flex; gap: 8px; }
+.galaxy-controls .button { min-width: 44px; padding: 10px 12px; }
+.galaxy-map { display: block; width: 100%; height: min(62svh, 560px); min-height: 280px; border: 1px solid var(--border); border-radius: 10px;
+  background: radial-gradient(ellipse at 50% 40%, #12304a, #07111d 70%); touch-action: none; cursor: grab; user-select: none; }
+.galaxy-map:active { cursor: grabbing; }
+.galaxy-backdrop { fill: transparent; }
+.galaxy-route { stroke: #4a9bff80; }
+.galaxy-route--partial { stroke: #8da9c4aa; }
+.galaxy-node { cursor: pointer; outline: none; }
+.galaxy-hit { fill: transparent; }
+.galaxy-star { fill: #6fd8ff; stroke: #d7f6ff; }
+.galaxy-node--detected .galaxy-star, .galaxy-glyph.galaxy-node--detected .galaxy-star { fill: #07111d; stroke: #9fb3c8; }
+.galaxy-node--mapped .galaxy-star, .galaxy-glyph.galaxy-node--mapped .galaxy-star { fill: var(--gold); stroke: #ffe0b0; }
+.galaxy-node--monitored .galaxy-star, .galaxy-glyph.galaxy-node--monitored .galaxy-star { fill: var(--success); stroke: #c8ffe6; }
+.galaxy-ring { fill: none; stroke: var(--success); opacity: .8; }
+.galaxy-selection { fill: none; stroke: var(--primary); filter: drop-shadow(0 0 4px #23c2ff99); }
+.galaxy-node text { fill: #e6f2ff; paint-order: stroke; stroke: #050d16; stroke-width: .3em; }
+.galaxy-node--detected text { fill: var(--muted); font-style: italic; }
+.galaxy-node:focus-visible .galaxy-hit { fill: #ffb34726; stroke: var(--gold); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+.galaxy-map:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.galaxy-legend { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: .75rem; color: var(--muted); }
+.galaxy-legend li { display: flex; align-items: center; gap: 6px; }
+.galaxy-glyph { width: 18px; height: 18px; flex-shrink: 0; }
+.galaxy-glyph .galaxy-star { stroke-width: 1.5px; }
+.galaxy-glyph.galaxy-node--detected .galaxy-star { stroke-dasharray: 3 2; }
+.galaxy-glyph .galaxy-ring { stroke-width: 1.5px; }
+.galaxy-own { fill: #04121d; }
+.galaxy-dash { width: 22px; border-top: 2px dashed #8da9c4; }
+.galaxy-note { margin: 10px 0 0; font-size: .72rem; }
+.galaxy-detail { position: sticky; top: 16px; overflow-wrap: anywhere; }
+.galaxy-detail .panel-head { flex-wrap: wrap; }
+.galaxy-subtitle { font-size: .85rem; margin: 16px 0 8px; }
+.galaxy-planets { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.galaxy-planets li { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-raised); font-size: .8rem; }
+.galaxy-planets span { color: var(--muted); font-size: .75rem; }
+.galaxy-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 8px; }
+.galaxy-list-item { width: 100%; min-height: 48px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: center; text-align: left;
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-raised); color: #e6f2ff; font: inherit; font-size: .82rem; cursor: pointer; }
+.galaxy-list-item .galaxy-glyph { grid-row: span 2; }
+.galaxy-list-item[aria-pressed='true'] { border-color: #1f6c8f; background: #0f2b3d; box-shadow: inset 3px 0 0 var(--primary); }
+.galaxy-screen details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--accent); font-size: .85rem; }
+@media (max-width: 1100px) { .galaxy-layout { grid-template-columns: minmax(0, 1fr); } .galaxy-detail { position: static; } }
+@media (max-width: 520px) {
+  .galaxy-map { height: 52svh; }
+  .galaxy-controls { width: 100%; }
+  .galaxy-controls .button { flex: 1; }
+  .galaxy-detail .button { width: 100%; }
+}

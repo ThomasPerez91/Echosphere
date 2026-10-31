@@ -17,8 +17,8 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 5B | Identity architecture / Portal-Game contracts | Contrats validés, registre séparant clôtures/délégation/reports | Documentaire terminé et intégré à master via PR #6 (`63bb7d1`) ; contrats partiellement implémentés par C02–C08 sur PR #7, handoff/GameSession C07 livrés sur PR #7 |
 | 5C | Portal Account/Lobby foundation — intégré | Fondation minimale compte/lobby selon cadrage 5B | Comptes globaux et accès aux parties sécurisés ; pas de Portal complet/multijoueur anticipé |
 | 5D | Secure Colony API + interactive Colony UI | APIs protégées appelant les services 5A et UI réelle | Session/autorisation/fog/idempotence contrôlés et résilience Portal/Game testée |
-| 6 | Research — lot courant, Q05 validée | Recherche globale et programmation suivante | Prérequis et application unique à échéance |
-| 7 | Galaxy + Exploration | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
+| 6 | Research — intégré via PR #9, Q05 close | Recherche globale et programmation suivante | Prérequis et application unique à échéance |
+| 7 | Galaxy + Exploration — lot courant, G00–G10 réalisés sur PR #10 | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
 | 8 | System View | Lecture des mondes et présences connues | Détails datés selon connaissances, mobile utilisable |
 | 9 | Fleets | Petit catalogue et missions asynchrones | Unités engagées une seule fois et arrivées récupérables |
 | 10 | Colonization | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
@@ -61,11 +61,13 @@ handoff/GameSession C07 livrés sur PR #7. [C04](../03-technical/portal-account-
 C08 livré ; recette de clôture C09 réalisée : 5C terminé, PR #7 fusionnée dans master le 2026-10-30 (`ff6ef89`, CI post-merge verte).
 **5D intégrée à master** via PR #8, merge `0e2ca11` et CI post-merge 41144706921 success.
 D00–D09, [API/UI Colony](../03-technical/colony-api-ui.md), Q39 et recette Portal coupé sont livrés.
-**Lot courant : étape 6 Recherche globale d’Empire**, work/step-6-research depuis ce master,
-une seule PR #9. Q05 est close produit, R02–R09 autorisés. Catalogue v0.2, persistance,
-services/worker et API/UI livrés sur cette PR ; R08/R09 vérifiés selon [progress](../../progress.md).
-[Plan R00–R09](step-6-plan.md), [contrat Q05](../01-game-design/research.md),
-[Research technique](../03-technical/research-api-ui.md). Aucune étape 7 autorisée.
+**Étape 6 intégrée via PR #9**, merge `437844e4`, CI post-merge 41152760101 success (5/5).
+Q05 close ; catalogue v0.2, persistance, services/worker et API/UI réellement livrés.
+[Plan historique R00–R09](step-6-plan.md), [contrat Q05](../01-game-design/research.md),
+[Research technique](../03-technical/research-api-ui.md).
+**Lot courant : étape 7 Galaxy + Exploration**, branche unique `work/step-7-galaxy-exploration`.
+G00/G01 autorisés par instruction du 31/10/2026 ; Q06 et contrat Exploration à proposer puis
+faire valider avant implémentation engageante. Étape 8 non commencée.
 Aucune nouvelle fusion sans instruction explicite, aucun Portal complet/multijoueur anticipé.
 La subdivision ne change pas la séquence générale. La défense complète reste liée au Combat :
 préparation UI/documentaire dès 5A, aucun effet actif. [Défense future](../01-game-design/planetary-defense.md).
@@ -122,3 +124,5 @@ Après fusion de #8 vérifiée : master/CI relues et nouveau lot étape 6 depuis
 premier checkpoint documentaire ; implémentation conditionnée à Q05 validée. Références visuelles :
 [research-view](../visual-reference/research-view.png) et [design-system](../visual-reference/design-system.png).
 La condition de fusion est satisfaite et Q05 a ensuite été validée explicitement ; voir le lot courant.
+
+Cadrage courant : [plan étape 7](step-7-plan.md), Q06/Exploration validées avec amendements le 31/10/2026 ; G02–G10 autorisés après CI préalable 5/5 verte.

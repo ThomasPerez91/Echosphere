@@ -172,6 +172,8 @@ file Empire 1+1, financement Colony et snapshots sans recalcul. v0.1 inchangée.
 [Plan étape 6](docs/05-project/step-6-plan.md), [contrat Q05](docs/01-game-design/research.md),
 [API/UI/recette](docs/03-technical/research-api-ui.md). Vérifier GitHub : après fusion #9,
 considérer Research intégrée à master ; ne pas reprendre une branche déjà fusionnée.
+Étape 7 sur PR #10 : galaxie procédurale galaxy-v1 (ruleset v0.3), connaissance Q08 par Empire,
+Exploration abstraite et UI Galaxie ; [contrat technique et recette](docs/03-technical/galaxy-api-ui.md).
 Le [registre Q40–Q56](docs/05-project/open-questions.md) distingue décisions closes, détails techniques
 délégués et reports support/email/modes. Aucun nouveau code d’authentification dans 5B. Sur PR #7, C01 ajoute le socle Portal et étend
 Compose ; [C02](docs/03-technical/portal-registration.md) ajoute inscription, Argon2id, vérification et livraison locale durable ; [C03](docs/03-technical/portal-sessions.md) ajoute connexion/sessions et CSRF ; [C04](docs/03-technical/portal-account-security.md) ajoute step-up, reset/changements sensibles et logout global sans MFA ; [C05](docs/03-technical/portal-mfa.md) ajoute TOTP/WebAuthn, secours et récupération limitée ; [C06](docs/03-technical/portal-game-control.md) livre lobby, synchronisation et révocations mTLS ; handoff/GameSession C07 livrés sur PR #7. [Recette C01](docs/03-technical/portal-foundation.md).

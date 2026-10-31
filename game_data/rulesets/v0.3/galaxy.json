@@ -1,0 +1,45 @@
+{
+  "version": "v0.3",
+  "galaxy_generator_version": "galaxy-v1",
+  "system_count": 40,
+  "min_systems": 30,
+  "max_systems": 50,
+  "starting_site_count": 4,
+  "max_starting_sites": 4,
+  "max_attempts": 64,
+  "min_degree": 2,
+  "max_degree": 4,
+  "min_mean_degree_bps": 28000,
+  "max_mean_degree_bps": 32000,
+  "min_junction_bps": 5000,
+  "max_mean_path_bps": 45000,
+  "diameter_divisor": 4,
+  "coordinate_limit": 1000,
+  "min_separation": 80,
+  "max_route_length": 450,
+  "detected_cell_size": 100,
+  "min_start_distance": 6,
+  "min_start_zone_size": 7,
+  "fairness_ratio_bps": 12000,
+  "planet_counts": {
+    "2": 20,
+    "3": 40,
+    "4": 30,
+    "5": 10
+  },
+  "sector_capacities": {
+    "9": 20,
+    "12": 35,
+    "15": 30,
+    "18": 15
+  },
+  "orbital_capacities": {
+    "1": 25,
+    "2": 50,
+    "3": 25
+  },
+  "useful_sectors": 12,
+  "useful_orbitals": 2,
+  "starting_sectors": 12,
+  "starting_orbitals": 2
+}
