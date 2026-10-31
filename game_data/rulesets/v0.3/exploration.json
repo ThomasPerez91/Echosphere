@@ -1,0 +1,13 @@
+{
+  "version": "v0.3",
+  "engagement_version": "abstract-expedition-v1",
+  "active_limit": 1,
+  "cost": {
+    "alloys": 50,
+    "flux": 50,
+    "data": 25
+  },
+  "flux_per_hop": 10,
+  "leg_seconds": 900,
+  "survey_seconds": 900
+}

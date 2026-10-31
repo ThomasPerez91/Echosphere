@@ -1,0 +1,128 @@
+{
+  "version": "v0.3",
+  "queue_limit": 2,
+  "refund_queued_bps": 10000,
+  "refund_active_bps": 8000,
+  "technologies": {
+    "engineering_1": {
+      "name": "Fabrication modulaire I",
+      "domain": "engineering",
+      "tier": 1,
+      "requires": [],
+      "cost": {
+        "alloys": 100,
+        "flux": 80,
+        "data": 200
+      },
+      "duration_seconds": 120,
+      "effect": "colony_alloys",
+      "reduction_bps": 500
+    },
+    "engineering_2": {
+      "name": "Fabrication modulaire II",
+      "domain": "engineering",
+      "tier": 2,
+      "requires": [
+        "engineering_1"
+      ],
+      "cost": {
+        "alloys": 200,
+        "flux": 160,
+        "data": 400
+      },
+      "duration_seconds": 300,
+      "effect": "colony_alloys",
+      "reduction_bps": 1000
+    },
+    "energy_1": {
+      "name": "Gestion énergétique I",
+      "domain": "energy",
+      "tier": 1,
+      "requires": [],
+      "cost": {
+        "alloys": 100,
+        "flux": 80,
+        "data": 200
+      },
+      "duration_seconds": 120,
+      "effect": "colony_flux",
+      "reduction_bps": 500
+    },
+    "energy_2": {
+      "name": "Gestion énergétique II",
+      "domain": "energy",
+      "tier": 2,
+      "requires": [
+        "energy_1"
+      ],
+      "cost": {
+        "alloys": 200,
+        "flux": 160,
+        "data": 400
+      },
+      "duration_seconds": 300,
+      "effect": "colony_flux",
+      "reduction_bps": 1000
+    },
+    "computation_1": {
+      "name": "Calcul scientifique I",
+      "domain": "computation",
+      "tier": 1,
+      "requires": [],
+      "cost": {
+        "alloys": 100,
+        "flux": 80,
+        "data": 200
+      },
+      "duration_seconds": 120,
+      "effect": "research_duration",
+      "reduction_bps": 500
+    },
+    "computation_2": {
+      "name": "Calcul scientifique II",
+      "domain": "computation",
+      "tier": 2,
+      "requires": [
+        "computation_1"
+      ],
+      "cost": {
+        "alloys": 200,
+        "flux": 160,
+        "data": 400
+      },
+      "duration_seconds": 300,
+      "effect": "research_duration",
+      "reduction_bps": 1000
+    },
+    "xenoscience_1": {
+      "name": "Protocoles d’analyse I",
+      "domain": "xenoscience",
+      "tier": 1,
+      "requires": [],
+      "cost": {
+        "alloys": 100,
+        "flux": 80,
+        "data": 200
+      },
+      "duration_seconds": 120,
+      "effect": "research_data",
+      "reduction_bps": 500
+    },
+    "xenoscience_2": {
+      "name": "Protocoles d’analyse II",
+      "domain": "xenoscience",
+      "tier": 2,
+      "requires": [
+        "xenoscience_1"
+      ],
+      "cost": {
+        "alloys": 200,
+        "flux": 160,
+        "data": 400
+      },
+      "duration_seconds": 300,
+      "effect": "research_data",
+      "reduction_bps": 1000
+    }
+  }
+}

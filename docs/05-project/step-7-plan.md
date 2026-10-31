@@ -185,3 +185,12 @@ aucune réservation gameplay ni création/affectation multi-Empires. Corpus de r
 timer artificiel. Coût/durée/engagement/permissions/rapport/stream/ruleset v0.3 validés ; Q09 ouverte.
 Correctif préalable cfff5be : cinq jobs ubuntu-24.04, Playwright inchangé. Attendre cinq verts
 avant code substantiel ; l’arrêt G01 décrit plus haut devient historique depuis cette validation.
+
+## G02 — réalisé, 31/10/2026
+
+Générateur galaxy-v1 et nouveau ruleset complet v0.3 ; anciens fichiers v0.1/v0.2 inchangés.
+Corpus requis intégral : 1 000/1 000 standard et 100/100 pour chaque bord, zéro échec ; mesures
+et limites dans progress. Script opérateur `PYTHONPATH=backend python3 scripts/measure_galaxy.py`.
+Gate indépendante de la construction et tests de corruption, golden/cross-process/variabilité.
+Zones initiales aux budgets structurels corrélés égaux, positions/connexions/noms seedés ; aucune
+réservation gameplay. G03–G10 restent à réaliser, aucune API/UI livrée par ce ticket.

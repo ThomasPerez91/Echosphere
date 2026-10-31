@@ -4,17 +4,45 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — validation et correctif CI préalable |
+| Champ | État au 31/10/2026 — G02 livré localement |
 | --- | --- |
 | Branche / base / PR | work/step-7-galaxy-exploration ; PR #10 brouillon ; master 437844e4 |
-| Tête publiée | cfff5beb45bccdfcec2164a1e268b64eb6f175e4 : cinq jobs Ubuntu 24.04, dépendances inchangées |
-| Agent / protection | Codex local ; checkout initial propre et synchronisé, un seul worktree ; aucun changement concurrent observé |
-| Décisions | Q06/Exploration validées explicitement avec amendements le 31/10/2026 ; 4 sites candidats, aucune réservation gameplay ; corpus standard 1 000 seeds / bords 4 × 100 ; Q09 ouverte |
-| CI observée | G01 b55d54c rouge : seuls deux jobs UI échouent à installer Chromium sous Ubuntu 26.04 ; correctif PR 41190831214 / push 41190827691 en cours au contrôle |
-| Travail actuel | Consignation des décisions canoniques et du plan ; aucun code substantiel avant cinq jobs verts du correctif |
-| Vérifications locales | check_docs 81 documents/liens ; git diff --check ; aucune suite fonctionnelle relancée pour ce correctif/documentation |
-| Prochaine action | Après CI 5/5 verte : G02 générateur/données/mesures, puis G03–G10 ; revenir avec métriques seulement si incompatibilité ou nouvelle décision produit |
-| Limites | Aucune Galaxy/Exploration livrée ; étape 8 non commencée ; aucun merge autorisé |
+| Tête | Commit portant ce checkpoint G02 ; validation produit publiée 35ae06d ; SHA/CI de tête à relire après push |
+| Agent | Codex local, écrivain unique ; aucun travail concurrent observé |
+| Préalable CI | cfff5be : PR 41190831214 completed/success, cinq jobs réellement vérifiés avant tout code G02 |
+| Décisions | Q06/Exploration closes étape 7 avec amendements ; aucun assouplissement ; Q09 ouverte |
+| Réalisé | Générateur pur galaxy-v1, gate d’acceptation indépendante de construction, données strictes v0.3 complètes, coûts/durées exacts, golden hash et corpus fixe |
+| Validation | Ruff ciblé OK ; 29 tests générateur + Research rules réussis (16,98 s), dont 1 400 seeds et déterminisme inter-processus ; scripts/check_docs et diff OK |
+| Fichiers | app/galaxy/generator.py et rules.py, chargeur Colony, tests générateur, game_data/rulesets/v0.3 et scripts/measure_galaxy.py |
+| Limites | G03–G10 à réaliser ; aucune persistance/API/UI Galaxy ou Exploration livrée à ce checkpoint ; étape 8 non commencée |
+| Suite | G03 persistance/migration puis G04 connaissance et G05 Exploration, sans nouveau point d’arrêt produit |
+
+## G02 — générateur et corpus de robustesse, 31/10/2026
+
+Version galaxy-v1 : quatre lobes initiaux à distance protégée, réseau central seedé, positions
+entières avec jitter déterministe, tirages pondérés puis garanties des mondes ; budget structurel
+initial identique entre zones (tirages corrélés), sans réservation gameplay des candidats. Cette
+corrélation assure les quatre métriques d’équité sans prétendre à des planètes indépendantes.
+Variation des noms/mondes/positions/connexions entre seeds. SHA-256 compteur/rejection sampling,
+tri canonique, pas d’horloge/hash Python/UUID. Gate finale indépendante : connexité, degrés, ponts,
+distances, séparation/routes, mondes/capacités/sites/équité et deux sorties disjointes par max-flow.
+64 tentatives maximum, erreur explicite sans relâchement ; corpus intégral conservé dans les tests.
+
+Mesure locale conteneur Python 3.12, seeds `galaxy-v1-corpus-0000` à taille du corpus exclue :
+
+| Systèmes / sites | Seeds | Échecs | Moyenne ms | p95 ms | Tentatives max |
+| --- | --- | --- | --- | --- | --- |
+| 40 / 4 | 1 000 | 0 | 5,151 | 7,873 | 2 |
+| 30 / 1 | 100 | 0 | 2,019 | 2,555 | 6 |
+| 30 / 4 | 100 | 0 | 2,128 | 3,157 | 6 |
+| 50 / 1 | 100 | 0 | 32,741 | 82,735 | 6 |
+| 50 / 4 | 100 | 0 | 31,694 | 81,953 | 9 |
+
+Toutes les sorties satisfont Q06 ; aucune seed retirée, aucune relaxation. Diamètre maximal 10
+sur standard, moyenne des chemins maximale 4,489744 ; bords 50 maximum 4,499592. Aucun benchmark
+production revendiqué. Golden hash, inter-processus/PYTHONHASHSEED, variabilité, corruptions finales,
+bornes, versions inconnues et erreur après 64 essais testés. 29 tests ciblés réussis ; pas encore
+de migration ou intégration PostgreSQL pour le nouveau domaine. v0.1/v0.2 octets inchangés.
 
 ## Correctif CI préalable à G02 — 31/10/2026
 

@@ -26,3 +26,7 @@ coûts/durées/effets et annulation. Research utilise la vitesse dédiée ; flee
 Aucun fichier v0.1 ni Universe épinglé n’est réécrit. Arrondis/plafonds et snapshots documentés dans
 [Research technique](../docs/03-technical/research-api-ui.md). Le loader par défaut reste v0.1 :
 choisir explicitement v0.2 pour une nouvelle instance compatible, jamais à la lecture d’une ancienne.
+
+Étape 7 : ruleset complet `v0.3` avec Galaxy/Exploration ; v0.1 et v0.2 immuables.
+`galaxy-v1` épinglé, 40 systèmes et 4 sites candidats par défaut ; coûts/durée Exploration
+versionnés, aucun bonus Research implicite. Aucune adoption d’ancien Universe à la lecture.
