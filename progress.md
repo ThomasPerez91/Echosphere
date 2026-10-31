@@ -7,13 +7,13 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 | Champ | État au 31/10/2026 — étape 7 G02–G10 réalisés, PR #10 |
 | --- | --- |
 | Branche / base / PR | work/step-7-galaxy-exploration ; PR #10 ; master 437844e4 ; aucun merge |
-| Tête | Commit portant ce checkpoint ; SHA/CI exacts à relire sur PR #10 (consignés aussi en commentaire PR) |
+| Tête | Tête fonctionnelle 53a7657 ; ce commit ne modifie que progress, sa CI est à relire sur PR #10 |
 | Agent | Claude Code local (WSL2), écrivain unique depuis la reprise du travail local Codex |
 | Réalisé | G03 persistance/migration 0008, G04 Knowledge, G05 Exploration, G06 API/permissions, G07 UI Galaxie, G08 hardening, G09 smoke réel, G10 revue/docs |
-| Validation locale | PostgreSQL 17 jetables : 265 Game (dont 20 Galaxy), 123 Portal ; ruff ; frontend lint 0 erreur, 37 Vitest, build, 17 Chromium (Galaxy ×4 largeurs) ; smokes Galaxy et Colony réels réussis (Research : voir entrée G09) |
-| CI | a3e7187 : 4/5, frontend KO sur test Research lent (corrigé) ; e307175 et suivants : voir PR |
+| Validation locale | PostgreSQL 17 jetables : 265 Game (dont 20 Galaxy), 123 Portal ; ruff ; frontend lint 0 erreur, 37 Vitest (aussi sous 0,3 CPU), build, 17 Chromium (Galaxy ×4 largeurs) ; smokes Galaxy, Colony et Research réels réussis |
+| CI | a3e7187 4/5 et acf5eb2 push 4/5 : frontend KO, timeouts jsdom sur runner lent (corrigé globalement) ; e307175 PR 5/5 ; **53a7657 push 41195739026 et PR 41195743056 : 5/5 success**, smoke Galaxy réussi en CI |
 | Limites | Smokes Compose sur projet par défaut (smoke_compose/portal/control/handoff) vérifiés par CI seulement, pour ne pas toucher la pile locale existante ; noms générés provisoires ; Q09 ouverte ; étape 8 non commencée |
-| Suite | Relire CI 5/5 de la tête, PR Ready ; attendre une autorisation explicite de merge |
+| Suite | PR #10 Ready for review ; attendre une autorisation explicite de merge ; étape 8 non commencée |
 
 ## G07–G10 — UI, hardening, recette réelle et revue, 31/10/2026
 
@@ -36,7 +36,8 @@ G09 : `scripts/smoke_galaxy_compose.py` + `galaxy_game_fixture.py` + `galaxy_bro
 page fermée, redémarrage du worker, mission completed/MAPPED/rapport observés **en base avant
 réouverture**, Portal API/contrôle arrêtés, nouvelle expédition terminée page fermée, zéro requête
 Portal, puis expiration → 401 sur lecture et commande alors que l’expédition acceptée juste avant
-se termine. Projet/volumes jetables supprimés. Smoke Colony local réussi.
+se termine. Projet/volumes jetables supprimés. Smokes Colony et Research locaux réussis ; en CI
+(53a7657), les sept smokes dont Galaxy sont verts.
 
 G10 : revue complète du diff (migration, modèle, générateur non modifié, Knowledge, non-fuite,
 Exploration, permissions, locks, UI, tests, docs). Anomalies corrigées listées dans l’entrée de
