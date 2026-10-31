@@ -29,7 +29,7 @@ Le tableau Q40–Q56 distingue décisions closes, détails techniques délégué
 | Q06 | **Close produit étape 7 — validation explicite du 31/10/2026 avec amendements** : taille/topologie/connexité/géométrie, mondes, départs et version/reproductibilité ; contrat Exploration validé, 4 sites candidats et corpus 1 000 seeds standard ; Q09 ouverte | 7 avant G02 | [Galaxie/Q06](../01-game-design/galaxy.md), [Exploration](../01-game-design/exploration.md), [plan G00–G10](step-7-plan.md) |
 | Q07 | Coûts/limites d'expansion, habitabilité, contestation, transfert et abandon | 10 | [Colonisation](../01-game-design/colonization.md) |
 | Q08 | **Clos produit, futur** : UNKNOWN sans fuite ; DETECTED existence/position approximative ; MAPPED structure durable ; MONITORED dynamique actualisée ; perte MONITORED → MAPPED, last_seen_at et aucun partage automatique | 7/8 | [Fog](../01-game-design/fog-of-war.md) |
-| Q09 | Classes/stats, routes, vitesse, cargo, rappel et coût des missions | 9 | [Flottes](../01-game-design/fleets.md) |
+| Q09 | Classes/stats, routes, vitesse, cargo, rappel et coût des missions — **ouverte, proposition F01 du 31/10/2026 (A1–A15) en attente de validation** | 9 avant F02 | [Flottes/Q09](../01-game-design/fleets.md), [plan F00–F11](step-9-plan.md) |
 | Q10 | Résolution combat, aléatoire, ciblage, retraite, pertes et butin | 12 | [Combat](../01-game-design/combat.md) |
 | Q11 | Poids des profils, départs, fréquence et budget des IA | 11 | [IA](../03-technical/ai-engine.md) |
 | Q12 | Mesure du ratio 80/20, métriques et format validé de game_data | 5 puis 16 | [Balance](../01-game-design/balance-philosophy.md) |
@@ -177,5 +177,5 @@ Aucun arbitrage produit supplémentaire nécessaire au cadrage 5B n’a été id
 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`), contrats partiellement implémentés par C02–C07 sur PR #7, handoff/GameSession C07 livrés sur PR #7.
 Historique 5B : seul le cadrage identité/autorisation Q16 avait été actualisé. Le complément
 utilisateur du 31/10/2026 clôt les décisions indiquées ci-dessous, sans renuméroter Q01–Q56 ;
-5D désormais intégrée via PR #8 (`0e2ca11`) ; Research intégrée via PR #9 (`437844e4`), Q05 close ; lot courant étape 7 : Q06/Exploration validées puis implémentées sur PR #10 (G02–G10), Q09 ouverte. Étape 8 non commencée.
+5D désormais intégrée via PR #8 (`0e2ca11`) ; Research intégrée via PR #9 (`437844e4`), Q05 close ; étape 7 intégrée via PR #10 (`773e05c`), étape 8 System View via PR #11 (`e011fd3`) ; lot courant étape 9, Q09 ouverte avec proposition F01 en attente de validation.
 5B n’a créé aucune table ; C02 ajoute les comptes côté Portal seulement, pas de membership.

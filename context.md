@@ -127,14 +127,17 @@ vérifiée le 31/10/2026 ; aucune adoption silencieuse des univers v0.1.
 `773e05c0971a78719b5ba1d1baca05df3aa7fb12` ; CI post-merge 41220568486 success (5/5),
 vérifiée le 31/10/2026. Q06/Q08 et Exploration livrées ; [technique](docs/03-technical/galaxy-api-ui.md).
 
-**Lot courant : étape 8 System View**, branche `work/step-8-system-view` depuis master propre.
-S00–S09 autorisés par instruction du 31/10/2026, sans validation intermédiaire sauf vraie décision
-produit nouvelle. Vue détaillée depuis Knowledge, permission galaxy.read, données datées ; aucun
-nouveau gameplay, scheduler, droit system.read, huitième domaine ou migration sans besoin démontré.
-DETECTED reste limité, structure MAPPED durable et observations MONITORED propres seulement.
-Implémentation et recette réelle sur [PR #11](https://github.com/ThomasPerez91/Echosphere/pull/11) ;
-[contrat System View](docs/03-technical/system-view.md), validations et gate CI dans progress.
-Étape 9 non commencée ; Q04/Q07/Q09 inchangées, aucun merge autorisé.
+**Étape 8 intégrée via PR #11**, tête finale `fc1f66d`, merge
+`e011fd3127c4888db551dd3792b347b1dc31b468` ; CI post-merge 41231820338 success (5/5),
+vérifiée le 31/10/2026. System View livrée depuis Knowledge, sans migration ;
+[contrat](docs/03-technical/system-view.md), [plan historique](docs/05-project/step-8-plan.md).
+
+**Lot courant : étape 9 Flottes**, branche `work/step-9-fleets` depuis master `e011fd3`, PR
+brouillon unique. F00 checkpoint puis F01 audit/proposition Q09 ; **arrêt obligatoire avant F02** :
+aucun schéma, migration, ruleset v0.4, catalogue exécutable ou gameplay Fleet avant validation
+explicite de Q09. Exploration v0.3 (`abstract-expedition-v1`) reste inchangée. Étape 10
+Colonisation non commencée ; Q04/Q07/Q10 ouvertes, aucun merge autorisé.
+[Plan étape 9](docs/05-project/step-9-plan.md).
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.

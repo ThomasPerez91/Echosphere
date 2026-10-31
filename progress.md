@@ -4,16 +4,37 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — S00–S09 réalisés, revue indépendante Claude Code (S10) |
+| Champ | État au 31/10/2026 — étape 9 F00/F01 réalisés, arrêt avant F02 (Q09 à valider) |
 | --- | --- |
-| Objectif | Étape 8 System View : projection depuis Knowledge existante, sans nouvelle mécanique |
-| Branche / base / PR | work/step-8-system-view ; PR #11 ; master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 ; aucun merge |
-| Tête | Revue sur f2688b2 (CI 41225197685 5/5) ; présent commit = corrections de revue + passation ; CI exacte de la nouvelle tête consignée dans PR #11 |
-| Agent | Codex local S00–S09 ; Claude Code local revue indépendante et corrections S10, seul écrivain pendant la revue |
-| Réalisé | Contrats/plan, détail sans rattrapage, routes Knowledge, observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ; revue : identifiants Colony retirés sans colony.read, monde propre présélectionné, titres et métadonnées Galaxy repliables |
-| Fichiers S10 | app/galaxy/service.py, api.py, system_view.py ; test_system_view.py ; client/validateurs, GalaxyView, SystemView, App, CSS, fixtures/tests UI ; galaxy_browser.mjs ; docs canoniques |
-| Validation locale S10 | PostgreSQL 17 jetable *_test : 275 Game réussis (10 System View), Ruff ; frontend lint 0 erreur (warning préexistant), 51 Vitest, build, 21 Chromium ; sonde textes longs 320 px ; recette HTTPS réelle réussie avec images de l’arbre courant ; check_docs et diff --check |
-| Limites / suite | Ready seulement après CI 5/5 de la tête finale ; merge sur autorisation explicite uniquement. Portal/contrats inchangés ; zéro migration/grant/game_data ; étape 9 non commencée. Chromium émulé, aucun appareil physique/production recetté |
+| Objectif | Étape 9 Flottes : proposer Q09 complète, puis attendre sa validation explicite avant tout code métier |
+| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 brouillon ; F00 7462a8c ; aucun merge |
+| Post-merge #11 | PR #11 fusionnée (tête fc1f66d, merge e011fd3) ; CI post-merge 41231820338 terminée success 5/5, vérifiée avant toute écriture |
+| Agent | Claude Code local, unique écrivain du lot |
+| Réalisé | F00 : synchronisation ff-only, branche, statuts. F01 : audit code + proposition Q09 complète (A1–A15) dans fleets.md, plan technique F02–F11 |
+| Fichiers | progress, context, AGENTS, roadmap, passation, registre, plans étapes 8/9, fleets.md, check_docs (plan étape 9 requis) |
+| Validation | check_docs et diff --check ; aucune suite applicative (aucun code modifié) |
+| Limites / suite | Attendre la validation explicite de Q09 (A1–A15, A9 structurant) ; aucun schéma, migration, ruleset v0.4 ou gameplay Fleet avant. Étape 10 non commencée |
+
+## F01 — audit et proposition Q09, 31/10/2026
+
+Lectures obligatoires faites (règles produit Flottes/Exploration/Galaxie/System View/Fog/
+Colonisation/Combat/boucle/économie/équilibrage, moteur temporel, modèle, sécurité, contrats
+Galaxy/System View, migrations, services TimeEngine/Exploration/Colony/Research, GameSession/
+permissions, placeholder Flottes). Constats clés : stream Exploration par Empire réutilisable comme
+stream d’opérations ; `speeds.fleet` déjà réservé ; aucune infrastructure orbitale ; permissions
+au plafond exact de 9 ; une seule colonie possible par Empire avant l’étape 10. Proposition :
+deux classes (sonde, cargo léger), production dédiée par colonie, garnison + flottes
+opérationnelles, missions DEPLOY/SURVEY/RETURN, transport par CHARGER/DÉCHARGER sans perte,
+rappel symétrique en temps, transition Exploration option C (v0.3 inchangé, v0.4 sondes),
+permissions fleet.read/build/command (plafond 12). Rien d’implémenté ; arrêt avant F02.
+
+## F00 — synchronisation post-merge System View, 31/10/2026
+
+GitHub vérifié avant écriture : PR #11 fermée/fusionnée, tête fc1f66d, merge e011fd3 ; CI
+post-merge 41231820338 attendue terminée puis lue success sur les cinq jobs (backend, frontend,
+portal-backend, portal-frontend, compose-smoke). Arbre local propre, master avancée en ff-only,
+branche `work/step-9-fleets` créée depuis e011fd3. Anciennes branches préservées. Statuts
+canoniques actualisés ; historique conservé.
 
 ## S10 — revue indépendante Claude Code, 31/10/2026
 
