@@ -781,8 +781,73 @@ def verified_path(session, mission):
         node = route.b_id if route.a_id == node else route.a_id
     if not legs or node != mission.destination_id:
         raise TimelineError("Inconsistent mission path")
-    if [str(leg.route_id) for leg in legs] != mission.snapshot["path"]:
+    return [leg.route_id for leg in legs]
+
+
+SNAPSHOT_KEYS = {
+    "version",
+    "engagement",
+    "kind",
+    "fleet_id",
+    "origin_id",
+    "destination_id",
+    "path",
+    "stacks",
+    "cargo",
+    "cost",
+    "travel_us",
+    "survey_us",
+    "speed",
+    "classes",
+    "request",
+}
+
+
+def verify_mission_snapshot(session, mission):
+    """Worker check of the accepted intention: the snapshot is rebuilt from the pinned ruleset,
+    the persisted legs and the engaged composition, then compared exactly. Any drift is a
+    TimelineError (rollback, retry then blocked), never a silent repositioning."""
+    snapshot, fleet = mission.snapshot, session.get(Fleet, mission.fleet_id)
+    rules = ruleset_for(session, mission.universe_id)
+    if (
+        rules.fleets is None
+        or not isinstance(snapshot, dict)
+        or set(snapshot) != SNAPSHOT_KEYS
+        or fleet is None
+        or (fleet.universe_id, fleet.empire_id) != (mission.universe_id, mission.empire_id)
+        or fleet.home_colony_id != mission.payer_colony_id
+    ):
         raise TimelineError("Inconsistent mission snapshot")
+    path, stacks = verified_path(session, mission), stacks_of(session, fleet.id)
+    survey = mission.kind == "SURVEY"
+    try:
+        if survey and not all(rules.fleets.classes[c].survey for c in stacks):
+            raise ValueError("SURVEY with a non-survey class")
+        quote = rules.fleets.mission_quote(stacks, len(path), rules.colony.speeds["fleet"], survey)
+    except (KeyError, ValueError):
+        raise TimelineError("Inconsistent mission snapshot") from None
+    expected = mission_snapshot(
+        rules,
+        mission.kind,
+        fleet.id,
+        mission.origin_id,
+        mission.destination_id,
+        path,
+        stacks,
+        cargo_of(session, fleet.id),
+        quote,
+    )
+    if any(snapshot[k] != v for k, v in expected.items()):
+        raise TimelineError("Inconsistent mission snapshot")
+    if mission.kind == "RETURN" and mission.destination_id != colony_system(
+        session, session.get(Colony, fleet.home_colony_id)
+    ):
+        raise TimelineError("Inconsistent mission snapshot")
+    _, travel, survey_us = quote
+    if mission.travel_arrival_at - mission.started_at != timedelta(
+        microseconds=travel
+    ) or mission.due_at - mission.travel_arrival_at != timedelta(microseconds=survey_us):
+        raise TimelineError("Inconsistent mission deadlines")
 
 
 def settle_fleet(session, mission, system_id, at):
@@ -798,9 +863,13 @@ def complete_arrival(session, event, processed_at):
     mission = check_mission_event(session, event, "fleet-arrival")
     if mission.status == "completed" and session.get(FleetReport, mission.id) is not None:
         return
-    if mission.status != "active" or mission.due_at != event.due_at:
+    if (
+        mission.status != "active"
+        or mission.due_at != event.due_at
+        or (mission.recalled_at, mission.return_at) != (None, None)
+    ):
         raise TimelineError("Inconsistent mission deadline")
-    verified_path(session, mission)
+    verify_mission_snapshot(session, mission)
     result = {"kind": mission.kind, "destination_id": str(mission.destination_id)}
     if mission.kind == "SURVEY":
         # Mapping happens at due_at only, after the analysis; same monotone Knowledge merge.
@@ -846,6 +915,8 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         )
         if event is None or event.status != "pending":
             raise TimelineError("Arrival event missing or blocked")
+        # Never schedule a return from a drifted mission: its origin comes from the snapshot.
+        verify_mission_snapshot(session, mission)
         event.status, event.completed_at, event.error_code = "completed", utc(at), "cancelled"
         mission.status, mission.recalled_at = "returning", utc(at)
         mission.return_at = utc(at) + (utc(at) - mission.started_at)
@@ -867,8 +938,16 @@ def complete_return(session, event, processed_at):
     mission = check_mission_event(session, event, "fleet-return")
     if mission.status == "completed" and session.get(FleetReport, mission.id) is not None:
         return
-    if mission.status != "returning" or mission.return_at != event.due_at:
+    if (
+        mission.status != "returning"
+        or mission.return_at != event.due_at
+        or mission.recalled_at is None
+        or not mission.started_at <= mission.recalled_at < mission.travel_arrival_at
+        or mission.return_at != mission.recalled_at + (mission.recalled_at - mission.started_at)
+    ):
         raise TimelineError("Inconsistent return deadline")
+    verify_mission_snapshot(session, mission)
+    origin = UUID(mission.snapshot["origin_id"])
     session.add(
         FleetReport(
             mission_id=mission.id,
@@ -876,7 +955,7 @@ def complete_return(session, event, processed_at):
             universe_id=mission.universe_id,
             observed_at=event.due_at,
             processed_at=utc(processed_at),
-            result={"kind": "RECALLED", "destination_id": str(mission.origin_id)},
+            result={"kind": "RECALLED", "destination_id": str(origin)},
         )
     )
-    settle_fleet(session, mission, mission.origin_id, event.due_at)
+    settle_fleet(session, mission, origin, event.due_at)

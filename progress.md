@@ -4,16 +4,29 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — étape 9 F02–F11 réalisés, PR #12 Ready après CI finale 5/5 |
+| Champ | État au 31/10/2026 — étape 9 F02–F11 réalisés, correctif Majeur de revue (snapshots worker), PR #12 Ready |
 | --- | --- |
 | Objectif | Étape 9 Flottes selon Q09 close avec amendements (31/10/2026) |
-| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 brouillon ; aucun merge |
+| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 Ready (redevenue Ready seulement après CI 5/5 de la nouvelle tête) ; aucun merge |
 | Agent | Claude Code local, unique écrivain du lot |
-| Réalisé | v0.4 (sonde/cargo léger, sans expédition abstraite), migration 0009 + droits fleet.* (12), production batch, garnisons, DEPLOY/SURVEY/RETURN, rappel, cargo, division/fusion, API, écran Flottes, raccourcis Galaxy/System View, GET non mutatifs (Galaxy compris), recette réelle Fleet |
+| Réalisé | v0.4 (sonde/cargo léger, sans expédition abstraite), migration 0009 + droits fleet.* (12), production batch, garnisons, DEPLOY/SURVEY/RETURN, rappel, cargo, division/fusion, API, écran Flottes, raccourcis Galaxy/System View, GET non mutatifs (Galaxy compris), recette réelle Fleet ; worker revalidant le snapshot accepté de chaque mission (revue indépendante) |
 | Fichiers | app/fleet/*, colony/rules, galaxy api/service/system_view, simulation/service, main, control contrats/modèle, schéma partagé, Portal, migration 0009, game_data/v0.4, frontend fleet/*, FleetView, useFleets, App, Galaxy/System View, CSS, tests, scripts smoke/fixture/browser Fleet, CI, docs |
-| Validation locale | Game PostgreSQL 17 *_test : 314 réussis (24 Fleet) ; Portal permissions 5 ; Ruff backend+scripts ; frontend lint 0 erreur, 58 Vitest, build, 25 Chromium (Flottes 4 largeurs) ; recette Compose Fleet réelle réussie ; check_docs, diff --check |
-| CI observée | fd12fe2/e5b7ad8/de1e81c : compose-smoke KO (révision Alembic 0008 attendue par deux smokes), corrigé ; fd12fe2 frontend KO intermittent sur un test Research existant, vert ensuite. 6f1f0f7 : push 41241206679 et PR 41241210532 success 5/5, recette Fleet comprise. Ce commit (docs/pied de page) : CI exacte consignée dans PR #12 |
+| Validation locale | Game PostgreSQL 17 *_test : 329 réussis (39 Fleet, dont 15 corruptions refusées ; 12 échouent sur l’ancien service) ; Portal permissions 5 ; Ruff backend+scripts ; frontend lint 0 erreur, 58 Vitest, build, 25 Chromium (Flottes 4 largeurs) ; recette Compose Fleet réelle réussie (relancée après correctif, image Game reconstruite) ; frontend non touché par le correctif ; check_docs, diff --check |
+| CI observée | fd12fe2/e5b7ad8/de1e81c : compose-smoke KO (révision Alembic 0008 attendue par deux smokes), corrigé ; fd12fe2 frontend KO intermittent sur un test Research existant, vert ensuite. 6f1f0f7 : push 41241206679 et PR 41241210532 success 5/5, recette Fleet comprise. ea22ec8 : push 41242281646 et PR 41242286700 success 5/5. Correctif snapshots : CI exacte consignée dans PR #12 |
 | Limites / suite | Attendre l’autorisation explicite de merge. File 3/colonie et capacité cargo garanties par le service sous verrou (non exprimables en CHECK). Chromium émulé seulement. Étape 10 non commencée |
+
+## Revue indépendante PR #12 — snapshots revalidés par le worker, 31/10/2026
+
+Anomalie Majeure relevée sur ea22ec8 : `complete_arrival()` ne revalidait que flux/clé/échéance/
+chemin, `complete_return()` repositionnait sur `mission.origin_id` sans contrôle. Correctif :
+`verify_mission_snapshot()` reconstruit le snapshot depuis le ruleset épinglé, les legs persistés
+(chaîne de routes), la composition et le cargo engagés, puis le compare exactement (version,
+engagement, type, flotte, origine, destination, chemin, stacks, cargo, vitesse, classes, coût,
+durées) ainsi que `travel_arrival_at − started_at` et `due_at − travel_arrival_at` ; flotte/
+payeuse/destination RETURN cohérentes. Appliqué à `FLEET_ARRIVAL`, au rappel (aucun
+`FLEET_RETURN` planifié depuis une mission dérivée) et à `FLEET_RETURN` (fenêtre et symétrie de
+`return_at` revérifiées, origine prise du snapshot). Toute dérive : TimelineError → rollback →
+retry puis blocked opérateur, sans rapport, téléportation ni modification de Knowledge.
 
 ## F02–F10 — Flottes, 31/10/2026
 

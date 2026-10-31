@@ -2,6 +2,7 @@
 
 # ruff: noqa: F811
 from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 from datetime import timedelta
 from threading import Barrier
 from uuid import UUID, uuid4
@@ -19,7 +20,14 @@ from app.access.http import cookie_name
 from app.colony.rules import load_ruleset
 from app.colony.service import configure_universe, enqueue, initialize_colony
 from app.fleet import service as fleet_service
-from app.fleet.models import Fleet, FleetMission, FleetStack, ShipOrder
+from app.fleet.models import (
+    Fleet,
+    FleetCargo,
+    FleetMission,
+    FleetReport,
+    FleetStack,
+    ShipOrder,
+)
 from app.galaxy import service as g
 from app.galaxy.models import GalaxyPlanet, StartingSite, SystemKnowledge
 from app.galaxy.world import generate_world
@@ -741,3 +749,153 @@ def test_concurrent_workers_apply_an_arrival_exactly_once(fleets):
     with w.game.factory() as s:
         assert s.scalar(select(func.count()).select_from(FleetMission)) == 1
         assert s.scalar(select(FleetMission.status)) == "completed"
+
+
+def known_rows(w):
+    with w.game.factory() as s:
+        rows = s.scalars(select(SystemKnowledge).where(SystemKnowledge.empire_id == w.empire))
+        return sorted(
+            (str(r.system_id), {c.key: getattr(r, c.key) for c in r.__mapper__.column_attrs})
+            for r in rows
+        )
+
+
+def drift(*path, value):
+    """Rewrites one nested snapshot field after acceptance (JSONB replaced as a whole)."""
+
+    def apply(s, mission, fleet, other):
+        snapshot = deepcopy(mission.snapshot)
+        node = snapshot
+        for part in path[:-1]:
+            node = node[part]
+        node[path[-1]] = value(node[path[-1]], mission, other)
+        mission.snapshot = snapshot
+
+    return apply
+
+
+def set_column(name, value):
+    def apply(s, mission, fleet, other):
+        setattr(mission, name, value(mission, other))
+
+    return apply
+
+
+def add_stack(s, mission, fleet, other):
+    s.add(FleetStack(fleet_id=fleet.id, ship_class="freighter", count=1))
+
+
+def add_cargo(s, mission, fleet, other):
+    s.add(FleetCargo(fleet_id=fleet.id, resource="alloys", amount=M))
+
+
+def deploy_from_survey(w):
+    """A probe on a MAPPED neighbour deploys back home: (mission id, fleet id, other system)."""
+    probe, mapped = surveyed(w)
+    systems = view(w).json()["systems"]
+    home = next(s["id"] for s in systems if s["state"] == "MONITORED")
+    other = next(s["id"] for s in systems if s["id"] not in (home, mapped))
+    body = launch(w, probe, "DEPLOY", home).json()
+    return body["result"]["mission_id"], probe, UUID(other)
+
+
+def assert_refused_untouched(w, mission_id, fleet_id, status, knowledge, kind):
+    """A drifted mission blocks: no effect, no teleport, no report, no Knowledge change."""
+    blocked = TimeEngine(w.game.factory, Clock(w.game), max_attempts=1).process_next()
+    assert blocked is not None and blocked.status == "blocked"
+    with w.game.factory() as s:
+        event = s.get(ScheduledEvent, blocked.event_id)
+        assert (event.event_type, event.error_code) == (kind, "handler_failed")
+        mission = s.get(FleetMission, UUID(mission_id))
+        fleet = s.get(Fleet, UUID(fleet_id))
+        assert mission.status == status and mission.completed_at is None
+        assert (fleet.status, fleet.system_id, fleet.active_mission_id) == (
+            "MOVING",
+            None,
+            mission.id,
+        )
+        assert s.get(FleetReport, mission.id) is None
+    assert known_rows(w) == knowledge
+    assert worker(w) == 0  # blocked head waits for an explicit operator repair
+
+
+DRIFTS = {
+    "origin": set_column("origin_id", lambda m, other: other),
+    "destination": set_column("destination_id", lambda m, other: other),
+    "path": drift("path", value=lambda v, m, other: [str(uuid4())]),
+    "travel_us": drift("travel_us", value=lambda v, m, other: v + 1),
+    "kind": drift("kind", value=lambda v, m, other: "SURVEY"),
+    "class": drift("classes", "probe", "hop_seconds", value=lambda v, m, other: v * 2),
+    "started_at": set_column("started_at", lambda m, other: m.started_at - timedelta(seconds=1)),
+    "stacks": add_stack,
+    "cargo": add_cargo,
+}
+
+
+@pytest.mark.parametrize("name", sorted(DRIFTS))
+def test_worker_refuses_an_arrival_whose_accepted_mission_drifted(fleets, name):
+    w = fleets()
+    mission_id, probe, other = deploy_from_survey(w)
+    with w.game.factory.begin() as s:
+        mission = s.get(FleetMission, UUID(mission_id))
+        DRIFTS[name](s, mission, s.get(Fleet, UUID(probe)), other)
+    knowledge = known_rows(w)
+    w.advance(minutes=11)
+    assert_refused_untouched(w, mission_id, probe, "active", knowledge, "FLEET_ARRIVAL")
+
+
+def test_worker_refuses_a_survey_whose_snapshot_drifted_without_mapping(fleets):
+    w = fleets()
+    home = built(w)
+    target = detected(w)
+    body = launch(w, home["id"], "SURVEY", target).json()
+    mission_id, probe = body["result"]["mission_id"], body["result"]["fleet_id"]
+    with w.game.factory.begin() as s:
+        mission = s.get(FleetMission, UUID(mission_id))
+        drift("survey_us", value=lambda v, m, other: v - 1)(s, mission, None, None)
+    knowledge = known_rows(w)
+    w.advance(minutes=26)
+    assert_refused_untouched(w, mission_id, probe, "active", knowledge, "FLEET_ARRIVAL")
+    assert read(w, target).json()["state"] == "DETECTED"
+
+
+RETURN_DRIFTS = {
+    "origin": set_column("origin_id", lambda m, other: other),
+    "snapshot_origin": drift("origin_id", value=lambda v, m, other: str(m.destination_id)),
+    "speed": drift("speed", "numerator", value=lambda v, m, other: v + 1),
+    "stacks": add_stack,
+}
+
+
+@pytest.mark.parametrize("name", sorted(RETURN_DRIFTS))
+def test_worker_refuses_a_return_whose_accepted_mission_drifted(fleets, name):
+    w = fleets()
+    mission_id, probe, other = deploy_from_survey(w)
+    w.advance(minutes=4)
+    recall = post(w, f"/missions/{mission_id}/recall", {"idempotency_key": uuid4().hex})
+    assert recall.status_code == 200
+    with w.game.factory.begin() as s:
+        mission = s.get(FleetMission, UUID(mission_id))
+        RETURN_DRIFTS[name](s, mission, s.get(Fleet, UUID(probe)), other)
+    knowledge = known_rows(w)
+    w.advance(minutes=5)
+    assert_refused_untouched(w, mission_id, probe, "returning", knowledge, "FLEET_RETURN")
+
+
+def test_recall_of_a_drifted_mission_schedules_no_return(fleets):
+    w = fleets()
+    mission_id, probe, other = deploy_from_survey(w)
+    with w.game.factory.begin() as s:
+        set_column("origin_id", lambda m, other: other)(
+            s, s.get(FleetMission, UUID(mission_id)), None, other
+        )
+    w.advance(minutes=4)
+    refused = post(w, f"/missions/{mission_id}/recall", {"idempotency_key": uuid4().hex})
+    assert refused.status_code == 503
+    with w.game.factory() as s:
+        mission = s.get(FleetMission, UUID(mission_id))
+        assert mission.status == "active" and mission.recalled_at is None
+        events = s.scalars(
+            select(ScheduledEvent).where(ScheduledEvent.idempotency_key.like(f"%{mission_id}"))
+        ).all()
+        assert [(e.event_type, e.status) for e in events] == [("FLEET_ARRIVAL", "pending")]

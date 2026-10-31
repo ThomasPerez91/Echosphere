@@ -27,8 +27,10 @@ d’Empire, sans renommage : Exploration v0.3, production et flottes. Événemen
 `SHIP_ORDER_COMPLETE` (lot entier dans la garnison, activation de l’ordre suivant déjà payé),
 `FLEET_ARRIVAL` (DEPLOY/RETURN ; SURVEY cartographie à `due_at` via `map_system`) et
 `FLEET_RETURN` (fin de rappel). Handlers mono-stream : jamais d’écriture Colony, de Portal, de
-session ou de navigateur ; vérification stream/clé/échéance/snapshot/chemin, rapport immuable
-`observed_at = due_at`, rejeu sans double effet.
+session ou de navigateur ; vérification stream/clé/échéance/chemin et snapshot reconstruit
+(ruleset épinglé, legs, composition et cargo engagés, coûts, durées, échéances) comparé exactement
+avant arrivée, rappel et retour ; toute dérive bloque (rollback, retry puis opérateur) sans effet.
+Rapport immuable `observed_at = due_at`, rejeu sans double effet.
 
 **Aucune projection ne rattrape cette chronologie** (Flottes, carte et missions Galaxy, System
 View) : un GET ne termine ni production, ni arrivée, ni expédition ; il verrouille seulement le
