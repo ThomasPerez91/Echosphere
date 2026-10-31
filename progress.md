@@ -4,7 +4,7 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — étape 9 F02–F10 réalisés, F11 revue/CI en cours |
+| Champ | État au 31/10/2026 — étape 9 F02–F11 réalisés, PR #12 Ready après CI finale 5/5 |
 | --- | --- |
 | Objectif | Étape 9 Flottes selon Q09 close avec amendements (31/10/2026) |
 | Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 brouillon ; aucun merge |
@@ -12,8 +12,8 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 | Réalisé | v0.4 (sonde/cargo léger, sans expédition abstraite), migration 0009 + droits fleet.* (12), production batch, garnisons, DEPLOY/SURVEY/RETURN, rappel, cargo, division/fusion, API, écran Flottes, raccourcis Galaxy/System View, GET non mutatifs (Galaxy compris), recette réelle Fleet |
 | Fichiers | app/fleet/*, colony/rules, galaxy api/service/system_view, simulation/service, main, control contrats/modèle, schéma partagé, Portal, migration 0009, game_data/v0.4, frontend fleet/*, FleetView, useFleets, App, Galaxy/System View, CSS, tests, scripts smoke/fixture/browser Fleet, CI, docs |
 | Validation locale | Game PostgreSQL 17 *_test : 314 réussis (24 Fleet) ; Portal permissions 5 ; Ruff backend+scripts ; frontend lint 0 erreur, 58 Vitest, build, 25 Chromium (Flottes 4 largeurs) ; recette Compose Fleet réelle réussie ; check_docs, diff --check |
-| CI observée | fd12fe2/e5b7ad8/de1e81c : compose-smoke KO (révision Alembic 0008 attendue par deux smokes), corrigé ; fd12fe2 frontend KO intermittent sur un test Research existant, vert ensuite. CI de la tête finale à relire |
-| Limites / suite | F11 : revue indépendante, CI finale 5/5, PR Ready sans merge. Étape 10 non commencée. Chromium émulé seulement |
+| CI observée | fd12fe2/e5b7ad8/de1e81c : compose-smoke KO (révision Alembic 0008 attendue par deux smokes), corrigé ; fd12fe2 frontend KO intermittent sur un test Research existant, vert ensuite. 6f1f0f7 : push 41241206679 et PR 41241210532 success 5/5, recette Fleet comprise. Ce commit (docs/pied de page) : CI exacte consignée dans PR #12 |
+| Limites / suite | Attendre l’autorisation explicite de merge. File 3/colonie et capacité cargo garanties par le service sous verrou (non exprimables en CHECK). Chromium émulé seulement. Étape 10 non commencée |
 
 ## F02–F10 — Flottes, 31/10/2026
 
