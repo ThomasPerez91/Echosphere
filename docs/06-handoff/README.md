@@ -75,4 +75,13 @@ System View livrée, anciens checkpoints historiques. Étape 9 ensuite menée su
 
 Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5). Lot courant :
 étape 10 Colonisation, branche `work/step-10-colonization`, PR #13, [plan](../05-project/step-10-plan.md) ;
-Q07 close avec amendements, COL02–COL11 réalisés. Étape 11 non commencée, aucun merge.
+Q07 close avec amendements, COL02–COL11 réalisés. Étape 11 alors non commencée, aucun merge.
+
+## État post-merge étape 10 — 01/11/2026
+
+Étape 10 intégrée via PR #13, merge `a33a452b416ec83d4e8b91d84292913d18db5a40` ;
+CI post-merge 41340653571 success (5/5), vérifiée le 01/11/2026. Colonisation/Q07 et la
+sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, branche
+`work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés ;
+Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
+[Plan AI00–AIxx](../05-project/step-11-plan.md). Aucun merge ni suppression de branche autorisé.

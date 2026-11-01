@@ -4,6 +4,25 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 01/11/2026 — AI00 |
+| --- | --- |
+| Objectif | Étape 11 Première IA : audit et proposition Q11 uniquement avant validation explicite |
+| Branche / base / PR | work/step-11-first-ai depuis master a33a452b416ec83d4e8b91d84292913d18db5a40 ; unique PR Draft à ouvrir vers master |
+| Tête / agent | Commit portant AI00 ; Codex local, seul écrivain autorisé. Dernier lot publié consigné Claude Code dans le checkpoint Colonisation |
+| Vérifié | PR #13 MERGED, ancienne tête 04d4b9e, merge a33a452 ; CI post-merge 41340653571 success 5/5 ; aucune PR ouverte ; disque propre, master ff-only puis branche neuve ; ancienne branche conservée |
+| Réalisé | Statuts canoniques post-merge, plan AI00/AI01 et arrêt avant tout code métier IA |
+| Décisions | Colonisation/Q07 livrées ; Q11 ouverte ; étape 12 non commencée ; aucun nouveau choix produit validé |
+| Validation | Check documentaire/liens et diff avant publication ; aucune suite runtime relancée pour ce checkpoint docs ; CI de tête à relire après push |
+| Suite / limites | AI01 : lectures/audit du code intégré, proposition Q11 et architecture/plan conditionnels, puis arrêt obligatoire. Aucun tableau/profil exécutable, worker ou scheduler IA, migration, game_data ou code métier autorisé |
+
+## AI00 — reprise post-merge Colonisation, 01/11/2026
+
+État GitHub vérifié, master locale/origin synchronisées sur a33a452. L'ancienne branche locale
+était encore work/step-10-colonization à 04d4b9e, propre et publiée ; elle est conservée.
+Premier checkpoint documentaire poussé avant audit/proposition et avant tout code IA substantiel.
+
+## Ancienne reprise rapide étape 10 — historique avant fusion
+
 | Champ | État au 01/11/2026 — étape 10 COL00–COL11 réalisés, Q07 close avec amendements |
 | --- | --- |
 | Objectif | Étape 10 Colonisation selon Q07 et la sous-décision Q04 v0.5 (validées le 01/11/2026 avec amendements) |

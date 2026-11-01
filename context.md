@@ -1,6 +1,6 @@
 # Contexte stable — Echosphere
 
-**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-10-31.
+**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-11-01.
 Vérifier GitHub réel puis lire AGENTS → context → progress → [passation](docs/06-handoff/README.md).
 
 ## Produit validé, état distinct
@@ -139,7 +139,7 @@ univers seulement), migration 0009, chronologie d’opérations d’Empire, GET 
 `fleet.*` (12 au total). [Règles](docs/01-game-design/fleets.md),
 [technique](docs/03-technical/fleets-api-ui.md), [plan historique](docs/05-project/step-9-plan.md).
 
-**Lot courant : étape 10 Colonisation**, branche `work/step-10-colonization` depuis master
+**Étape 10 Colonisation intégrée via PR #13**, branche historique `work/step-10-colonization` depuis master
 `3a528b6`, [PR #13](https://github.com/ThomasPerez91/Echosphere/pull/13).
 - **Décisions :** Q07 close le 01/11/2026 avec amendements, ainsi que la sous-décision Q04 v0.5.
 - **Livré par COL02–COL11 :** ruleset v0.5 (colonisateur, `colonization.json`), migration 0010,
@@ -148,7 +148,14 @@ univers seulement), migration 0009, chronologie d’opérations d’Empire, GET 
 - **Références :** [règles](docs/01-game-design/colonization.md),
   [technique](docs/03-technical/colonization-api-ui.md), [plan](docs/05-project/step-10-plan.md).
 
-Étape 11 non commencée ; Q04 (hors sous-décision) et Q10 ouvertes ; aucun merge.
+Étape 10 intégrée via PR #13, merge `a33a452b416ec83d4e8b91d84292913d18db5a40` ;
+CI post-merge 41340653571 success (5/5), vérifiée le 01/11/2026. Colonisation/Q07 et la
+sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, branche
+`work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés ;
+Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
+[Plan AI00–AIxx](docs/05-project/step-11-plan.md). Aucun merge ni suppression de branche autorisé.
+
+Q04 (hors sous-décision) et Q10 ouvertes.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.
@@ -158,4 +165,4 @@ partage produit et défense futurs, caps/pacing balançables et budgets de perfo
 Aucun nouveau merge autorisé. Références UI Recherche : design-system.png et research-view.png,
 illustrations de composition seulement, jamais catalogue ou règles validés.
 
-Les plans étapes 7 à 9 sont historiques depuis leurs fusions ; Colonisation est le lot courant.
+Les plans étapes 7 à 10 sont historiques depuis leurs fusions ; Première IA est le lot courant documentaire.

@@ -145,10 +145,12 @@ CI post-merge 41231820338 success (5/5), vérifiée le 31/10/2026 ; [contrat](do
 Étape 9 Flottes intégrée via PR #12, merge `3a528b62079a4e177e65fdef7ce324b14784a08f` ;
 CI post-merge 41322146062 success (5/5), vérifiée le 01/11/2026 ; Q09 close,
 [règles](docs/01-game-design/fleets.md), [technique](docs/03-technical/fleets-api-ui.md).
-Lot courant : **étape 10 Colonisation**, branche `work/step-10-colonization` depuis master `3a528b6`,
-PR #13 unique ; [plan](docs/05-project/step-10-plan.md). Q07 close le 01/11/2026 avec amendements
-(et sous-décision Q04 v0.5) ; COL02–COL11 réalisés, [technique](docs/03-technical/colonization-api-ui.md).
-Étape 11 non commencée, Q04 (hors sous-décision) et Q10 ouvertes. Aucun merge autorisé.
+Étape 10 intégrée via PR #13, merge `a33a452b416ec83d4e8b91d84292913d18db5a40` ;
+CI post-merge 41340653571 success (5/5), vérifiée le 01/11/2026. Colonisation/Q07 et la
+sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, branche
+`work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés ;
+Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
+[Plan AI00–AIxx](docs/05-project/step-11-plan.md). Aucun merge ni suppression de branche autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver
