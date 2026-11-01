@@ -98,10 +98,12 @@ class Fleet(Record, Base):
         UniqueConstraint("id", "empire_id", "universe_id", name="uq_fleet_scope"),
         UniqueConstraint("active_mission_id", name="uq_fleet_active_mission"),
         CheckConstraint("kind IN ('GARRISON','TASK')", name="kind"),
-        CheckConstraint("status IN ('STATIONED','MOVING','MERGED')", name="status"),
+        # SETTLED: a task Fleet whose colonizer founded a Colony; history kept, never deleted.
+        CheckConstraint("status IN ('STATIONED','MOVING','MERGED','SETTLED')", name="status"),
         CheckConstraint("(status = 'STATIONED') = (system_id IS NOT NULL)", name="location"),
         CheckConstraint("(status = 'MOVING') = (active_mission_id IS NOT NULL)", name="engagement"),
         CheckConstraint("kind <> 'GARRISON' OR status = 'STATIONED'", name="garrison"),
+        CheckConstraint("status <> 'SETTLED' OR kind = 'TASK'", name="settled"),
         CheckConstraint("length(trim(name)) > 0", name="name"),
         Index(
             "ix_fleet_garrison",
@@ -157,13 +159,30 @@ class FleetMission(Record, Base):
             name="fk_fleet_missions_destination_system_knowledge",
         ),
         ForeignKeyConstraint(["payer_colony_id", "empire_id", "universe_id"], COLONY),
+        # COLONIZE targets a planet this Empire knows, inside the destination system.
+        ForeignKeyConstraint(
+            ["empire_id", "target_planet_id"],
+            ["planet_knowledge.empire_id", "planet_knowledge.planet_id"],
+            name="fk_fleet_missions_target_planet_knowledge",
+        ),
+        ForeignKeyConstraint(
+            ["target_planet_id", "destination_id", "universe_id"],
+            ["planets.id", "planets.system_id", "planets.universe_id"],
+            name="fk_fleet_missions_target_planet_system",
+        ),
         UniqueConstraint("id", "fleet_id", name="uq_fleet_mission_fleet"),
         UniqueConstraint("id", "empire_id", "universe_id", name="uq_fleet_mission_scope"),
         UniqueConstraint("empire_id", "idempotency_key", name="uq_fleet_mission_key"),
-        CheckConstraint("kind IN ('DEPLOY','SURVEY','RETURN')", name="kind"),
+        CheckConstraint("kind IN ('DEPLOY','SURVEY','RETURN','COLONIZE')", name="kind"),
         CheckConstraint("status IN ('active','returning','completed')", name="status"),
-        CheckConstraint("origin_id <> destination_id", name="route"),
-        CheckConstraint("travel_arrival_at > started_at", name="travel"),
+        CheckConstraint("(kind = 'COLONIZE') = (target_planet_id IS NOT NULL)", name="target"),
+        # Only COLONIZE may target the current system: 0 hop, arrival = start, no recall window.
+        CheckConstraint("origin_id <> destination_id OR kind = 'COLONIZE'", name="route"),
+        CheckConstraint(
+            "(origin_id <> destination_id AND travel_arrival_at > started_at) "
+            "OR (origin_id = destination_id AND travel_arrival_at = started_at)",
+            name="travel",
+        ),
         CheckConstraint(
             "(kind = 'SURVEY' AND due_at > travel_arrival_at) "
             "OR (kind <> 'SURVEY' AND due_at = travel_arrival_at)",
@@ -185,6 +204,19 @@ class FleetMission(Record, Base):
             unique=True,
             postgresql_where=text("status IN ('active','returning')"),
         ),
+        # One active colonization per Empire; competing claims looked up per target planet.
+        Index(
+            "ix_fleet_mission_colonize_active",
+            "empire_id",
+            unique=True,
+            postgresql_where=text("kind = 'COLONIZE' AND status = 'active'"),
+        ),
+        Index(
+            "ix_fleet_mission_colonize_target",
+            "universe_id",
+            "target_planet_id",
+            postgresql_where=text("kind = 'COLONIZE' AND status = 'active'"),
+        ),
     )
     empire_id: Mapped[UUID] = mapped_column(Uuid)
     universe_id: Mapped[UUID] = mapped_column(Uuid)
@@ -194,6 +226,7 @@ class FleetMission(Record, Base):
     origin_id: Mapped[UUID] = mapped_column(Uuid)
     destination_id: Mapped[UUID] = mapped_column(Uuid)
     payer_colony_id: Mapped[UUID] = mapped_column(Uuid)
+    target_planet_id: Mapped[UUID | None] = mapped_column(Uuid)
     idempotency_key: Mapped[str] = mapped_column(String(160))
     snapshot: Mapped[dict] = mapped_column(JSONB)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

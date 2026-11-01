@@ -22,6 +22,7 @@ PERMISSIONS = frozenset(
         "fleet.read",
         "fleet.build",
         "fleet.command",
+        "colony.expand",
     )
 )
 
@@ -46,8 +47,9 @@ class Binding(Wire):
             "fleet.read",
             "fleet.build",
             "fleet.command",
+            "colony.expand",
         ]
-    ] = Field(min_length=1, max_length=12)
+    ] = Field(min_length=1, max_length=13)
 
     @model_validator(mode="after")
     def unique(self):
