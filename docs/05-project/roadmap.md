@@ -20,8 +20,8 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 6 | Research — intégré via PR #9, Q05 close | Recherche globale et programmation suivante | Prérequis et application unique à échéance |
 | 7 | Galaxy + Exploration — intégré via PR #10 (`773e05c`) | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
 | 8 | System View — intégré via PR #11 (`e011fd3`) | Lecture des mondes et présences connues | Détails datés selon connaissances, mobile utilisable |
-| 9 | Fleets — lot courant, Q09 à valider | Petit catalogue et missions asynchrones | Unités engagées une seule fois et arrivées récupérables |
-| 10 | Colonization | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
+| 9 | Fleets — intégré via PR #12 (`3a528b6`), Q09 close | Petit catalogue et missions asynchrones | Unités engagées une seule fois et arrivées récupérables |
+| 10 | Colonization — lot courant (PR #13), Q07 close | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
 | 11 | Première AI | Utility/Goals et profils simples | Services communs, décisions reproductibles, connaissance limitée |
 | 12 | Combat MVP | Résolution et rapports militaires simples | Q02/Q10 arbitrées, simulation et rejeu des résultats |
 | 13 | Relations IA minimales | Interactions compréhensibles entre civilisations | Q18 arbitrée, pas de diplomatie avancée anticipée |
@@ -136,6 +136,11 @@ Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
 ## État post-merge étape 8 — 31/10/2026
 
 Étape 8 intégrée via PR #11, merge `e011fd3`, CI post-merge 41231820338 success (5/5) ;
-System View livrée, anciens checkpoints historiques. Lot courant : étape 9 Flottes, branche
-`work/step-9-fleets`, F00/F01 puis arrêt avant F02 tant que Q09 n’est pas validée.
-Étape 10 Colonisation non commencée, aucun merge autorisé.
+System View livrée, anciens checkpoints historiques. Étape 9 ensuite menée sur `work/step-9-fleets`.
+
+## État post-merge étape 9 — 01/11/2026
+
+Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5) ; Flottes v0.4
+livrées, [plan historique](step-9-plan.md). Lot courant : étape 10 Colonisation, branche
+`work/step-10-colonization`, [plan](step-10-plan.md), PR #13 : Q07 close avec amendements, COL02–COL11
+réalisés. Étape 11 IA non commencée, aucun merge autorisé.

@@ -3,7 +3,9 @@ import type { Amounts } from "../colony/api";
 export { ApiError };
 
 export type Empire = { id: string; name: string };
-export type SystemRef = { id: string; state: "DETECTED" | "MAPPED" | "MONITORED"; name?: string };
+/** Knowledge structure only; `colony_id` names an own Colony and requires colony.read. */
+export type KnownPlanet = { id: string; name: string; sector_capacity: number; orbital_capacity: number; colony_id: string | null };
+export type SystemRef = { id: string; state: "DETECTED" | "MAPPED" | "MONITORED"; name?: string; planets?: KnownPlanet[] };
 export type ShipClass = {
   name: string;
   cost: Amounts;
@@ -36,10 +38,10 @@ export type FleetView = {
   cargo: Amounts;
   capacity: string;
   mission_id: string | null;
-  colony_here: string | null;
-  unload: { credited: Amounts; kept: Amounts } | null;
+  /** Every own Colony of this system (colony.read only): load/unload always name one. */
+  colonies_here: { id: string; name: string; unload: { credited: Amounts; kept: Amounts } | null }[];
 };
-export type MissionKind = "DEPLOY" | "SURVEY" | "RETURN";
+export type MissionKind = "DEPLOY" | "SURVEY" | "RETURN" | "COLONIZE";
 export type MissionView = {
   id: string;
   fleet_id: string;
@@ -58,7 +60,15 @@ export type MissionView = {
   return_at: string | null;
   completed_at: string | null;
   payer_colony_id: string | null;
-  report: { observed_at: string; processed_at: string; result: { kind: string } } | null;
+  target_planet: { id: string; name: string } | null;
+  report: { observed_at: string; processed_at: string; result: { kind: string; outcome?: string; reason?: string; colony_id?: string | null } } | null;
+};
+export type Colonization = {
+  colonizer_class: string;
+  package_minimum: Amounts;
+  max_colonies: number;
+  max_active_missions: number;
+  colonizer_quote: { rank: number; multiplier_bps: number; cost: Amounts } | null;
 };
 export type FleetProjection = {
   server_time: string;
@@ -71,6 +81,7 @@ export type FleetProjection = {
   colonies?: ColonyView[];
   fleets?: FleetView[];
   missions?: MissionView[];
+  colonization?: Colonization | null;
   systems?: SystemRef[];
 };
 export type Quote = {
@@ -84,6 +95,8 @@ export type Quote = {
   due_at: string;
   payer_colony_id: string | null;
   affordable: boolean;
+  target_planet_id: string | null;
+  package_minimum: Amounts | null;
 };
 
 type Value = Record<string, unknown>;
@@ -102,6 +115,12 @@ const systemRef = (v: unknown) =>
   object(v) && id(v.id) &&
   (v.state === "DETECTED" ? !("name" in v) : ["MAPPED", "MONITORED"].includes(String(v.state)) && typeof v.name === "string");
 const nullableRef = (v: unknown) => v === null || systemRef(v);
+const planet = (v: unknown) =>
+  object(v) && id(v.id) && typeof v.name === "string" && integer(v.sector_capacity) && integer(v.orbital_capacity) &&
+  (v.colony_id === null || id(v.colony_id));
+// Planets belong to MAPPED+ structure only; a DETECTED signal never carries them.
+const knownSystem = (v: unknown) =>
+  systemRef(v) && (!("planets" in (v as Value)) || ((v as Value).state !== "DETECTED" && list((v as Value).planets, planet)));
 
 const order = (v: unknown) =>
   object(v) && id(v.id) && typeof v.ship_class === "string" && integer(v.quantity) &&
@@ -113,10 +132,11 @@ const fleet = (v: unknown) =>
   ["STATIONED", "MOVING"].includes(String(v.status)) && (v.home_colony_id === null || id(v.home_colony_id)) &&
   (v.status === "STATIONED" ? systemRef(v.system) : v.system === null) && counts(v.stacks) &&
   amounts(v.cargo) && micro(v.capacity) && (v.mission_id === null || id(v.mission_id)) &&
-  (v.colony_here === null || id(v.colony_here)) &&
-  (v.unload === null || (object(v.unload) && amounts(v.unload.credited) && amounts(v.unload.kept)));
+  list(v.colonies_here, (c) => object(c) && id(c.id) && typeof c.name === "string" &&
+    (c.unload === null || (object(c.unload) && amounts(c.unload.credited) && amounts(c.unload.kept))));
 const mission = (v: unknown) =>
-  object(v) && id(v.id) && id(v.fleet_id) && ["DEPLOY", "SURVEY", "RETURN"].includes(String(v.kind)) &&
+  object(v) && id(v.id) && id(v.fleet_id) && ["DEPLOY", "SURVEY", "RETURN", "COLONIZE"].includes(String(v.kind)) &&
+  (v.kind === "COLONIZE" ? object(v.target_planet) && id(v.target_planet.id) && typeof v.target_planet.name === "string" : v.target_planet === null) &&
   ["active", "returning", "completed"].includes(String(v.status)) && nullableRef(v.origin) &&
   nullableRef(v.destination) && integer(v.hops) && counts(v.stacks) && amounts(v.cargo) && amounts(v.cost) &&
   date(v.started_at) && date(v.travel_arrival_at) && date(v.due_at) && optionalDate(v.recalled_at) &&
@@ -137,11 +157,16 @@ export function validFleets(value: unknown, empire: string): value is FleetProje
       typeof c.survey === "boolean") &&
     integer(value.queue_limit) && integer(value.max_quantity) &&
     list(value.colonies, (c) => object(c) && id(c.id) && typeof c.name === "string" && id(c.system_id) && list(c.orders, order)) &&
-    list(value.fleets, fleet) && list(value.missions, mission) && list(value.systems, systemRef);
+    list(value.fleets, fleet) && list(value.missions, mission) && list(value.systems, knownSystem) &&
+    (value.colonization === null || (object(value.colonization) && typeof value.colonization.colonizer_class === "string" &&
+      amounts(value.colonization.package_minimum) && integer(value.colonization.max_colonies) &&
+      (value.colonization.colonizer_quote === null || (object(value.colonization.colonizer_quote) &&
+        integer(value.colonization.colonizer_quote.rank) && amounts(value.colonization.colonizer_quote.cost)))));
   if (!shapes) return false;
   // Colony data belongs to colony.read: present without it is a leak, refused rather than hidden.
   if (!v.permissions.includes("colony.read") && (v.colonies!.length || v.fleets!.some((f) =>
-    f.home_colony_id || f.colony_here || f.unload) || v.missions!.some((m) => m.payer_colony_id)))
+    f.home_colony_id || f.colonies_here.length) || v.missions!.some((m) => m.payer_colony_id || m.report?.result.colony_id) ||
+    v.systems!.some((s) => s.planets?.some((p) => p.colony_id)) || v.colonization?.colonizer_quote))
     return false;
   const known = new Set(v.systems!.map((s) => s.id));
   return v.fleets!.every((f) => !f.system || known.has(f.system.id));
@@ -194,7 +219,7 @@ export async function fleetCommand(universe: string, empire: string, csrf: strin
   return { result: reply.result, fleets: reply.fleets };
 }
 
-export type Plan = { fleet_id: string; kind: MissionKind; destination_id?: string; units: Record<string, number> };
+export type Plan = { fleet_id: string; kind: MissionKind; destination_id?: string; target_planet_id?: string; units: Record<string, number> };
 
 /** Quote of a launch. A paying colony without colony.read is a leak, refused rather than hidden. */
 export async function previewMission(universe: string, empire: string, csrf: string, plan: Plan, colonyRead: boolean,

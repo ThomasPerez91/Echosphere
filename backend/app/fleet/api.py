@@ -21,7 +21,7 @@ from app.control.models import EmpireBinding
 from app.fleet import service
 from app.fleet.models import Fleet, FleetMission, FleetReport, ShipOrder
 from app.galaxy import service as galaxy
-from app.galaxy.models import SystemKnowledge
+from app.galaxy.models import PlanetKnowledge, SystemKnowledge
 from app.persistence.models import Colony, Empire, Planet
 from app.simulation.scheduler import lock_stream
 
@@ -46,8 +46,9 @@ class Order(Body):
 
 class Plan(Body):
     fleet_id: str = Field(pattern=UUID_PATTERN)
-    kind: Literal["DEPLOY", "SURVEY", "RETURN"]
+    kind: Literal["DEPLOY", "SURVEY", "RETURN", "COLONIZE"]
     destination_id: str | None = Field(default=None, pattern=UUID_PATTERN)
+    target_planet_id: str | None = Field(default=None, pattern=UUID_PATTERN)
     units: Units = Field(min_length=1, max_length=16)
 
 
@@ -90,11 +91,33 @@ def system_ref(session, empire_id, system_id, *, detected=True):
 
 def scrub(result, permissions):
     """Reports carry Knowledge projections: Colony ids stay behind colony.read."""
+    if "colony.read" in permissions:
+        return result
     system = (result.get("discoveries") or {}).get("system")
-    if system and "colony.read" not in permissions and system.get("observation"):
+    if system and system.get("observation"):
         system = {**system, "observation": None}
         result = {**result, "discoveries": {**result["discoveries"], "system": system}}
+    if result.get("colony_id"):
+        result = {**result, "colony_id": None}  # the founding is reported, the Colony is not
     return result
+
+
+def known_planets(session, empire_id, system_id, owned):
+    """Structure from Knowledge only; an own Colony is named only with colony.read (`owned`)."""
+    return [
+        {
+            "id": str(p.planet_id),
+            "name": p.known_name,
+            "sector_capacity": p.sector_capacity,
+            "orbital_capacity": p.orbital_capacity,
+            "colony_id": owned.get(p.planet_id),
+        }
+        for p in session.scalars(
+            select(PlanetKnowledge)
+            .where(PlanetKnowledge.empire_id == empire_id, PlanetKnowledge.system_id == system_id)
+            .order_by(PlanetKnowledge.planet_id)
+        )
+    ]
 
 
 def mission_view(session, mission, permissions):
@@ -119,6 +142,14 @@ def mission_view(session, mission, permissions):
         "completed_at": mission.completed_at.isoformat() if mission.completed_at else None,
         # Like Research/Exploration: the paying colony is shown only with colony.read.
         "payer_colony_id": str(mission.payer_colony_id) if "colony.read" in permissions else None,
+        "target_planet": {
+            "id": str(mission.target_planet_id),
+            "name": session.get(
+                PlanetKnowledge, (mission.empire_id, mission.target_planet_id)
+            ).known_name,
+        }
+        if mission.target_planet_id
+        else None,
         "report": {
             "observed_at": report.observed_at.isoformat(),
             "processed_at": report.processed_at.isoformat(),
@@ -184,13 +215,12 @@ def project(session, universe_id, empire_id, permissions, at):
     fleet_views = []
     for fleet in session.scalars(
         select(Fleet)
-        .where(Fleet.empire_id == empire_id, Fleet.status != "MERGED")
+        .where(Fleet.empire_id == empire_id, Fleet.status.notin_(("MERGED", "SETTLED")))
         .order_by(Fleet.kind, Fleet.created_at, Fleet.id)
     ):
         stacks = service.stacks_of(session, fleet.id)
-        here = next(
-            (c for c in colonies if fleet.system_id and systems[c.id] == fleet.system_id), None
-        )
+        # Every own Colony of this system, chosen explicitly to load/unload: never "the first".
+        here = [c for c in colonies if fleet.system_id and systems[c.id] == fleet.system_id]
         carried = service.cargo_of(session, fleet.id)
         mission = (
             session.get(FleetMission, fleet.active_mission_id) if fleet.active_mission_id else None
@@ -207,13 +237,19 @@ def project(session, universe_id, empire_id, permissions, at):
                 "cargo": amounts(carried),
                 "capacity": str(f.cargo_capacity(stacks)),
                 "mission_id": str(mission.id) if mission else None,
-                "colony_here": str(here.id) if here and colony_read else None,
-                "unload": {
-                    k: amounts(v)
-                    for k, v in service.unload_preview(session, fleet, here.id, at).items()
-                }
-                if here and colony_read and carried
-                else None,
+                "colonies_here": [
+                    {
+                        "id": str(c.id),
+                        "name": session.get(Planet, c.planet_id).name,
+                        "unload": {
+                            k: amounts(v)
+                            for k, v in service.unload_preview(session, fleet, c.id, at).items()
+                        }
+                        if carried
+                        else None,
+                    }
+                    for c in (here if colony_read else [])
+                ],
             }
         )
     # Every open mission (in-flight list, recall, deadlines) plus the 30 latest completed ones:
@@ -238,6 +274,33 @@ def project(session, universe_id, empire_id, permissions, at):
         .order_by(SystemKnowledge.system_id)
     )
     galaxy_read = "galaxy.read" in permissions
+    owned = {c.planet_id: str(c.id) for c in colonies} if colony_read else {}
+    x = rules.colonization
+    colonization = None
+    if x is not None:
+        quote = service.colonizer_quote(session, rules, empire_id)
+        colonization = {
+            "colonizer_class": x.colonizer_class,
+            "package_minimum": amounts(x.package_minimum()),
+            "max_colonies": x.max_colonies,
+            "max_active_missions": x.max_active_missions,
+            # The progressive price depends on the colony count: production rights only.
+            "colonizer_quote": {
+                "rank": quote["rank"],
+                "multiplier_bps": quote["multiplier_bps"],
+                "cost": amounts(quote["cost"]),
+            }
+            if colony_read and "fleet.build" in permissions
+            else None,
+        }
+    systems_view = []
+    for k in known:
+        ref = system_ref(session, empire_id, k.system_id, detected=galaxy_read)
+        if ref is None:
+            continue
+        if x is not None and ref["state"] != "DETECTED":
+            ref["planets"] = known_planets(session, empire_id, k.system_id, owned)
+        systems_view.append(ref)
     return base | {
         "catalogue": {
             key: {
@@ -256,12 +319,9 @@ def project(session, universe_id, empire_id, permissions, at):
         "colonies": colony_views,
         "fleets": fleet_views,
         "missions": [mission_view(session, m, permissions) for m in missions],
+        "colonization": colonization,
         # Destinations come from Knowledge only; DETECTED signals need galaxy.read (SURVEY).
-        "systems": [
-            ref
-            for k in known
-            if (ref := system_ref(session, empire_id, k.system_id, detected=galaxy_read))
-        ],
+        "systems": systems_view,
     }
 
 
@@ -313,13 +373,17 @@ class Fleets(Colonies):
                 lock_stream(session, state.stream_id, universe_id)
             return project(session, universe_id, empire_id, permissions, self.clock.now())
 
-    def act(self, raw, universe_id, empire_id, needed, operation):
+    def act(self, raw, universe_id, empire_id, needed, operation, *, with_rights=False):
         with self.factory.begin() as session:
             permissions, access = self.authorize_empire(
                 session, raw, universe_id, empire_id, needed, act=True
             )
             at = self.clock.now()
-            result = operation(session, at, f"http:{access.membership_id}:")
+            ns = f"http:{access.membership_id}:"
+            if with_rights:
+                result = operation(session, at, ns, permissions)
+            else:
+                result = operation(session, at, ns)
             return {
                 "result": result,
                 "fleets": project(session, universe_id, empire_id, permissions, at),
@@ -355,6 +419,9 @@ class Fleets(Colonies):
 
     @staticmethod
     def mission_rights(kind):
+        if kind == "COLONIZE":
+            # Founding is irreversible in v0.5: a dedicated right, never colony.construct.
+            return ("fleet.command", "galaxy.read", "colony.expand")
         return ("fleet.command", "galaxy.read") if kind == "SURVEY" else ("fleet.command",)
 
     def preview(self, raw, universe_id, empire_id, body: Plan):
@@ -371,6 +438,8 @@ class Fleets(Colonies):
                 UUID(body.destination_id) if body.destination_id else None,
                 body.units,
                 self.clock.now(),
+                UUID(body.target_planet_id) if body.target_planet_id else None,
+                "colony.read" in permissions,
             )
             if "colony.read" not in permissions:
                 # Commanding stays allowed without colony.read; the paying colony is not shown.
@@ -380,7 +449,7 @@ class Fleets(Colonies):
             }
 
     def launch(self, raw, universe_id, empire_id, body: Launch):
-        def run(session, at, ns):
+        def run(session, at, ns, permissions):
             mission = service.launch(
                 session,
                 self.engine,
@@ -393,10 +462,14 @@ class Fleets(Colonies):
                 body.cargo,
                 key=ns + body.idempotency_key,
                 at=at,
+                target_planet_id=UUID(body.target_planet_id) if body.target_planet_id else None,
+                colony_read="colony.read" in permissions,
             )
             return {"mission_id": str(mission.id), "fleet_id": str(mission.fleet_id)}
 
-        return self.act(raw, universe_id, empire_id, self.mission_rights(body.kind), run)
+        return self.act(
+            raw, universe_id, empire_id, self.mission_rights(body.kind), run, with_rights=True
+        )
 
     def recall(self, raw, universe_id, empire_id, mission_id, body: Keyed):
         def run(session, at, ns):

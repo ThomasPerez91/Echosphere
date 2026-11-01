@@ -46,14 +46,14 @@ export function useColony(universe: string | null, enabled: boolean, csrf: strin
     reads.current?.abort(); const controller = new AbortController(); reads.current = controller;
     const observed = generation.current; const timer = window.setTimeout(() => controller.abort(), 10000);
     try {
-      let target = colony ?? current.current.projection?.colony.id;
-      if (!target) {
-        const colonies = await listColonies(universe, controller.signal);
-        if (!active.current || observed !== generation.current) return;
-        if (!colonies.length) { setState(old => ({ ...old, phase: 'empty', colonies, error: null })); return; }
-        setState(old => ({ ...old, colonies }));
-        target = colonies[0].id;
-      }
+      // The list is reread too: a colony founded by the worker joins the selector on refresh.
+      const colonies = await listColonies(universe, controller.signal);
+      if (!active.current || observed !== generation.current) return;
+      if (!colonies.length) { setState(old => ({ ...old, phase: 'empty', colonies, error: null })); return; }
+      setState(old => ({ ...old, colonies }));
+      // An explicit choice is read as asked (unknown → server refusal); a refresh keeps its colony.
+      const kept = current.current.projection?.colony.id;
+      const target = colony ?? (kept && colonies.some(c => c.id === kept) ? kept : colonies[0].id);
       const projection = await readColony(universe, target, controller.signal);
       if (active.current && observed === generation.current) accept(projection);
     } catch (error) {

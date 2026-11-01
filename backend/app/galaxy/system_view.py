@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from app.colony.service import rules_for
 from app.galaxy.models import PlanetKnowledge, RouteKnowledge, SystemKnowledge
 from app.galaxy.service import project_system
 from app.persistence.models import Colony
@@ -17,8 +18,12 @@ def project(session, known, permissions, at):
         server_time=at.isoformat(),
         empire_id=str(known.empire_id),
         permissions=[
-            p for p in ("galaxy.read", "colony.read", "fleet.command") if p in permissions
+            p
+            for p in ("galaxy.read", "colony.read", "fleet.command", "colony.expand")
+            if p in permissions
         ],
+        # Pinned ruleset only says whether COLONIZE exists (v0.5+); never who occupies a world.
+        colonization=rules_for(session, known.universe_id).colonization is not None,
         routes=[],
         presences=[],
         colony_links=[],

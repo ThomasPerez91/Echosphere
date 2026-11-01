@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import { FleetView } from "./components/FleetView";
 import { ApiError, previewMission, validFleets } from "./fleet/api";
-import { colony, done, empire, fleets, garrison, mission, near, order, otherEmpire, otherFleets, surveying, universe } from "../tests/fleetFixture";
+import { colony, colonizing, done, empire, fleets, freeWorld, garrison, mission, near, order, origin, otherEmpire, otherFleets, secondColony, surveying, universe } from "../tests/fleetFixture";
 
 const json = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body });
 beforeAll(() => {
@@ -15,7 +15,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 type Call = [string, RequestInit | undefined];
 type Reply = ReturnType<typeof json>;
-function setup(route: (url: string, init?: RequestInit) => Reply | Promise<Reply>, target?: { empire: string; system: string }) {
+function setup(route: (url: string, init?: RequestInit) => Reply | Promise<Reply>, target?: { empire: string; system: string; planet?: string }) {
   const fetcher = vi.fn(async (url: string, init?: RequestInit) => route(url, init));
   vi.stubGlobal("fetch", fetcher);
   const lost = vi.fn();
@@ -344,4 +344,155 @@ test("travel arrival switches a SURVEY to analysis and removes recall without a 
   expect(await within(card).findByText("Analyse en cours", {}, { timeout: 2000 })).toBeVisible();
   expect(within(card).queryByRole("button", { name: "Rappeler…" })).not.toBeInTheDocument();
   expect(calls().length).toBe(reads); // local deadline only: no polling
+});
+
+// --- Colonization (v0.5) ------------------------------------------------------------------------
+
+const colonizeRoute = (permissions?: string[]) => (url: string, init?: RequestInit) => {
+  if (url.endsWith("/missions/preview")) return json({
+    kind: "COLONIZE", destination_id: origin, hops: 0, cost: { alloys: "0", flux: "0", data: "0" }, travel_us: "0", survey_us: "0",
+    travel_arrival_at: "2099-01-01T00:00:00Z", due_at: "2099-01-01T00:00:00Z", payer_colony_id: colony, affordable: true,
+    target_planet_id: freeWorld, package_minimum: { alloys: "500000000", flux: "250000000", data: "50000000" },
+  });
+  if (init?.method === "POST") return json({ result: { mission_id: mission, fleet_id: garrison }, fleets: colonizing(permissions) });
+  return url.endsWith("/fleets") ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(colonizing(permissions));
+};
+
+test("COLONIZE targets a known world with exactly one colonizer and the package, never a destination", async () => {
+  const { calls } = setup(colonizeRoute());
+  const card = (await screen.findByText("Garnison Nouvelle Aube")).closest("li")!;
+  fireEvent.click(within(card).getByRole("button", { name: "Envoyer…" }));
+  const dialog = screen.getByRole("dialog");
+  fireEvent.click(within(dialog).getByRole("radio", { name: "Colonisation" }));
+  const worlds = within(dialog).getByRole("combobox", { name: "Monde visé" });
+  // An own colony named under colony.read is not offered; nothing is ever called "Libre".
+  expect(within(worlds).queryByText(/Nouvelle Aube/)).not.toBeInTheDocument();
+  expect(within(dialog).getByText(/Occupation actuelle inconnue/)).toBeVisible();
+  expect(screen.queryByText(/\bLibre\b/)).not.toBeInTheDocument();
+  fireEvent.change(worlds, { target: { value: freeWorld } });
+  for (const [label, value] of [["Alliages", "600"], ["Flux", "300"], ["Données", "100"]])
+    fireEvent.change(within(dialog).getByRole("spinbutton", { name: new RegExp(label) }), { target: { value } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Calculer le devis" }));
+  expect(await within(dialog).findByText(/0 saut\(s\)/)).toBeVisible();
+  expect(within(dialog).getByText(/aucun carburant/)).toBeVisible();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Confirmer" }));
+  await screen.findByText("Ordre accepté par le serveur.");
+  const preview = JSON.parse(String(calls().find(([url]) => url.endsWith("/missions/preview"))![1]!.body));
+  expect(preview).toEqual({ fleet_id: garrison, kind: "COLONIZE", units: { colonizer: 1 }, target_planet_id: freeWorld });
+  const launch = JSON.parse(String(calls().find(([url, init]) => url.endsWith("/missions") && init?.method === "POST")![1]!.body));
+  expect(launch).toMatchObject({ kind: "COLONIZE", target_planet_id: freeWorld, units: { colonizer: 1 }, cargo: { alloys: 600, flux: 300, data: 100 } });
+  expect(launch).not.toHaveProperty("destination_id");
+});
+
+test("COLONIZE is not offered without colony.expand; a short package is flagged before the server refuses", async () => {
+  setup(colonizeRoute(["colony.read", "galaxy.read", "fleet.read", "fleet.build", "fleet.command"]));
+  const card = (await screen.findByText("Garnison Nouvelle Aube")).closest("li")!;
+  fireEvent.click(within(card).getByRole("button", { name: "Envoyer…" }));
+  expect(within(screen.getByRole("dialog")).queryByRole("radio", { name: "Colonisation" })).not.toBeInTheDocument();
+  cleanup();
+  setup(colonizeRoute());
+  const again = (await screen.findByText("Garnison Nouvelle Aube")).closest("li")!;
+  fireEvent.click(within(again).getByRole("button", { name: "Envoyer…" }));
+  fireEvent.click(within(screen.getByRole("dialog")).getByRole("radio", { name: "Colonisation" }));
+  expect(within(screen.getByRole("dialog")).getByText(/insuffisant, chargez d’abord le colonisateur/)).toBeVisible();
+});
+
+test("a colonizer order shows the current progressive server price and always holds one unit", async () => {
+  const { calls } = setup(colonizeRoute());
+  fireEvent.change(await screen.findByRole("combobox", { name: "Classe" }), { target: { value: "colonizer" } });
+  expect(screen.getByText(/Prix serveur actuel : 2\s?400 Alliages · 1\s?200 Flux · 600 Données/)).toBeVisible();
+  expect(screen.getByText(/rang 3.*×2/)).toBeVisible();
+  fireEvent.change(screen.getByRole("spinbutton", { name: /Quantité/ }), { target: { value: "5" } });
+  fireEvent.click(screen.getByRole("button", { name: "Commander" }));
+  await screen.findByText("Ordre accepté par le serveur.");
+  const body = JSON.parse(String(calls().find(([url, init]) => url.endsWith("/orders") && init?.method === "POST")![1]!.body));
+  expect(body).toMatchObject({ ship_class: "colonizer", quantity: 1 });
+});
+
+test("with two own colonies in the system, load and unload require an explicit colony", async () => {
+  const { calls } = setup(colonizeRoute());
+  const card = (await screen.findByText("Garnison Nouvelle Aube")).closest("li")!;
+  fireEvent.click(within(card).getByRole("button", { name: "Décharger…" }));
+  const dialog = screen.getByRole("dialog");
+  const choice = within(dialog).getByRole("combobox", { name: "Colonie" });
+  expect(choice).toHaveValue("");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Confirmer" }));
+  expect(calls().some(([url]) => url.endsWith("/unload"))).toBe(false); // nothing silently chosen
+  fireEvent.change(choice, { target: { value: secondColony } });
+  expect(within(dialog).getByText(/500 crédités, 100 conservés à bord/)).toBeVisible();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Confirmer" }));
+  await screen.findByText("Ordre accepté par le serveur.");
+  const unload = calls().find(([url]) => url.endsWith("/unload"))!;
+  expect(JSON.parse(String(unload[1]!.body))).toMatchObject({ colony_id: secondColony });
+});
+
+test("the System View shortcut opens the COLONIZE dialog on the chosen world", async () => {
+  setup(colonizeRoute(), { empire, system: origin, planet: freeWorld });
+  const dialog = await screen.findByRole("dialog", { name: "Envoyer une flotte" });
+  expect(within(dialog).getByRole("radio", { name: "Colonisation" })).toBeChecked();
+  expect(within(dialog).getByRole("combobox", { name: "Monde visé" })).toHaveValue(freeWorld);
+});
+
+test("validator refuses world structure on DETECTED signals and colony names without colony.read", () => {
+  expect(validFleets(colonizing(), empire)).toBe(true);
+  const restricted = colonizing(["galaxy.read", "fleet.read", "fleet.command", "colony.expand"]);
+  expect(validFleets(restricted, empire)).toBe(true);
+  const named = colonizing(["galaxy.read", "fleet.read", "fleet.command", "colony.expand"]);
+  named.systems![0].planets![0].colony_id = colony;
+  expect(validFleets(named, empire)).toBe(false);
+  const leaked = colonizing();
+  (leaked.systems![1] as Record<string, unknown>).planets = [];
+  expect(validFleets(leaked, empire)).toBe(false);
+  const report = colonizing(["galaxy.read", "fleet.read"]);
+  report.missions = [{ ...surveying(), kind: "COLONIZE", status: "completed", completed_at: "2099-01-01T00:00:00Z", payer_colony_id: null,
+    target_planet: { id: freeWorld, name: "Monde" }, report: { observed_at: "2099-01-01T00:00:00Z", processed_at: "2099-01-01T00:00:01Z",
+      result: { kind: "COLONIZE", outcome: "founded", colony_id: secondColony } } }];
+  expect(validFleets(report, empire)).toBe(false);
+});
+
+test("COLONIZE from a task fleet holding more than the colonizer lets the player allocate the package sent", async () => {
+  const mixed = colonizing();
+  mixed.fleets = [{ ...mixed.fleets![0], kind: "TASK", name: "Flotte mixte", stacks: { colonizer: 1, freighter: 1 }, capacity: String(1500e6) }];
+  const { calls } = setup((url, init) => {
+    if (url.endsWith("/missions/preview")) return colonizeRoute()(url, init);
+    if (init?.method === "POST") return json({ result: { mission_id: mission, fleet_id: garrison }, fleets: mixed });
+    return url.endsWith("/fleets") ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(mixed);
+  });
+  const card = (await screen.findByText("Flotte mixte", { selector: "h3" })).closest("li")!;
+  fireEvent.click(within(card).getByRole("button", { name: "Envoyer…" }));
+  const dialog = screen.getByRole("dialog");
+  fireEvent.click(within(dialog).getByRole("radio", { name: "Colonisation" }));
+  // A detachment: the cargo sent is chosen here, and the minimum is checked against it.
+  expect(within(dialog).getByText(/insuffisant/)).toBeVisible();
+  fireEvent.change(within(dialog).getByRole("combobox", { name: "Monde visé" }), { target: { value: freeWorld } });
+  for (const [label, value] of [["Alliages", "600"], ["Flux", "300"], ["Données", "100"]])
+    fireEvent.change(within(dialog).getByRole("spinbutton", { name: new RegExp(label) }), { target: { value } });
+  expect(within(dialog).queryByText(/insuffisant/)).not.toBeInTheDocument();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Calculer le devis" }));
+  fireEvent.click(await within(dialog).findByRole("button", { name: "Confirmer" }));
+  await screen.findByText("Ordre accepté par le serveur.");
+  const launch = JSON.parse(String(calls().find(([url, init]) => url.endsWith("/missions") && init?.method === "POST")![1]!.body));
+  expect(launch).toMatchObject({ units: { colonizer: 1 }, cargo: { alloys: 600, flux: 300, data: 100 } });
+});
+
+test("a task fleet sent whole carries its cargo implicitly: no inputs, no cargo field", async () => {
+  const lone = colonizing();
+  lone.fleets = [{ ...lone.fleets![0], kind: "TASK", name: "Flotte coloniale" }];
+  const { calls } = setup((url, init) => {
+    if (url.endsWith("/missions/preview")) return colonizeRoute()(url, init);
+    if (init?.method === "POST") return json({ result: { mission_id: mission, fleet_id: garrison }, fleets: lone });
+    return url.endsWith("/fleets") ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(lone);
+  });
+  const card = (await screen.findByText("Flotte coloniale", { selector: "h3" })).closest("li")!;
+  fireEvent.click(within(card).getByRole("button", { name: "Envoyer…" }));
+  const dialog = screen.getByRole("dialog");
+  fireEvent.click(within(dialog).getByRole("radio", { name: "Colonisation" }));
+  expect(within(dialog).queryByRole("spinbutton", { name: /Alliages/ })).not.toBeInTheDocument();
+  expect(within(dialog).queryByText(/insuffisant/)).not.toBeInTheDocument(); // 600/300/100 aboard
+  fireEvent.change(within(dialog).getByRole("combobox", { name: "Monde visé" }), { target: { value: freeWorld } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Calculer le devis" }));
+  fireEvent.click(await within(dialog).findByRole("button", { name: "Confirmer" }));
+  await screen.findByText("Ordre accepté par le serveur.");
+  const launch = JSON.parse(String(calls().find(([url, init]) => url.endsWith("/missions") && init?.method === "POST")![1]!.body));
+  expect(launch).not.toHaveProperty("cargo");
 });

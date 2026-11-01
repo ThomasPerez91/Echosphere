@@ -104,11 +104,12 @@
               "exploration.start",
               "fleet.read",
               "fleet.build",
-              "fleet.command"
+              "fleet.command",
+              "colony.expand"
             ],
             "type": "string"
           },
-          "maxItems": 12,
+          "maxItems": 13,
           "minItems": 1,
           "title": "Permissions",
           "type": "array"

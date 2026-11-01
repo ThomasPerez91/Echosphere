@@ -107,8 +107,19 @@ class Colony(Record, Base):
             name="fk_colonies_planet_universe",
         ),
         UniqueConstraint("planet_id", name="uq_colonies_planet"),
+        # Founded by colonization (v0.5+): at most one Colony per mission; NULL for start colonies.
+        ForeignKeyConstraint(
+            ["founding_mission_id", "empire_id", "universe_id"],
+            ["fleet_missions.id", "fleet_missions.empire_id", "fleet_missions.universe_id"],
+            name="fk_colonies_founding_mission_fleet_missions",
+            use_alter=True,
+        ),
+        UniqueConstraint("founding_mission_id", name="uq_colonies_founding_mission"),
+        CheckConstraint("(founded_at IS NULL) = (founding_mission_id IS NULL)", name="founding"),
     )
 
     universe_id: Mapped[UUID] = mapped_column(ForeignKey("universes.id"), index=True)
     empire_id: Mapped[UUID] = mapped_column(Uuid, index=True)
     planet_id: Mapped[UUID] = mapped_column(Uuid)
+    founded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    founding_mission_id: Mapped[UUID | None] = mapped_column(Uuid)

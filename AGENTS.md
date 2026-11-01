@@ -142,10 +142,13 @@ Q05 close ; Research intégrée à master via PR #9, merge `437844e4`, CI post-m
 CI post-merge 41220568486 success (5/5), vérifiée le 31/10/2026. Q06/Q08 et Exploration livrées.
 Étape 8 System View intégrée via PR #11, merge `e011fd3127c4888db551dd3792b347b1dc31b468` ;
 CI post-merge 41231820338 success (5/5), vérifiée le 31/10/2026 ; [contrat](docs/03-technical/system-view.md).
-Lot courant : **étape 9 Flottes**, branche `work/step-9-fleets` depuis master `e011fd3`, PR brouillon
-unique (PR #12). Q09 close le 31/10/2026 avec amendements, F02–F11 autorisés ;
+Étape 9 Flottes intégrée via PR #12, merge `3a528b62079a4e177e65fdef7ce324b14784a08f` ;
+CI post-merge 41322146062 success (5/5), vérifiée le 01/11/2026 ; Q09 close,
 [règles](docs/01-game-design/fleets.md), [technique](docs/03-technical/fleets-api-ui.md).
-Exploration v0.3 inchangée, étape 10 non commencée, Q04/Q07/Q10 hors portée. Aucun merge autorisé.
+Lot courant : **étape 10 Colonisation**, branche `work/step-10-colonization` depuis master `3a528b6`,
+PR #13 unique ; [plan](docs/05-project/step-10-plan.md). Q07 close le 01/11/2026 avec amendements
+(et sous-décision Q04 v0.5) ; COL02–COL11 réalisés, [technique](docs/03-technical/colonization-api-ui.md).
+Étape 11 non commencée, Q04 (hors sous-décision) et Q10 ouvertes. Aucun merge autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver
@@ -167,9 +170,15 @@ Ne pas élargir le périmètre sur la seule base de la passation.
   Exploration abstraite 1 active/Empire sans Fleet, chemin sur routes connues, lock
   Exploration → Research → Colony. [Contrat technique](docs/03-technical/galaxy-api-ui.md).
 - Étape 9 : flottes v0.4 sur la chronologie des opérations d’Empire (stream Exploration, sans
-  renommage), handlers mono-stream sans écriture Colony ; aucun GET ne rattrape cette chronologie
+  renommage), handlers mono-stream sans modifier une Colony existante ; aucun GET ne rattrape cette chronologie
   (worker/commandes seulement). Une unité = un stack d’une flotte, une mission ouverte au plus,
   garanti en base ; rappel symétrique pendant le trajet ; déchargement plafonné sans perte.
+- Étape 10 : colonisation v0.5 = mission COLONIZE du moteur Flottes (planète connue, 1 colonisateur
+  consommé, cargo = stock initial, 0 saut possible dans le système courant). Résolution : stream de
+  l'Empire puis verrou de ligne sur la planète, rang immuable `(due_at, started_at, id)`, seule une
+  revendication `active` non rappelée et mieux classée bloque, `uq_colonies_planet` en dernier
+  rempart. La victoire crée une Colony neuve (`found_colony`, jamais `initialize_colony`).
+  Occupation étrangère jamais révélée (`target_unavailable`). Ni abandon ni transfert en v0.5.
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède

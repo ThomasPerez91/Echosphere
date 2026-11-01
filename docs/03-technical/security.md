@@ -177,7 +177,16 @@ au GET détail. [Contrat System View](system-view.md).
 
 ## Flottes étape 9
 
-Droits explicites `fleet.read`, `fleet.build`, `fleet.command` (plafond 12 partout), jamais
+Droits explicites `fleet.read`, `fleet.build`, `fleet.command` (plafond 13 partout depuis `colony.expand`, étape 10), jamais
 attribués automatiquement. Flottes visibles par leur seul Empire ; inconnu/étranger/autre univers
 même 404 ; données Colony seulement sous `colony.read`, refusées côté client sinon. Aucun capteur,
 contact ou flotte étrangère. GET non mutatifs. [Contrat Flottes](fleets-api-ui.md).
+
+Étape 10 : `colony.expand` (13 permissions, sans attribution automatique) est exigé avec
+`fleet.command` et `galaxy.read` pour le devis et le lancement d'une COLONIZE. `colony.read` n'est
+pas exigé : il sert seulement à nommer ses propres colonies.
+
+L'occupation étrangère n'est jamais vérifiée au lancement. L'échec à l'arrivée renvoie un
+`target_unavailable` unique, sans Empire, flotte, défense, stock ni activité. Un monde déjà possédé
+par l'Empire n'est signalé `target_owned` qu'avec `colony.read`.
+[Contrat](colonization-api-ui.md).

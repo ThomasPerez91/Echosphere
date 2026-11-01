@@ -69,3 +69,13 @@ L’API/UI Colony interactive est désormais 5D après contrats 5B et fondation 
 Étape 9 : écran « Flottes » réel ([contrat](fleets-api-ui.md)) dans l’entrée existante, hook à
 générations/abort, une commande à la fois, clé réutilisée après issue inconnue, relectures passives
 aux échéances ; sous-route `fleets/send/{empire}/{system}` pour le raccourci Galaxy/System View.
+
+Étape 10 :
+- **Dialogue Flottes :** mission COLONIZE (monde connu, 1 colonisateur, paquet minimum, devis 0 ou
+  N sauts) et prix serveur courant du colonisateur.
+- **CHARGER/DÉCHARGER :** la colonie est choisie explicitement parmi `colonies_here`.
+- **Raccourci :** « Coloniser… » depuis la System View.
+- **Écran Colonie :** `useColony` relit la liste à chaque lecture, ce qui fait apparaître une
+  colonie fondée dans le sélecteur existant.
+
+[Contrat](colonization-api-ui.md).

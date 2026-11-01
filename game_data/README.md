@@ -34,3 +34,10 @@ versionnés, aucun bonus Research implicite. Aucune adoption d’ancien Universe
 Étape 9 : ruleset complet `v0.4` = v0.3 (versions seules changées) + `fleets.json` (sonde, cargo
 léger, file 3/1, batch 1–20, analyse SURVEY) ; aucune expédition abstraite dans v0.4. v0.1–v0.3
 immuables, univers existants jamais migrés. `speeds.fleet` ne touche que les déplacements.
+
+Étape 10 : ruleset complet `v0.5` = v0.4 (versions seules changées) + classe `colonizer` dans
+`fleets.json` (1 200/600/300, 3 h, 30 min et 20 Flux par saut, cargo 1 000) + `colonization.json`
+(quantité 1 par ordre, coût progressif 1 + 0,5 × (N − 1), 12 colonies, 1 COLONIZE active, paquet
+minimum 500/250/50). Les données propres au colonisateur restent dans `colonization.json` : le
+schéma des classes v0.4 est inchangé, donc les snapshots v0.4 en cours restent valides.
+v0.1–v0.4 immuables, univers existants jamais migrés.
