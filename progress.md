@@ -4,6 +4,25 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 01/11/2026 — Q11 validée, début AI02 |
+| --- | --- |
+| Objectif | Implémenter AI02–AI11 selon Q11 validée avec amendements |
+| Branche / base / PR | work/step-11-first-ai ; master a33a452 ; PR #14 Draft unique |
+| Tête / agent | f4a14d9 AI01 ; présent commit consigne validation ; Codex local seul écrivain |
+| Vérifié | Disque propre, branche/PR/base distantes conformes ; CI AI01 push 41343195071 et PR 41343200391 success 5/5 ; aucune PR concurrente |
+| Décisions | Q11 close, contrat amendé dans artificial-intelligence ; AI02–AI11 autorisés sans validation intermédiaire ; Combat/merge interdits |
+| Validation | check_docs/diff ; aucune implémentation revendiquée à ce checkpoint |
+| Suite | v0.6 et tests, contexte/contrôleur/pagination, orchestrateur/politique, bootstrap, autonomie/recette/CI et revue automatique avant clôture |
+
+## Validation Q11 — 01/11/2026
+
+Instruction explicite reçue avec amendements, synthétisés dans le contrat canonique. Les deux CI
+AI01 ont été réellement vérifiées vertes avant AI02. Paramètres techniques ajustables sur mesure,
+anti-famine des familles et exclusivité IA/humain obligatoires ; aucun retour utilisateur requis
+pour les choix techniques couverts. Les checkpoints AI01 ci-dessous restent historiques.
+
+### Reprise AI01 historique
+
 | Champ | État au 01/11/2026 — AI00/AI01 documentaires terminés, Q11 à valider |
 | --- | --- |
 | Objectif | Étape 11 Première IA : audit du code intégré et proposition Q11 uniquement |

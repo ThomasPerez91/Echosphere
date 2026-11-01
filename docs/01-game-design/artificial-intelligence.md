@@ -160,3 +160,58 @@ l'existant. La recette utilisera exclusivement un projet et des bases *_test.
 
 Une validation Q11 ne vaut pas autorisation de merge. AI02–AI11 restent conditionnels à une
 instruction explicite ; ce document ne contient aucun profil exécutable.
+
+## Q11 — validation avec amendements, 01/11/2026
+
+**Q11 close pour l'étape 11, validation utilisateur explicite.** AI02–AI11 autorisés sans
+validation intermédiaire sauf nouvelle décision produit. Les deux CI AI01, push 41343195071 et
+PR 41343200391 sur f4a14d9, ont été vérifiées success 5/5 avant AI02. La proposition AI01 reste
+historique ; les précisions ci-dessous priment. Aucun merge ou Combat autorisé.
+
+- A1–A10 validés : profils et poids du tableau, choix explicite figé, départ équitable, bootstrap
+  de référence 1 humain + 2 IA (economic_cautious/expansionist), 0–3 IA supportées par ce bootstrap
+  seulement, sans en faire un plafond produit général. Sites en ordre canonique, indépendamment
+  du profil et de leur qualité. Insuffisance de sites = refus, jamais génération compensatoire.
+- Empire IA exclusif : activation refusée avec binding humain ; aucun grant humain tant qu'un
+  contrôleur est actif. Aucun binding supprimé implicitement. controller_type descriptif ne
+  suffit pas : AIController persistant Universe/Empire/profil/policy/état est la racine de confiance.
+  Aucun Account/User/Membership/session/ticket/cookie IA, aucune permission Portal ai.*.
+- Décideur pur → dispatcher limité → services communs ; pas d'exécuteur générique ni d'identité
+  arbitraire fournie par le décideur. Capabilities read/construct, research read/start, galaxy
+  read, fleet read/build/command, colony.expand ; aucune annulation ni rappel automatique.
+- Grille de 600 s ancrée au départ, prochaine échéance = premier créneau strictement futur ;
+  une commande maximum ou WAIT/refus par tour. Après panne, état actuel et un seul nouveau tour,
+  aucun rattrapage stratégique. Projets multi-tours sans réservation, revalidés et abandonnables.
+- 128 candidats maximum, pages flottes ≤64, bornes avant matérialisation/produit cartésien.
+  Chaque famille paginée a ordre canonique, curseur persistant et parcours circulaire : une option
+  continuellement éligible est examinée au plus en ceil(M/P) visites. Test anti-famine obligatoire.
+- Bootstrap Colony : Alliages puis Flux puis Données, compte tenu des ordres déjà engagés et
+  stocks réels. Réserve seulement décisionnelle, aucune ressource bloquée. Faute de moyens :
+  attendre ou transport légitime. Échec COLONIZE mémorisé seulement planet_id/observed_at/reason
+  target_unavailable, sans cause ni identité étrangère et sans partage de Knowledge.
+- Utilité entière 0..1000, poids × utilité ; aucun hasard/float. Égalité : coût lexical
+  (Alliages, Flux, Données), durée, clé stable. Rejeu = observation/mémoire/profil/policy/date
+  identiques, pas seed seule ; manifester les identités dans les scénarios multi-bases.
+- v0.6 complet = v0.5 + ai.json strict (policy, profils, cadence, budgets, normalisations).
+  Données immuables épinglées ; charger v0.6 ne crée/active aucun contrôleur. v0.1–v0.5 inchangés,
+  aucun backfill ou adoption. Vrai bootstrap opérateur transactionnel, aucun import *_test runtime.
+- Orchestrateur Game dédié hors handler TimeEngine ; next_decision_at durable. Locks contrôleur
+  → opérations → Research → colonies existantes triées ; inclure toute Colony créée pendant le
+  catch-up avant observation. Aucun stream étranger ni inversion Planet→stream amont.
+- Effet, séquence, trace, mémoire/intention et prochain rendez-vous atomiques. Clé stable
+  contrôleur+séquence+action, même clé sur retry. Refus métier tracé puis prochain créneau sans
+  autre essai ; erreur technique rollback intégral, retry borné puis blocked opérateur.
+- enabled/paused/blocked explicites ; pause empêche les nouveaux tours, jamais les achèvements
+  acceptés. Reprise sur état courant sans tours antidatés. Portal indisponible/session humaine
+  expirée n'arrêtent ni IA ni événements acceptés.
+- Traces privées : observation canonique/version, buts/candidats réellement évalués, scores,
+  raisons/départage/intention/résultat et budgets/curseurs, y compris WAIT. Pas d'API publique.
+  Rétention 100 tours, observation 256 KiB et candidats/résultat 64 KiB initiaux ; dépassement
+  avant commande, jamais troncature cachée. Timeouts/retries/tailles techniques ajustables sur
+  mesures, bornés et documentés, pas règles produit immuables.
+- Sortie : variation des données cachées → même observation/décision ; profils réellement
+  divergents ; autonomie économique complète jusque Colony fondée puis producteurs, via services
+  communs uniquement. Recette page fermée/Portal coupé, redémarrage et session humaine expirée.
+  Horloge injectée/cadence de test explicites possibles ; aucune aide après départ.
+- Avant Ready : suites/DB/concurrence/crash/fog/autonomie/Alembic/smokes/docs/CI exacte ; puis
+  attendre la revue automatique Codex et traiter les fils, zéro non résolu. Aucun merge implicite.

@@ -1,5 +1,10 @@
 # Étape 11 — Première IA stratégique
 
+**État courant : Q11 close avec amendements le 01/11/2026 ; AI02–AI11 autorisés.**
+CI AI01 push 41343195071 et PR 41343200391 success 5/5 vérifiées avant AI02.
+[Contrat faisant foi](../01-game-design/artificial-intelligence.md#q11--validation-avec-amendements-01112026).
+Les sections conditionnelles ci-dessous conservent la proposition AI01 historique.
+
 **Statut : AI00/AI01 documentaires autorisés le 01/11/2026 ; Q11 ouverte.**
 Base master `a33a452b416ec83d4e8b91d84292913d18db5a40`, PR #13 fusionnée ; CI post-merge
 41340653571 success 5/5 vérifiée. Branche unique `work/step-11-first-ai`, PR Draft vers master.

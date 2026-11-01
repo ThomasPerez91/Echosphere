@@ -92,3 +92,7 @@ Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Co
 Étape 11 AI01 : [audit/architecture proposés](03-technical/ai-engine.md#ai01--audit-du-code-intégré),
 [Q11 A1–A10 non validée](01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02),
 [plan conditionnel](05-project/step-11-plan.md). Arrêt avant AI02 ; aucun code IA ni étape 12.
+
+État courant étape 11 : Q11 close avec amendements le 01/11/2026 ; AI02–AI11 autorisés après
+CI AI01 push 41343195071 et PR 41343200391 vérifiées success 5/5. PR #14 reste Draft pendant
+implémentation ; aucun merge ni Combat. Les statuts documentaires AI01 ci-dessus sont historiques.

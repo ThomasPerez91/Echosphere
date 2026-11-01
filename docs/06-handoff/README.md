@@ -90,3 +90,7 @@ AI00 publié (`6a09b07`) ; AI01 audit/proposition sur PR Draft #14 :
 [Q11 ouverte A1–A10](../01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02),
 [audit/architecture](../03-technical/ai-engine.md), [plan AI02–AI11 conditionnel](../05-project/step-11-plan.md).
 Prochaine action : validation utilisateur Q11 ; aucun code IA avant cette validation.
+
+État courant étape 11 : Q11 close avec amendements le 01/11/2026 ; AI02–AI11 autorisés après
+CI AI01 push 41343195071 et PR 41343200391 vérifiées success 5/5. PR #14 reste Draft pendant
+implémentation ; aucun merge ni Combat. Les statuts documentaires AI01 ci-dessus sont historiques.
