@@ -15,7 +15,7 @@ export function surveying(at = "2099-01-01T00:00:00Z"): MissionView {
     destination: { id: near, state: "DETECTED" }, hops: 1, stacks: { probe: 1 },
     cargo: amounts(0, 0, 0), cost: amounts(0, 4, 20), started_at: at,
     travel_arrival_at: "2099-01-01T00:10:00Z", due_at: "2099-01-01T00:25:00Z",
-    recalled_at: null, return_at: null, completed_at: null, payer_colony_id: colony, report: null,
+    recalled_at: null, return_at: null, completed_at: null, payer_colony_id: colony, target_planet: null, report: null,
   };
 }
 
@@ -43,12 +43,12 @@ export function fleets(missions: MissionView[] = [surveying()], permissions?: st
       {
         id: garrison, name: "Garnison Nouvelle Aube", kind: "GARRISON", status: "STATIONED", home_colony_id: colony,
         system: { id: origin, state: "MONITORED", name: "Système d’origine" }, stacks: { probe: 2, freighter: 1 },
-        cargo: amounts(300, 0, 0), capacity: String(500e6), mission_id: null, colony_here: colony,
-        unload: { credited: amounts(100, 0, 0), kept: amounts(200, 0, 0) },
+        cargo: amounts(300, 0, 0), capacity: String(500e6), mission_id: null,
+        colonies_here: [{ id: colony, name: "Nouvelle Aube", unload: { credited: amounts(100, 0, 0), kept: amounts(200, 0, 0) } }],
       },
       {
         id: task, name: "Flotte 2", kind: "TASK", status: "MOVING", home_colony_id: colony, system: null,
-        stacks: { probe: 1 }, cargo: amounts(0, 0, 0), capacity: "0", mission_id: mission, colony_here: null, unload: null,
+        stacks: { probe: 1 }, cargo: amounts(0, 0, 0), capacity: "0", mission_id: mission, colonies_here: [],
       },
     ],
     missions: [...missions, {
@@ -57,6 +57,7 @@ export function fleets(missions: MissionView[] = [surveying()], permissions?: st
       travel_arrival_at: "2098-12-31T22:20:00Z", due_at: "2098-12-31T22:20:00Z", completed_at: "2098-12-31T22:20:00Z",
       report: { observed_at: "2098-12-31T22:20:00Z", processed_at: "2098-12-31T22:20:01Z", result: { kind: "DEPLOY" } },
     }],
+    colonization: null,
     systems: [
       { id: origin, state: "MONITORED", name: "Système d’origine" },
       { id: near, state: "DETECTED" },
@@ -69,6 +70,36 @@ export function otherFleets(): FleetProjection {
   const p = fleets([], ["galaxy.read", "fleet.read", "fleet.build", "fleet.command"]);
   return {
     ...p, empire: { id: otherEmpire, name: "Empire B" }, colonies: [], missions: [],
-    fleets: [{ ...p.fleets![0], name: "Garnison Bastion B", home_colony_id: null, colony_here: null, unload: null, cargo: amounts(0, 0, 0) }],
+    fleets: [{ ...p.fleets![0], name: "Garnison Bastion B", home_colony_id: null, colonies_here: [], cargo: amounts(0, 0, 0) }],
+  };
+}
+
+export const freeWorld = "cccccccc-0000-4000-8000-000000000001";
+export const ownWorld = "cccccccc-0000-4000-8000-000000000002";
+export const secondColony = "cccccccc-0000-4000-8000-000000000003";
+/** v0.5 projection: a colonizer in the garrison, two known worlds of the home system. */
+export function colonizing(permissions?: string[]): FleetProjection {
+  const p = fleets([], permissions ?? ["colony.read", "galaxy.read", "fleet.read", "fleet.build", "fleet.command", "colony.expand"]);
+  const colonyRead = p.permissions.includes("colony.read");
+  return {
+    ...p,
+    colonies: colonyRead ? p.colonies : [],
+    catalogue: { ...p.catalogue, colonizer: { name: "Colonisateur", cost: amounts(1200, 600, 300), build_us: String(10800e6), hop_seconds: 1800, flux_per_hop: 20, cargo: String(1000e6), survey: false } },
+    fleets: [{ ...p.fleets![0], stacks: { colonizer: 1 }, capacity: String(1000e6), cargo: amounts(600, 300, 100),
+      home_colony_id: colonyRead ? p.fleets![0].home_colony_id : null,
+      colonies_here: colonyRead ? [
+        { id: colony, name: "Nouvelle Aube", unload: { credited: amounts(600, 300, 100), kept: amounts(0, 0, 0) } },
+        { id: secondColony, name: "Seconde Aube", unload: { credited: amounts(500, 300, 100), kept: amounts(100, 0, 0) } },
+      ] : [] }],
+    missions: [],
+    colonization: { colonizer_class: "colonizer", package_minimum: amounts(500, 250, 50), max_colonies: 12, max_active_missions: 1,
+      colonizer_quote: colonyRead ? { rank: 3, multiplier_bps: 20000, cost: amounts(2400, 1200, 600) } : null },
+    systems: [
+      { id: origin, state: "MONITORED", name: "Système d’origine", planets: [
+        { id: ownWorld, name: "Nouvelle Aube", sector_capacity: 12, orbital_capacity: 2, colony_id: colonyRead ? colony : null },
+        { id: freeWorld, name: "Monde libre ?", sector_capacity: 9, orbital_capacity: 1, colony_id: null },
+      ] },
+      { id: near, state: "DETECTED" },
+    ],
   };
 }

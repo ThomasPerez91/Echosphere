@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { empire, fleets, garrison, near, order, otherEmpire, otherFleets, session, universe } from '../tests/fleetFixture';
+import { colonizing, empire, fleets, freeWorld, garrison, near, order, origin, otherEmpire, otherFleets, session, universe } from '../tests/fleetFixture';
 import { projection } from '../tests/galaxyFixture';
 
 for (const width of [320, 390, 768, 1440]) {
@@ -118,3 +118,41 @@ test('shortcut from Galaxy on the second Empire opens that Empire prefilled, nev
   await expect(dialog).toBeHidden(); // prefill consumed once
   expect(firstReads).toEqual([]);
 });
+
+for (const width of [320, 390, 768, 1440]) {
+  test(`colonize ${width}px: System View shortcut, COLONIZE dialog, targets and no overflow`, async ({ browser }, testInfo) => {
+    const context = await browser.newContext({ viewport: { width, height: 850 }, hasTouch: true });
+    const page = await context.newPage();
+    const writes: string[] = [];
+    page.on('request', r => { if (r.url().includes('/api/game/') && r.method() !== 'GET') writes.push(r.url()); });
+    await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));
+    await page.route(`**/api/game/${universe}/session`, r => r.fulfill({ json: session }));
+    await page.route(`**/api/game/${universe}/colonies`, r => r.fulfill({ json: { colonies: [] } }));
+    await page.route(`**/api/game/${universe}/fleets`, r => r.fulfill({ json: { empires: [{ id: empire, name: 'Empire test' }] } }));
+    await page.route(`**/api/game/${universe}/fleets/${empire}`, r => r.fulfill({ json: colonizing() }));
+    await page.goto(`/#universe/${universe}/fleets/colonize/${empire}/${origin}/${freeWorld}`);
+    const dialog = page.getByRole('dialog', { name: 'Envoyer une flotte' });
+    await expect(dialog.getByRole('radio', { name: 'Colonisation' })).toBeChecked();
+    await expect(dialog.getByRole('combobox', { name: 'Monde visé' })).toHaveValue(freeWorld);
+    await expect(dialog.getByText(/Occupation actuelle inconnue/)).toBeVisible();
+    await expect(page.getByText(/\bLibre\b/)).toHaveCount(0);
+    // A radio's touch target is its whole label (.fleet-choice), as everywhere in Fleets.
+    for (const control of await dialog.locator('button, select, input:not([type=radio]), label.fleet-choice').all()) {
+      const box = await control.boundingBox();
+      if (box) expect(box.height, await control.getAttribute('name') ?? '').toBeGreaterThanOrEqual(44);
+    }
+    const overflow = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.width);
+    // A modal dialog does not widen the document: check that nothing inside it leaks out.
+    const leaks = await dialog.evaluate((box) => {
+      const edge = box.getBoundingClientRect().right;
+      return [...box.querySelectorAll('*')].filter((e) => e.getBoundingClientRect().right > edge + 1).map((e) => e.tagName);
+    });
+    expect(leaks).toEqual([]);
+    await page.screenshot({ path: testInfo.outputPath(`colonize-${width}.png`), fullPage: true });
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    expect(writes).toEqual([]);
+    await context.close();
+  });
+}

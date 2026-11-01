@@ -10,7 +10,7 @@ export function detail(state: 'MAPPED' | 'MONITORED' = 'MONITORED'): SystemDetai
   const base = projection().systems.find(s => s.id === origin)!;
   const own = base.planets![0];
   const link = { colony_id: colony, planet_id: own.id, name: own.name };
-  return { ...base, state, planets: [...worlds, own], server_time: session.server_time, empire_id: empire,
+  return { ...base, state, planets: [...worlds, own], server_time: session.server_time, empire_id: empire, colonization: false,
     permissions: ['galaxy.read', 'colony.read'],
     routes: [{ id: '44444444-4444-4444-8444-444444444444', neighbor: { id: projection().systems[1].id, state: 'DETECTED' } }],
     presences: state === 'MONITORED' ? [{ kind: 'own_colony', current: true, observed_at: base.last_seen_at!, colony: link }] : [],

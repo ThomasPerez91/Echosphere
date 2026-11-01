@@ -7,7 +7,7 @@ import type { FleetProjection, MissionKind, MissionView, Quote, ShipOrder } from
 import { duration, exactUnits, resourceKeys, resourceLabels, time, units } from "../colony/format";
 import { Badge, Button, EmptyState, Panel } from "./ui";
 
-const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour" };
+const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation" };
 const messages: Record<string, string> = {
   accepted: "Ordre accepté par le serveur.",
   insufficient_resources: "Ressources insuffisantes dans la colonie concernée.",
@@ -31,6 +31,14 @@ const messages: Record<string, string> = {
   idempotency_conflict: "Cette action a déjà été envoyée avec un autre contenu. Actualisez.",
   fleet_busy: "Des événements de flotte sont en cours de traitement. Réessayez dans un instant.",
   invalid_request: "Action invalide. Actualisez la page.",
+  planet_not_found: "Ce monde n’est pas dans vos connaissances.",
+  target_owned: "Ce monde est déjà l’une de vos colonies.",
+  target_unavailable: "Ce monde n’est pas disponible pour une colonisation.",
+  colony_limit: "Limite de colonies atteinte pour les règles de cette partie.",
+  colonization_active: "Une colonisation est déjà en cours pour cet Empire.",
+  package_insufficient: "Le paquet de fondation à bord est inférieur au minimum requis.",
+  colonize_units: "Une colonisation engage exactement un colonisateur, sans autre vaisseau.",
+  colonization_unavailable: "Les règles de cette partie n’incluent pas la colonisation.",
 };
 const message = (code: string) => messages[code] ?? "Service Game indisponible. Réessayer n’enverra pas l’action deux fois.";
 
@@ -67,14 +75,20 @@ function Cargo({ cargo }: { cargo: Amounts }) {
 }
 
 const place = (s: { name?: string; state: string } | null) => s ? (s.name ?? "Signal détecté — structure inconnue") : "—";
+function reportTitle(m: MissionView) {
+  const result = m.report!.result;
+  if (result.kind === "RECALLED") return "Rappel terminé";
+  if (result.kind === "COLONIZE") return result.outcome === "founded" ? "Colonie fondée" : "Monde indisponible à l’arrivée";
+  return kindLabels[m.kind];
+}
 
 type Dialog =
-  | { mode: "send"; fleet: string; kind: MissionKind; destination: string; units: Record<string, number>; cargo: Record<string, number>;
-      quote: Quote | null; quoted: string | null; error: string | null }
+  | { mode: "send"; fleet: string; kind: MissionKind; destination: string; planet: string; units: Record<string, number>;
+      cargo: Record<string, number>; quote: Quote | null; quoted: string | null; error: string | null }
   | { mode: "split"; fleet: string; units: Record<string, number>; cargo: Record<string, number> }
   | { mode: "merge"; fleet: string; target: string }
-  | { mode: "load"; fleet: string; cargo: Record<string, number> }
-  | { mode: "unload"; fleet: string }
+  | { mode: "load"; fleet: string; colony: string; cargo: Record<string, number> }
+  | { mode: "unload"; fleet: string; colony: string }
   | { mode: "cancel"; order: ShipOrder }
   | { mode: "recall"; mission: MissionView };
 
@@ -83,7 +97,7 @@ const positive = (values: Record<string, number>) =>
   Object.fromEntries(Object.entries(values).filter(([, v]) => v > 0).sort(([a], [b]) => a.localeCompare(b)));
 /** Everything a launch would send: a quote is shown and confirmable only for this exact intention. */
 const intentOf = (d: Send) =>
-  JSON.stringify([d.fleet, d.kind, d.kind === "RETURN" ? "" : d.destination, positive(d.units), positive(d.cargo)]);
+  JSON.stringify([d.fleet, d.kind, d.kind === "RETURN" ? "" : d.destination, d.planet, positive(d.units), positive(d.cargo)]);
 
 function Counter({ label, value, max, onChange }: { label: string; value: number; max: number; onChange: (n: number) => void }) {
   return <label className="galaxy-field fleet-counter">{label}
@@ -95,7 +109,7 @@ function Counter({ label, value, max, onChange }: { label: string; value: number
 
 export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyChanged, target }: {
   universe: string; enabled: boolean; csrf?: string; onSessionLost: () => void; onEconomyChanged?: () => void;
-  target?: { empire: string; system: string };
+  target?: { empire: string; system: string; planet?: string };
 }) {
   const fleets = useFleets(universe, enabled, csrf, onSessionLost, target?.empire);
   const p = fleets.projection;
@@ -133,12 +147,23 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
   // and the prefill is consumed only once it actually opened.
   useEffect(() => {
     if (prefilled.current || !p?.available || !target || p.empire.id !== target.empire || dialog) return;
-    const fleet = p.fleets!.find((f) => f.status === "STATIONED" && Object.keys(f.stacks).length && f.system?.id !== target.system);
     const system = p.systems!.find((s) => s.id === target.system);
-    if (!fleet || !system || !p.permissions.includes("fleet.command")) return;
+    if (!system || !p.permissions.includes("fleet.command")) return;
+    if (target.planet) {
+      // "Coloniser…" from System View: a fleet carrying a colonizer, the same COLONIZE flow.
+      const colonizer = p.colonization?.colonizer_class;
+      const fleet = colonizer && p.fleets!.find((f) => f.status === "STATIONED" && f.stacks[colonizer]);
+      if (!fleet || !system.planets?.some((pl) => pl.id === target.planet)) return;
+      prefilled.current = true;
+      setDialog({ mode: "send", fleet: fleet.id, kind: "COLONIZE", destination: "", planet: target.planet,
+        units: { [colonizer]: 1 }, cargo: {}, quote: null, quoted: null, error: null });
+      return;
+    }
+    const fleet = p.fleets!.find((f) => f.status === "STATIONED" && Object.keys(f.stacks).length && f.system?.id !== target.system);
+    if (!fleet) return;
     prefilled.current = true;
     setDialog({ mode: "send", fleet: fleet.id, kind: system.state === "DETECTED" ? "SURVEY" : "DEPLOY",
-      destination: system.id, units: {}, cargo: {}, quote: null, quoted: null, error: null });
+      destination: system.id, planet: "", units: {}, cargo: {}, quote: null, quoted: null, error: null });
   }, [p, target, dialog]);
 
   // Travel arrival changes what the screen offers without any server event (SURVEY analysis
@@ -170,6 +195,8 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
   };
   const done = (result: unknown) => { if (result) { close(); onEconomyChanged?.(); } };
   const toCargo = (values: Record<string, number>) => Object.fromEntries(Object.entries(values).filter(([, v]) => v > 0));
+  const target_of = (d: Send) => d.kind === "COLONIZE" ? { target_planet_id: d.planet }
+    : d.kind === "RETURN" ? {} : { destination_id: d.destination };
 
   async function quote(d: Send) {
     if (!p || !csrf) return;
@@ -187,8 +214,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     };
     try {
       const q = await previewMission(universe, p.empire.id, csrf, {
-        fleet_id: d.fleet, kind: d.kind, units: toCargo(d.units),
-        ...(d.kind === "RETURN" ? {} : { destination_id: d.destination }),
+        fleet_id: d.fleet, kind: d.kind, units: toCargo(d.units), ...target_of(d),
       }, p.permissions.includes("colony.read"), controller.signal);
       apply({ quote: q, quoted: intent, error: null });
     } catch (error) {
@@ -205,8 +231,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
       // Confirm launches only the exact intention that was quoted; otherwise quote again.
       if (!dialog.quote || dialog.quoted !== intentOf(dialog)) return void quote(dialog);
       done(await fleets.run("/missions", {
-        fleet_id: dialog.fleet, kind: dialog.kind, units: toCargo(dialog.units),
-        ...(dialog.kind === "RETURN" ? {} : { destination_id: dialog.destination }),
+        fleet_id: dialog.fleet, kind: dialog.kind, units: toCargo(dialog.units), ...target_of(dialog),
         ...(Object.keys(toCargo(dialog.cargo)).length ? { cargo: toCargo(dialog.cargo) } : {}),
       }, JSON.stringify(dialog)));
     } else if (dialog.mode === "split") {
@@ -214,11 +239,11 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     } else if (dialog.mode === "merge") {
       done(await fleets.run(`/${dialog.fleet}/merge`, { target_id: dialog.target }, dialog.target));
     } else if (dialog.mode === "load") {
-      const fleet = p!.fleets!.find((f) => f.id === dialog.fleet)!;
-      done(await fleets.run(`/${dialog.fleet}/load`, { colony_id: fleet.colony_here, cargo: toCargo(dialog.cargo) }, JSON.stringify(dialog)));
+      if (!dialog.colony) return;
+      done(await fleets.run(`/${dialog.fleet}/load`, { colony_id: dialog.colony, cargo: toCargo(dialog.cargo) }, JSON.stringify(dialog)));
     } else if (dialog.mode === "unload") {
-      const fleet = p!.fleets!.find((f) => f.id === dialog.fleet)!;
-      done(await fleets.run(`/${dialog.fleet}/unload`, { colony_id: fleet.colony_here }, dialog.fleet));
+      if (!dialog.colony) return;
+      done(await fleets.run(`/${dialog.fleet}/unload`, { colony_id: dialog.colony }, JSON.stringify([dialog.fleet, dialog.colony])));
     } else if (dialog.mode === "cancel") {
       done(await fleets.run(`/orders/${dialog.order.id}/cancel`, {}, dialog.order.id));
     } else {
@@ -253,21 +278,26 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
       {p.colonies!.map((colony) => {
         const choice = order[colony.id] ?? { ship: Object.keys(p.catalogue!)[0], quantity: 1 };
         const ship = p.catalogue![choice.ship];
+        // The colonizer price is Empire-wide and progressive: show the current server quote.
+        const colonizer = choice.ship === p.colonization?.colonizer_class;
+        const unitCost = colonizer && p.colonization?.colonizer_quote ? p.colonization.colonizer_quote.cost : ship.cost;
         return <section key={colony.id} className="panel fleet-production" aria-labelledby={`production-${colony.id}`}>
           <div className="panel-head"><h2 id={`production-${colony.id}`}>Production — {colony.name}</h2>
             <span className="panel-meta">{colony.orders.length} / {p.queue_limit} ordres</span></div>
           <p className="panel-meta">Capacité de fabrication de base de la colonie : aucun secteur ni emplacement orbital utilisé. Le lot entier apparaît dans la garnison à la fin.</p>
           {can("fleet.build") && <form className="fleet-order" onSubmit={async (e) => {
             e.preventDefault();
-            const result = await fleets.run("/orders", { colony_id: colony.id, ship_class: choice.ship, quantity: choice.quantity }, JSON.stringify([colony.id, choice]));
+            const quantity = colonizer ? 1 : choice.quantity;
+            const result = await fleets.run("/orders", { colony_id: colony.id, ship_class: choice.ship, quantity }, JSON.stringify([colony.id, choice.ship, quantity]));
             if (result) onEconomyChanged?.();
           }}>
             <label className="galaxy-field">Classe
               <select value={choice.ship} onChange={(e) => setOrder({ ...order, [colony.id]: { ...choice, ship: e.target.value } })}>
                 {Object.entries(p.catalogue!).map(([key, c]) => <option key={key} value={key}>{c.name}</option>)}
               </select></label>
-            <Counter label="Quantité" value={choice.quantity} max={p.max_quantity!} onChange={(n) => setOrder({ ...order, [colony.id]: { ...choice, quantity: Math.max(1, n) } })} />
-            <p className="fleet-unit">Par unité : {resourceKeys.map((k) => `${units(ship.cost[k])} ${resourceLabels[k]}`).join(" · ")} · {duration(ship.build_us)} de fabrication · {units(ship.cargo)} de cargo{ship.survey ? " · cartographie" : ""}</p>
+            <Counter label="Quantité" value={colonizer ? 1 : choice.quantity} max={colonizer ? 1 : p.max_quantity!} onChange={(n) => setOrder({ ...order, [colony.id]: { ...choice, quantity: Math.max(1, n) } })} />
+            <p className="fleet-unit">{colonizer ? "Prix serveur actuel" : "Par unité"} : {resourceKeys.map((k) => `${units(unitCost[k])} ${resourceLabels[k]}`).join(" · ")} · {duration(ship.build_us)} de fabrication · {units(ship.cargo)} de cargo{ship.survey ? " · cartographie" : ""}</p>
+            {colonizer && p.colonization?.colonizer_quote && <p className="panel-meta">Coût progressif : rang {p.colonization.colonizer_quote.rank} (colonies, colonisateurs et ordres en cours), ×{p.colonization.colonizer_quote.multiplier_bps / 10000}. Recalculé et figé par le serveur à la confirmation.</p>}
             <Button className="button--primary" type="submit" disabled={fleets.pending || colony.orders.length >= p.queue_limit!}>Commander</Button>
           </form>}
           {colony.orders.length === 0 ? <p>Aucune production en cours.</p> : <ol className="fleet-list">{colony.orders.map((o) =>
@@ -288,12 +318,15 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
             <p className="panel-meta">Cargo : <Cargo cargo={f.cargo} /> · capacité {units(f.capacity)}</p>
             {can("fleet.command") && <div className="fleet-actions">
               {Object.keys(f.stacks).length > 0 && <Button className="button--primary" disabled={fleets.pending}
-                onClick={(e) => open({ mode: "send", fleet: f.id, kind: "DEPLOY", destination: "", units: {}, cargo: {}, quote: null, quoted: null, error: null }, e)}>Envoyer…</Button>}
+                onClick={(e) => open({ mode: "send", fleet: f.id, kind: "DEPLOY", destination: "", planet: "", units: {}, cargo: {}, quote: null, quoted: null, error: null }, e)}>Envoyer…</Button>}
               {Object.keys(f.stacks).length > 0 && <Button disabled={fleets.pending} onClick={(e) => open({ mode: "split", fleet: f.id, units: {}, cargo: {} }, e)}>Diviser…</Button>}
               {f.kind === "TASK" && stationed.some((o) => o.id !== f.id && o.system?.id === f.system?.id) &&
                 <Button disabled={fleets.pending} onClick={(e) => open({ mode: "merge", fleet: f.id, target: "" }, e)}>Fusionner…</Button>}
-              {f.colony_here && BigInt(f.capacity) > 0n && <Button disabled={fleets.pending} onClick={(e) => open({ mode: "load", fleet: f.id, cargo: {} }, e)}>Charger…</Button>}
-              {f.unload && <Button disabled={fleets.pending} onClick={(e) => open({ mode: "unload", fleet: f.id }, e)}>Décharger…</Button>}
+              {/* Several own colonies in this system: the player always names the one used. */}
+              {f.colonies_here.length > 0 && BigInt(f.capacity) > 0n && <Button disabled={fleets.pending}
+                onClick={(e) => open({ mode: "load", fleet: f.id, colony: f.colonies_here.length === 1 ? f.colonies_here[0].id : "", cargo: {} }, e)}>Charger…</Button>}
+              {f.colonies_here.length > 0 && resourceKeys.some((k) => BigInt(f.cargo[k]) > 0n) && <Button disabled={fleets.pending}
+                onClick={(e) => open({ mode: "unload", fleet: f.id, colony: f.colonies_here.length === 1 ? f.colonies_here[0].id : "" }, e)}>Décharger…</Button>}
             </div>}
           </li>)}</ul>}
       </section>
@@ -304,7 +337,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           return <li key={m.id} className="fleet-card">
             <div className="panel-head"><h3>{fleetName(m.fleet_id)}</h3>
               <Badge tone="accent">{m.status === "returning" ? "Retour après rappel" : analysing ? "Analyse en cours" : kindLabels[m.kind]}</Badge></div>
-            <p>{place(m.origin)} → {place(m.destination)} · {m.hops} saut(s)</p>
+            <p>{place(m.origin)} → {place(m.destination)}{m.target_planet ? ` · monde ${m.target_planet.name}` : ""} · {m.hops} saut(s)</p>
             <Composition stacks={m.stacks} p={p} />
             <dl className="fleet-dates">
               <div><dt>Départ</dt><dd>{time(m.started_at)}</dd></div>
@@ -321,7 +354,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
       </section>
       <section className="panel" aria-labelledby="reports-title"><h2 id="reports-title">Rapports récents</h2>
         {reports.length === 0 ? <p>Aucun rapport de flotte.</p> : <ul className="fleet-reports">{reports.map((m) => <li key={m.id}>
-          <strong>{m.report!.result.kind === "RECALLED" ? "Rappel terminé" : kindLabels[m.kind]}</strong> — {fleetName(m.fleet_id)} : {place(m.report!.result.kind === "RECALLED" ? m.origin : m.destination)}
+          <strong>{reportTitle(m)}</strong> — {fleetName(m.fleet_id)} : {place(m.report!.result.kind === "RECALLED" ? m.origin : m.destination)}{m.target_planet ? ` · monde ${m.target_planet.name}` : ""}
           <p className="panel-meta">Observé à l’échéance {time(m.report!.observed_at)} · traité par le serveur {time(m.report!.processed_at)}</p>
         </li>)}</ul>}
       </section>
@@ -349,9 +382,19 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     if (dialog.mode === "recall") return <p>La flotte refera le chemin déjà parcouru : retour vers {place(dialog.mission.origin)} sans coût ni remboursement, cargaison conservée. Possible seulement pendant le trajet.</p>;
     if (!current) return <p role="alert">Flotte indisponible. Actualisez.</p>;
     const capacityNote = <p className="panel-meta">Capacité de cargo : {units(current.capacity)} · à bord : <Cargo cargo={current.cargo} /></p>;
-    if (dialog.mode === "unload") return <><p>Crédit jusqu’à la capacité de stockage libre de la colonie ; le surplus reste à bord, sans perte.</p>
-      <ul>{resourceKeys.filter((k) => BigInt(current.cargo[k]) > 0n).map((k) => <li key={k}>{resourceLabels[k]} : {units(current.unload!.credited[k])} crédités, {units(current.unload!.kept[k])} conservés à bord</li>)}</ul>
-      <p className="panel-meta">Estimation au {time(p.server_time)}.</p></>;
+    const colonyChoice = (value: string, set: (colony: string) => void) => current.colonies_here.length > 1 ?
+      <label className="galaxy-field">Colonie
+        <select required value={value} onChange={(e) => set(e.target.value)}>
+          <option value="">Choisir…</option>
+          {current.colonies_here.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select></label> : <p>Colonie : {current.colonies_here[0]?.name ?? "—"}</p>;
+    if (dialog.mode === "unload") {
+      const chosen = current.colonies_here.find((c) => c.id === dialog.colony);
+      return <>{colonyChoice(dialog.colony, (colony) => setDialog({ ...dialog, colony }))}
+        <p>Crédit jusqu’à la capacité de stockage libre de la colonie ; le surplus reste à bord, sans perte.</p>
+        {chosen?.unload && <ul>{resourceKeys.filter((k) => BigInt(current.cargo[k]) > 0n).map((k) => <li key={k}>{resourceLabels[k]} : {units(chosen.unload!.credited[k])} crédités, {units(chosen.unload!.kept[k])} conservés à bord</li>)}</ul>}
+        <p className="panel-meta">Estimation au {time(p.server_time)}.</p></>;
+    }
     if (dialog.mode === "merge") return <label className="galaxy-field">Flotte de destination
       <select required value={dialog.target} onChange={(e) => setDialog({ ...dialog, target: e.target.value })}>
         <option value="">Choisir…</option>
@@ -360,8 +403,9 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     const cargoInputs = (values: Record<string, number>, max: (k: keyof Amounts) => number, set: (v: Record<string, number>) => void) =>
       <fieldset className="fleet-fieldset"><legend>Cargaison (unités)</legend>{resourceKeys.map((k) =>
         <Counter key={k} label={resourceLabels[k]} value={values[k] ?? 0} max={max(k)} onChange={(n) => set({ ...values, [k]: n })} />)}</fieldset>;
-    if (dialog.mode === "load") return <>{capacityNote}{cargoInputs(dialog.cargo, () => Number(BigInt(current.capacity) / 1_000_000n), (cargo) => setDialog({ ...dialog, cargo }))}
-      <p className="panel-meta">Prélevé dans le stock de la colonie présente dans ce système ; refusé si stock ou capacité insuffisants.</p></>;
+    if (dialog.mode === "load") return <>{colonyChoice(dialog.colony, (colony) => setDialog({ ...dialog, colony }))}{capacityNote}
+      {cargoInputs(dialog.cargo, () => Number(BigInt(current.capacity) / 1_000_000n), (cargo) => setDialog({ ...dialog, cargo }))}
+      <p className="panel-meta">Prélevé dans le stock de la colonie choisie ; refusé si stock ou capacité insuffisants.</p></>;
     const unitInputs = (values: Record<string, number>, set: (v: Record<string, number>) => void) =>
       <fieldset className="fleet-fieldset"><legend>Unités engagées</legend>{Object.entries(current.stacks).map(([c, n]) =>
         <Counter key={c} label={p.catalogue![c]?.name ?? c} value={values[c] ?? 0} max={n} onChange={(v) => set({ ...values, [c]: v })} />)}</fieldset>;
@@ -372,25 +416,44 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
       <p className="panel-meta">Chaque flotte résultante doit pouvoir porter sa cargaison, sinon l’opération est refusée.</p></>;
     const destinations = p.systems!.filter((s) => s.id !== current.system?.id &&
       (dialog.kind === "SURVEY" ? s.state === "DETECTED" : s.state !== "DETECTED"));
+    const colonizer = p.colonization?.colonizer_class;
+    // COLONIZE is offered only by the pinned ruleset, the rights and a colonizer aboard.
+    const canColonize = !!colonizer && !!current.stacks[colonizer] && can("colony.expand") && can("galaxy.read");
+    const kinds: MissionKind[] = ["DEPLOY", "SURVEY", "RETURN", ...(canColonize ? ["COLONIZE" as const] : [])];
+    // Worlds from Knowledge only; an own colony is excluded only when colony.read names it.
+    const worlds = p.systems!.flatMap((s) => (s.planets ?? []).filter((pl) => !pl.colony_id).map((pl) => ({ ...pl, system: s })));
+    const aboard = current.kind === "GARRISON" ? dialog.cargo : Object.fromEntries(resourceKeys.map((k) => [k, Number(BigInt(current.cargo[k]) / 1_000_000n)]));
+    const minimum = p.colonization?.package_minimum;
+    const short = !!minimum && resourceKeys.some((k) => (aboard[k] ?? 0) * 1_000_000 < Number(minimum[k]));
     return <>
       <p>Depuis {place(current.system)} — {current.name}. Trajet et coûts calculés par le serveur sur vos routes connues.</p>
-      <fieldset className="fleet-fieldset"><legend>Mission</legend>{(["DEPLOY", "SURVEY", "RETURN"] as MissionKind[]).map((k) =>
+      <fieldset className="fleet-fieldset"><legend>Mission</legend>{kinds.map((k) =>
         <label key={k} className="fleet-choice"><input type="radio" name="kind" checked={dialog.kind === k}
-          onChange={() => edit({ kind: k, destination: "" })} /> {kindLabels[k]}</label>)}</fieldset>
-      {dialog.kind !== "RETURN" ? <label className="galaxy-field">Destination
+          onChange={() => edit({ kind: k, destination: "", planet: "", units: k === "COLONIZE" && colonizer ? { [colonizer]: 1 } : {} })} /> {kindLabels[k]}</label>)}</fieldset>
+      {dialog.kind === "COLONIZE" ? <>
+        <label className="galaxy-field">Monde visé
+          <select required value={dialog.planet} onChange={(e) => edit({ planet: e.target.value })}>
+            <option value="">Choisir…</option>
+            {worlds.map((w) => <option key={w.id} value={w.id}>{w.name} — {place(w.system)} · {w.sector_capacity} secteurs · {w.orbital_capacity} orbitaux</option>)}
+          </select></label>
+        <p className="panel-meta">Occupation actuelle inconnue : elle n’est vérifiée qu’à l’arrivée. Un monde indisponible fait échouer la mission sans révéler son occupant.</p>
+        <p>Engage exactement 1 {p.catalogue![colonizer!]?.name ?? colonizer}, consommé à la fondation ; conservé avec son cargo en cas d’échec ou de rappel.</p>
+      </> : dialog.kind !== "RETURN" ? <label className="galaxy-field">Destination
         <select required value={dialog.destination} onChange={(e) => edit({ destination: e.target.value })}>
           <option value="">Choisir…</option>
           {destinations.map((s) => <option key={s.id} value={s.id}>{place(s)}</option>)}
         </select></label> : <p>Retour vers le système de la colonie d’attache.</p>}
-      {unitInputs(dialog.units, (units) => edit({ units }))}
+      {dialog.kind !== "COLONIZE" && unitInputs(dialog.units, (units) => edit({ units }))}
       {hasCargo && current.kind === "GARRISON" && cargoInputs(dialog.cargo, cargoMax, (cargo) => edit({ cargo }))}
+      {dialog.kind === "COLONIZE" && minimum && <p className={short ? "feedback feedback--error" : "panel-meta"}>
+        Paquet de fondation (tout le cargo engagé devient le stock initial) : minimum {resourceKeys.map((k) => `${units(minimum[k])} ${resourceLabels[k]}`).join(" · ")}{short ? " — insuffisant, chargez d’abord le colonisateur." : "."}</p>}
       {dialog.error && <p role="alert" className="feedback feedback--error">{message(dialog.error)}</p>}
       {dialog.quote && dialog.quoted === intentOf(dialog) && <div className="fleet-quote" aria-live="polite">
         <p><strong>{dialog.quote.hops} saut(s)</strong> · trajet {duration(dialog.quote.travel_us)}{dialog.quote.kind === "SURVEY" ? ` · analyse ${duration(dialog.quote.survey_us)}` : ""}</p>
         <p>Carburant payé au départ par la colonie d’attache : {resourceKeys.filter((k) => BigInt(dialog.quote!.cost[k]) > 0n).map((k) => `${units(dialog.quote!.cost[k])} ${resourceLabels[k]}`).join(" · ") || "aucun"}</p>
         <p>Arrivée estimée : {time(dialog.quote.travel_arrival_at)}{dialog.quote.kind === "SURVEY" ? ` · cartographie à ${time(dialog.quote.due_at)}` : ""}</p>
         {!dialog.quote.affordable && <p className="feedback feedback--error">Stock probablement insuffisant dans la colonie d’attache.</p>}
-        <p className="panel-meta">Aucun remboursement après le départ. Rappel possible uniquement pendant le trajet.</p>
+        <p className="panel-meta">{dialog.quote.hops === 0 ? "Même système : aucun trajet, aucun carburant, résolution par le serveur dès sa prise en charge, sans rappel possible." : "Aucun remboursement après le départ. Rappel possible uniquement pendant le trajet."}</p>
       </div>}
     </>;
   }

@@ -79,7 +79,12 @@ export function SystemView({ universe, empire, system, onSessionLost, onColony }
           <div><dt>Capacité orbitale</dt><dd>{selected.orbital_capacity}</dd></div></dl>
           <p>Capacités connues de ce monde.</p>
           {link && <a className="button button--primary" onClick={onColony}
-            href={`#universe/${universe}/colony/overview/${link.colony_id}`}>Voir ma colonie</a>}</>}
+            href={`#universe/${universe}/colony/overview/${link.colony_id}`}>Voir ma colonie</a>}
+          {!link && data.colonization && <>
+            {/* Never "Libre": the current occupation of a structure-only world is not known. */}
+            <p className="panel-meta">Occupation actuelle inconnue : elle n’est vérifiée qu’à l’arrivée d’un colonisateur.</p>
+            {data.permissions?.includes('fleet.command') && data.permissions.includes('colony.expand') &&
+              <a className="button" href={`#universe/${universe}/fleets/colonize/${empire}/${system}/${selected.id}`}>Coloniser…</a>}</>}</>}
       </section>
     </div>
     <section className="panel" aria-labelledby="system-worlds-title"><h2 id="system-worlds-title">Mondes connus</h2>

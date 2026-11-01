@@ -230,6 +230,8 @@ export async function startExpedition(
 export type ColonyLink = { colony_id: string; planet_id: string; name: string };
 export type SystemDetail = KnownSystem & {
   server_time?: string; empire_id?: string; permissions?: string[];
+  /** Pinned ruleset offers COLONIZE (v0.5+); says nothing about who occupies a world. */
+  colonization?: boolean;
   routes?: { id: string; neighbor: { id: string; state: KnowledgeState; name?: string } }[];
   presences?: { kind: "own_colony"; current: boolean; observed_at: string | null; colony: ColonyLink | null }[];
   colony_links?: ColonyLink[];
@@ -237,10 +239,10 @@ export type SystemDetail = KnownSystem & {
 export function validSystemDetail(value: unknown, empire: string, systemId: string): value is SystemDetail {
   if (!validKnownSystem(value) || value.id !== systemId) return false;
   const v = value as SystemDetail;
-  if (v.state === "DETECTED") return ["routes", "presences", "colony_links", "permissions", "server_time", "empire_id"].every(k => !(k in v));
+  if (v.state === "DETECTED") return ["routes", "presences", "colony_links", "permissions", "server_time", "empire_id", "colonization"].every(k => !(k in v));
   const link = (c: unknown) => object(c) && id(c.colony_id) && typeof c.name === "string"
     && v.planets!.some(p => p.id === c.planet_id);
-  return v.empire_id === empire && date(v.server_time)
+  return v.empire_id === empire && date(v.server_time) && typeof v.colonization === "boolean"
     && list(v.permissions, p => typeof p === "string") && v.permissions!.includes("galaxy.read")
     && (v.permissions!.includes("colony.read") || !v.observation)
     && list(v.routes, r => object(r) && id(r.id) && object(r.neighbor) && id(r.neighbor.id)

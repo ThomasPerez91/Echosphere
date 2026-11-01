@@ -109,3 +109,28 @@ test('detail validator refuses hidden DETECTED structure and foreign scope', () 
   const bad = detail(); bad.permissions = ['galaxy.read'];
   expect(validSystemDetail(bad, empire, origin)).toBe(false);
 });
+
+test('v0.5: a world without own colony offers "Coloniser…" into the Fleet flow, never "Libre"', async () => {
+  const body = { ...detail(), colonization: true, permissions: ['galaxy.read', 'colony.read', 'fleet.command', 'colony.expand'] };
+  setup(body);
+  // The own world opens first: its colony link, no colonization offer.
+  expect(await screen.findByRole('link', { name: 'Voir ma colonie' })).toBeVisible();
+  expect(screen.queryByRole('link', { name: 'Coloniser…' })).not.toBeInTheDocument();
+  screen.getByRole('button', { name: /1 · Rocher Pâle/ }).click();
+  const link = await screen.findByRole('link', { name: 'Coloniser…' });
+  expect(link).toHaveAttribute('href', `#universe/${universe}/fleets/colonize/${empire}/${origin}/0aaaaaaa-0000-4000-8000-000000000001`);
+  expect(screen.getByText(/Occupation actuelle inconnue/)).toBeVisible();
+  expect(screen.queryByText(/\bLibre\b/)).not.toBeInTheDocument();
+});
+
+test('no colonization offer without the ruleset or without colony.expand', async () => {
+  setup({ ...detail(), colonization: false, permissions: ['galaxy.read', 'colony.read', 'fleet.command', 'colony.expand'] });
+  (await screen.findByRole('button', { name: /1 · Rocher Pâle/ })).click();
+  await waitFor(() => expect(screen.getByRole('heading', { name: 'Rocher Pâle' })).toBeVisible());
+  expect(screen.queryByRole('link', { name: 'Coloniser…' })).not.toBeInTheDocument();
+  cleanup();
+  setup({ ...detail(), colonization: true, permissions: ['galaxy.read', 'colony.read', 'fleet.command'] });
+  (await screen.findByRole('button', { name: /1 · Rocher Pâle/ })).click();
+  await waitFor(() => expect(screen.getByText(/Occupation actuelle inconnue/)).toBeVisible());
+  expect(screen.queryByRole('link', { name: 'Coloniser…' })).not.toBeInTheDocument();
+});
