@@ -18,6 +18,7 @@ from app.ai.bootstrap import bootstrap
 from app.ai.controller import change_state
 from app.ai.models import AIController
 from app.ai.orchestrator import Orchestrator
+from app.colony.rules import load_ruleset
 from app.core.config import Settings
 from app.persistence.database import create_database_engine, create_session_factory
 from app.simulation.clock import SystemClock, utc
@@ -37,6 +38,7 @@ def main() -> None:
     parser.add_argument("--name")
     parser.add_argument("--seed")
     parser.add_argument("--profiles", default="economic_cautious,expansionist")
+    parser.add_argument("--ruleset", choices=["v0.6", "v0.7"], default="v0.6")
     parser.add_argument("--at", help="Explicit aware ISO start, bootstrap only")
     parser.add_argument("--limit", type=int, default=20)
     parser.add_argument("--poll-interval", type=float, default=5.0)
@@ -70,6 +72,7 @@ def main() -> None:
                     args.seed,
                     profiles,
                     at,
+                    rules=load_ruleset(args.ruleset),
                 )
             print(json.dumps(result))
             return

@@ -8,8 +8,9 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.ai.rules import AIRules
+from app.ai.rules import AIRules, AIRulesV2
 from app.colonization.rules import ColonizationRules
+from app.combat.rules import CombatRules
 from app.fleet.rules import FleetRules
 from app.galaxy.rules import ExplorationRules, GalaxyRules
 from app.simulation.production import MAX_AMOUNT, MICRO_UNITS, RESOURCES, amount
@@ -179,7 +180,8 @@ class Ruleset(StrictModel):
     exploration: ExplorationRules | None = None
     fleets: FleetRules | None = None
     colonization: ColonizationRules | None = None
-    ai: AIRules | None = None
+    ai: AIRulesV2 | AIRules | None = None
+    combat: CombatRules | None = None
 
     @property
     def version(self) -> str:
@@ -238,14 +240,27 @@ class Ruleset(StrictModel):
                 raise ValueError("Founding package must fit the colonizer and new colony storage")
             self.fleets.order_quote(x.colonizer_class, x.colonizer_max_quantity)
             x.multiplier_bps(x.max_colonies)
-        if self.version == "v0.6":
-            if self.ai is None:
-                raise ValueError("v0.6 requires pinned AI configuration, not an active controller")
+        if self.version in {"v0.6", "v0.7"}:
+            if self.ai is None or self.ai.version != self.version:
+                raise ValueError("Pinned AI configuration required, not an active controller")
             ai_kinds = {*self.ai.producers.values(), self.ai.industry_kind, self.ai.storage_kind}
             if not ai_kinds <= self.catalogue.infrastructures.keys():
                 raise ValueError("Unknown infrastructure in AI policy")
         elif self.ai is not None:
             raise ValueError("AI configuration unavailable in historical rulesets")
+        # Combat exists from v0.7 only: military classes with Combat stats, no offensive AI.
+        if self.version == "v0.7":
+            k = self.combat
+            if k is None or k.version != self.version:
+                raise ValueError("Missing or mixed Combat version")
+            for ship in k.classes:
+                c = self.fleets.classes.get(ship)
+                if c is None or c.survey or c.cargo:
+                    raise ValueError("Military classes are cargo-free, non-survey Fleet classes")
+            if self.ai.military.ship_class not in k.classes:
+                raise ValueError("AI military goal must use a military class")
+        elif self.combat is not None:
+            raise ValueError("Combat unavailable in historical rulesets")
         c, catalogue = self.colony, self.catalogue.infrastructures
         if set(c.initial_stocks) != RESOURCES or set(c.speeds) != {
             "economy",
@@ -344,6 +359,8 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
         }.get(version, ("galaxy", "fleets", "colonization"))
         if version == "v0.6":
             extensions += ("ai",)
+        if version == "v0.7":
+            extensions += ("ai", "combat")
         for name in extensions:
             parts[name] = json.loads(
                 (location / "rulesets" / version / f"{name}.json").read_text(),

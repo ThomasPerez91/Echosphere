@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 
-from app.ai.rules import GOALS, canonical
+from app.ai.rules import canonical
 
 
 def circular_page(items, cursor, size):
@@ -28,7 +28,7 @@ def choose(observation, memory, profile, rules):
     urgent = any(c["bootstrap"] and c["reason"] is None for c in observation["candidates"])
     for c in observation["candidates"]:
         utility = c["utility"]
-        if type(utility) is not int or not 0 <= utility <= 1000 or c["goal"] not in GOALS:
+        if type(utility) is not int or not 0 <= utility <= 1000 or c["goal"] not in rules.goals:
             raise ValueError("Invalid utility feature")
         if (
             set(c["cost"]) != {"alloys", "flux", "data"}
@@ -60,7 +60,7 @@ def choose(observation, memory, profile, rules):
     )
     return {
         "choice": ranked[0]["key"] if ranked else None,
-        "goals": list(GOALS),
+        "goals": list(rules.goals),
         "evaluated": deepcopy(rows),
         "tie_break": ["score_desc", "alloys", "flux", "data", "duration_us", "key"],
     }
