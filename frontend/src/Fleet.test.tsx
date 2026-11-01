@@ -333,3 +333,15 @@ test("F — a superseded quote failing late shows no error and keeps the current
   expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
   expect(within(dialog).getByText(/2 saut\(s\)/)).toBeVisible();
 });
+
+test("travel arrival switches a SURVEY to analysis and removes recall without a server read", async () => {
+  const arriving = surveying("2098-12-31T23:59:00Z");
+  arriving.travel_arrival_at = "2099-01-01T00:00:00.400Z"; // 400 ms after the server time
+  const { calls } = setup((url) => url.endsWith("/fleets") ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(fleets([arriving])));
+  const card = (await screen.findByText("Flotte 2", { selector: "h3" })).closest("li")!;
+  expect(within(card).getByRole("button", { name: "Rappeler…" })).toBeVisible();
+  const reads = calls().length;
+  expect(await within(card).findByText("Analyse en cours", {}, { timeout: 2000 })).toBeVisible();
+  expect(within(card).queryByRole("button", { name: "Rappeler…" })).not.toBeInTheDocument();
+  expect(calls().length).toBe(reads); // local deadline only: no polling
+});

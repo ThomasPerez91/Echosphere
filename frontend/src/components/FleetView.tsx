@@ -141,6 +141,22 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
       destination: system.id, units: {}, cargo: {}, quote: null, quoted: null, error: null });
   }, [p, target, dialog]);
 
+  // Travel arrival changes what the screen offers without any server event (SURVEY analysis
+  // starts, recall closes): re-render at the next one locally, no extra read.
+  const [phaseTick, setPhaseTick] = useState(0);
+  useEffect(() => {
+    if (!p?.available) return;
+    const now = Date.parse(p.server_time) + (Date.now() - fleets.receivedAt);
+    const next = p.missions!
+      .filter((m) => m.status === "active" && m.kind !== "RETURN")
+      .map((m) => Date.parse(m.travel_arrival_at))
+      .filter((at) => at > now)
+      .sort((x, y) => x - y)[0];
+    if (next === undefined) return;
+    const timer = window.setTimeout(() => setPhaseTick((n) => n + 1), next - now + 50);
+    return () => window.clearTimeout(timer);
+  }, [p, fleets.receivedAt, phaseTick]);
+
   const open = (next: Dialog, event: { currentTarget: HTMLElement }) => {
     invalidateQuote();
     trigger.current = event.currentTarget;

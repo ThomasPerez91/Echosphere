@@ -72,7 +72,7 @@ Sans `colony.read` : aucune colonie, attache, payeuse (devis compris, `payer_col
 
 Écran « Flottes » réel : production et file, garnisons et flottes stationnées, missions
 (SURVEY en deux temps), rapports, dialogues avec devis serveur, previews d’annulation et de
-déchargement, rappel proposé seulement pendant le trajet. Validateurs stricts (fuite Colony sans
+déchargement, rappel proposé seulement pendant le trajet (retiré localement à l’arrivée, sans lecture serveur). Validateurs stricts (fuite Colony sans
 droit ou nom d’un système DETECTED refusés). Raccourci « Envoyer une flotte ici » depuis Galaxy
 et System View vers le même flux, sur l’Empire du raccourci (lu en premier, dialogue jamais ouvert sur
 un autre Empire, prérempli une seule fois) ; devis protégé des réponses obsolètes (génération,
