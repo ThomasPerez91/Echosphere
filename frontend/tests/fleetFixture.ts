@@ -1,5 +1,5 @@
 import type { FleetProjection, MissionView } from "../src/fleet/api";
-import { amounts, colony, empire, near, origin, session } from "./galaxyFixture";
+import { amounts, colony, empire, near, origin, otherEmpire, session } from "./galaxyFixture";
 export { colony, empire, near, origin, session, universe, otherEmpire } from "./galaxyFixture";
 // Intercepted UI data only: shapes follow the Game API; values are test placeholders, not rules.
 export const garrison = "66666666-6666-4666-8666-666666666666";
@@ -61,5 +61,14 @@ export function fleets(missions: MissionView[] = [surveying()], permissions?: st
       { id: origin, state: "MONITORED", name: "Système d’origine" },
       { id: near, state: "DETECTED" },
     ],
+  };
+}
+
+/** A second readable Empire without colony.read: its own garrison only, nothing from Empire A. */
+export function otherFleets(): FleetProjection {
+  const p = fleets([], ["galaxy.read", "fleet.read", "fleet.build", "fleet.command"]);
+  return {
+    ...p, empire: { id: otherEmpire, name: "Empire B" }, colonies: [], missions: [],
+    fleets: [{ ...p.fleets![0], name: "Garnison Bastion B", home_colony_id: null, colony_here: null, unload: null, cargo: amounts(0, 0, 0) }],
   };
 }

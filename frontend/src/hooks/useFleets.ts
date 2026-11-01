@@ -23,7 +23,8 @@ export function nextDeadline(p: FleetProjection | null) {
  * worker does), one command at a time, an unknown outcome keeps its key so a retry cannot pay
  * twice, and a late answer for another Universe/Empire/command generation is ignored.
  */
-export function useFleets(universe: string | null, enabled: boolean, csrf: string | undefined, onSessionLost: () => void) {
+export function useFleets(universe: string | null, enabled: boolean, csrf: string | undefined, onSessionLost: () => void,
+  preferredEmpire?: string) {
   const [state, setState] = useState<State>({ phase: "idle", empires: [], projection: null, receivedAt: 0, error: null });
   const [selectedEmpire, setSelectedEmpire] = useState("");
   const [pending, setPending] = useState(false);
@@ -40,6 +41,8 @@ export function useFleets(universe: string | null, enabled: boolean, csrf: strin
   const late = useRef(0);
   const lost = useRef(onSessionLost);
   lost.current = onSessionLost;
+  const preferred = useRef(preferredEmpire);
+  preferred.current = preferredEmpire;
 
   const accept = useCallback((projection: FleetProjection) => {
     const previous = current.current.projection;
@@ -76,7 +79,8 @@ export function useFleets(universe: string | null, enabled: boolean, csrf: strin
           return;
         }
         setState((old) => ({ ...old, empires }));
-        target = empires[0].id;
+        // A shortcut's Empire is read first when accessible; otherwise the first readable one.
+        target = empires.find((e) => e.id === preferred.current)?.id ?? empires[0].id;
       }
       selected.current = target;
       setSelectedEmpire(target);

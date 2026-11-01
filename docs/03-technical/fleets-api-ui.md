@@ -74,7 +74,9 @@ Sans `colony.read` : aucune colonie, attache, payeuse (devis compris, `payer_col
 (SURVEY en deux temps), rapports, dialogues avec devis serveur, previews d’annulation et de
 déchargement, rappel proposé seulement pendant le trajet. Validateurs stricts (fuite Colony sans
 droit ou nom d’un système DETECTED refusés). Raccourci « Envoyer une flotte ici » depuis Galaxy
-et System View vers le même flux ; la Galaxie indique le mode d’exploration v0.4. Mobile 320–1440,
+et System View vers le même flux, sur l’Empire du raccourci (lu en premier, dialogue jamais ouvert sur
+un autre Empire, prérempli une seule fois) ; devis protégé des réponses obsolètes (génération,
+abandon, intention exacte : toute modification efface le devis, Confirmer n’envoie que l’intention chiffrée) ; la Galaxie indique le mode d’exploration v0.4. Mobile 320–1440,
 cibles 44 px, clavier et focus, aucune donnée inventée.
 
 ## Recette

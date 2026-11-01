@@ -69,13 +69,21 @@ function Cargo({ cargo }: { cargo: Amounts }) {
 const place = (s: { name?: string; state: string } | null) => s ? (s.name ?? "Signal détecté — structure inconnue") : "—";
 
 type Dialog =
-  | { mode: "send"; fleet: string; kind: MissionKind; destination: string; units: Record<string, number>; cargo: Record<string, number>; quote: Quote | null; error: string | null }
+  | { mode: "send"; fleet: string; kind: MissionKind; destination: string; units: Record<string, number>; cargo: Record<string, number>;
+      quote: Quote | null; quoted: string | null; error: string | null }
   | { mode: "split"; fleet: string; units: Record<string, number>; cargo: Record<string, number> }
   | { mode: "merge"; fleet: string; target: string }
   | { mode: "load"; fleet: string; cargo: Record<string, number> }
   | { mode: "unload"; fleet: string }
   | { mode: "cancel"; order: ShipOrder }
   | { mode: "recall"; mission: MissionView };
+
+type Send = Extract<Dialog, { mode: "send" }>;
+const positive = (values: Record<string, number>) =>
+  Object.fromEntries(Object.entries(values).filter(([, v]) => v > 0).sort(([a], [b]) => a.localeCompare(b)));
+/** Everything a launch would send: a quote is shown and confirmable only for this exact intention. */
+const intentOf = (d: Send) =>
+  JSON.stringify([d.fleet, d.kind, d.kind === "RETURN" ? "" : d.destination, positive(d.units), positive(d.cargo)]);
 
 function Counter({ label, value, max, onChange }: { label: string; value: number; max: number; onChange: (n: number) => void }) {
   return <label className="galaxy-field fleet-counter">{label}
@@ -89,13 +97,15 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
   universe: string; enabled: boolean; csrf?: string; onSessionLost: () => void; onEconomyChanged?: () => void;
   target?: { empire: string; system: string };
 }) {
-  const fleets = useFleets(universe, enabled, csrf, onSessionLost);
+  const fleets = useFleets(universe, enabled, csrf, onSessionLost, target?.empire);
   const p = fleets.projection;
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [order, setOrder] = useState<Record<string, { ship: string; quantity: number }>>({});
   const box = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const prefilled = useRef(false);
+  const quoteGeneration = useRef(0);
+  const quoteRequest = useRef<AbortController | null>(null);
   const can = (right: string) => !!p?.permissions.includes(right);
 
   useEffect(() => {
@@ -107,33 +117,68 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
   const moving = p?.available ? p.missions!.filter((m) => m.status !== "completed") : [];
   const reports = p?.available ? p.missions!.filter((m) => m.report).slice(0, 8) : [];
 
-  // "Envoyer une flotte ici" from Galaxy/System View: same flow, destination prefilled once.
+  // Any edit, new request, closing or reopening supersedes the quote in flight.
+  const invalidateQuote = () => {
+    quoteGeneration.current += 1;
+    quoteRequest.current?.abort();
+    quoteRequest.current = null;
+  };
   useEffect(() => {
-    if (prefilled.current || !p?.available || !target || p.empire.id !== target.empire) return;
-    prefilled.current = true;
+    const generation = quoteGeneration, request = quoteRequest;
+    return () => { generation.current += 1; request.current?.abort(); };
+  }, []);
+
+  // "Envoyer une flotte ici" from Galaxy/System View (one mount per shortcut): useFleets reads the
+  // shortcut's Empire first; the dialog opens only on that Empire's projection, never another one,
+  // and the prefill is consumed only once it actually opened.
+  useEffect(() => {
+    if (prefilled.current || !p?.available || !target || p.empire.id !== target.empire || dialog) return;
     const fleet = p.fleets!.find((f) => f.status === "STATIONED" && Object.keys(f.stacks).length && f.system?.id !== target.system);
     const system = p.systems!.find((s) => s.id === target.system);
     if (!fleet || !system || !p.permissions.includes("fleet.command")) return;
+    prefilled.current = true;
     setDialog({ mode: "send", fleet: fleet.id, kind: system.state === "DETECTED" ? "SURVEY" : "DEPLOY",
-      destination: system.id, units: {}, cargo: {}, quote: null, error: null });
-  }, [p, target]);
+      destination: system.id, units: {}, cargo: {}, quote: null, quoted: null, error: null });
+  }, [p, target, dialog]);
 
-  const open = (next: Dialog, event: { currentTarget: HTMLElement }) => { trigger.current = event.currentTarget; setDialog(next); };
-  const close = () => { setDialog(null); window.setTimeout(() => trigger.current?.focus(), 0); };
+  const open = (next: Dialog, event: { currentTarget: HTMLElement }) => {
+    invalidateQuote();
+    trigger.current = event.currentTarget;
+    setDialog(next);
+  };
+  const close = () => { invalidateQuote(); setDialog(null); window.setTimeout(() => trigger.current?.focus(), 0); };
+  /** Edit the mission form: the displayed quote no longer matches and must be recomputed. */
+  const edit = (patch: Partial<Send>) => {
+    invalidateQuote();
+    setDialog((d) => d?.mode === "send" ? { ...d, ...patch, quote: null, quoted: null, error: null } : d);
+  };
   const done = (result: unknown) => { if (result) { close(); onEconomyChanged?.(); } };
   const toCargo = (values: Record<string, number>) => Object.fromEntries(Object.entries(values).filter(([, v]) => v > 0));
 
-  async function quote(d: Extract<Dialog, { mode: "send" }>) {
+  async function quote(d: Send) {
     if (!p || !csrf) return;
+    invalidateQuote();
+    const generation = quoteGeneration.current;
+    const controller = new AbortController();
+    quoteRequest.current = controller;
+    const intent = intentOf(d);
+    // A late answer is a complete no-op: newer request, edited form, closed or other dialog.
+    const apply = (patch: Pick<Send, "quote" | "quoted" | "error">) => {
+      if (generation !== quoteGeneration.current) return false;
+      quoteRequest.current = null;
+      setDialog((cur) => cur?.mode === "send" && intentOf(cur) === intent ? { ...cur, ...patch } : cur);
+      return true;
+    };
     try {
       const q = await previewMission(universe, p.empire.id, csrf, {
         fleet_id: d.fleet, kind: d.kind, units: toCargo(d.units),
         ...(d.kind === "RETURN" ? {} : { destination_id: d.destination }),
-      }, p.permissions.includes("colony.read"), new AbortController().signal);
-      setDialog({ ...d, quote: q, error: null });
+      }, p.permissions.includes("colony.read"), controller.signal);
+      apply({ quote: q, quoted: intent, error: null });
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) onSessionLost();
-      setDialog({ ...d, quote: null, error: error instanceof ApiError ? error.code : "unavailable" });
+      if (apply({ quote: null, quoted: null, error: error instanceof ApiError ? error.code : "unavailable" }) &&
+        error instanceof ApiError && error.status === 401)
+        onSessionLost();
     }
   }
 
@@ -141,7 +186,8 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     event.preventDefault();
     if (!dialog) return;
     if (dialog.mode === "send") {
-      if (!dialog.quote) return void quote(dialog);
+      // Confirm launches only the exact intention that was quoted; otherwise quote again.
+      if (!dialog.quote || dialog.quoted !== intentOf(dialog)) return void quote(dialog);
       done(await fleets.run("/missions", {
         fleet_id: dialog.fleet, kind: dialog.kind, units: toCargo(dialog.units),
         ...(dialog.kind === "RETURN" ? {} : { destination_id: dialog.destination }),
@@ -226,7 +272,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
             <p className="panel-meta">Cargo : <Cargo cargo={f.cargo} /> · capacité {units(f.capacity)}</p>
             {can("fleet.command") && <div className="fleet-actions">
               {Object.keys(f.stacks).length > 0 && <Button className="button--primary" disabled={fleets.pending}
-                onClick={(e) => open({ mode: "send", fleet: f.id, kind: "DEPLOY", destination: "", units: {}, cargo: {}, quote: null, error: null }, e)}>Envoyer…</Button>}
+                onClick={(e) => open({ mode: "send", fleet: f.id, kind: "DEPLOY", destination: "", units: {}, cargo: {}, quote: null, quoted: null, error: null }, e)}>Envoyer…</Button>}
               {Object.keys(f.stacks).length > 0 && <Button disabled={fleets.pending} onClick={(e) => open({ mode: "split", fleet: f.id, units: {}, cargo: {} }, e)}>Diviser…</Button>}
               {f.kind === "TASK" && stationed.some((o) => o.id !== f.id && o.system?.id === f.system?.id) &&
                 <Button disabled={fleets.pending} onClick={(e) => open({ mode: "merge", fleet: f.id, target: "" }, e)}>Fusionner…</Button>}
@@ -270,7 +316,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
         {renderDialog()}
         <div className="dialog-actions">
           <Button onClick={close}>Fermer</Button>
-          <Button className="button--primary" type="submit" disabled={fleets.pending}>{dialog.mode === "send" && !dialog.quote ? "Calculer le devis" : "Confirmer"}</Button>
+          <Button className="button--primary" type="submit" disabled={fleets.pending}>{dialog.mode === "send" && (!dialog.quote || dialog.quoted !== intentOf(dialog)) ? "Calculer le devis" : "Confirmer"}</Button>
         </div>
       </form>}
     </dialog>
@@ -308,23 +354,22 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     if (dialog.mode === "split") return <>{unitInputs(dialog.units, (u) => setDialog({ ...dialog, units: u }))}
       {hasCargo && cargoInputs(dialog.cargo, cargoMax, (cargo) => setDialog({ ...dialog, cargo }))}{capacityNote}
       <p className="panel-meta">Chaque flotte résultante doit pouvoir porter sa cargaison, sinon l’opération est refusée.</p></>;
-    const reset = { quote: null, error: null };
     const destinations = p.systems!.filter((s) => s.id !== current.system?.id &&
       (dialog.kind === "SURVEY" ? s.state === "DETECTED" : s.state !== "DETECTED"));
     return <>
       <p>Depuis {place(current.system)} — {current.name}. Trajet et coûts calculés par le serveur sur vos routes connues.</p>
       <fieldset className="fleet-fieldset"><legend>Mission</legend>{(["DEPLOY", "SURVEY", "RETURN"] as MissionKind[]).map((k) =>
         <label key={k} className="fleet-choice"><input type="radio" name="kind" checked={dialog.kind === k}
-          onChange={() => setDialog({ ...dialog, kind: k, destination: "", ...reset })} /> {kindLabels[k]}</label>)}</fieldset>
+          onChange={() => edit({ kind: k, destination: "" })} /> {kindLabels[k]}</label>)}</fieldset>
       {dialog.kind !== "RETURN" ? <label className="galaxy-field">Destination
-        <select required value={dialog.destination} onChange={(e) => setDialog({ ...dialog, destination: e.target.value, ...reset })}>
+        <select required value={dialog.destination} onChange={(e) => edit({ destination: e.target.value })}>
           <option value="">Choisir…</option>
           {destinations.map((s) => <option key={s.id} value={s.id}>{place(s)}</option>)}
         </select></label> : <p>Retour vers le système de la colonie d’attache.</p>}
-      {unitInputs(dialog.units, (u) => setDialog({ ...dialog, units: u, ...reset }))}
-      {hasCargo && current.kind === "GARRISON" && cargoInputs(dialog.cargo, cargoMax, (cargo) => setDialog({ ...dialog, cargo, ...reset }))}
+      {unitInputs(dialog.units, (units) => edit({ units }))}
+      {hasCargo && current.kind === "GARRISON" && cargoInputs(dialog.cargo, cargoMax, (cargo) => edit({ cargo }))}
       {dialog.error && <p role="alert" className="feedback feedback--error">{message(dialog.error)}</p>}
-      {dialog.quote && <div className="fleet-quote" aria-live="polite">
+      {dialog.quote && dialog.quoted === intentOf(dialog) && <div className="fleet-quote" aria-live="polite">
         <p><strong>{dialog.quote.hops} saut(s)</strong> · trajet {duration(dialog.quote.travel_us)}{dialog.quote.kind === "SURVEY" ? ` · analyse ${duration(dialog.quote.survey_us)}` : ""}</p>
         <p>Carburant payé au départ par la colonie d’attache : {resourceKeys.filter((k) => BigInt(dialog.quote!.cost[k]) > 0n).map((k) => `${units(dialog.quote!.cost[k])} ${resourceLabels[k]}`).join(" · ") || "aucun"}</p>
         <p>Arrivée estimée : {time(dialog.quote.travel_arrival_at)}{dialog.quote.kind === "SURVEY" ? ` · cartographie à ${time(dialog.quote.due_at)}` : ""}</p>

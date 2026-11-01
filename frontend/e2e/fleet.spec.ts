@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { empire, fleets, garrison, near, order, session, universe } from '../tests/fleetFixture';
+import { empire, fleets, garrison, near, order, otherEmpire, otherFleets, session, universe } from '../tests/fleetFixture';
 import { projection } from '../tests/galaxyFixture';
 
 for (const width of [320, 390, 768, 1440]) {
@@ -85,4 +85,36 @@ test('cancel production from the UI: Keyed body as validated by the Game API, th
   await expect(page.getByText('Ordre accepté par le serveur.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Annuler…' })).toHaveCount(0);
   expect(bodies).toHaveLength(1);
+});
+
+test('shortcut from Galaxy on the second Empire opens that Empire prefilled, never the first one', async ({ page }) => {
+  const both = { empires: [{ id: empire, name: 'Empire A' }, { id: otherEmpire, name: 'Empire B' }] };
+  const firstReads: string[] = [];
+  await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));
+  await page.route(`**/api/game/${universe}/session`, r => r.fulfill({ json: session }));
+  await page.route(`**/api/game/${universe}/colonies`, r => r.fulfill({ json: { colonies: [] } }));
+  await page.route(`**/api/game/${universe}/galaxy`, r => r.fulfill({ json: both }));
+  for (const id of [empire, otherEmpire]) {
+    const map = projection([], id);
+    map.permissions = [...map.permissions, 'fleet.command'];
+    await page.route(`**/api/game/${universe}/galaxy/${id}`, r => r.fulfill({ json: map }));
+  }
+  await page.route(`**/api/game/${universe}/fleets`, r => r.fulfill({ json: both }));
+  await page.route(`**/api/game/${universe}/fleets/${empire}`, r => { firstReads.push(r.request().url()); return r.fulfill({ json: fleets() }); });
+  await page.route(`**/api/game/${universe}/fleets/${otherEmpire}`, r => r.fulfill({ json: otherFleets() }));
+
+  await page.goto(`/#universe/${universe}/galaxy`);
+  await page.getByRole('combobox', { name: 'Empire' }).selectOption(otherEmpire);
+  await page.locator('.galaxy-list').getByRole('button', { name: /Signal détecté 1/ }).click();
+  await page.getByRole('link', { name: 'Envoyer une flotte ici' }).click();
+  await expect(page).toHaveURL(new RegExp(`fleets/send/${otherEmpire}/${near}$`));
+  const dialog = page.getByRole('dialog', { name: 'Envoyer une flotte' });
+  await expect(dialog.getByText(/Garnison Bastion B/)).toBeVisible();
+  await expect(dialog.getByRole('combobox', { name: 'Destination' })).toHaveValue(near);
+  await expect(page.getByRole('combobox', { name: 'Empire' })).toHaveValue(otherEmpire);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await page.getByRole('button', { name: 'Actualiser' }).click();
+  await expect(dialog).toBeHidden(); // prefill consumed once
+  expect(firstReads).toEqual([]);
 });
