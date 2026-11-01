@@ -31,6 +31,7 @@ STATUS = {
     "exploration_unavailable": 409,
     "fleet_unavailable": 409,
     "fleet_not_found": 404,
+    "planet_not_found": 404,
     "mission_not_found": 404,
     "fleet_busy": 503,
     "colony_not_found": 404,

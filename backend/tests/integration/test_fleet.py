@@ -399,7 +399,9 @@ def test_transport_unloads_up_to_storage_and_keeps_surplus_aboard(fleets):
     worker(w)
     with w.game.factory.begin() as s:
         s.get(ResourceBalance, (second_id, "alloys")).stock = 9_900 * M  # production may refill
-    preview = next(f for f in view(w).json()["fleets"] if f["id"] == task)["unload"]
+    (here,) = next(f for f in view(w).json()["fleets"] if f["id"] == task)["colonies_here"]
+    assert here["id"] == str(second_id)
+    preview = here["unload"]
     assert preview["credited"]["alloys"] == str(100 * M) and preview["kept"]["alloys"] == str(
         200 * M
     )
