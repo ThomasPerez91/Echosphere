@@ -1,5 +1,9 @@
 # Étape 10 — Colonisation et expansion
 
+**État actuel : intégré via PR #13, merge a33a452, CI post-merge 41340653571 success 5/5
+vérifiée le 01/11/2026. Le [lot courant étape 11](step-11-plan.md) est documentaire.**
+Les checkpoints et consignes de branche ci-dessous sont historiques avant fusion.
+
 **Q07 close le 01/11/2026 avec amendements (et sous-décision Q04 v0.5) ; COL02–COL11 réalisés sur PR #13.**
 Base master `3a528b62079a4e177e65fdef7ce324b14784a08f` : étape 9 Flottes intégrée via PR #12, CI
 post-merge 41322146062 success (5/5), vérifiée le 01/11/2026. Branche unique

@@ -4,16 +4,41 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 01/11/2026 — AI00 |
+| Champ | État au 01/11/2026 — AI00/AI01 documentaires terminés, Q11 à valider |
 | --- | --- |
-| Objectif | Étape 11 Première IA : audit et proposition Q11 uniquement avant validation explicite |
-| Branche / base / PR | work/step-11-first-ai depuis master a33a452b416ec83d4e8b91d84292913d18db5a40 ; unique PR Draft à ouvrir vers master |
-| Tête / agent | Commit portant AI00 ; Codex local, seul écrivain autorisé. Dernier lot publié consigné Claude Code dans le checkpoint Colonisation |
-| Vérifié | PR #13 MERGED, ancienne tête 04d4b9e, merge a33a452 ; CI post-merge 41340653571 success 5/5 ; aucune PR ouverte ; disque propre, master ff-only puis branche neuve ; ancienne branche conservée |
-| Réalisé | Statuts canoniques post-merge, plan AI00/AI01 et arrêt avant tout code métier IA |
-| Décisions | Colonisation/Q07 livrées ; Q11 ouverte ; étape 12 non commencée ; aucun nouveau choix produit validé |
-| Validation | Check documentaire/liens et diff avant publication ; aucune suite runtime relancée pour ce checkpoint docs ; CI de tête à relire après push |
-| Suite / limites | AI01 : lectures/audit du code intégré, proposition Q11 et architecture/plan conditionnels, puis arrêt obligatoire. Aucun tableau/profil exécutable, worker ou scheduler IA, migration, game_data ou code métier autorisé |
+| Objectif | Étape 11 Première IA : audit du code intégré et proposition Q11 uniquement |
+| Branche / base / PR | work/step-11-first-ai depuis master a33a452b416ec83d4e8b91d84292913d18db5a40 ; PR #14 Draft unique vers master |
+| Tête / agent | AI00 6a09b07ae34d36020867dfb4815e521a5d2d2fbd publié avant audit/code ; tête = commit portant AI01, SHA/CI exacts dans PR #14 ; Codex local seul écrivain autorisé |
+| Départ vérifié | PR #13 MERGED, ancienne tête 04d4b9e, merge a33a452 ; CI post-merge 41340653571 success 5/5 ; aucune PR concurrente ; disque propre, master ff-only et branche neuve ; ancienne branche conservée |
+| Réalisé | Audit indépendant du code a33a452 (services/Knowledge/permissions/locks/worker/versions/migrations/tests/recettes), Q11 A1–A10 proposée, architecture hors handler multi-stream, plan conditionnel AI02–AI11 |
+| Fichiers | AGENTS/context/progress, docs index/roadmap/registre/passation/step-11-plan ; artificial-intelligence (Q11), ai-engine (audit avec preuves et architecture) ; docs uniquement |
+| Décisions / risques | Colonisation/Q07 intégrées ; Q11 reste ouverte, aucun poids/cadence/budget nouveau validé. AI_TURN multi-stream incompatible avec les invariants ; bootstrap à 0/h et identité des scénarios à couvrir ; aucune triche compensatoire |
+| Validation locale | python3 scripts/check_docs.py : 90 documents/liens OK ; git diff --check ; comparaison JSON v0.1→v0.5 en lecture seule. Aucun test runtime/Compose/Alembic/benchmark IA relancé localement pour AI01 |
+| CI observée | Base a33a452 : run 41340653571 success 5/5, journaux 364 Game / 124 Portal / 81 Vitest + 31 Chromium Game ; smokes existants et Alembic dans ce run. AI00 : PR 41342661915 quatre jobs verts, compose-smoke en cours à ce checkpoint ; push 41342656138 observé en cours ; CI AI01 à relire après push, aucun succès anticipé |
+| Suite / limites | Arrêt obligatoire après AI01 : faire valider Q11 A1–A10 avant AI02. PR reste Draft ; aucun code IA, table, worker, scheduler, profil exécutable, migration ou game_data créé. Étape 12 non commencée ; pas de merge, suppression, tag/release ou déploiement |
+
+## AI01 — audit, Q11 et architecture proposés, 01/11/2026
+
+Lectures produit/économie/Fog, technique, contrats identité et projet réalisées ; inventaire du
+code intégré a33a452 et lecture des services/projections, modèles/contraintes, scheduler/worker,
+règles v0.1→v0.5, tests et recettes. Aucune confiance accordée aux anciens statuts lorsque le
+code les contredit. La CI de base a été lue, pas relancée ni confondue avec un nouveau test IA.
+
+Références canoniques : [audit et architecture](docs/03-technical/ai-engine.md#ai01--audit-du-code-intégré),
+[Q11 proposée A1–A10](docs/01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02),
+[AI02–AI11 conditionnels](docs/05-project/step-11-plan.md).
+
+Recommandations non validées : deux profils économique/prudent et expansionniste choisis au
+départ, référence 1 humain + 2 IA et départs communs, un tour/10 min et une commande maximum,
+128 candidats/64 flottes paginées, budgets économiques réels et réserve, bootstrap économique
+prioritaire, nouveau v0.6 sans adoption d'ancien univers. Pas de profil agressif avant Combat.
+Exécution proposée dans un orchestrateur Game transactionnel hors ScheduledEvent handler,
+contrôleur explicite, DTO limité à sa Knowledge et ses possessions, mêmes services, traces privées
+et reprise atomique. Aucun de ces éléments n'est implémenté ni validé implicitement.
+
+Pas d'anomalie runtime supplémentaire prouvée dans les chemins relus ; risques d'intégration et
+écarts documentaires qualifiés dans l'audit. Pas de preuve d'autonomie, balance, charge ou sécurité
+exhaustive. La prochaine action dépend de Q11 : aucune poursuite AI02 sur la seule base de ce plan.
 
 ## AI00 — reprise post-merge Colonisation, 01/11/2026
 

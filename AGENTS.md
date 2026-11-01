@@ -148,8 +148,10 @@ CI post-merge 41322146062 success (5/5), vérifiée le 01/11/2026 ; Q09 close,
 Étape 10 intégrée via PR #13, merge `a33a452b416ec83d4e8b91d84292913d18db5a40` ;
 CI post-merge 41340653571 success (5/5), vérifiée le 01/11/2026. Colonisation/Q07 et la
 sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, branche
-`work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés ;
-Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
+`work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés, publiés sur PR Draft #14 ;
+Q11 proposée A1–A10 et ouverte, aucun code IA engageant avant sa validation explicite.
+[Proposition](docs/01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02),
+[audit/architecture proposés](docs/03-technical/ai-engine.md). Arrêt après AI01. Étape 12 Combat non commencée.
 [Plan AI00–AIxx](docs/05-project/step-11-plan.md). Aucun merge ni suppression de branche autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 

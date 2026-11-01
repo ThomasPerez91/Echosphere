@@ -73,7 +73,7 @@ System View livrée, anciens checkpoints historiques. Étape 9 ensuite menée su
 
 ## État post-merge étape 9 — 01/11/2026
 
-Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5). Lot courant :
+Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5). Historique de la reprise suivante :
 étape 10 Colonisation, branche `work/step-10-colonization`, PR #13, [plan](../05-project/step-10-plan.md) ;
 Q07 close avec amendements, COL02–COL11 réalisés. Étape 11 alors non commencée, aucun merge.
 
@@ -85,3 +85,8 @@ sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, bran
 `work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés ;
 Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
 [Plan AI00–AIxx](../05-project/step-11-plan.md). Aucun merge ni suppression de branche autorisé.
+
+AI00 publié (`6a09b07`) ; AI01 audit/proposition sur PR Draft #14 :
+[Q11 ouverte A1–A10](../01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02),
+[audit/architecture](../03-technical/ai-engine.md), [plan AI02–AI11 conditionnel](../05-project/step-11-plan.md).
+Prochaine action : validation utilisateur Q11 ; aucun code IA avant cette validation.

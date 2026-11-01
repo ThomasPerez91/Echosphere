@@ -31,7 +31,7 @@ Le tableau Q40–Q56 distingue décisions closes, détails techniques délégué
 | Q08 | **Clos produit, futur** : UNKNOWN sans fuite ; DETECTED existence/position approximative ; MAPPED structure durable ; MONITORED dynamique actualisée ; perte MONITORED → MAPPED, last_seen_at et aucun partage automatique | 7/8 | [Fog](../01-game-design/fog-of-war.md) |
 | Q09 | **Close produit étape 9 — validation explicite du 31/10/2026 avec amendements** : catalogue sonde/cargo léger, production batch, garnisons, DEPLOY/SURVEY/RETURN, cargo, rappel, v0.4, GET non mutatif | 9 avant F02 | [Flottes/Q09](../01-game-design/fleets.md), [plan F00–F11](step-9-plan.md) |
 | Q10 | Résolution combat, aléatoire, ciblage, retraite, pertes et butin | 12 | [Combat](../01-game-design/combat.md) |
-| Q11 | **Ouverte — étape 11 documentaire AI00/AI01** : poids/choix des profils, départs, fréquence et budgets IA ; validation explicite avant code engageant | 11 avant AI02 | [IA](../03-technical/ai-engine.md), [plan](step-11-plan.md) |
+| Q11 | **Ouverte — proposition AI01 A1–A10 non validée** : poids/choix des profils, départs, fréquence et budgets IA ; validation explicite avant code engageant | 11 avant AI02 | [Q11 proposée](../01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02), [audit/architecture](../03-technical/ai-engine.md), [plan](step-11-plan.md) |
 | Q12 | Mesure du ratio 80/20, métriques et format validé de game_data | 5 puis 16 | [Balance](../01-game-design/balance-philosophy.md) |
 | Q13 | Ordre simultané, locks, rattrapage, retries et compatibilité des versions | 3 | [Événements](../03-technical/event-engine.md) |
 | Q14 | Victoire/défaite, durée d'univers, resets et rattrapage | cadrage MVP | [Progression](../01-game-design/progression.md) |

@@ -46,8 +46,8 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   **implémentées dans leur périmètre 5C (C02–C08), fusionnées via PR #7** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. 5C
   terminé et fusionné (`ff6ef89`), 5D intégrée via #8 (`0e2ca11`). Lot courant :
-  étape 11 Première IA (AI00/AI01 documentaires, Q11 ouverte) ; étape 9 Flottes intégrée via PR #12 (`3a528b6`) ; étape 8 System View intégrée via PR #11 (`e011fd3`) ; étape 7 Galaxy + Exploration intégrée via PR #10 (`773e05c`), [technique](03-technical/galaxy-api-ui.md).
-  [Research](05-project/step-6-plan.md) intégrée via PR #9 (`437844e4`), Q05 close ; [API/UI](03-technical/research-api-ui.md). Étape 11 alors non commencée.
+  étape 11 Première IA (AI00/AI01 documentaires, Q11 ouverte) ; Colonisation intégrée via PR #13 (`a33a452`) ; étape 9 Flottes intégrée via PR #12 (`3a528b6`) ; étape 8 System View intégrée via PR #11 (`e011fd3`) ; étape 7 Galaxy + Exploration intégrée via PR #10 (`773e05c`), [technique](03-technical/galaxy-api-ui.md).
+  [Research](05-project/step-6-plan.md) intégrée via PR #9 (`437844e4`), Q05 close ; [API/UI](03-technical/research-api-ui.md). Étape 12 non commencée.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
@@ -88,3 +88,7 @@ sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, bran
 `work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés ;
 Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
 [Plan AI00–AIxx](05-project/step-11-plan.md). Aucun merge ni suppression de branche autorisé.
+
+Étape 11 AI01 : [audit/architecture proposés](03-technical/ai-engine.md#ai01--audit-du-code-intégré),
+[Q11 A1–A10 non validée](01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02),
+[plan conditionnel](05-project/step-11-plan.md). Arrêt avant AI02 ; aucun code IA ni étape 12.
