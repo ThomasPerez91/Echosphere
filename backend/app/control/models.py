@@ -80,7 +80,8 @@ class EmpireBinding(Base):
             'AND permissions <@ \'["colony.read","colony.construct","colony.cancel",'
             '"research.read","research.start","research.cancel",'
             '"galaxy.read","exploration.read","exploration.start",'
-            '"fleet.read","fleet.build","fleet.command","colony.expand"]\'::jsonb',
+            '"fleet.read","fleet.build","fleet.command","colony.expand",'
+            '"combat.read","combat.attack"]\'::jsonb',
             name="binding_permissions",
         ),
     )

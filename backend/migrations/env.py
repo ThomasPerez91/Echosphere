@@ -3,6 +3,7 @@ from alembic import context
 from app.access import models as access_models  # noqa: F401
 from app.ai import models as ai_models  # noqa: F401
 from app.colony import models as colony_models  # noqa: F401
+from app.combat import models as combat_models  # noqa: F401
 from app.control import models as control_models  # noqa: F401
 from app.core.config import Settings
 from app.fleet import models as fleet_models  # noqa: F401

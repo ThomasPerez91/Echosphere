@@ -105,11 +105,13 @@
               "fleet.read",
               "fleet.build",
               "fleet.command",
-              "colony.expand"
+              "colony.expand",
+              "combat.read",
+              "combat.attack"
             ],
             "type": "string"
           },
-          "maxItems": 13,
+          "maxItems": 15,
           "minItems": 1,
           "title": "Permissions",
           "type": "array"

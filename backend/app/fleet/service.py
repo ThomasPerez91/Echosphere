@@ -49,7 +49,11 @@ def operations(session, engine, universe_id, empire_id, at):
     """Command path: lock and fully catch up the Empire Operations stream before deciding."""
     state = galaxy.state_for(session, universe_id, empire_id)
     lock_stream(session, state.stream_id, universe_id)
-    if not engine.catch_up_stream(session, state.stream_id, universe_id, utc(at)).complete:
+    progress = engine.catch_up_stream(session, state.stream_id, universe_id, utc(at))
+    if progress.fenced:
+        # A due Combat is not resolved yet: never let military state move past the battle.
+        raise FleetError("A combat must be resolved first", "combat_pending")
+    if not progress.complete:
         raise FleetError("Operations need retry/operator", "fleet_busy")
     return state
 
