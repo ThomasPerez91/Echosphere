@@ -1,5 +1,7 @@
 # Étape 9 — Flottes et missions asynchrones
 
+**Plan historique : étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5), 01/11/2026.**
+
 **Q09 validée le 31/10/2026 avec amendements ([Flottes](../01-game-design/fleets.md)) ; F02–F11 autorisés sans validation intermédiaire.**
 Base master `e011fd3127c4888db551dd3792b347b1dc31b468`, étape 8 intégrée via PR #11, CI post-merge
 41231820338 success (5/5). Branche unique `work/step-9-fleets`, [PR #12](https://github.com/ThomasPerez91/Echosphere/pull/12)

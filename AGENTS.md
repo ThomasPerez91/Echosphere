@@ -142,10 +142,13 @@ Q05 close ; Research intégrée à master via PR #9, merge `437844e4`, CI post-m
 CI post-merge 41220568486 success (5/5), vérifiée le 31/10/2026. Q06/Q08 et Exploration livrées.
 Étape 8 System View intégrée via PR #11, merge `e011fd3127c4888db551dd3792b347b1dc31b468` ;
 CI post-merge 41231820338 success (5/5), vérifiée le 31/10/2026 ; [contrat](docs/03-technical/system-view.md).
-Lot courant : **étape 9 Flottes**, branche `work/step-9-fleets` depuis master `e011fd3`, PR brouillon
-unique (PR #12). Q09 close le 31/10/2026 avec amendements, F02–F11 autorisés ;
+Étape 9 Flottes intégrée via PR #12, merge `3a528b62079a4e177e65fdef7ce324b14784a08f` ;
+CI post-merge 41322146062 success (5/5), vérifiée le 01/11/2026 ; Q09 close,
 [règles](docs/01-game-design/fleets.md), [technique](docs/03-technical/fleets-api-ui.md).
-Exploration v0.3 inchangée, étape 10 non commencée, Q04/Q07/Q10 hors portée. Aucun merge autorisé.
+Lot courant : **étape 10 Colonisation**, branche `work/step-10-colonization` depuis master `3a528b6`,
+PR brouillon unique ; [plan](docs/05-project/step-10-plan.md). **Q07 ouverte : aucun code métier
+Colonization avant sa validation explicite** (COL00/COL01 documentaires). Étape 11 non commencée,
+Q04/Q10 ouvertes. Aucun merge autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver

@@ -1,19 +1,28 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
 ## Reprise rapide
 
-| Champ | État au 01/11/2026 — étape 9 F02–F11 réalisés, correctifs de revue (snapshots worker, 7 P2 Codex), PR #12 Ready |
+| Champ | État au 01/11/2026 — étape 10 COL00 : checkpoint post-merge, Q07 ouverte |
 | --- | --- |
-| Objectif | Étape 9 Flottes selon Q09 close avec amendements (31/10/2026) |
-| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 Ready (redevenue Ready seulement après CI 5/5 de la nouvelle tête) ; aucun merge |
+| Objectif | Étape 10 Colonisation ; COL00 checkpoint puis COL01 audit + proposition Q07, arrêt avant COL02 |
+| Branche / base / PR | work/step-10-colonization depuis master 3a528b62079a4e177e65fdef7ce324b14784a08f (merge PR #12) ; PR brouillon unique « Étape 10 — Colonisation et expansion » ; aucun merge |
 | Agent | Claude Code local, unique écrivain du lot |
-| Réalisé | v0.4 (sonde/cargo léger, sans expédition abstraite), migration 0009 + droits fleet.* (12), production batch, garnisons, DEPLOY/SURVEY/RETURN, rappel, cargo, division/fusion, API, écran Flottes, raccourcis Galaxy/System View, GET non mutatifs (Galaxy compris), recette réelle Fleet ; worker revalidant le snapshot accepté de chaque mission (revue indépendante) ; 5 P2 Codex corrigés (annulation UI, payeuse du devis, missions ouvertes non tronquées, raccourci multi-Empire, devis obsolètes, GET Flottes verrouillant le stream d’opérations, phase SURVEY/rappel à l’arrivée) |
-| Fichiers | app/fleet/*, colony/rules, galaxy api/service/system_view, simulation/service, main, control contrats/modèle, schéma partagé, Portal, migration 0009, game_data/v0.4, frontend fleet/*, FleetView, useFleets, App, Galaxy/System View, CSS, tests, scripts smoke/fixture/browser Fleet, CI, docs |
-| Validation locale | Game PostgreSQL 17 *_test : 333 réussis (43 Fleet, dont 15 corruptions refusées et 4 tests P2, tous en échec sur l’ancien code) ; Portal permissions 5 ; Ruff backend+scripts ; frontend lint 0 erreur, 70 Vitest, build, 27 Chromium (Flottes 4 largeurs, annulation, raccourci Galaxie vers le second Empire) ; recette Compose Fleet réelle réussie avec annulation UI vérifiée en base (images Game/frontend reconstruites) ; check_docs, diff --check |
-| CI observée | fd12fe2/e5b7ad8/de1e81c : compose-smoke KO (révision Alembic 0008 attendue par deux smokes), corrigé ; fd12fe2 frontend KO intermittent sur un test Research existant, vert ensuite. 6f1f0f7 : push 41241206679 et PR 41241210532 success 5/5, recette Fleet comprise. ea22ec8 : push 41242281646 et PR 41242286700 success 5/5. 57a9443 (snapshots) : push 41249447504 et PR 41249450317 success 5/5. dfe18d4 (3 P2) : push 41308504123 et PR 41308508497 success 5/5. 6f0dd08 (multi-Empire/devis) : push 41313410930 et PR 41313415299 success 5/5. 2af680f (verrou GET) : push 41315650882 success 5/5, PR 41315655733 success 5/5 après relance du seul job frontend (instabilité ci-après, frontend identique à 6f0dd08). Phase à l’arrivée : CI exacte consignée dans PR #12. Instabilité Vitest préexistante : un test « réponse incertaine » (Galaxy/Research/GameAccess) bloque parfois 5 s, aussi sur dfe18d4 (1/10 localement) |
-| Limites / suite | Attendre l’autorisation explicite de merge. File 3/colonie et capacité cargo garanties par le service sous verrou (non exprimables en CHECK). Chromium émulé seulement. Étape 10 non commencée |
+| État d’entrée vérifié | PR #12 fusionnée (merge 3a528b6, parents e011fd3 + f0dfd09) ; CI post-merge 41322146062 success 5/5 ; branche work/step-9-fleets conservée ; master local ff-only sur 3a528b6, arbre propre |
+| Réalisé (COL00) | Statuts canoniques (AGENTS, context, docs/README, roadmap, passation, registre) : étape 9 intégrée, étape 10 lot courant, Q07 ouverte, étape 11 non commencée ; plan step-10-plan.md ; check_docs l’exige |
+| Validation | check_docs, diff --check ; aucun code modifié |
+| Limites / suite | COL01 : audit en lecture et proposition Q07 ; aucun code métier Colonization avant validation explicite de Q07 |
+
+## Étape 9 — clôture, 01/11/2026
+
+Étape 9 F02–F11 réalisée sur work/step-9-fleets puis intégrée via PR #12 (merge 3a528b6, CI
+post-merge 41322146062 success 5/5). Correctifs de revue : snapshots revalidés par le worker et 7 P2
+Codex (annulation UI, payeuse du devis, missions ouvertes non tronquées, raccourci multi-Empire,
+devis obsolètes, verrou du GET Flottes, phase SURVEY/rappel à l’arrivée). Dernière validation
+locale : Game 333, frontend 70 Vitest + 27 Chromium, recette Compose Fleet réelle. Instabilité
+Vitest préexistante (tests « réponse incertaine » Galaxy/Research/GameAccess bloquant parfois 5 s),
+non traitée, relances ciblées en CI.
 
 ## Revue Codex PR #12 — deux P2 frontend sur dfe18d4, 01/11/2026
 

@@ -46,8 +46,8 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   **implémentées dans leur périmètre 5C (C02–C08), fusionnées via PR #7** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. 5C
   terminé et fusionné (`ff6ef89`), 5D intégrée via #8 (`0e2ca11`). Lot courant :
-  étape 9 Flottes sur PR #12 ; étape 8 System View intégrée via PR #11 (`e011fd3`) ; étape 7 Galaxy + Exploration intégrée via PR #10 (`773e05c`), [technique](03-technical/galaxy-api-ui.md).
-  [Research](05-project/step-6-plan.md) intégrée via PR #9 (`437844e4`), Q05 close ; [API/UI](03-technical/research-api-ui.md). Étape 10 non commencée.
+  étape 10 Colonisation (Q07 ouverte) ; étape 9 Flottes intégrée via PR #12 (`3a528b6`) ; étape 8 System View intégrée via PR #11 (`e011fd3`) ; étape 7 Galaxy + Exploration intégrée via PR #10 (`773e05c`), [technique](03-technical/galaxy-api-ui.md).
+  [Research](05-project/step-6-plan.md) intégrée via PR #9 (`437844e4`), Q05 close ; [API/UI](03-technical/research-api-ui.md). Étape 11 non commencée.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
@@ -68,8 +68,14 @@ Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
 ## État post-merge étape 8 — 31/10/2026
 
 Étape 8 intégrée via PR #11, merge `e011fd3`, CI post-merge 41231820338 success (5/5).
-Lot courant : étape 9 Flottes, branche `work/step-9-fleets`, Q09 validée avec amendements,
-F02–F11 en cours. Étape 10 Colonisation non commencée, aucun merge autorisé.
+Étape 9 ensuite menée sur `work/step-9-fleets` (F00–F11).
 
+## État post-merge étape 9 — 01/11/2026
+
+Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5).
+Lot courant : étape 10 Colonisation, branche `work/step-10-colonization`, Q07 ouverte : COL00/COL01
+documentaires puis arrêt avant COL02. Étape 11 non commencée, aucun merge autorisé.
+
+Étape 10 : [Colonisation](01-game-design/colonization.md), [plan COL00–COL11](05-project/step-10-plan.md).
 Étape 9 : [Flottes Q09](01-game-design/fleets.md), [contrat technique](03-technical/fleets-api-ui.md), [plan F00–F11](05-project/step-9-plan.md).
 Étape 8 : [contrat System View](01-game-design/system-view.md), [projection/navigation](03-technical/system-view.md), [plan S00–S09](05-project/step-8-plan.md).
