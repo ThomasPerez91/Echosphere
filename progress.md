@@ -4,10 +4,10 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 01/11/2026 — AI02–AI10 réalisés, AI11 en cours |
+| Champ | État au 01/11/2026 — AI02–AI11 réalisés, revue Codex GitHub en attente de crédits |
 | --- | --- |
 | Objectif | Étape 11 Première IA selon Q11 validée avec amendements |
-| Branche / base / PR | work/step-11-first-ai ; master a33a452 ; PR #14 Draft unique |
+| Branche / base / PR | work/step-11-first-ai ; master a33a452 ; PR #14 Ready, unique |
 | Tête / agent | Claude Code, seul écrivain après la limite d'usage de Codex local ; tête et CI exactes dans la PR |
 | Reprise | HEAD local = distant 86f8e25 au départ, travail Codex non commité (perception, politique, dispatcher, orchestrateur, tests) sauvegardé puis publié sans perte (ae00462, 8a5a007, 9ce7680) |
 | Réalisé | v0.6/ai.json, contrôleur exclusif et bootstrap, migration 0011, collecteur borné, politique pure, dispatcher, orchestrateur, CLI `app.ai.worker`, service Compose `ai-worker` (profil `ai`), recette `smoke_ai_compose.py` en CI. [Contrat](docs/03-technical/first-ai.md) |
@@ -15,7 +15,8 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 | Validation locale | Suite Game complète 396 sur l’état final, dont 32 tests IA PostgreSQL et purs, Ruff ; recette Compose IA réelle réussie ; check_docs, diff --check. Frontend non modifié |
 | CI | 767f244 : push 41351837408 et PR 41351842896 success 5/5 (396 Game, 124 Portal, 81 Vitest + 31 Chromium, compose-smoke avec `smoke_ai_compose.py`). Tête finale et CI exactes dans la PR |
 | Revue | Revue indépendante du diff depuis a33a452 : aucune route ni log n'expose traces/observations ; verrous opérations → Research → colonies identiques aux humains, exclusivité sous verrou d'Empire ; clés `ai:` stables ; 128 candidats = somme des pages ; rétention 100 traces ; v0.1–v0.5 intacts. Seul écart corrigé : `--at` futur refusé par la CLI |
-| Suite | AI11 : PR Ready puis revue automatique Codex GitHub, fils traités ; aucun merge, étape 12 non commencée |
+| Revue automatique | PR #14 passée Ready sur 6a409e2 (CI push 41353374929 et PR 41353378426 success 5/5) ; revue Codex GitHub déclenchée mais **échouée** : limite d'usage Codex des revues atteinte, aucun fil ouvert |
+| Suite | Relancer `@codex review` quand les crédits Codex le permettent, traiter les fils ; aucun merge sans autorisation, étape 12 non commencée |
 
 ## Reprise Claude Code — étape 11, 01/11/2026
 
