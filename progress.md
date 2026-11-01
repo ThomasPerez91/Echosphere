@@ -12,7 +12,7 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 | Reprise | HEAD local = distant 86f8e25 au départ, travail Codex non commité (perception, politique, dispatcher, orchestrateur, tests) sauvegardé puis publié sans perte (ae00462, 8a5a007, 9ce7680) |
 | Réalisé | v0.6/ai.json, contrôleur exclusif et bootstrap, migration 0011, collecteur borné, politique pure, dispatcher, orchestrateur, CLI `app.ai.worker`, service Compose `ai-worker` (profil `ai`), recette `smoke_ai_compose.py` en CI. [Contrat](docs/03-technical/first-ai.md) |
 | Anomalies corrigées | (1) CI 86f8e25 : inventaire `test_world` sans les tables `ai_*`. (2) Conversion LOAD : unités entières, pas micro-unités (correctif Codex, désormais couvert par un test). (3) Bootstrap d'une colonie fondée en ordre Données → Flux → Alliages, l'ordre de l'objet JSONB épinglé : ordre explicite Alliages → Flux → Données |
-| Validation locale | Suite Game 394 (avant les nouveaux tests), tests IA 32 PostgreSQL et purs, Ruff ; recette Compose IA réelle réussie ; check_docs, diff --check. Frontend non modifié |
+| Validation locale | Suite Game complète 396 sur l’état final, dont 32 tests IA PostgreSQL et purs, Ruff ; recette Compose IA réelle réussie ; check_docs, diff --check. Frontend non modifié |
 | CI | 9ce7680 : backend, frontend, Portal verts, compose-smoke observé en cours au checkpoint ; nouvelle tête à relire |
 | Suite | AI11 : CI de la tête finale, revue indépendante du diff depuis a33a452, Ready puis revue automatique Codex ; aucun merge, étape 12 non commencée |
 

@@ -58,6 +58,8 @@ def main() -> None:
     try:
         if args.bootstrap:
             at = utc(datetime.fromisoformat(args.at)) if args.at else clock.now()
+            if at > clock.now():
+                parser.error("bootstrap --at cannot anchor timelines in the future")
             profiles = [p for p in args.profiles.split(",") if p]
             with factory.begin() as session:
                 result = bootstrap(
