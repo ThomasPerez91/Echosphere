@@ -4,15 +4,15 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 01/11/2026 — Q11 validée, début AI02 |
+| Champ | État au 01/11/2026 — AI02 livré, socle AI03/AI04/AI07 |
 | --- | --- |
 | Objectif | Implémenter AI02–AI11 selon Q11 validée avec amendements |
 | Branche / base / PR | work/step-11-first-ai ; master a33a452 ; PR #14 Draft unique |
-| Tête / agent | f4a14d9 AI01 ; présent commit consigne validation ; Codex local seul écrivain |
+| Tête / agent | AI02 597d9fa ; tête = présent checkpoint identité/bootstrap ; Codex local seul écrivain |
 | Vérifié | Disque propre, branche/PR/base distantes conformes ; CI AI01 push 41343195071 et PR 41343200391 success 5/5 ; aucune PR concurrente |
 | Décisions | Q11 close, contrat amendé dans artificial-intelligence ; AI02–AI11 autorisés sans validation intermédiaire ; Combat/merge interdits |
-| Validation | check_docs/diff ; aucune implémentation revendiquée à ce checkpoint |
-| Suite | v0.6 et tests, contexte/contrôleur/pagination, orchestrateur/politique, bootstrap, autonomie/recette/CI et revue automatique avant clôture |
+| Validation | 67 tests de règles + 15 PostgreSQL AI/contrôle, Ruff, Alembic upgrade/check ; détails ci-dessous. CI nouvelle tête à lire après push |
+| Suite | v0.6, contrôleur/bootstrap/migration livrés dans leur périmètre ; restent collecteur/dispatcher/pagination, orchestrateur/politique, autonomie/recette/CI et revue automatique |
 
 ## Validation Q11 — 01/11/2026
 
@@ -1962,3 +1962,18 @@ budgets/familles et normalisations. Charger les données n'active aucun contrôl
 v0.1–v0.5 modifié. Tests réels en image Python de développement, code/règles du dépôt montés :
 67 tests AI/Colony/Colonization/Fleet/Research rules réussis ; Ruff ciblé réussi. Pas encore de
 persistance ou tour IA implémenté à ce checkpoint. Suite : contrôleur exclusif et frontières.
+
+## AI03/AI04/AI07 — identité, migration et bootstrap, 01/11/2026
+
+AIController persistant, traces et reçu de bootstrap ; migration 0011 additive/DDL figé, aucun
+backfill. Activation/grant humain sérialisés par Empire ; contrôleur présent (pause incluse) ne
+constitue jamais un transfert implicite. Bootstrap réel atomique v0.6, sites canoniques, un humain
+et profils explicites, mêmes stocks/infrastructures/date ; aucune unité gratuite. Rejeu stable,
+conflit/refus sans monde partiel, v0.6 seul sans activation implicite. Pause/reprise sur grille
+future et contrôle digest de données épinglées. Recettes existantes attendent la nouvelle tête
+Alembic, sans changer leurs scénarios.
+
+Réellement exécuté sur PostgreSQL 17 echosphere_ai_test dédié : 15 tests AI/contrôle réussis,
+dont course activation/grant, départs, absence de faux comptes/unités, dérive policy, metadata et
+downgrade peuplé refusé ; Alembic upgrade/check sans dérive et Ruff ciblé réussis. Pas encore de
+collecteur/décideur/orchestrateur ni preuve d'autonomie. Suite : ces frontières et leurs tests.

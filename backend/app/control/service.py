@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from sqlalchemy import delete, select, text
 from sqlalchemy.dialects.postgresql import insert
 
+from app.ai.models import AIController
 from app.control.contracts import Access, Provision, Revoke, digest
 from app.control.models import (
     ControlOperation,
@@ -161,9 +162,13 @@ class Control:
             ):
                 raise ControlError("access_epoch_conflict")
         for binding in message.bindings:
-            empire = session.get(Empire, binding.empire_id)
+            empire = session.scalar(select(Empire).where(
+                Empire.id == binding.empire_id).with_for_update())
             if empire is None or empire.universe_id != message.universe_id:
                 raise ControlError("empire_scope_denied", 403)
+            if session.scalar(select(AIController.id).where(
+                AIController.empire_id == empire.id).limit(1)) is not None:
+                raise ControlError("empire_ai_controlled", 409)
         principal.account_epoch = max(principal.account_epoch, message.account_epoch)
         if row is None:
             row = GameAccess(
