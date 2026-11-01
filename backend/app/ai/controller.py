@@ -23,15 +23,22 @@ def next_slot(started_at, observed_at, cadence=600):
 
 
 def no_human_binding(session, empire_id):
-    if session.scalar(select(EmpireBinding.empire_id).where(
-        EmpireBinding.empire_id == empire_id).limit(1)) is not None:
+    if (
+        session.scalar(
+            select(EmpireBinding.empire_id).where(EmpireBinding.empire_id == empire_id).limit(1)
+        )
+        is not None
+    ):
         raise AIDenied("human_binding_present")
 
 
 def activate(session, universe_id, empire_id, profile, at):
     # Same parent lock as the control-plane grant path, BEFORE inspecting either side.
-    empire = session.scalar(select(Empire).where(
-        Empire.id == empire_id, Empire.universe_id == universe_id).with_for_update())
+    empire = session.scalar(
+        select(Empire)
+        .where(Empire.id == empire_id, Empire.universe_id == universe_id)
+        .with_for_update()
+    )
     rules = rules_for(session, universe_id)
     if empire is None or empire.controller_type != "ai" or rules.ai is None:
         raise AIDenied("ai_scope_unavailable")
@@ -41,10 +48,17 @@ def activate(session, universe_id, empire_id, profile, at):
     if session.scalar(select(AIController.id).where(AIController.empire_id == empire.id)):
         raise AIDenied("controller_already_exists")
     row = AIController(
-        universe_id=universe_id, empire_id=empire.id, profile=profile,
-        policy_version=rules.ai.policy_version, policy_digest=fingerprint(rules.ai.model_dump()),
-        state="enabled", started_at=utc(at), next_decision_at=utc(at) + timedelta(seconds=600),
-        sequence=1, memory={}, attempts=0,
+        universe_id=universe_id,
+        empire_id=empire.id,
+        profile=profile,
+        policy_version=rules.ai.policy_version,
+        policy_digest=fingerprint(rules.ai.model_dump()),
+        state="enabled",
+        started_at=utc(at),
+        next_decision_at=utc(at) + timedelta(seconds=600),
+        sequence=1,
+        memory={},
+        attempts=0,
     )
     session.add(row)
     session.flush()
@@ -55,11 +69,16 @@ def authorize(session, controller):
     # Always derives scopes from the locked row, never from a policy-supplied identity.
     empire = session.get(Empire, controller.empire_id)
     rules = rules_for(session, controller.universe_id)
-    if (controller.state != "enabled" or empire is None
-            or empire.universe_id != controller.universe_id or empire.controller_type != "ai"
-            or rules.ai is None or controller.profile not in rules.ai.profiles
-            or controller.policy_version != rules.ai.policy_version
-            or controller.policy_digest != fingerprint(rules.ai.model_dump())):
+    if (
+        controller.state != "enabled"
+        or empire is None
+        or empire.universe_id != controller.universe_id
+        or empire.controller_type != "ai"
+        or rules.ai is None
+        or controller.profile not in rules.ai.profiles
+        or controller.policy_version != rules.ai.policy_version
+        or controller.policy_digest != fingerprint(rules.ai.model_dump())
+    ):
         raise AIDenied("ai_scope_or_policy_mismatch")
     no_human_binding(session, empire.id)
     return rules
