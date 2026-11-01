@@ -1,7 +1,8 @@
 # Colonisation
 
 **Statut : Q07 close pour le périmètre de l'étape 10 — validation explicite du 01/11/2026 avec
-amendements (section ci-dessous), ainsi que la sous-décision Q04. COL02–COL11 autorisés.** Les chiffres
+amendements (section ci-dessous), ainsi que la sous-décision Q04 ; implémentée sur PR #13
+([technique](../03-technical/colonization-api-ui.md)).** Les chiffres
 sont la balance v0.5 dans game_data versionné, jamais des constantes métier ni des vérités du
 produit. La proposition A1–A30 ci-dessous s'applique telle qu'amendée.
 

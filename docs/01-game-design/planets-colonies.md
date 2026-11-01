@@ -51,3 +51,12 @@ non l’ensemble des futures planètes. **Orientation validée** : leurs capacit
 secteurs abstraits, spécialisation émergente par allocation, pas de classe de planète imposée.
 **Implémenté** : initialize_colony contrôle aujourd’hui la capacité du ruleset de référence ; il ne
 constitue pas encore un initialiseur général de planètes variées. Voir [audit #5](../06-handoff/pr-5-audit.md).
+
+## Étape 10 — colonies fondées (v0.5)
+
+Une colonie fondée par colonisation prend les capacités réelles de sa planète générée : 9 à 18
+secteurs, 1 à 3 emplacements orbitaux. Elle n'a aucune infrastructure gratuite et un Command Core
+conceptuel. Ses stocks sont le paquet livré, sa production est nulle.
+
+La colonie de départ v0.1–v0.4 (12/2, quatre infrastructures) reste inchangée. Ni abandon ni
+transfert en v0.5. [Colonisation](colonization.md).

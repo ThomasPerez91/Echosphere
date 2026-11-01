@@ -207,3 +207,14 @@ Game 0009 : ordres de production, flottes (garnison/opérationnelle, STATIONED/M
 stacks, cargo, missions, étapes, rapports et registre d’idempotence. Invariant d’engagement en
 base (mission ouverte unique, MOVING ⇔ mission, stationnement et trajets limités aux Knowledge),
 droits `fleet.*` dans le CHECK des bindings (12). [Contrat Flottes](fleets-api-ui.md).
+
+Game 0010 :
+- **`fleet_missions` :** COLONIZE avec `target_planet_id`, qui doit être connue de l'Empire et
+  appartenir au système de destination. Seule COLONIZE peut rester dans son système (0 saut). Une
+  COLONIZE active par Empire, avec un index des concurrents par planète.
+- **`fleets` :** statut `SETTLED`, réservé aux flottes opérationnelles et conservant l'historique.
+- **`colonies` :** `founded_at` et `founding_mission_id` (unique). `uq_colonies_planet` reste
+  l'unique occupation courante.
+- **Bindings :** `colony.expand` ajouté au CHECK (13 permissions).
+
+Pas d'abandon, de transfert ni de table d'historique en v0.5. [Contrat Colonisation](colonization-api-ui.md).

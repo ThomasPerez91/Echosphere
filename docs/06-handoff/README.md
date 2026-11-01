@@ -74,5 +74,5 @@ System View livrée, anciens checkpoints historiques. Étape 9 ensuite menée su
 ## État post-merge étape 9 — 01/11/2026
 
 Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5). Lot courant :
-étape 10 Colonisation, branche `work/step-10-colonization`, [plan](../05-project/step-10-plan.md) ;
-Q07 ouverte, arrêt avant tout code métier jusqu’à validation. Étape 11 non commencée, aucun merge.
+étape 10 Colonisation, branche `work/step-10-colonization`, PR #13, [plan](../05-project/step-10-plan.md) ;
+Q07 close avec amendements, COL02–COL11 réalisés. Étape 11 non commencée, aucun merge.

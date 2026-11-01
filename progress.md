@@ -4,15 +4,33 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 01/11/2026 — étape 10 COL00/COL01 réalisés, Q07 proposée, arrêt avant COL02 |
+| Champ | État au 01/11/2026 — étape 10 COL00–COL11 réalisés, Q07 close avec amendements |
 | --- | --- |
-| Objectif | Étape 10 Colonisation ; COL00 checkpoint et COL01 audit + proposition Q07 réalisés ; attendre la validation de Q07 |
-| Branche / base / PR | work/step-10-colonization depuis master 3a528b62079a4e177e65fdef7ce324b14784a08f (merge PR #12) ; PR #13 brouillon unique « Étape 10 — Colonisation et expansion » ; aucun merge |
+| Objectif | Étape 10 Colonisation selon Q07 et la sous-décision Q04 v0.5 (validées le 01/11/2026 avec amendements) |
+| Branche / base / PR | work/step-10-colonization depuis master 3a528b62079a4e177e65fdef7ce324b14784a08f ; PR #13 (Ready seulement après revue, CI 5/5 et revue Codex terminée) ; aucun merge |
 | Agent | Claude Code local, unique écrivain du lot |
-| État d’entrée vérifié | PR #12 fusionnée (merge 3a528b6, parents e011fd3 + f0dfd09) ; CI post-merge 41322146062 success 5/5 ; branche work/step-9-fleets conservée ; master local ff-only sur 3a528b6, arbre propre |
-| Réalisé | COL00 : statuts canoniques (étape 9 intégrée, étape 10 lot courant, Q07 ouverte, étape 11 non commencée), plan step-10-plan.md exigé par check_docs. COL01 : audit du code intégré (step-10-plan.md), proposition Q07 A1–A30 et sous-décision Q04 (colonization.md), registre Q07 en attente |
-| Validation | check_docs, diff --check ; aucun code modifié |
-| Limites / suite | Arrêt : aucun code métier Colonization (ruleset v0.5, colonisateur, migration, table, mission, endpoint, UI) avant validation explicite de Q07 et de la sous-décision Q04 ; puis COL02–COL11 |
+| Réalisé | v0.5 (colonisateur, colonization.json), migration 0010 (COLONIZE/cible, 0 saut COLONIZE seulement, SETTLED, founded_at/founding_mission_id, colony.expand → 13), prix progressif figé sous verrou, found_colony séparé, COLONIZE distante et locale, résolution déterministe (stream propre puis verrou planète, rang immuable), rappel sous le même verrou, colonies_here, API/projection/System View, UI Flottes/System View/sélecteur Colonie, recette réelle deux Empires |
+| Fichiers | game_data/v0.5, app/colonization/*, colony/rules, fleet/service+api+models, persistence/models, galaxy/system_view, control contrats/modèle, schéma partagé, Portal, migration 0010, frontend fleet/galaxy api, FleetView, SystemView, App, useColony, CSS, tests, scripts colonization/fleet, CI, docs |
+| Validation locale | Game PostgreSQL 17 *_test : 364 réussis (18 Colonisation ; une mutation sans la règle de rang les fait échouer) ; unitaires règles v0.5 ; Portal permissions 5 ; Ruff ; alembic upgrade/downgrade/check sans dérive ; frontend lint 0 erreur, 79 Vitest, build, 31 Chromium (Colonisation 4 largeurs) ; recettes Compose Colonisation et Flottes réelles réussies (images Game/frontend/Portal reconstruites) ; check_docs, diff --check |
+| CI observée | 6711c9b : 5/5. cfb8e71 : compose-smoke KO attendu (recette Fleet sur l'ancienne projection), corrigé dans 58b6d9d/95194d0. Tête finale : CI exacte consignée dans PR #13 |
+| Limites / suite | Revue indépendante, CI finale 5/5, revue Codex terminée, fils traités ; puis Ready et attente d'autorisation de merge. Ni abandon ni transfert (v0.5). Chromium émulé seulement. Instabilité Vitest préexistante (« réponse incertaine »). Étape 11 non commencée |
+
+## Étape 10 COL02–COL11 — Colonisation, 01/11/2026
+
+Q07 close avec amendements (colonization.md) : sous-décision Q04 v0.5, `target_owned` seulement
+sous `colony.read`, tout le cargo engagé devient le stock, N inchangé par la fondation, devis de
+production dynamique sérialisé, colonisation du système courant (0 saut, sans rappel), filtre de
+concurrence limité aux revendications `active` non rappelées, `colonies_here`, snapshot étendu.
+
+- **Ruleset v0.5 :** les données du colonisateur restent hors du schéma de classe v0.4, pour que les
+  snapshots et missions v0.4 en vol restent valides (contrainte découverte en COL02).
+- **Résolution :** `resolve_colonize` décide sous le stream de l'Empire puis la ligne de la planète.
+  Le résultat ne dépend pas de l'ordre des workers ; tests et recette le prouvent dans les deux
+  ordres et avec deux workers.
+- **Écart corrigé en route (écran Colonie) :** la liste n'était lue qu'une fois, donc une colonie
+  fondée restait invisible dans le sélecteur ; elle est désormais relue à chaque lecture.
+- **Écart corrigé en route (dialogues mobiles) :** un `select` à libellé long débordait du dialogue
+  à 320 px ; nouveau test de débordement interne au dialogue.
 
 ## Étape 9 — clôture, 01/11/2026
 

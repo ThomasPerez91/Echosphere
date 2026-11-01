@@ -73,9 +73,9 @@ Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
 ## État post-merge étape 9 — 01/11/2026
 
 Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5).
-Lot courant : étape 10 Colonisation, branche `work/step-10-colonization`, Q07 ouverte : COL00/COL01
-documentaires puis arrêt avant COL02. Étape 11 non commencée, aucun merge autorisé.
+Lot courant : étape 10 Colonisation, branche `work/step-10-colonization` (PR #13). Q07 close
+avec amendements, COL02–COL11 réalisés. Étape 11 non commencée, aucun merge autorisé.
 
-Étape 10 : [Colonisation](01-game-design/colonization.md), [plan COL00–COL11](05-project/step-10-plan.md).
+Étape 10 : [Colonisation Q07](01-game-design/colonization.md), [contrat technique](03-technical/colonization-api-ui.md), [plan COL00–COL11](05-project/step-10-plan.md).
 Étape 9 : [Flottes Q09](01-game-design/fleets.md), [contrat technique](03-technical/fleets-api-ui.md), [plan F00–F11](05-project/step-9-plan.md).
 Étape 8 : [contrat System View](01-game-design/system-view.md), [projection/navigation](03-technical/system-view.md), [plan S00–S09](05-project/step-8-plan.md).

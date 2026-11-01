@@ -133,3 +133,14 @@ opérations d’Empire (stream `EmpireExploration` existant, sans renommage), m�
 handlers mono-stream sans écriture Colony. Les projections ne rattrapent plus ce stream (Galaxy
 compris) : worker et commandes seulement. Ordre principal → opérations → Research → colonies.
 [Contrat technique](fleets-api-ui.md).
+
+Étape 10 : la résolution COLONIZE reste un `FLEET_ARRIVAL` sur le stream des opérations de
+l'Empire. Après ce stream, elle prend un verrou de ligne `FOR UPDATE` sur la planète cible, jamais
+un second stream ; le rappel COLONIZE prend le même verrou.
+- **Victoire :** planète libre et aucune COLONIZE concurrente `active`, non rappelée et mieux classée
+  au rang `(due_at, started_at, id)`. Le résultat ne dépend pas de l'ordre des workers.
+- **Invariant de l'étape 9 amendé :** un handler ne modifie jamais une colonie **existante**. La
+  victoire crée une colonie neuve, avec sa timeline et son stream neufs, dans sa transaction.
+- **0 saut (même système) :** `due_at = started_at`, résolu par le worker, jamais dans la requête.
+
+[Contrat technique](colonization-api-ui.md).

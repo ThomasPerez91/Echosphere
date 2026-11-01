@@ -21,7 +21,7 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 7 | Galaxy + Exploration — intégré via PR #10 (`773e05c`) | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
 | 8 | System View — intégré via PR #11 (`e011fd3`) | Lecture des mondes et présences connues | Détails datés selon connaissances, mobile utilisable |
 | 9 | Fleets — intégré via PR #12 (`3a528b6`), Q09 close | Petit catalogue et missions asynchrones | Unités engagées une seule fois et arrivées récupérables |
-| 10 | Colonization — lot courant, Q07 à valider | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
+| 10 | Colonization — lot courant (PR #13), Q07 close | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
 | 11 | Première AI | Utility/Goals et profils simples | Services communs, décisions reproductibles, connaissance limitée |
 | 12 | Combat MVP | Résolution et rapports militaires simples | Q02/Q10 arbitrées, simulation et rejeu des résultats |
 | 13 | Relations IA minimales | Interactions compréhensibles entre civilisations | Q18 arbitrée, pas de diplomatie avancée anticipée |
@@ -142,5 +142,5 @@ System View livrée, anciens checkpoints historiques. Étape 9 ensuite menée su
 
 Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5) ; Flottes v0.4
 livrées, [plan historique](step-9-plan.md). Lot courant : étape 10 Colonisation, branche
-`work/step-10-colonization`, [plan](step-10-plan.md) : COL00/COL01 puis arrêt avant COL02 tant que
-Q07 n’est pas validée. Étape 11 IA non commencée, aucun merge autorisé.
+`work/step-10-colonization`, [plan](step-10-plan.md), PR #13 : Q07 close avec amendements, COL02–COL11
+réalisés. Étape 11 IA non commencée, aucun merge autorisé.

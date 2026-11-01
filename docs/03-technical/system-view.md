@@ -38,3 +38,8 @@ Les tests UI interceptés sont distincts de cette recette réelle ; résultats e
 
 Étape 9 : le détail transmet aussi `fleet.command` quand il est accordé, pour le seul raccourci
 « Envoyer une flotte ici » vers l’écran Flottes ; aucun état de flotte ni logique Fleet dans la vue.
+
+Étape 10 : le détail expose seulement `colonization: true|false` (le ruleset propose COLONIZE ou
+non) et transmet `colony.expand`. Un monde sans colonie propre affiche « Occupation actuelle
+inconnue », jamais « Libre », et un bouton « Coloniser… » vers le même dialogue Flottes
+(`fleets/colonize/{empire}/{système}/{planète}`).

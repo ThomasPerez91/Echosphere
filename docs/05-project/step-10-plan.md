@@ -1,6 +1,6 @@
 # Étape 10 — Colonisation et expansion
 
-**Q07 ouverte : aucun code métier Colonization avant validation explicite de la proposition COL01.**
+**Q07 close le 01/11/2026 avec amendements (et sous-décision Q04 v0.5) ; COL02–COL11 réalisés sur PR #13.**
 Base master `3a528b62079a4e177e65fdef7ce324b14784a08f` : étape 9 Flottes intégrée via PR #12, CI
 post-merge 41322146062 success (5/5), vérifiée le 01/11/2026. Branche unique
 `work/step-10-colonization`, une seule PR brouillon vers master. Aucun merge autorisé ; étape 11 IA
@@ -15,10 +15,10 @@ population, terraformation, traits planétaires complets (Q04).
 | --- | --- |
 | COL00 | Synchro post-merge (CI 41322146062 5/5), master ff-only, branche, PR brouillon, statuts canoniques, ce plan |
 | COL01 | Réalisé : audit ci-dessous, [proposition Q07](../01-game-design/colonization.md) A1–A30 et sous-décision Q04 ; **arrêt** |
-| COL02+ | Non autorisés avant validation de Q07 ; découpage proposé ci-dessous |
+| COL02–COL11 | Réalisés après validation de Q07 : voir tableau ci-dessous et [progress](../../progress.md) |
 
-Pendant COL00/COL01 : documentation, audit, proposition et schémas conceptuels seulement. Aucun
-ruleset v0.5 exécutable, classe ou mission de colonisation, migration, table, endpoint ou UI.
+Historique : COL00/COL01 sont restés documentaires (aucun ruleset exécutable, migration, table,
+endpoint ni UI) jusqu'à la validation de Q07 ; le code métier commence à COL02.
 
 ## COL01 — audit du code intégré (master `3a528b6`)
 
@@ -101,7 +101,7 @@ sont signalés comme tels.
   arbitrés avant les migrations métier ». C'est cohérent avec Q07, qui reste ouverte, et
   l'occupation courante reste `uq_colonies_planet`.
 
-## Découpage proposé après validation de Q07
+## Découpage réalisé après validation de Q07
 
 | Ticket | Travail et preuve attendue |
 | --- | --- |

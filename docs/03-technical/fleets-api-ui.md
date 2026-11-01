@@ -86,3 +86,12 @@ seulement) : production UI page fermée puis worker, SURVEY UI, GET après éch�
 worker arrêté, cartographie prouvée en base avant relecture, annulation UI d’un ordre en attente puis actif vérifiée en base, rappel DEPLOY idempotent, rappel
 refusé pendant l’analyse, CHARGER → DEPLOY → DÉCHARGER vers une seconde colonie de test au
 stockage partiel, Portal coupé, expiration de session. Résultats et CI dans [progress](../../progress.md).
+
+## Étape 10 (v0.5)
+
+- **COLONIZE :** ajoutée sur ce même moteur ([contrat](colonization-api-ui.md)).
+- **CHARGER/DÉCHARGER :** la projection donne `colonies_here`, la liste des colonies propres du
+  système filtrée par `colony.read`. Le joueur nomme toujours la colonie, sans « première colonie »
+  implicite.
+- **Flottes `SETTLED` :** une flotte dont le colonisateur a fondé une colonie est exclue des listes,
+  comme `MERGED`.

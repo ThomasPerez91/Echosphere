@@ -140,9 +140,15 @@ univers seulement), migration 0009, chronologie d’opérations d’Empire, GET 
 [technique](docs/03-technical/fleets-api-ui.md), [plan historique](docs/05-project/step-9-plan.md).
 
 **Lot courant : étape 10 Colonisation**, branche `work/step-10-colonization` depuis master
-`3a528b6`, PR brouillon unique ; [plan](docs/05-project/step-10-plan.md). Q07 ouverte : COL00
-checkpoint et COL01 audit/proposition, arrêt avant tout code métier jusqu’à validation explicite.
-Étape 11 non commencée ; Q04/Q10 ouvertes ; aucun merge.
+`3a528b6`, [PR #13](https://github.com/ThomasPerez91/Echosphere/pull/13).
+- **Décisions :** Q07 close le 01/11/2026 avec amendements, ainsi que la sous-décision Q04 v0.5.
+- **Livré par COL02–COL11 :** ruleset v0.5 (colonisateur, `colonization.json`), migration 0010,
+  `found_colony`, mission COLONIZE (y compris 0 saut), concurrence déterministe sous verrou planète,
+  `colony.expand` (13 permissions), interface et recette réelle.
+- **Références :** [règles](docs/01-game-design/colonization.md),
+  [technique](docs/03-technical/colonization-api-ui.md), [plan](docs/05-project/step-10-plan.md).
+
+Étape 11 non commencée ; Q04 (hors sous-décision) et Q10 ouvertes ; aucun merge.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.
