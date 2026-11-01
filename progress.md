@@ -4,15 +4,15 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 01/11/2026 — étape 10 COL00 : checkpoint post-merge, Q07 ouverte |
+| Champ | État au 01/11/2026 — étape 10 COL00/COL01 réalisés, Q07 proposée, arrêt avant COL02 |
 | --- | --- |
-| Objectif | Étape 10 Colonisation ; COL00 checkpoint puis COL01 audit + proposition Q07, arrêt avant COL02 |
-| Branche / base / PR | work/step-10-colonization depuis master 3a528b62079a4e177e65fdef7ce324b14784a08f (merge PR #12) ; PR brouillon unique « Étape 10 — Colonisation et expansion » ; aucun merge |
+| Objectif | Étape 10 Colonisation ; COL00 checkpoint et COL01 audit + proposition Q07 réalisés ; attendre la validation de Q07 |
+| Branche / base / PR | work/step-10-colonization depuis master 3a528b62079a4e177e65fdef7ce324b14784a08f (merge PR #12) ; PR #13 brouillon unique « Étape 10 — Colonisation et expansion » ; aucun merge |
 | Agent | Claude Code local, unique écrivain du lot |
 | État d’entrée vérifié | PR #12 fusionnée (merge 3a528b6, parents e011fd3 + f0dfd09) ; CI post-merge 41322146062 success 5/5 ; branche work/step-9-fleets conservée ; master local ff-only sur 3a528b6, arbre propre |
-| Réalisé (COL00) | Statuts canoniques (AGENTS, context, docs/README, roadmap, passation, registre) : étape 9 intégrée, étape 10 lot courant, Q07 ouverte, étape 11 non commencée ; plan step-10-plan.md ; check_docs l’exige |
+| Réalisé | COL00 : statuts canoniques (étape 9 intégrée, étape 10 lot courant, Q07 ouverte, étape 11 non commencée), plan step-10-plan.md exigé par check_docs. COL01 : audit du code intégré (step-10-plan.md), proposition Q07 A1–A30 et sous-décision Q04 (colonization.md), registre Q07 en attente |
 | Validation | check_docs, diff --check ; aucun code modifié |
-| Limites / suite | COL01 : audit en lecture et proposition Q07 ; aucun code métier Colonization avant validation explicite de Q07 |
+| Limites / suite | Arrêt : aucun code métier Colonization (ruleset v0.5, colonisateur, migration, table, mission, endpoint, UI) avant validation explicite de Q07 et de la sous-décision Q04 ; puis COL02–COL11 |
 
 ## Étape 9 — clôture, 01/11/2026
 
