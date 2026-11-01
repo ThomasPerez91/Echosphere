@@ -36,5 +36,15 @@
   "expansion_before_survey_utility": 0,
   "trace_retention": 100,
   "observation_bytes": 262144,
-  "result_bytes": 65536
+  "result_bytes": 65536,
+  "producers": {
+    "alloys": "extraction_complex",
+    "flux": "flux_reactor",
+    "data": "data_node"
+  },
+  "industry_kind": "industrial_complex",
+  "storage_kind": "logistics_center",
+  "industry_utility": 250,
+  "storage_threshold_bps": 9000,
+  "project_turn_limit": 72
 }

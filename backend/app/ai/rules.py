@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 GOALS = ("economy", "research", "exploration", "expansion", "logistics")
 PROFILES = {"economic_cautious", "expansionist"}
+# Q11 bootstrap order; never the order of a pinned dict (JSONB reorders object keys).
+BOOTSTRAP_ORDER = ("alloys", "flux", "data")
 Positive = Annotated[int, Field(strict=True, gt=0, le=1_000_000)]
 Weight = Annotated[int, Field(strict=True, ge=0, le=100)]
 
@@ -24,6 +26,12 @@ class AIRules(BaseModel):
     economy_target_per_hour: dict[str, Positive]
     research_queued_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
     expansion_before_survey_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
+    producers: dict[str, str]
+    industry_kind: str
+    storage_kind: str
+    industry_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
+    storage_threshold_bps: Annotated[int, Field(strict=True, ge=1, le=10000)]
+    project_turn_limit: Positive
     trace_retention: Positive
     observation_bytes: Positive
     result_bytes: Positive
@@ -41,6 +49,8 @@ class AIRules(BaseModel):
             raise ValueError("Candidate pages exceed the scoring budget")
         if set(self.economy_target_per_hour) != {"alloys", "flux", "data"}:
             raise ValueError("Three real resource rates required")
+        if set(self.producers) != set(BOOTSTRAP_ORDER):
+            raise ValueError("Three producer references required")
         return self
 
 

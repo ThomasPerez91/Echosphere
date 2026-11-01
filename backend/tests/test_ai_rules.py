@@ -23,12 +23,19 @@ def test_v06_only_adds_pinned_ai_configuration_and_preserves_all_gameplay():
             Ruleset.model_validate(old | {"ai": after.ai.model_dump()})
 
 
-@pytest.mark.parametrize("key,value", [
-    ("ai", None), ("ai", {}),
-    ("cadence_seconds", 601), ("candidate_limit", 129), ("fleet_page_size", True),
-    ("profiles", {"aggressive": {}}),
-    ("family_pages", {"economy": 129}), ("unknown", 1),
-])
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("ai", None),
+        ("ai", {}),
+        ("cadence_seconds", 601),
+        ("candidate_limit", 129),
+        ("fleet_page_size", True),
+        ("profiles", {"aggressive": {}}),
+        ("family_pages", {"economy": 129}),
+        ("unknown", 1),
+    ],
+)
 def test_ai_configuration_is_strict_and_bounded(key, value):
     data = load_ruleset("v0.6").model_dump()
     if key == "ai":

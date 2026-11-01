@@ -241,6 +241,9 @@ class Ruleset(StrictModel):
         if self.version == "v0.6":
             if self.ai is None:
                 raise ValueError("v0.6 requires pinned AI configuration, not an active controller")
+            ai_kinds = {*self.ai.producers.values(), self.ai.industry_kind, self.ai.storage_kind}
+            if not ai_kinds <= self.catalogue.infrastructures.keys():
+                raise ValueError("Unknown infrastructure in AI policy")
         elif self.ai is not None:
             raise ValueError("AI configuration unavailable in historical rulesets")
         c, catalogue = self.colony, self.catalogue.infrastructures
