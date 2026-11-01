@@ -8,6 +8,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.ai.rules import AIRules
 from app.colonization.rules import ColonizationRules
 from app.fleet.rules import FleetRules
 from app.galaxy.rules import ExplorationRules, GalaxyRules
@@ -178,6 +179,7 @@ class Ruleset(StrictModel):
     exploration: ExplorationRules | None = None
     fleets: FleetRules | None = None
     colonization: ColonizationRules | None = None
+    ai: AIRules | None = None
 
     @property
     def version(self) -> str:
@@ -236,6 +238,11 @@ class Ruleset(StrictModel):
                 raise ValueError("Founding package must fit the colonizer and new colony storage")
             self.fleets.order_quote(x.colonizer_class, x.colonizer_max_quantity)
             x.multiplier_bps(x.max_colonies)
+        if self.version == "v0.6":
+            if self.ai is None:
+                raise ValueError("v0.6 requires pinned AI configuration, not an active controller")
+        elif self.ai is not None:
+            raise ValueError("AI configuration unavailable in historical rulesets")
         c, catalogue = self.colony, self.catalogue.infrastructures
         if set(c.initial_stocks) != RESOURCES or set(c.speeds) != {
             "economy",
@@ -332,6 +339,8 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
             "v0.3": ("galaxy", "exploration"),
             "v0.4": ("galaxy", "fleets"),
         }.get(version, ("galaxy", "fleets", "colonization"))
+        if version == "v0.6":
+            extensions += ("ai",)
         for name in extensions:
             parts[name] = json.loads(
                 (location / "rulesets" / version / f"{name}.json").read_text(),

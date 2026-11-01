@@ -1,0 +1,40 @@
+{
+  "version": "v0.6",
+  "policy_version": "utility-goals-v1",
+  "profiles": {
+    "economic_cautious": {
+      "economy": 45,
+      "research": 20,
+      "exploration": 20,
+      "expansion": 10,
+      "logistics": 5
+    },
+    "expansionist": {
+      "economy": 25,
+      "research": 15,
+      "exploration": 20,
+      "expansion": 35,
+      "logistics": 5
+    }
+  },
+  "cadence_seconds": 600,
+  "candidate_limit": 128,
+  "fleet_page_size": 64,
+  "family_pages": {
+    "economy": 32,
+    "research": 16,
+    "exploration": 24,
+    "expansion": 32,
+    "logistics": 24
+  },
+  "economy_target_per_hour": {
+    "alloys": 800,
+    "flux": 600,
+    "data": 300
+  },
+  "research_queued_utility": 300,
+  "expansion_before_survey_utility": 0,
+  "trace_retention": 100,
+  "observation_bytes": 262144,
+  "result_bytes": 65536
+}

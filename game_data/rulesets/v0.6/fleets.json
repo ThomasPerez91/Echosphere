@@ -1,0 +1,56 @@
+{
+  "version": "v0.6",
+  "engagement_version": "fleet-v1",
+  "survey_version": "fleet-survey-v1",
+  "queue_limit": 3,
+  "max_quantity": 20,
+  "refund_queued_bps": 10000,
+  "refund_active_bps": 8000,
+  "survey_seconds": 900,
+  "survey_cost": {
+    "alloys": 0,
+    "flux": 0,
+    "data": 20
+  },
+  "classes": {
+    "probe": {
+      "name": "Sonde",
+      "cost": {
+        "alloys": 80,
+        "flux": 40,
+        "data": 40
+      },
+      "build_seconds": 1200,
+      "hop_seconds": 600,
+      "flux_per_hop": 4,
+      "cargo": 0,
+      "survey": true
+    },
+    "freighter": {
+      "name": "Cargo léger",
+      "cost": {
+        "alloys": 200,
+        "flux": 60,
+        "data": 20
+      },
+      "build_seconds": 2400,
+      "hop_seconds": 1200,
+      "flux_per_hop": 8,
+      "cargo": 500,
+      "survey": false
+    },
+    "colonizer": {
+      "name": "Colonisateur",
+      "cost": {
+        "alloys": 1200,
+        "flux": 600,
+        "data": 300
+      },
+      "build_seconds": 10800,
+      "hop_seconds": 1800,
+      "flux_per_hop": 20,
+      "cargo": 1000,
+      "survey": false
+    }
+  }
+}

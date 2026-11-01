@@ -1954,3 +1954,11 @@ suit la source validée ; vérifier la CI de sa propre tête avant toute future 
 corrigé, #4 shell responsive. Fusion #3 : 4ee81dd, CI 52 backend/3 frontend/Compose ; fusion #4 :
 54f928e, source 52 backend/10 frontend/5 Chromium/Compose. develop supprimée par l’utilisateur et absence
 vérifiée. master = intégration stable, work/... → PR master → revue/autorisation propre à chaque merge.
+
+## AI02 — ruleset v0.6 et validation stricte, 01/11/2026
+
+v0.6 copie v0.5 sans changement économique et ajoute ai.json strict : profils/poids, grille,
+budgets/familles et normalisations. Charger les données n'active aucun contrôleur. Aucun fichier
+v0.1–v0.5 modifié. Tests réels en image Python de développement, code/règles du dépôt montés :
+67 tests AI/Colony/Colonization/Fleet/Research rules réussis ; Ruff ciblé réussi. Pas encore de
+persistance ou tour IA implémenté à ce checkpoint. Suite : contrôleur exclusif et frontières.
