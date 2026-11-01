@@ -195,6 +195,11 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
   };
   const done = (result: unknown) => { if (result) { close(); onEconomyChanged?.(); } };
   const toCargo = (values: Record<string, number>) => Object.fromEntries(Object.entries(values).filter(([, v]) => v > 0));
+  /** Server rule: only a task fleet sent whole carries its cargo implicitly (no cargo field). */
+  const sentWhole = (d: Send) => {
+    const fleet = p?.fleets?.find((f) => f.id === d.fleet);
+    return fleet?.kind === "TASK" && JSON.stringify(positive(d.units)) === JSON.stringify(positive(fleet.stacks));
+  };
   const target_of = (d: Send) => d.kind === "COLONIZE" ? { target_planet_id: d.planet }
     : d.kind === "RETURN" ? {} : { destination_id: d.destination };
 
@@ -232,7 +237,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
       if (!dialog.quote || dialog.quoted !== intentOf(dialog)) return void quote(dialog);
       done(await fleets.run("/missions", {
         fleet_id: dialog.fleet, kind: dialog.kind, units: toCargo(dialog.units), ...target_of(dialog),
-        ...(Object.keys(toCargo(dialog.cargo)).length ? { cargo: toCargo(dialog.cargo) } : {}),
+        ...(!sentWhole(dialog) && Object.keys(toCargo(dialog.cargo)).length ? { cargo: toCargo(dialog.cargo) } : {}),
       }, JSON.stringify(dialog)));
     } else if (dialog.mode === "split") {
       done(await fleets.run(`/${dialog.fleet}/split`, { units: toCargo(dialog.units), cargo: toCargo(dialog.cargo) }, JSON.stringify(dialog)));
@@ -422,7 +427,10 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     const kinds: MissionKind[] = ["DEPLOY", "SURVEY", "RETURN", ...(canColonize ? ["COLONIZE" as const] : [])];
     // Worlds from Knowledge only; an own colony is excluded only when colony.read names it.
     const worlds = p.systems!.flatMap((s) => (s.planets ?? []).filter((pl) => !pl.colony_id).map((pl) => ({ ...pl, system: s })));
-    const aboard = current.kind === "GARRISON" ? dialog.cargo : Object.fromEntries(resourceKeys.map((k) => [k, Number(BigInt(current.cargo[k]) / 1_000_000n)]));
+    // Same rule as the server: only a task fleet sent whole carries its cargo implicitly; any
+    // detachment (garrison, or part of a task fleet) sends exactly the cargo chosen here.
+    const whole = sentWhole(dialog);
+    const aboard = whole ? Object.fromEntries(resourceKeys.map((k) => [k, Number(BigInt(current.cargo[k]) / 1_000_000n)])) : dialog.cargo;
     const minimum = p.colonization?.package_minimum;
     const short = !!minimum && resourceKeys.some((k) => (aboard[k] ?? 0) * 1_000_000 < Number(minimum[k]));
     return <>
@@ -444,7 +452,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           {destinations.map((s) => <option key={s.id} value={s.id}>{place(s)}</option>)}
         </select></label> : <p>Retour vers le système de la colonie d’attache.</p>}
       {dialog.kind !== "COLONIZE" && unitInputs(dialog.units, (units) => edit({ units }))}
-      {hasCargo && current.kind === "GARRISON" && cargoInputs(dialog.cargo, cargoMax, (cargo) => edit({ cargo }))}
+      {hasCargo && !whole && cargoInputs(dialog.cargo, cargoMax, (cargo) => edit({ cargo }))}
       {dialog.kind === "COLONIZE" && minimum && <p className={short ? "feedback feedback--error" : "panel-meta"}>
         Paquet de fondation (tout le cargo engagé devient le stock initial) : minimum {resourceKeys.map((k) => `${units(minimum[k])} ${resourceLabels[k]}`).join(" · ")}{short ? " — insuffisant, chargez d’abord le colonisateur." : "."}</p>}
       {dialog.error && <p role="alert" className="feedback feedback--error">{message(dialog.error)}</p>}
