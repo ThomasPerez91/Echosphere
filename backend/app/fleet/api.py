@@ -20,8 +20,10 @@ from app.colony.service import rules_for
 from app.control.models import EmpireBinding
 from app.fleet import service
 from app.fleet.models import Fleet, FleetMission, FleetReport, ShipOrder
+from app.galaxy import service as galaxy
 from app.galaxy.models import SystemKnowledge
 from app.persistence.models import Colony, Empire, Planet
+from app.simulation.scheduler import lock_stream
 
 router = APIRouter(prefix="/game/{universe_id}/fleets")
 
@@ -303,6 +305,12 @@ class Fleets(Colonies):
     def read(self, raw, universe_id, empire_id):
         with self.factory.begin() as session:
             permissions, _ = self.authorize_empire(session, raw, universe_id, empire_id)
+            if rules_for(session, universe_id).fleets is not None:
+                # Like Galaxy: lock the Empire Operations stream, never catch it up. The worker
+                # holds it while applying an event, so fleets, missions and reports are read
+                # from one consistent state (never MOVING with an already completed mission).
+                state = galaxy.state_for(session, universe_id, empire_id)
+                lock_stream(session, state.stream_id, universe_id)
             return project(session, universe_id, empire_id, permissions, self.clock.now())
 
     def act(self, raw, universe_id, empire_id, needed, operation):

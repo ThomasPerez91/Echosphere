@@ -4,15 +4,15 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 01/11/2026 — étape 9 F02–F11 réalisés, correctifs de revue (snapshots worker, 5 P2 Codex), PR #12 Ready |
+| Champ | État au 01/11/2026 — étape 9 F02–F11 réalisés, correctifs de revue (snapshots worker, 6 P2 Codex), PR #12 Ready |
 | --- | --- |
 | Objectif | Étape 9 Flottes selon Q09 close avec amendements (31/10/2026) |
 | Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 Ready (redevenue Ready seulement après CI 5/5 de la nouvelle tête) ; aucun merge |
 | Agent | Claude Code local, unique écrivain du lot |
-| Réalisé | v0.4 (sonde/cargo léger, sans expédition abstraite), migration 0009 + droits fleet.* (12), production batch, garnisons, DEPLOY/SURVEY/RETURN, rappel, cargo, division/fusion, API, écran Flottes, raccourcis Galaxy/System View, GET non mutatifs (Galaxy compris), recette réelle Fleet ; worker revalidant le snapshot accepté de chaque mission (revue indépendante) ; 5 P2 Codex corrigés (annulation UI, payeuse du devis, missions ouvertes non tronquées, raccourci multi-Empire, devis obsolètes) |
+| Réalisé | v0.4 (sonde/cargo léger, sans expédition abstraite), migration 0009 + droits fleet.* (12), production batch, garnisons, DEPLOY/SURVEY/RETURN, rappel, cargo, division/fusion, API, écran Flottes, raccourcis Galaxy/System View, GET non mutatifs (Galaxy compris), recette réelle Fleet ; worker revalidant le snapshot accepté de chaque mission (revue indépendante) ; 5 P2 Codex corrigés (annulation UI, payeuse du devis, missions ouvertes non tronquées, raccourci multi-Empire, devis obsolètes, GET Flottes verrouillant le stream d’opérations) |
 | Fichiers | app/fleet/*, colony/rules, galaxy api/service/system_view, simulation/service, main, control contrats/modèle, schéma partagé, Portal, migration 0009, game_data/v0.4, frontend fleet/*, FleetView, useFleets, App, Galaxy/System View, CSS, tests, scripts smoke/fixture/browser Fleet, CI, docs |
-| Validation locale | Game PostgreSQL 17 *_test : 332 réussis (42 Fleet, dont 15 corruptions refusées et 3 tests P2, tous en échec sur l’ancien code) ; Portal permissions 5 ; Ruff backend+scripts ; frontend lint 0 erreur, 69 Vitest, build, 27 Chromium (Flottes 4 largeurs, annulation, raccourci Galaxie vers le second Empire) ; recette Compose Fleet réelle réussie avec annulation UI vérifiée en base (images Game/frontend reconstruites) ; check_docs, diff --check |
-| CI observée | fd12fe2/e5b7ad8/de1e81c : compose-smoke KO (révision Alembic 0008 attendue par deux smokes), corrigé ; fd12fe2 frontend KO intermittent sur un test Research existant, vert ensuite. 6f1f0f7 : push 41241206679 et PR 41241210532 success 5/5, recette Fleet comprise. ea22ec8 : push 41242281646 et PR 41242286700 success 5/5. 57a9443 (snapshots) : push 41249447504 et PR 41249450317 success 5/5. dfe18d4 (3 P2) : push 41308504123 et PR 41308508497 success 5/5. Correctifs multi-Empire/devis : CI exacte consignée dans PR #12. Instabilité Vitest préexistante : un test « réponse incertaine » (Galaxy/Research/GameAccess) bloque parfois 5 s, aussi sur dfe18d4 (1/10 localement) |
+| Validation locale | Game PostgreSQL 17 *_test : 333 réussis (43 Fleet, dont 15 corruptions refusées et 4 tests P2, tous en échec sur l’ancien code) ; Portal permissions 5 ; Ruff backend+scripts ; frontend lint 0 erreur, 69 Vitest, build, 27 Chromium (Flottes 4 largeurs, annulation, raccourci Galaxie vers le second Empire) ; recette Compose Fleet réelle réussie avec annulation UI vérifiée en base (images Game/frontend reconstruites) ; check_docs, diff --check |
+| CI observée | fd12fe2/e5b7ad8/de1e81c : compose-smoke KO (révision Alembic 0008 attendue par deux smokes), corrigé ; fd12fe2 frontend KO intermittent sur un test Research existant, vert ensuite. 6f1f0f7 : push 41241206679 et PR 41241210532 success 5/5, recette Fleet comprise. ea22ec8 : push 41242281646 et PR 41242286700 success 5/5. 57a9443 (snapshots) : push 41249447504 et PR 41249450317 success 5/5. dfe18d4 (3 P2) : push 41308504123 et PR 41308508497 success 5/5. 6f0dd08 (multi-Empire/devis) : push 41313410930 et PR 41313415299 success 5/5. Verrou du GET Flottes : CI exacte consignée dans PR #12. Instabilité Vitest préexistante : un test « réponse incertaine » (Galaxy/Research/GameAccess) bloque parfois 5 s, aussi sur dfe18d4 (1/10 localement) |
 | Limites / suite | Attendre l’autorisation explicite de merge. File 3/colonie et capacité cargo garanties par le service sous verrou (non exprimables en CHECK). Chromium émulé seulement. Étape 10 non commencée |
 
 ## Revue Codex PR #12 — deux P2 frontend sur dfe18d4, 01/11/2026
@@ -23,7 +23,10 @@ projection, le préremplissage n’est consommé qu’une fois réussi, aucun fo
 de mission obsolètes : génération monotone + AbortController, signature d’intention (flotte, type,
 destination, unités, cargaison) ; une réponse tardive (succès ou erreur) est un no-op, toute
 modification/fermeture invalide le devis, Confirmer relance un devis si l’intention a changé.
-Backend inchangé. 8 Vitest (7 en échec sur l’ancien code) et 1 Chromium ajoutés.
+Backend inchangé. 8 Vitest (7 en échec sur l’ancien code) et 1 Chromium ajoutés. Revue Codex de
+6f0dd08 : un P2 backend — le GET Flottes ne verrouillait pas le stream d’opérations (projection
+possiblement incohérente pendant une arrivée, contrairement au contrat) ; verrou ajouté sans
+rattrapage comme Galaxy, test de concurrence PostgreSQL (en échec sur l’ancien code).
 
 ## Revue Codex PR #12 — trois P2 sur 57a9443, 01/11/2026
 

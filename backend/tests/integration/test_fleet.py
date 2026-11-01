@@ -2,6 +2,7 @@
 
 # ruff: noqa: F811
 from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeout
 from copy import deepcopy
 from datetime import timedelta
 from threading import Barrier
@@ -35,6 +36,7 @@ from app.main import create_app
 from app.persistence.models import Colony, Empire, Planet, Universe
 from app.research import service as research
 from app.simulation.models import ResourceBalance, ScheduledEvent
+from app.simulation.scheduler import lock_stream
 from app.simulation.service import TimeEngine
 
 pytestmark = pytest.mark.integration
@@ -988,3 +990,30 @@ def test_open_missions_are_never_hidden_by_the_history_limit(fleets):
     assert (
         post(w, f"/missions/{active}/recall", {"idempotency_key": uuid4().hex}).status_code == 200
     )
+
+
+def test_fleet_read_waits_for_the_worker_holding_the_operations_stream(fleets):
+    """A GET never interleaves with an event being applied: it waits for the stream lock."""
+    w = fleets()
+    home = built(w)
+    launch(w, home["id"], "SURVEY", detected(w))
+    w.advance(minutes=26)
+    with w.game.factory() as s:
+        stream = g.state_for(s, w.universe, w.empire).stream_id
+    holder = w.game.factory()
+    holder.begin()
+    lock_stream(holder, stream, w.universe)  # what the worker holds while applying the arrival
+    with ThreadPoolExecutor(1) as pool:
+        reading = pool.submit(view, w)
+        try:
+            with pytest.raises(FuturesTimeout):
+                reading.result(timeout=1)
+        finally:
+            holder.rollback()
+            holder.close()
+        assert reading.result(timeout=10).status_code == 200
+    assert worker(w) == 1
+    body = view(w).json()
+    moving = [f for f in body["fleets"] if f["status"] == "MOVING"]
+    open_missions = [m for m in body["missions"] if m["status"] != "completed"]
+    assert moving == open_missions == []  # one consistent state after the arrival
