@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import App from './App';
 import type { Projection } from './colony/api';
@@ -229,4 +229,28 @@ test.each([false, true])('explicit Colony deep-link targets its source and ignor
   await act(async () => { resolveOld(reply(first)); });
   expect(screen.queryByRole('heading', { name: 'Kepler Test' })).not.toBeInTheDocument();
   if (!refused) expect(screen.getByRole('heading', { name: 'Linked source' })).toBeVisible();
+});
+
+test('a colony founded meanwhile joins the existing selector on the next refresh, keeping the current one', async () => {
+  const founded = 'dddddddd-0000-4000-8000-000000000001';
+  let listings = 0;
+  const reply = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url === '/api/ready') return reply({ status: 'ready' });
+    if (url.endsWith('/session')) return reply(session);
+    if (url.endsWith('/colonies')) return reply({ colonies: [
+      { id: colonyId, name: 'Kepler Test', empire: { id: 'e', name: 'Empire Test' } },
+      ...(++listings > 1 ? [{ id: founded, name: 'Monde fondé', empire: { id: 'e', name: 'Empire Test' } }] : []),
+    ] });
+    if (url.endsWith(`/${colonyId}`)) return reply(projection());
+    throw new Error('Unexpected request');
+  }));
+  window.history.replaceState(null, '', `#universe/${universe}/colony/overview`);
+  render(<App />);
+  await screen.findByRole('heading', { name: 'Kepler Test' });
+  expect(screen.queryByRole('combobox', { name: 'Colonie' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Actualiser la colonie' }));
+  const selector = await screen.findByRole('combobox', { name: 'Colonie' });
+  expect(within(selector).getByRole('option', { name: 'Monde fondé' })).toBeInTheDocument();
+  expect(selector).toHaveValue(colonyId);
 });

@@ -175,7 +175,7 @@ try {
   const convoy = await command(page, '/missions', { fleet_id: garrison.id, kind: 'DEPLOY', destination_id: target, units: { freighter: 1 }, cargo: { alloys: 300 } });
   const freighter = convoy.body.result.fleet_id;
   p = await until(page, x => x.fleets.find(f => f.id === freighter)?.status === 'STATIONED', 'convoy arrival');
-  const preview = p.fleets.find(f => f.id === freighter).unload;
+  const preview = p.fleets.find(f => f.id === freighter).colonies_here.find(c => c.id === second).unload;
   if (preview.credited.alloys !== String(100e6) || preview.kept.alloys !== String(200e6)) throw new Error(`Unload preview: ${JSON.stringify(preview)}`);
   const unloaded = await command(page, `/${freighter}/unload`, { colony_id: second });
   if (unloaded.body.result.credited.alloys !== String(100e6) || unloaded.body.result.kept.alloys !== String(200e6)) throw new Error('Partial unload expected');
