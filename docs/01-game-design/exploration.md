@@ -1,6 +1,6 @@
 # Exploration
 
-**Statut : contrat minimal étape 7 validé explicitement le 31/10/2026 ; implémenté sur PR #10, [contrat technique](../03-technical/galaxy-api-ui.md). Q09 reste totalement ouverte.**
+**Statut : contrat minimal étape 7 validé explicitement le 31/10/2026 ; implémenté sur PR #10, [contrat technique](../03-technical/galaxy-api-ui.md). Q09 close le 31/10/2026 : ce contrat reste celui des univers v0.3 ; les univers v0.4 explorent par SURVEY de sondes ([Flottes](fleets.md)), sans expédition abstraite.**
 
 
 Explorer transforme l'incertitude en information utile : routes, systèmes, planètes, traits,

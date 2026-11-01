@@ -16,7 +16,9 @@ def project(session, known, permissions, at):
     result.update(
         server_time=at.isoformat(),
         empire_id=str(known.empire_id),
-        permissions=[p for p in ("galaxy.read", "colony.read") if p in permissions],
+        permissions=[
+            p for p in ("galaxy.read", "colony.read", "fleet.command") if p in permissions
+        ],
         routes=[],
         presences=[],
         colony_links=[],

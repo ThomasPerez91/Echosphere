@@ -149,7 +149,8 @@ def initialize_empire(session, engine, universe_id, empire_id, colony_id, at):
         if empire is None:
             raise GalaxyError("Empire not found", "empire_not_found")
         rules = rules_for(session, universe_id)
-        if rules.galaxy is None or rules.exploration is None:
+        # v0.3 explores with the abstract expedition, v0.4+ with probe Fleets: one of them.
+        if rules.galaxy is None or (rules.exploration is None and rules.fleets is None):
             raise GalaxyError("Pinned ruleset unavailable", "galaxy_unavailable")
         planet = session.get(Planet, colony.planet_id)
         physical = session.get(GalaxySystem, planet.system_id)
@@ -230,7 +231,8 @@ def project_system(session, known, colony_read=True):
     return result
 
 
-def known_path(session, universe_id, empire_id, origin_id, destination_id):
+def known_path(session, universe_id, empire_id, origin_id, destination_id, *, mapped=False):
+    """Shortest known path; the target is DETECTED (survey) or, with mapped=True, MAPPED+."""
     knowledge = {
         r.system_id: r
         for r in session.scalars(
@@ -242,8 +244,12 @@ def known_path(session, universe_id, empire_id, origin_id, destination_id):
     target = knowledge.get(destination_id)
     if target is None:
         raise GalaxyError("System not found", "system_not_found")
-    if target.state != "DETECTED":
+    if not mapped and target.state != "DETECTED":
         raise GalaxyError("System already mapped", "destination_mapped")
+    if mapped and target.state == "DETECTED":
+        raise GalaxyError("System structure unknown", "destination_unmapped")
+    if origin_id == destination_id:
+        raise GalaxyError("Fleet already at destination", "invalid_request")
     if origin_id not in knowledge or knowledge[origin_id].state == "DETECTED":
         raise GalaxyError("Source inaccessible", "destination_unreachable")
     graph = {node: [] for node in knowledge}
@@ -288,6 +294,8 @@ def start(session, engine, universe_id, empire_id, colony_id, destination_id, *,
             return existing
         if not key or len(key) > 160:
             raise GalaxyError("Invalid intent", "invalid_request")
+        if rules_for(session, universe_id).exploration is None:
+            raise GalaxyError("Abstract expedition absent from ruleset", "exploration_unavailable")
         path = known_path(
             session,
             universe_id,

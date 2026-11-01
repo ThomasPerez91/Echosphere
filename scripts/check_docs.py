@@ -79,7 +79,7 @@ REQUIRED = {
     ],
     *[
         f"docs/05-project/{name}.md"
-        for name in ("roadmap", "backlog", "releases", "open-questions", "step-8-plan")
+        for name in ("roadmap", "backlog", "releases", "open-questions", "step-8-plan", "step-9-plan")
     ],
     *[
         f"docs/adr/{name}.md"

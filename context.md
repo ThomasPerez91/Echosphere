@@ -127,14 +127,18 @@ vérifiée le 31/10/2026 ; aucune adoption silencieuse des univers v0.1.
 `773e05c0971a78719b5ba1d1baca05df3aa7fb12` ; CI post-merge 41220568486 success (5/5),
 vérifiée le 31/10/2026. Q06/Q08 et Exploration livrées ; [technique](docs/03-technical/galaxy-api-ui.md).
 
-**Lot courant : étape 8 System View**, branche `work/step-8-system-view` depuis master propre.
-S00–S09 autorisés par instruction du 31/10/2026, sans validation intermédiaire sauf vraie décision
-produit nouvelle. Vue détaillée depuis Knowledge, permission galaxy.read, données datées ; aucun
-nouveau gameplay, scheduler, droit system.read, huitième domaine ou migration sans besoin démontré.
-DETECTED reste limité, structure MAPPED durable et observations MONITORED propres seulement.
-Implémentation et recette réelle sur [PR #11](https://github.com/ThomasPerez91/Echosphere/pull/11) ;
-[contrat System View](docs/03-technical/system-view.md), validations et gate CI dans progress.
-Étape 9 non commencée ; Q04/Q07/Q09 inchangées, aucun merge autorisé.
+**Étape 8 intégrée via PR #11**, tête finale `fc1f66d`, merge
+`e011fd3127c4888db551dd3792b347b1dc31b468` ; CI post-merge 41231820338 success (5/5),
+vérifiée le 31/10/2026. System View livrée depuis Knowledge, sans migration ;
+[contrat](docs/03-technical/system-view.md), [plan historique](docs/05-project/step-8-plan.md).
+
+**Lot courant : étape 9 Flottes**, branche `work/step-9-fleets` depuis master `e011fd3`,
+[PR #12](https://github.com/ThomasPerez91/Echosphere/pull/12). Q09 close le 31/10/2026 avec
+amendements ; F02–F11 autorisés sans validation intermédiaire. Ruleset v0.4 (sondes/cargos,
+SURVEY remplace l’expédition abstraite pour les nouveaux univers seulement), migration 0009,
+chronologie d’opérations d’Empire, GET non mutatifs, droits `fleet.*` (12 au total).
+[Règles](docs/01-game-design/fleets.md), [technique](docs/03-technical/fleets-api-ui.md),
+[plan](docs/05-project/step-9-plan.md). Étape 10 non commencée ; Q04/Q07/Q10 ouvertes ; aucun merge.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.

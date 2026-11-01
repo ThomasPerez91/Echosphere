@@ -174,3 +174,10 @@ structure snapshotée et présence propre datée ; liens Colony uniquement sous 
 vérification actuelle de la colonie propre ; sans colony.read, aucun identifiant de colonie émis
 (observation `null`, Galaxy comprise) et refus client d’une réponse qui en porterait. DETECTED limité, UNKNOWN non-fuyant, aucun achèvement
 au GET détail. [Contrat System View](system-view.md).
+
+## Flottes étape 9
+
+Droits explicites `fleet.read`, `fleet.build`, `fleet.command` (plafond 12 partout), jamais
+attribués automatiquement. Flottes visibles par leur seul Empire ; inconnu/étranger/autre univers
+même 404 ; données Colony seulement sous `colony.read`, refusées côté client sinon. Aucun capteur,
+contact ou flotte étrangère. GET non mutatifs. [Contrat Flottes](fleets-api-ui.md).

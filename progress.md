@@ -4,16 +4,93 @@ Mise à jour : 2026-10-31. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 31/10/2026 — S00–S09 réalisés, revue indépendante Claude Code (S10) |
+| Champ | État au 01/11/2026 — étape 9 F02–F11 réalisés, correctifs de revue (snapshots worker, 7 P2 Codex), PR #12 Ready |
 | --- | --- |
-| Objectif | Étape 8 System View : projection depuis Knowledge existante, sans nouvelle mécanique |
-| Branche / base / PR | work/step-8-system-view ; PR #11 ; master 773e05c0971a78719b5ba1d1baca05df3aa7fb12 ; aucun merge |
-| Tête | Revue sur f2688b2 (CI 41225197685 5/5) ; présent commit = corrections de revue + passation ; CI exacte de la nouvelle tête consignée dans PR #11 |
-| Agent | Codex local S00–S09 ; Claude Code local revue indépendante et corrections S10, seul écrivain pendant la revue |
-| Réalisé | Contrats/plan, détail sans rattrapage, routes Knowledge, observations datées, liens propres colony.read ; UI interne Galaxy, retour/cadrage, deep-link Colony ; revue : identifiants Colony retirés sans colony.read, monde propre présélectionné, titres et métadonnées Galaxy repliables |
-| Fichiers S10 | app/galaxy/service.py, api.py, system_view.py ; test_system_view.py ; client/validateurs, GalaxyView, SystemView, App, CSS, fixtures/tests UI ; galaxy_browser.mjs ; docs canoniques |
-| Validation locale S10 | PostgreSQL 17 jetable *_test : 275 Game réussis (10 System View), Ruff ; frontend lint 0 erreur (warning préexistant), 51 Vitest, build, 21 Chromium ; sonde textes longs 320 px ; recette HTTPS réelle réussie avec images de l’arbre courant ; check_docs et diff --check |
-| Limites / suite | Ready seulement après CI 5/5 de la tête finale ; merge sur autorisation explicite uniquement. Portal/contrats inchangés ; zéro migration/grant/game_data ; étape 9 non commencée. Chromium émulé, aucun appareil physique/production recetté |
+| Objectif | Étape 9 Flottes selon Q09 close avec amendements (31/10/2026) |
+| Branche / base / PR | work/step-9-fleets depuis master e011fd3127c4888db551dd3792b347b1dc31b468 ; PR #12 Ready (redevenue Ready seulement après CI 5/5 de la nouvelle tête) ; aucun merge |
+| Agent | Claude Code local, unique écrivain du lot |
+| Réalisé | v0.4 (sonde/cargo léger, sans expédition abstraite), migration 0009 + droits fleet.* (12), production batch, garnisons, DEPLOY/SURVEY/RETURN, rappel, cargo, division/fusion, API, écran Flottes, raccourcis Galaxy/System View, GET non mutatifs (Galaxy compris), recette réelle Fleet ; worker revalidant le snapshot accepté de chaque mission (revue indépendante) ; 5 P2 Codex corrigés (annulation UI, payeuse du devis, missions ouvertes non tronquées, raccourci multi-Empire, devis obsolètes, GET Flottes verrouillant le stream d’opérations, phase SURVEY/rappel à l’arrivée) |
+| Fichiers | app/fleet/*, colony/rules, galaxy api/service/system_view, simulation/service, main, control contrats/modèle, schéma partagé, Portal, migration 0009, game_data/v0.4, frontend fleet/*, FleetView, useFleets, App, Galaxy/System View, CSS, tests, scripts smoke/fixture/browser Fleet, CI, docs |
+| Validation locale | Game PostgreSQL 17 *_test : 333 réussis (43 Fleet, dont 15 corruptions refusées et 4 tests P2, tous en échec sur l’ancien code) ; Portal permissions 5 ; Ruff backend+scripts ; frontend lint 0 erreur, 70 Vitest, build, 27 Chromium (Flottes 4 largeurs, annulation, raccourci Galaxie vers le second Empire) ; recette Compose Fleet réelle réussie avec annulation UI vérifiée en base (images Game/frontend reconstruites) ; check_docs, diff --check |
+| CI observée | fd12fe2/e5b7ad8/de1e81c : compose-smoke KO (révision Alembic 0008 attendue par deux smokes), corrigé ; fd12fe2 frontend KO intermittent sur un test Research existant, vert ensuite. 6f1f0f7 : push 41241206679 et PR 41241210532 success 5/5, recette Fleet comprise. ea22ec8 : push 41242281646 et PR 41242286700 success 5/5. 57a9443 (snapshots) : push 41249447504 et PR 41249450317 success 5/5. dfe18d4 (3 P2) : push 41308504123 et PR 41308508497 success 5/5. 6f0dd08 (multi-Empire/devis) : push 41313410930 et PR 41313415299 success 5/5. 2af680f (verrou GET) : push 41315650882 success 5/5, PR 41315655733 success 5/5 après relance du seul job frontend (instabilité ci-après, frontend identique à 6f0dd08). Phase à l’arrivée : CI exacte consignée dans PR #12. Instabilité Vitest préexistante : un test « réponse incertaine » (Galaxy/Research/GameAccess) bloque parfois 5 s, aussi sur dfe18d4 (1/10 localement) |
+| Limites / suite | Attendre l’autorisation explicite de merge. File 3/colonie et capacité cargo garanties par le service sous verrou (non exprimables en CHECK). Chromium émulé seulement. Étape 10 non commencée |
+
+## Revue Codex PR #12 — deux P2 frontend sur dfe18d4, 01/11/2026
+
+(1) Raccourci « Envoyer une flotte ici » vers un Empire autre que le premier lisible : `useFleets`
+lit d’abord l’Empire du raccourci s’il est accessible ; le dialogue ne s’ouvre que sur sa
+projection, le préremplissage n’est consommé qu’une fois réussi, aucun forçage ensuite. (2) Devis
+de mission obsolètes : génération monotone + AbortController, signature d’intention (flotte, type,
+destination, unités, cargaison) ; une réponse tardive (succès ou erreur) est un no-op, toute
+modification/fermeture invalide le devis, Confirmer relance un devis si l’intention a changé.
+Backend inchangé. 8 Vitest (7 en échec sur l’ancien code) et 1 Chromium ajoutés. Revue Codex de
+6f0dd08 : un P2 backend — le GET Flottes ne verrouillait pas le stream d’opérations (projection
+possiblement incohérente pendant une arrivée, contrairement au contrat) ; verrou ajouté sans
+rattrapage comme Galaxy, test de concurrence PostgreSQL (en échec sur l’ancien code). Revue de
+2af680f : un P2 frontend — écran ouvert au passage de `travel_arrival_at`, la SURVEY restait
+« en trajet » avec un rappel proposé ; minuterie locale de rendu à la prochaine arrivée (aucune
+lecture serveur), test Vitest en échec sur l’ancien code.
+
+## Revue Codex PR #12 — trois P2 sur 57a9443, 01/11/2026
+
+Fils confirmés et corrigés : (1) annulation de production refusée en 422 depuis l’UI, l’endpoint
+validant `Empty` alors que le client envoie toujours une clé d’intention — modèle `Keyed`,
+annulation idempotente par ordre (rejeu = même remboursement, aucun second crédit) ; les tests
+envoyaient `{}` et masquaient l’écart, ils utilisent désormais le corps du vrai client. (2)
+`payer_colony_id` du devis exposé sans `colony.read` — nul dans ce cas, validateur frontend qui
+refuse la fuite ; la commande reste permise sans `colony.read` (Q09). (3) la projection limitait
+toutes les missions à 30 — toutes les missions ouvertes + les 30 dernières terminées, ordre
+déterministe. Recette réelle : annulation UI d’un ordre en attente (100 %) puis actif (80 %)
+vérifiée en base, rejeu sans second remboursement.
+
+## Revue indépendante PR #12 — snapshots revalidés par le worker, 31/10/2026
+
+Anomalie Majeure relevée sur ea22ec8 : `complete_arrival()` ne revalidait que flux/clé/échéance/
+chemin, `complete_return()` repositionnait sur `mission.origin_id` sans contrôle. Correctif :
+`verify_mission_snapshot()` reconstruit le snapshot depuis le ruleset épinglé, les legs persistés
+(chaîne de routes), la composition et le cargo engagés, puis le compare exactement (version,
+engagement, type, flotte, origine, destination, chemin, stacks, cargo, vitesse, classes, coût,
+durées) ainsi que `travel_arrival_at − started_at` et `due_at − travel_arrival_at` ; flotte/
+payeuse/destination RETURN cohérentes. Appliqué à `FLEET_ARRIVAL`, au rappel (aucun
+`FLEET_RETURN` planifié depuis une mission dérivée) et à `FLEET_RETURN` (fenêtre et symétrie de
+`return_at` revérifiées, origine prise du snapshot). Toute dérive : TimelineError → rollback →
+retry puis blocked opérateur, sans rapport, téléportation ni modification de Knowledge.
+
+## F02–F10 — Flottes, 31/10/2026
+
+Q09 close avec amendements (fleets.md). Ruleset v0.4 complet = v0.3 + fleets.json, v0.1–v0.3
+intacts. Migration 0009 depuis DDL généré des modèles : invariant d’engagement en base, statut
+MERGED pour l’historique. Services : production batch sur la chronologie d’opérations d’Empire,
+annulation Q39 explicite, missions à chemin serveur snapshoté, SURVEY en deux temps cartographiant
+à due_at, rappel symétrique acquittant l’arrivée, cargo plafonné sans perte, registre
+d’idempotence. Les GET (Flottes, Galaxy, System View) ne rattrapent plus cette chronologie.
+
+Recette réelle `smoke_fleet_compose.py` réussie localement après reconstruction des images Game,
+frontend et Portal de l’arbre courant (étiquettes seules ; la pile conservée et ses volumes
+intacts) : la première exécution échouait car l’image Portal antérieure refusait les droits fleet.*.
+Anomalies corrigées en route : smokes portal/handoff attendant la révision 0008 ; course mission
+contre chargement correctement refusée (`cargo_capacity`), test corrigé.
+
+## F01 — audit et proposition Q09, 31/10/2026
+
+Lectures obligatoires faites (règles produit Flottes/Exploration/Galaxie/System View/Fog/
+Colonisation/Combat/boucle/économie/équilibrage, moteur temporel, modèle, sécurité, contrats
+Galaxy/System View, migrations, services TimeEngine/Exploration/Colony/Research, GameSession/
+permissions, placeholder Flottes). Constats clés : stream Exploration par Empire réutilisable comme
+stream d’opérations ; `speeds.fleet` déjà réservé ; aucune infrastructure orbitale ; permissions
+au plafond exact de 9 ; une seule colonie possible par Empire avant l’étape 10. Proposition :
+deux classes (sonde, cargo léger), production dédiée par colonie, garnison + flottes
+opérationnelles, missions DEPLOY/SURVEY/RETURN, transport par CHARGER/DÉCHARGER sans perte,
+rappel symétrique en temps, transition Exploration option C (v0.3 inchangé, v0.4 sondes),
+permissions fleet.read/build/command (plafond 12). Rien d’implémenté ; arrêt avant F02.
+
+## F00 — synchronisation post-merge System View, 31/10/2026
+
+GitHub vérifié avant écriture : PR #11 fermée/fusionnée, tête fc1f66d, merge e011fd3 ; CI
+post-merge 41231820338 attendue terminée puis lue success sur les cinq jobs (backend, frontend,
+portal-backend, portal-frontend, compose-smoke). Arbre local propre, master avancée en ff-only,
+branche `work/step-9-fleets` créée depuis e011fd3. Anciennes branches préservées. Statuts
+canoniques actualisés ; historique conservé.
 
 ## S10 — revue indépendante Claude Code, 31/10/2026
 

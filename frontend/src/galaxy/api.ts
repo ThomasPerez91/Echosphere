@@ -54,6 +54,8 @@ export type Option = {
 };
 export type Projection = {
   server_time: string;
+  /** Pinned exploration means: abstract expedition (v0.3) or probe Fleet SURVEY (v0.4+). */
+  exploration?: "abstract-expedition-v1" | "fleet-survey-v1";
   empire: Empire;
   permissions: string[];
   systems: KnownSystem[];

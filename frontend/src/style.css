@@ -354,3 +354,32 @@ html { scroll-padding-bottom: 24px; }
   .system-capacities > div { padding: 9px; }
   .system-world-shortcuts button { flex: 1 1 110px; }
 }
+
+/* Fleets: server state only; countdowns are local estimates, never authority. */
+.fleet-screen { display: grid; gap: var(--space); min-width: 0; overflow-wrap: anywhere; }
+.fleet-screen .panel-meta, .fleet-screen .fleet-unit { white-space: normal; overflow-wrap: anywhere; }
+.fleet-screen .panel-head { flex-wrap: wrap; gap: 8px; }
+.fleet-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; }
+.fleet-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.fleet-card h3 { margin: 0; font-size: 1rem; }
+.fleet-card p { margin: 0; }
+.fleet-stacks { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.fleet-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.fleet-actions .button { min-height: 44px; }
+.fleet-order { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 12px; align-items: end; margin-bottom: 12px; }
+.fleet-order .fleet-unit { grid-column: 1 / -1; margin: 0; font-size: .8rem; color: var(--muted); }
+.fleet-counter input { min-height: 44px; max-width: 100%; border-radius: 7px; border: 1px solid var(--border); background: #0b1726; color: #e6f2ff; padding: 0 10px; font: inherit; }
+.fleet-fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin: 12px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 10px; min-width: 0; }
+.fleet-fieldset legend { padding: 0 4px; color: var(--muted); font-size: .8rem; }
+.fleet-choice { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.fleet-choice input { width: 20px; height: 20px; }
+.fleet-quote { border-left: 3px solid var(--accent); padding: 8px 12px; margin: 12px 0; display: grid; gap: 6px; }
+.fleet-quote p { margin: 0; }
+.fleet-dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 8px; margin: 0; }
+.fleet-dates dt { color: var(--muted); font-size: .75rem; }
+.fleet-dates dd { margin: 2px 0 0; }
+.fleet-reports { padding-left: 1.1rem; display: grid; gap: 10px; }
+.dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+@media (max-width: 600px) {
+  .fleet-actions .button, .dialog-actions .button { flex: 1 1 140px; }
+}

@@ -140,12 +140,12 @@ Q05 close ; Research intégrée à master via PR #9, merge `437844e4`, CI post-m
 41152760101 success (5/5), vérifiée le 31/10/2026. Ses consignes R00–R09/branche sont historiques.
 Étape 7 intégrée via PR #10, merge `773e05c0971a78719b5ba1d1baca05df3aa7fb12` ;
 CI post-merge 41220568486 success (5/5), vérifiée le 31/10/2026. Q06/Q08 et Exploration livrées.
-Lot courant : **étape 8 System View**, branche `work/step-8-system-view` depuis master propre.
-S00–S09 autorisés sans validation intermédiaire : lecture des Knowledge existantes, galaxy.read,
-pas de huitième domaine, zéro migration préférée. DETECTED sans détail, MAPPED structure durable,
-MONITORED observations propres réellement autorisées et datées. Aucun GET ne termine une mission.
-Implémentation et recette réelle sur PR #11 ; [contrat](docs/03-technical/system-view.md),
-validation/CI de tête dans progress. Q04/Q07/Q09 hors portée ; étape 9 non commencée. Aucun merge autorisé.
+Étape 8 System View intégrée via PR #11, merge `e011fd3127c4888db551dd3792b347b1dc31b468` ;
+CI post-merge 41231820338 success (5/5), vérifiée le 31/10/2026 ; [contrat](docs/03-technical/system-view.md).
+Lot courant : **étape 9 Flottes**, branche `work/step-9-fleets` depuis master `e011fd3`, PR brouillon
+unique (PR #12). Q09 close le 31/10/2026 avec amendements, F02–F11 autorisés ;
+[règles](docs/01-game-design/fleets.md), [technique](docs/03-technical/fleets-api-ui.md).
+Exploration v0.3 inchangée, étape 10 non commencée, Q04/Q07/Q10 hors portée. Aucun merge autorisé.
 Ne pas élargir le périmètre sur la seule base de la passation.
 
 ## Invariants techniques à préserver
@@ -166,6 +166,10 @@ Ne pas élargir le périmètre sur la seule base de la passation.
 - Étape 7 : UNKNOWN = absence de Knowledge, projections Galaxy depuis la Knowledge seule ;
   Exploration abstraite 1 active/Empire sans Fleet, chemin sur routes connues, lock
   Exploration → Research → Colony. [Contrat technique](docs/03-technical/galaxy-api-ui.md).
+- Étape 9 : flottes v0.4 sur la chronologie des opérations d’Empire (stream Exploration, sans
+  renommage), handlers mono-stream sans écriture Colony ; aucun GET ne rattrape cette chronologie
+  (worker/commandes seulement). Une unité = un stack d’une flotte, une mission ouverte au plus,
+  garanti en base ; rappel symétrique pendant le trajet ; déchargement plafonné sans perte.
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède

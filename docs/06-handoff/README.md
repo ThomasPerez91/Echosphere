@@ -64,5 +64,11 @@ Plan historique : [plan étape 7](../05-project/step-7-plan.md), Q06/Exploration
 
 Étape 7 intégrée via PR #10, merge `773e05c`, CI post-merge 41220568486 success (5/5).
 Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
-Lot courant : étape 8 System View, branche `work/step-8-system-view`, S00–S09 autorisés.
-Étape 9 Fleets non commencée, aucun merge autorisé.
+Étape 8 ensuite menée sur `work/step-8-system-view` (S00–S10).
+
+## État post-merge étape 8 — 31/10/2026
+
+Étape 8 intégrée via PR #11, merge `e011fd3`, CI post-merge 41231820338 success (5/5) ;
+System View livrée, anciens checkpoints historiques. Lot courant : étape 9 Flottes, branche
+`work/step-9-fleets`, F00/F01 puis arrêt avant F02 tant que Q09 n’est pas validée.
+Étape 10 Colonisation non commencée, aucun merge autorisé.

@@ -40,6 +40,11 @@ MAPPED/MONITORED = nom, position exacte et `mapped_at` copiés au moment de la c
 (deux FK vers la Knowledge du même Empire). Les projections lisent **uniquement** ces tables : aucune
 jointure vers le monde réel pour enrichir une réponse, aucun filtrage Python/React d’un monde complet.
 
+Depuis l’étape 9, les lectures (carte, missions, détail) ne rattrapent plus le stream
+d’opérations : une expédition échue est terminée par le worker ou une commande, jamais par un GET.
+Univers v0.4 : pas d’expédition abstraite (`exploration_unavailable`), champ `exploration`
+indiquant `fleet-survey-v1`. Voir [Flottes](fleets-api-ui.md).
+
 Surveillance : seul le système contenant une colonie propre devient MONITORED (observation =
 identifiants de ses propres colonies, projetée `null` sans colony.read ; le marqueur « votre colonie »
 du client dérive de MONITORED seul, une ancienne observation MAPPED n’est plus présentée comme la

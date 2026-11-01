@@ -125,3 +125,11 @@ de l’Empire la cartographie, les voisins détectés, le rapport immuable et la
 débit, Portal ou session. Commande : principal Game → Exploration → Research → Colony, aucun chemin
 inverse. Snapshot et chemin vérifiés ; incohérence → retry/opérateur, jamais faux succès.
 [Contrat technique](galaxy-api-ui.md), [preuves](../../progress.md).
+
+## Flottes étape 9 — PR #12
+
+`SHIP_ORDER_COMPLETE`, `FLEET_ARRIVAL` et `FLEET_RETURN` s’exécutent sur la chronologie des
+opérations d’Empire (stream `EmpireExploration` existant, sans renommage), même TimeEngine/worker,
+handlers mono-stream sans écriture Colony. Les projections ne rattrapent plus ce stream (Galaxy
+compris) : worker et commandes seulement. Ordre principal → opérations → Research → colonies.
+[Contrat technique](fleets-api-ui.md).

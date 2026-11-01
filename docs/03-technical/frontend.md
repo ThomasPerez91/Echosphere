@@ -65,3 +65,7 @@ Landing publique → inscription/login → compte/lobby/liste des parties → cr
 Universe → Game UI. Compte global multi-parties, handoff vers session Game autonome. L’application
 actuelle est le shell Game ; elle n’implémente ni ces écrans Portal ni une authentification.
 L’API/UI Colony interactive est désormais 5D après contrats 5B et fondation 5C selon cadrage.
+
+Étape 9 : écran « Flottes » réel ([contrat](fleets-api-ui.md)) dans l’entrée existante, hook à
+générations/abort, une commande à la fois, clé réutilisée après issue inconnue, relectures passives
+aux échéances ; sous-route `fleets/send/{empire}/{system}` pour le raccourci Galaxy/System View.

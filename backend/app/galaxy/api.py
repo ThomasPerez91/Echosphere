@@ -87,7 +87,8 @@ class Galaxy(Colonies):
             )
         )
         sources, options = [], []
-        if "colony.read" in permissions:
+        # Abstract expedition quotes only where the pinned ruleset has it (v0.3).
+        if "colony.read" in permissions and rules_for(session, universe_id).exploration:
             research.catch_up(session, self.engine, universe_id, empire_id, at)
             colonies = list(
                 session.scalars(
@@ -141,8 +142,12 @@ class Galaxy(Colonies):
                             "reason": reason,
                         }
                     )
+        pinned = rules_for(session, universe_id)
         return {
             "server_time": at.isoformat(),
+            "exploration": pinned.exploration.engagement_version
+            if pinned.exploration
+            else pinned.fleets.survey_version,
             "empire": {"id": str(empire_id), "name": session.get(Empire, empire_id).name},
             "permissions": permissions,
             "systems": [
@@ -200,16 +205,17 @@ class Galaxy(Colonies):
                 "exploration.read" if missions else "galaxy.read",
             )
             at = self.clock.now()
+            # Projections never catch up the Empire Operations stream: an overdue expedition,
+            # production or Fleet movement is applied by the worker or a command, never a GET.
+            # The lock only serializes the monitoring refresh with the handlers' Knowledge writes.
+            state = service.state_for(session, universe_id, empire_id)
+            lock_stream(session, state.stream_id, universe_id)
             if system_id is not None:
-                # System View reads persisted knowledge only, even when a mission is overdue.
-                state = service.state_for(session, universe_id, empire_id)
-                lock_stream(session, state.stream_id, universe_id)
                 known = session.get(SystemKnowledge, (empire_id, system_id))
                 if known is None or known.universe_id != universe_id:
                     raise AccessError("system_not_found", 404)
                 service.refresh_monitoring(session, universe_id, empire_id, at)
                 return system_view.project(session, known, permissions, at)
-            service.catch_up(session, self.engine, universe_id, empire_id, at)
             if missions:
                 return {
                     "missions": self.missions_projection(

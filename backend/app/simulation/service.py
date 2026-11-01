@@ -156,6 +156,7 @@ class TimeEngine(Scheduler):
 
     def __init__(self, *args, handlers=None, **kwargs):
         from app.colony.service import complete_construction
+        from app.fleet.service import complete_arrival, complete_order, complete_return
         from app.galaxy.service import complete_exploration
         from app.research.service import complete_research
 
@@ -168,6 +169,14 @@ class TimeEngine(Scheduler):
                 "CONSTRUCTION_COMPLETE": complete_construction,
                 "RESEARCH_COMPLETE": complete_research,
                 "EXPLORATION_COMPLETE": lambda session, event: complete_exploration(
+                    session, event, self.clock.now()
+                ),
+                # Empire Operations timeline: production and Fleet movements, one stream each.
+                "SHIP_ORDER_COMPLETE": complete_order,
+                "FLEET_ARRIVAL": lambda session, event: complete_arrival(
+                    session, event, self.clock.now()
+                ),
+                "FLEET_RETURN": lambda session, event: complete_return(
                     session, event, self.clock.now()
                 ),
             },
