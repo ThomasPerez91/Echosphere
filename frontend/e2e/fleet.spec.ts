@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { empire, fleets, garrison, near, session, universe } from '../tests/fleetFixture';
+import { empire, fleets, garrison, near, order, session, universe } from '../tests/fleetFixture';
 import { projection } from '../tests/galaxyFixture';
 
 for (const width of [320, 390, 768, 1440]) {
@@ -59,3 +59,30 @@ for (const width of [320, 390, 768, 1440]) {
     await context.close();
   });
 }
+
+test('cancel production from the UI: Keyed body as validated by the Game API, then server state', async ({ page }) => {
+  await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));
+  await page.route(`**/api/game/${universe}/session`, r => r.fulfill({ json: session }));
+  await page.route(`**/api/game/${universe}/colonies`, r => r.fulfill({ json: { colonies: [] } }));
+  await page.route(`**/api/game/${universe}/fleets`, r => r.fulfill({ json: { empires: [{ id: empire, name: 'Empire test' }] } }));
+  await page.route(`**/api/game/${universe}/fleets/${empire}`, r => r.fulfill({ json: fleets() }));
+  const bodies: unknown[] = [];
+  await page.route(`**/api/game/${universe}/fleets/${empire}/orders/${order}/cancel`, r => {
+    const body = r.request().postDataJSON();
+    bodies.push(body);
+    // Mirrors the backend Keyed model (extra="forbid"): anything else is the real 422.
+    const keyed = Object.keys(body).join() === 'idempotency_key' && /^[A-Za-z0-9_-]{16,64}$/.test(body.idempotency_key);
+    const after = fleets();
+    after.colonies![0].orders = [];
+    return keyed
+      ? r.fulfill({ json: { result: { order_id: order, refunded: { alloys: '100000000', flux: '64000000', data: '64000000' } }, fleets: after } })
+      : r.fulfill({ status: 422, json: { error: { code: 'invalid_request' } } });
+  });
+  await page.goto(`/#universe/${universe}/fleets`);
+  await page.getByRole('button', { name: 'Annuler…' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Annuler la production' });
+  await dialog.getByRole('button', { name: 'Confirmer' }).click();
+  await expect(page.getByText('Ordre accepté par le serveur.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Annuler…' })).toHaveCount(0);
+  expect(bodies).toHaveLength(1);
+});

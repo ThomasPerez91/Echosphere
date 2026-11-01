@@ -2,8 +2,8 @@ import { StrictMode } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import { FleetView } from "./components/FleetView";
-import { validFleets } from "./fleet/api";
-import { colony, empire, fleets, garrison, mission, near, order, surveying, universe } from "../tests/fleetFixture";
+import { ApiError, previewMission, validFleets } from "./fleet/api";
+import { colony, done, empire, fleets, garrison, mission, near, order, surveying, universe } from "../tests/fleetFixture";
 
 const json = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body });
 beforeAll(() => {
@@ -115,4 +115,52 @@ test("validator refuses Colony data without colony.read and named DETECTED signa
   setup((url) => url.endsWith("/fleets") ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(leak));
   await waitFor(() => expect(screen.getByRole("alert")).toBeVisible());
   expect(screen.queryByText("Hidden")).not.toBeInTheDocument();
+});
+
+test("cancelling production sends the backend intention contract and is confirmed by the server", async () => {
+  const { calls } = setup((url, init) => {
+    if (init?.method === "POST") return json({ result: { order_id: order, refunded: { alloys: "100000000", flux: "64000000", data: "64000000" } },
+      fleets: { ...fleets(), colonies: [{ ...fleets().colonies![0], orders: [] }] } });
+    return base(url);
+  });
+  fireEvent.click(await screen.findByRole("button", { name: "Annuler…" }));
+  const dialog = screen.getByRole("dialog");
+  expect(within(dialog).getByText(/28 perdus définitivement/)).toBeVisible();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Confirmer" }));
+  await screen.findByText("Ordre accepté par le serveur.");
+  const [url, init] = calls().find(([, i]) => i?.method === "POST")!;
+  expect(url).toMatch(new RegExp(`/fleets/${empire}/orders/${order}/cancel$`));
+  // Exactly the Keyed body the Game API accepts (extra fields are refused there).
+  const body = JSON.parse(String(init!.body));
+  expect(Object.keys(body)).toEqual(["idempotency_key"]);
+  expect(body.idempotency_key).toMatch(/^[A-Za-z0-9_-]{16,64}$/);
+  expect(screen.queryByRole("button", { name: "Annuler…" })).not.toBeInTheDocument();
+});
+
+test("mission quote refuses a paying colony without colony.read", async () => {
+  const quote = (payer: string | null) => ({
+    kind: "DEPLOY", destination_id: near, hops: 1, cost: { alloys: "0", flux: "4000000", data: "0" },
+    travel_us: "600000000", survey_us: "0", travel_arrival_at: "2099-01-01T00:10:00Z",
+    due_at: "2099-01-01T00:10:00Z", payer_colony_id: payer, affordable: true,
+  });
+  const ask = (payer: string | null, colonyRead: boolean) => {
+    vi.stubGlobal("fetch", vi.fn(async () => json(quote(payer))));
+    return previewMission(universe, empire, "a".repeat(64), { fleet_id: garrison, kind: "DEPLOY", destination_id: near, units: { probe: 1 } },
+      colonyRead, new AbortController().signal);
+  };
+  expect((await ask(colony, true)).payer_colony_id).toBe(colony);
+  expect((await ask(null, false)).payer_colony_id).toBeNull();
+  await expect(ask(colony, false)).rejects.toBeInstanceOf(ApiError);
+});
+
+test("an old open mission listed after 30 completed ones stays in flight with its recall", async () => {
+  const history = Array.from({ length: 30 }, (_, i) => ({
+    ...fleets().missions!.find((m) => m.id === done)!, id: `aaaaaaaa-0000-4000-8000-${String(100 + i).padStart(12, "0")}`,
+  }));
+  const old = surveying("2098-12-01T00:00:00Z");
+  setup((url) => url.endsWith("/fleets") ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(fleets([...history, old])));
+  const moving = (await screen.findByRole("heading", { name: "Flottes en mission" })).closest("section")!;
+  const card = within(moving).getByText("Flotte 2", { selector: "h3" }).closest("li")!;
+  expect(within(card).getByRole("button", { name: "Rappeler…" })).toBeVisible();
+  expect(mission).toBe(old.id);
 });

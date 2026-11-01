@@ -10,11 +10,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app.access.http import cookie_name
 from app.access.service import AccessError
-from app.colony.api import Colonies, Empty, bootstrap, call, command
+from app.colony.api import Colonies, bootstrap, call, command
 from app.colony.projection import amounts
 from app.colony.service import rules_for
 from app.control.models import EmpireBinding
@@ -214,11 +214,21 @@ def project(session, universe_id, empire_id, permissions, at):
                 else None,
             }
         )
-    missions = session.scalars(
-        select(FleetMission)
-        .where(FleetMission.empire_id == empire_id)
+    # Every open mission (in-flight list, recall, deadlines) plus the 30 latest completed ones:
+    # the history limit never hides a fleet still travelling.
+    recent = (
+        select(FleetMission.id)
+        .where(FleetMission.empire_id == empire_id, FleetMission.status == "completed")
         .order_by(FleetMission.started_at.desc(), FleetMission.id)
         .limit(30)
+    )
+    missions = session.scalars(
+        select(FleetMission)
+        .where(
+            FleetMission.empire_id == empire_id,
+            or_(FleetMission.status.in_(("active", "returning")), FleetMission.id.in_(recent)),
+        )
+        .order_by(FleetMission.started_at.desc(), FleetMission.id)
     )
     known = session.scalars(
         select(SystemKnowledge)
@@ -341,7 +351,7 @@ class Fleets(Colonies):
 
     def preview(self, raw, universe_id, empire_id, body: Plan):
         with self.factory.begin() as session:
-            self.authorize_empire(
+            permissions, _ = self.authorize_empire(
                 session, raw, universe_id, empire_id, self.mission_rights(body.kind)
             )
             quote = service.preview(
@@ -354,6 +364,9 @@ class Fleets(Colonies):
                 body.units,
                 self.clock.now(),
             )
+            if "colony.read" not in permissions:
+                # Commanding stays allowed without colony.read; the paying colony is not shown.
+                quote["payer_colony_id"] = None
             return {**quote, "cost": amounts(quote["cost"])} | {
                 k: str(quote[k]) for k in ("travel_us", "survey_us")
             }
@@ -485,7 +498,8 @@ async def order(universe_id: UUID, empire_id: UUID, request: Request):
 
 @router.post("/{empire_id}/orders/{order_id}/cancel")
 async def cancel(universe_id: UUID, empire_id: UUID, order_id: UUID, request: Request):
-    raw, _ = await command(request, universe_id, Empty)
+    # Same intention contract as every Fleet command; cancelling is idempotent by order itself.
+    raw, _ = await command(request, universe_id, Keyed)
     return await call(Fleets(request.app.state).cancel, raw, universe_id, empire_id, order_id)
 
 

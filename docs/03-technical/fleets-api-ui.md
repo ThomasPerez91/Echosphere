@@ -58,13 +58,14 @@ stockage libre et laisse le surplus à bord ; division/fusion stationnées, capa
 ## API
 
 Préfixe `/game/{universe}/fleets` : `GET` (Empires lisibles), `GET /{empire}` (catalogue, files
-avec preview d’annulation, flottes, missions récentes et rapports, systèmes connus),
+avec preview d’annulation, flottes, toutes les missions ouvertes + les 30 dernières terminées,
+rapports, systèmes connus),
 `POST /{empire}/orders`, `/orders/{id}/cancel`, `/missions/preview` (devis sans mutation),
 `/missions`, `/missions/{id}/recall`, `/{fleet}/split`, `/merge`, `/load`, `/unload`.
-Toute commande : GameSession, binding, CSRF/Origin, clé d’intention par membership, activité
+Toute commande, annulation comprise (idempotente par ordre) : GameSession, binding, CSRF/Origin, clé d’intention par membership, activité
 explicite, aucun appel Portal. Droits : lecture `fleet.read` ; production + `fleet.build` +
 `colony.read` ; commandes + `fleet.command` (SURVEY + `galaxy.read`, cargo + `colony.read`).
-Sans `colony.read` : aucune colonie, attache, payeuse ni preview de cargo transmise. Flottes
+Sans `colony.read` : aucune colonie, attache, payeuse (devis compris, `payer_colony_id` nul) ni preview de cargo transmise. Flottes
 étrangères/inconnues/autre univers : même 404 ; systèmes DETECTED listés seulement avec `galaxy.read`.
 
 ## UI
@@ -80,6 +81,6 @@ cibles 44 px, clavier et focus, aucune donnée inventée.
 
 `scripts/smoke_fleet_compose.py` (projet, bases et volumes `*_test` jetables, durées de test
 seulement) : production UI page fermée puis worker, SURVEY UI, GET après échéance sans effet avec
-worker arrêté, cartographie prouvée en base avant relecture, rappel DEPLOY idempotent, rappel
+worker arrêté, cartographie prouvée en base avant relecture, annulation UI d’un ordre en attente puis actif vérifiée en base, rappel DEPLOY idempotent, rappel
 refusé pendant l’analyse, CHARGER → DEPLOY → DÉCHARGER vers une seconde colonie de test au
 stockage partiel, Portal coupé, expiration de session. Résultats et CI dans [progress](../../progress.md).

@@ -80,6 +80,36 @@ try {
 
   // 2. SURVEY launched through the UI while the worker is stopped: GETs past due change nothing.
   await marker('stop-worker'); await waitMarker('worker-stopped');
+  // Production cancelled through the real UI (no interception): queued then active order.
+  const production = page.locator('ol.fleet-list > li');
+  for (const quantity of ['10', '1']) {
+    await page.getByRole('combobox', { name: 'Classe' }).selectOption('probe');
+    await page.getByRole('spinbutton', { name: 'Quantité' }).fill(quantity);
+    await page.getByRole('button', { name: 'Commander' }).click();
+    await page.getByText('Ordre accepté par le serveur.').waitFor();
+    await page.getByRole('button', { name: 'Masquer' }).click();
+  }
+  p = (await read(page)).body;
+  const orders = Object.fromEntries(p.colonies[0].orders.map(o => [o.status, o]));
+  if (!orders.active || !orders.queued) throw new Error(`Active and queued orders expected: ${JSON.stringify(p.colonies[0].orders)}`);
+  for (const o of [orders.queued, orders.active]) {
+    await production.filter({ has: page.getByText(`${o.quantity} × Sonde`, { exact: true }) })
+      .getByRole('button', { name: 'Annuler…' }).click();
+    await page.getByRole('dialog', { name: 'Annuler la production' }).getByRole('button', { name: 'Confirmer' }).click();
+    await page.getByText('Ordre accepté par le serveur.').waitFor();
+    await page.getByRole('button', { name: 'Masquer' }).click();
+  }
+  await page.getByText('Aucune production en cours.').waitFor();
+  const dataStock = async () => BigInt((await read(page, `/api/game/${universe}/colonies/${colony}`)).body.resources.find(r => r.resource === 'data').stock);
+  const before = await dataStock();
+  const cancelReplay = await command(page, `/orders/${orders.queued.id}/cancel`, {});
+  const refunded = cancelReplay.body.result?.refunded ?? {};
+  if (cancelReplay.status !== 200 || refunded.alloys !== '80000000' || refunded.flux !== '40000000' || refunded.data !== '40000000')
+    throw new Error(`Cancel replay must return the single 100 % refund: ${JSON.stringify(cancelReplay.body)}`);
+  if (await dataStock() - before >= 1000000n) throw new Error('A cancel replay must never refund twice');
+  await marker('orders-cancelled', JSON.stringify({ queued: orders.queued.id, active: orders.active.id }));
+  await waitMarker('orders-checked');
+  console.log('Fleet: queued and active production cancelled through the UI, replay refunds nothing more');
   await garrisonCard.getByRole('button', { name: 'Envoyer…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Envoyer une flotte' });
   await dialog.getByRole('radio', { name: 'Cartographie' }).check();

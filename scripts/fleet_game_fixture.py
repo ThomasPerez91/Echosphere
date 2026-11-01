@@ -15,7 +15,14 @@ from uuid import UUID
 from app.colony.rules import Ruleset, load_ruleset
 from app.colony.service import configure_universe, initialize_colony
 from app.core.config import Settings
-from app.fleet.models import Fleet, FleetCargo, FleetMission, FleetReport, FleetStack
+from app.fleet.models import (
+    Fleet,
+    FleetCargo,
+    FleetMission,
+    FleetReport,
+    FleetStack,
+    ShipOrder,
+)
 from app.galaxy import service as galaxy
 from app.galaxy.models import GalaxyPlanet, SystemKnowledge
 from app.galaxy.world import generate_world
@@ -153,6 +160,23 @@ def state(empire_id):
             )
     engine.dispose()
     print(json.dumps({"fleets": fleets, "missions": missions}))
+
+
+def order(order_id):
+    """Durable cancellation proof: status, refund and the acknowledged production event."""
+    engine, sessions = factory()
+    with sessions() as session:
+        row = session.get(ShipOrder, UUID(order_id))
+        event = session.scalar(
+            select(ScheduledEvent).where(ScheduledEvent.idempotency_key == f"ship-order:{row.id}")
+        )
+        result = {
+            "status": row.status,
+            "refunded": row.refunded,
+            "event": [event.status, event.error_code] if event else None,
+        }
+    engine.dispose()
+    print(json.dumps(result))
 
 
 def stock(colony_id, resource):

@@ -82,7 +82,7 @@ export type Quote = {
   survey_us: string;
   travel_arrival_at: string;
   due_at: string;
-  payer_colony_id: string;
+  payer_colony_id: string | null;
   affordable: boolean;
 };
 
@@ -196,11 +196,14 @@ export async function fleetCommand(universe: string, empire: string, csrf: strin
 
 export type Plan = { fleet_id: string; kind: MissionKind; destination_id?: string; units: Record<string, number> };
 
-export async function previewMission(universe: string, empire: string, csrf: string, plan: Plan, signal: AbortSignal) {
+/** Quote of a launch. A paying colony without colony.read is a leak, refused rather than hidden. */
+export async function previewMission(universe: string, empire: string, csrf: string, plan: Plan, colonyRead: boolean,
+  signal: AbortSignal) {
   const body = await post(universe, empire, "/missions/preview", csrf, plan, signal);
   if (!object(body) || !id(body.destination_id) || !integer(body.hops) || !amounts(body.cost) ||
     !micro(body.travel_us) || !micro(body.survey_us) || !date(body.travel_arrival_at) || !date(body.due_at) ||
-    typeof body.affordable !== "boolean")
+    typeof body.affordable !== "boolean" ||
+    !(body.payer_colony_id === null || (colonyRead && id(body.payer_colony_id))))
     throw new ApiError("invalid_response", 0);
   return body as Quote;
 }

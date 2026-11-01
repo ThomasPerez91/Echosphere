@@ -129,7 +129,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
       const q = await previewMission(universe, p.empire.id, csrf, {
         fleet_id: d.fleet, kind: d.kind, units: toCargo(d.units),
         ...(d.kind === "RETURN" ? {} : { destination_id: d.destination }),
-      }, new AbortController().signal);
+      }, p.permissions.includes("colony.read"), new AbortController().signal);
       setDialog({ ...d, quote: q, error: null });
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) onSessionLost();

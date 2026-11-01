@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from test_colony_api import Clock, World, game, set_access  # noqa: F401
 from test_galaxy import galaxy, read  # noqa: F401
 from test_galaxy import send as explore
-from test_game_sessions import enter
+from test_game_sessions import enter, ticket
 
 from app.access.http import cookie_name
 from app.colony.rules import load_ruleset
@@ -129,6 +129,11 @@ def launch(w, fleet, kind, destination=None, units=None, key=None, cargo=None):
     return post(w, "/missions", body)
 
 
+def cancel(w, order_id, key=None):
+    """Same body as the real client (useFleets.run): always an intention key."""
+    return post(w, f"/orders/{order_id}/cancel", {"idempotency_key": key or uuid4().hex})
+
+
 def worker(w, limit=20):
     """Drain due events like the real worker; returns how many were processed."""
     engine, count = TimeEngine(w.game.factory, Clock(w.game)), 0
@@ -232,7 +237,7 @@ def test_cancellation_queued_100_active_80_capped_and_no_partial_ship(fleets):
     queued = order(w, "probe", 2).json()["result"]["order_id"]
     last = order(w, "probe", 1).json()["result"]["order_id"]
     flux = stocks(w)["flux"]
-    assert post(w, f"/orders/{last}/cancel", {}).status_code == 200
+    assert cancel(w, last).status_code == 200
     assert stocks(w)["flux"] - flux == 40 * M  # still queued: 100 %
     with w.game.factory.begin() as s:
         s.get(ResourceBalance, (w.colony, "alloys")).stock = 9_500 * M  # 500 free
@@ -243,12 +248,10 @@ def test_cancellation_queued_100_active_80_capped_and_no_partial_ship(fleets):
     assert preview["recoverable"]["alloys"] == str(500 * M) and preview["lost"]["alloys"] == str(
         300 * M
     )
-    cancelled = post(w, f"/orders/{active}/cancel", {}).json()
+    cancelled = cancel(w, active).json()
     assert cancelled["result"]["refunded"]["alloys"] == str(500 * M)
     assert stocks(w)["alloys"] == 10_000 * M
-    assert post(w, f"/orders/{active}/cancel", {}).json()["result"]["refunded"]["alloys"] == str(
-        500 * M
-    )
+    assert cancel(w, active).json()["result"]["refunded"]["alloys"] == str(500 * M)
     with w.game.factory() as s:
         event = s.scalar(
             select(ScheduledEvent).where(ScheduledEvent.idempotency_key == f"ship-order:{active}")
@@ -256,7 +259,7 @@ def test_cancellation_queued_100_active_80_capped_and_no_partial_ship(fleets):
         assert (event.status, event.error_code) == ("completed", "cancelled")
         assert s.get(ShipOrder, UUID(queued)).status == "active"  # promoted at the same instant
     flux = stocks(w)["flux"]
-    assert post(w, f"/orders/{queued}/cancel", {}).status_code == 200
+    assert cancel(w, queued).status_code == 200
     assert stocks(w)["flux"] - flux == 64 * M  # promoted to active: 80 %
     w.advance(hours=10)
     worker(w)
@@ -409,6 +412,25 @@ def test_transport_unloads_up_to_storage_and_keeps_surplus_aboard(fleets):
     )
 
 
+def rebind(w, rights, revision=2):
+    """New binding revision and a fresh GameSession carrying exactly these rights."""
+    set_access(
+        w.game,
+        w.user,
+        w.universe,
+        w.membership,
+        [{"empire_id": str(w.empire), "permissions": rights}],
+        revision=revision,
+        epoch=revision,
+    )
+    encoded, pre, _ = ticket(
+        w.game, (w.user, w.universe, w.membership), revision=revision, access_epoch=revision
+    )
+    raw, _ = w.game.exchange(encoded, pre, None, w.universe)
+    w.raw = raw
+    w.client.cookies.set(cookie_name(w.universe), raw)
+
+
 @pytest.mark.parametrize(
     "rights,call,code",
     [
@@ -424,21 +446,7 @@ def test_permissions_are_explicit(fleets, rights, call, code):
     fleet_id = uuid4()
     if call != "read" and call != "order":
         fleet_id = built(w)["id"]
-    set_access(
-        w.game,
-        w.user,
-        w.universe,
-        w.membership,
-        [{"empire_id": str(w.empire), "permissions": rights}],
-        revision=2,
-        epoch=2,
-    )
-    from test_game_sessions import ticket
-
-    encoded, pre, _ = ticket(w.game, (w.user, w.universe, w.membership), revision=2, access_epoch=2)
-    raw, _ = w.game.exchange(encoded, pre, None, w.universe)
-    w.raw = raw
-    w.client.cookies.set(cookie_name(w.universe), raw)
+    rebind(w, rights)
     response = {
         "read": lambda: view(w),
         "order": lambda: order(w),
@@ -899,3 +907,84 @@ def test_recall_of_a_drifted_mission_schedules_no_return(fleets):
             select(ScheduledEvent).where(ScheduledEvent.idempotency_key.like(f"%{mission_id}"))
         ).all()
         assert [(e.event_type, e.status) for e in events] == [("FLEET_ARRIVAL", "pending")]
+
+
+def test_cancel_takes_the_client_intention_key_and_never_refunds_twice(fleets):
+    w = fleets()
+    order(w, "freighter", 1)
+    queued = order(w, "probe", 1).json()["result"]["order_id"]
+    assert w.read().status_code == 200  # settle the colony at this instant first
+    flux, key = stocks(w)["flux"], uuid4().hex
+    first = cancel(w, queued, key)
+    assert first.status_code == 200
+    assert first.json()["result"] == {
+        "order_id": queued,
+        "refunded": {"alloys": str(80 * M), "data": str(40 * M), "flux": str(40 * M)},
+    }
+    assert cancel(w, queued, key).json()["result"] == first.json()["result"]
+    assert cancel(w, queued).json()["result"] == first.json()["result"]
+    assert stocks(w)["flux"] - flux == 40 * M  # refunded exactly once
+    assert post(w, f"/orders/{queued}/cancel", {}).status_code == 422  # the key is the contract
+    with w.game.factory() as s:
+        assert s.get(ShipOrder, UUID(queued)).status == "cancelled"
+
+
+def test_mission_preview_hides_the_paying_colony_without_colony_read(fleets):
+    w = fleets()
+    probe, mapped = surveyed(w)
+    home = next(s["id"] for s in view(w).json()["systems"] if s["state"] == "MONITORED")
+    plan = {"fleet_id": probe, "kind": "DEPLOY", "destination_id": home, "units": {"probe": 1}}
+    shown = post(w, "/missions/preview", plan)
+    assert shown.status_code == 200 and shown.json()["payer_colony_id"] == str(w.colony)
+    rebind(w, ["fleet.read", "fleet.command"])
+    for body in (plan, {"fleet_id": probe, "kind": "RETURN", "units": {"probe": 1}}):
+        hidden = post(w, "/missions/preview", body)
+        assert hidden.status_code == 200 and hidden.json()["payer_colony_id"] is None
+        assert hidden.json()["hops"] == 1  # the command itself stays allowed
+    assert str(w.colony) not in view(w).text
+
+
+def test_open_missions_are_never_hidden_by_the_history_limit(fleets):
+    w = fleets()
+    home = built(w, "probe", 2)
+    target = detected(w)
+    active = launch(w, home["id"], "SURVEY", target).json()["result"]["mission_id"]
+    w.advance(minutes=1)
+    recalled = launch(w, home["id"], "SURVEY", target).json()["result"]["mission_id"]
+    w.advance(minutes=1)
+    assert (
+        post(w, f"/missions/{recalled}/recall", {"idempotency_key": uuid4().hex}).status_code == 200
+    )
+    with w.game.factory.begin() as s:
+        old = s.get(FleetMission, UUID(active))
+        for i in range(31):  # newer history: 31 completed missions started after both
+            start = old.started_at + timedelta(minutes=5, seconds=i)
+            s.add(
+                FleetMission(
+                    empire_id=w.empire,
+                    universe_id=w.universe,
+                    fleet_id=UUID(home["id"]),
+                    kind="DEPLOY",
+                    status="completed",
+                    origin_id=old.origin_id,
+                    destination_id=old.destination_id,
+                    payer_colony_id=w.colony,
+                    idempotency_key=uuid4().hex,
+                    snapshot=old.snapshot,
+                    started_at=start,
+                    travel_arrival_at=start + timedelta(seconds=1),
+                    due_at=start + timedelta(seconds=1),
+                    completed_at=start + timedelta(seconds=1),
+                )
+            )
+    missions = view(w).json()["missions"]
+    statuses = {m["id"]: m["status"] for m in missions}
+    assert statuses[active] == "active" and statuses[recalled] == "returning"
+    assert sum(1 for m in missions if m["status"] == "completed") == 30
+    assert len(missions) == 32
+    starts = [(m["started_at"], m["id"]) for m in missions]
+    assert [s for s, _ in starts] == sorted((s for s, _ in starts), reverse=True)
+    assert [m["id"] for m in missions[-2:]] == [recalled, active]  # oldest, still listed
+    assert (
+        post(w, f"/missions/{active}/recall", {"idempotency_key": uuid4().hex}).status_code == 200
+    )

@@ -16,6 +16,7 @@ from smoke_galaxy_compose import PORTAL_ACCESS, PORTAL_FIXTURE
 from smoke_handoff_compose import ROOT, redacted, run
 
 RIGHTS = "['colony.read','galaxy.read','fleet.read','fleet.build','fleet.command']"
+M = 1_000_000
 
 
 def main():
@@ -139,6 +140,8 @@ def main():
                 "produced",
                 "stop-worker",
                 "worker-stopped",
+                "orders-cancelled",
+                "orders-checked",
                 "gets-checked",
                 "surveyed",
                 "second-colony",
@@ -190,6 +193,23 @@ def main():
                         run(*compose, "stop", "--timeout", "5", "worker", env=environment)
                         (artifacts / "worker-stopped").write_text("ready")
                         done.add("stop")
+                    if (artifacts / "orders-cancelled").exists() and "orders" not in done:
+                        ids = json.loads((artifacts / "orders-cancelled").read_text())
+                        queued = json.loads(game(f"order({ids['queued']!r})"))
+                        active = json.loads(game(f"order({ids['active']!r})"))
+                        # Cancelled once in DB: 100 % queued, 80 % active, event acknowledged.
+                        assert queued == {
+                            "status": "cancelled",
+                            "refunded": {"alloys": 80 * M, "data": 40 * M, "flux": 40 * M},
+                            "event": None,
+                        }, queued
+                        assert active == {
+                            "status": "cancelled",
+                            "refunded": {"alloys": 640 * M, "data": 320 * M, "flux": 320 * M},
+                            "event": ["completed", "cancelled"],
+                        }, active
+                        (artifacts / "orders-checked").write_text("ready")
+                        done.add("orders")
                     if (artifacts / "gets-checked").exists() and "gets" not in done:
                         mission = (artifacts / "gets-checked").read_text().strip()
                         # Past due after several GETs: still active, its event still pending.
@@ -264,7 +284,16 @@ def main():
                     Path("/tmp/echosphere-fleet-failure.log").write_text(redacted(stdout + stderr))
                     print(redacted(stdout + stderr)[-12000:], flush=True)
                     raise RuntimeError("Fleet real browser scenario failed")
-                expected = {"ordered", "stop", "gets", "colony", "portal", "expire", "expiry"}
+                expected = {
+                    "ordered",
+                    "stop",
+                    "orders",
+                    "gets",
+                    "colony",
+                    "portal",
+                    "expire",
+                    "expiry",
+                }
                 assert done == expected, done
                 print(stdout)
         finally:
