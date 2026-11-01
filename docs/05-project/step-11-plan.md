@@ -1,9 +1,24 @@
 # Étape 11 — Première IA stratégique
 
-**État courant : Q11 close avec amendements le 01/11/2026 ; AI02–AI11 autorisés.**
-CI AI01 push 41343195071 et PR 41343200391 success 5/5 vérifiées avant AI02.
-[Contrat faisant foi](../01-game-design/artificial-intelligence.md#q11--validation-avec-amendements-01112026).
+**État courant : AI02–AI10 réalisés sur la PR #14 ; AI11 (revue, CI, Ready) en cours.**
+Q11 close avec amendements le 01/11/2026. CI AI01 push 41343195071 et PR 41343200391 success 5/5
+vérifiées avant AI02. [Contrat faisant foi](../01-game-design/artificial-intelligence.md#q11--validation-avec-amendements-01112026),
+[contrat technique réalisé](../03-technical/first-ai.md). Reprise Claude Code le 01/11/2026 après
+la limite d'usage de Codex local : travail local non commité préservé puis publié, aucun merge.
 Les sections conditionnelles ci-dessous conservent la proposition AI01 historique.
+
+| Ticket | Réalisé |
+| --- | --- |
+| AI02 | v0.6 = v0.5 + `ai.json` strict, épinglé, sans activation ; v0.1–v0.5 inchangés |
+| AI03 | Collecteur DTO borné (possessions et Knowledge propres), dispatcher à capabilities fixes vers les services communs |
+| AI04 | Migration 0011 : `ai_controllers`, `ai_decisions`, `ai_bootstraps` ; downgrade peuplé refusé |
+| AI05 | Orchestrateur hors handler, verrous ordonnés, tour atomique, clés `ai:` stables, retry/blocked, pause ; CLI `app.ai.worker` |
+| AI06 | Politique Utility/Goals pure, profils, projets multi-tours, bootstrap Alliages → Flux → Données, ravitaillement, mémoire d'échec |
+| AI07 | Bootstrap opérateur transactionnel (CLI), sites canoniques ; service Compose `ai-worker` opt-in borné |
+| AI08 | Scénario headless de 72 h, deux profils, chaîne complète jusqu'à la colonie fondée qui se développe |
+| AI09 | Concurrence, crash, panne longue, fog, budgets, anti-famine, divergence des profils |
+| AI10 | Recette Compose `smoke_ai_compose.py` intégrée à la CI |
+| AI11 | Revue indépendante, docs/passation, CI du SHA final, Ready, revue automatique ; aucun merge |
 
 **Statut : AI00/AI01 documentaires autorisés le 01/11/2026 ; Q11 ouverte.**
 Base master `a33a452b416ec83d4e8b91d84292913d18db5a40`, PR #13 fusionnée ; CI post-merge

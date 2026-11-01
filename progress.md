@@ -4,15 +4,57 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 01/11/2026 — AI02 livré, socle AI03/AI04/AI07 |
+| Champ | État au 01/11/2026 — AI02–AI10 réalisés, AI11 en cours |
 | --- | --- |
-| Objectif | Implémenter AI02–AI11 selon Q11 validée avec amendements |
+| Objectif | Étape 11 Première IA selon Q11 validée avec amendements |
 | Branche / base / PR | work/step-11-first-ai ; master a33a452 ; PR #14 Draft unique |
-| Tête / agent | AI02 597d9fa ; tête = présent checkpoint identité/bootstrap ; Codex local seul écrivain |
-| Vérifié | Disque propre, branche/PR/base distantes conformes ; CI AI01 push 41343195071 et PR 41343200391 success 5/5 ; aucune PR concurrente |
-| Décisions | Q11 close, contrat amendé dans artificial-intelligence ; AI02–AI11 autorisés sans validation intermédiaire ; Combat/merge interdits |
-| Validation | 67 tests de règles + 15 PostgreSQL AI/contrôle, Ruff, Alembic upgrade/check ; détails ci-dessous. CI nouvelle tête à lire après push |
-| Suite | v0.6, contrôleur/bootstrap/migration livrés dans leur périmètre ; restent collecteur/dispatcher/pagination, orchestrateur/politique, autonomie/recette/CI et revue automatique |
+| Tête / agent | Claude Code, seul écrivain après la limite d'usage de Codex local ; tête et CI exactes dans la PR |
+| Reprise | HEAD local = distant 86f8e25 au départ, travail Codex non commité (perception, politique, dispatcher, orchestrateur, tests) sauvegardé puis publié sans perte (ae00462, 8a5a007, 9ce7680) |
+| Réalisé | v0.6/ai.json, contrôleur exclusif et bootstrap, migration 0011, collecteur borné, politique pure, dispatcher, orchestrateur, CLI `app.ai.worker`, service Compose `ai-worker` (profil `ai`), recette `smoke_ai_compose.py` en CI. [Contrat](docs/03-technical/first-ai.md) |
+| Anomalies corrigées | (1) CI 86f8e25 : inventaire `test_world` sans les tables `ai_*`. (2) Conversion LOAD : unités entières, pas micro-unités (correctif Codex, désormais couvert par un test). (3) Bootstrap d'une colonie fondée en ordre Données → Flux → Alliages, l'ordre de l'objet JSONB épinglé : ordre explicite Alliages → Flux → Données |
+| Validation locale | Suite Game 394 (avant les nouveaux tests), tests IA 32 PostgreSQL et purs, Ruff ; recette Compose IA réelle réussie ; check_docs, diff --check. Frontend non modifié |
+| CI | 9ce7680 : backend, frontend, Portal verts, compose-smoke observé en cours au checkpoint ; nouvelle tête à relire |
+| Suite | AI11 : CI de la tête finale, revue indépendante du diff depuis a33a452, Ready puis revue automatique Codex ; aucun merge, étape 12 non commencée |
+
+## Reprise Claude Code — étape 11, 01/11/2026
+
+Codex local a atteint sa limite d'usage en plein AI05/AI08. Inventaire en lecture seule d'abord :
+branche, HEAD (`86f8e25` = distant), diffs indexés, non indexés et fichiers nouveaux. Le patch et
+les fichiers non suivis ont été sauvegardés hors dépôt avant toute écriture, sans reset, checkout
+ni restore. La base de test laissée par Codex était vide (les fixtures suppriment leurs univers) :
+rien à diagnostiquer dans les données, chaîne autonome relancée par le test.
+
+**Chaîne autonome (72 h d'horloge injectée, deux profils) :** constructions, Research, sonde, SURVEY,
+colonisateur, détachement, CHARGER le paquet, COLONIZE, fondation par le worker, puis producteurs
+de la nouvelle colonie. Le test vérifie :
+- cargo LOAD = 500/250/50 unités entières ;
+- snapshot COLONIZE et stock initial = paquet × 10⁶ micro-unités ;
+- production 0 et aucune infrastructure à la fondation ;
+- trois premiers ordres de construction = Alliages, Flux, Données ;
+- toutes les clés métier en `ai:<controller>:` ;
+- aucune injection.
+
+**Profils :** sur une même observation réelle, les deux profils choisissent différemment, avec des
+utilités et raisons identiques : seuls les poids diffèrent.
+
+**Anti-famine :** avec une page de recherche réduite à 1, chaque technologie est examinée une fois
+en `M` visites, dans l'ordre canonique, puis le parcours reboucle.
+
+**Recette Compose réelle :**
+- départ et absence humaine :
+  - univers provisionné par Portal, bootstrap par la CLI opérateur (rejeu identique), départs égaux ;
+  - humain entré par le handoff réel, page fermée, Portal arrêté ;
+- horizon long par l'horloge de test, preuve en base : chaque IA a 23 constructions, 8 Research
+  (arbre complet), 39 SURVEY (toute la galaxie hors origine) et une fondation qui produit ;
+- processus réels :
+  - `worker` et deux `ai-worker` : exactement un tour coalescé par contrôleur ;
+  - redémarrage sans tour en double ;
+- session humaine valide sans Portal, puis 401 à l'expiration.
+
+Projet et volumes de la recette supprimés, pile conservée.
+
+Limites : équilibrage provisoire (les deux profils plafonnent la galaxie et l'arbre en ~28 h), charge
+de Q17 non démontrée, pas de Combat ni d'interface IA.
 
 ## Validation Q11 — 01/11/2026
 

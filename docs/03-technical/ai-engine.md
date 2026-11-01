@@ -2,6 +2,10 @@
 
 **Statut : Orientation validée, future — moteur déterministe/testable sans LLM stratégique.**
 
+**Implémenté à l'étape 11 (PR #14) : [contrat technique Première IA](first-ai.md).** Il fait foi
+pour l'exécution : orchestrateur hors handler sur `ai_controllers`, sans `AI_TURN`. Les sections
+« Exécution future » et AI01 ci-dessous sont historiques.
+
 
 Le moteur initial n'utilise pas de LLM. Un décideur Utility/Goals reçoit une observation autorisée,
 un profil et un instant logique. Il évalue des objectifs, sélectionne une commande valide puis

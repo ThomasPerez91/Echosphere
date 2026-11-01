@@ -151,7 +151,8 @@ sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, bran
 `work/step-11-first-ai`, PR #14. Q11 close avec amendements le 01/11/2026 ; AI02–AI11
 explicitement autorisés après CI AI01 push 41343195071 et PR 41343200391 vérifiées success 5/5.
 [Contrat Q11](docs/01-game-design/artificial-intelligence.md#q11--validation-avec-amendements-01112026),
-[architecture](docs/03-technical/ai-engine.md), [plan](docs/05-project/step-11-plan.md).
+[architecture](docs/03-technical/ai-engine.md), [plan](docs/05-project/step-11-plan.md),
+[contrat technique réalisé](docs/03-technical/first-ai.md) : AI02–AI10 réalisés, AI11 en cours.
 Contrôleur persistant exclusif sans identité humaine factice ; mêmes services/Knowledge ; tours
 sur grille 600 s, une commande maximum, pagination circulaire anti-famine, aucun AI_TURN
 multi-stream. v0.6 explicite sans adoption d'anciens univers. Étape 12 non commencée, aucun merge.
@@ -186,6 +187,11 @@ Ne pas élargir le périmètre sur la seule base de la passation.
   revendication `active` non rappelée et mieux classée bloque, `uq_colonies_planet` en dernier
   rempart. La victoire crée une Colony neuve (`found_colony`, jamais `initialize_colony`).
   Occupation étrangère jamais révélée (`target_unavailable`). Ni abandon ni transfert en v0.5.
+- Étape 11 : IA v0.6 = `AIController` persistant exclusif (racine de confiance, jamais
+  controller_type), orchestrateur `app.ai.worker` hors handler (verrous opérations → Research →
+  colonies propres, catch-up complet), une commande max par tour via services communs, clé
+  `ai:<controller>:<sequence>:<op>`, grille 600 s sans rattrapage. Collecteur borné aux possessions/
+  Knowledge propres, curseurs circulaires, politique pure JSON ; aucune ressource/flotte offerte.
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède

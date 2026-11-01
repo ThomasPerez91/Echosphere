@@ -218,3 +218,12 @@ Game 0010 :
 - **Bindings :** `colony.expand` ajouté au CHECK (13 permissions).
 
 Pas d'abandon, de transfert ni de table d'historique en v0.5. [Contrat Colonisation](colonization-api-ui.md).
+
+Game 0011 :
+- **`ai_controllers` :** un contrôleur par Empire IA (Univers/Empire en FK composite), profil,
+  politique épinglée, état, rendez-vous, séquence, mémoire minimale et essais techniques.
+- **`ai_decisions` :** une trace privée par `(controller, sequence)`, 100 conservées.
+- **`ai_bootstraps` :** requête et résultat idempotents du démarrage v0.6.
+
+Aucun inventaire ni identité IA, aucune donnée ajoutée aux anciens univers. Downgrade refusé avec
+des données IA. [Contrat Première IA](first-ai.md).

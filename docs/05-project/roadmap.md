@@ -154,6 +154,6 @@ sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, bran
 Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
 [Plan AI00–AIxx](step-11-plan.md). Aucun merge ni suppression de branche autorisé.
 
-État courant étape 11 : Q11 close avec amendements le 01/11/2026 ; AI02–AI11 autorisés après
-CI AI01 push 41343195071 et PR 41343200391 vérifiées success 5/5. PR #14 reste Draft pendant
-implémentation ; aucun merge ni Combat. Les statuts documentaires AI01 ci-dessus sont historiques.
+État courant étape 11 : Q11 close avec amendements le 01/11/2026 ; AI02–AI10 réalisés sur la
+PR #14 (reprise Claude Code après limite Codex, travail local préservé), [contrat technique](../03-technical/first-ai.md).
+AI11 revue/CI/Ready en cours ; aucun merge ni Combat. Les statuts documentaires AI01 ci-dessus sont historiques.

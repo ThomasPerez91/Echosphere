@@ -190,3 +190,17 @@ L'occupation étrangère n'est jamais vérifiée au lancement. L'échec à l'arr
 `target_unavailable` unique, sans Empire, flotte, défense, stock ni activité. Un monde déjà possédé
 par l'Empire n'est signalé `target_owned` qu'avec `colony.read`.
 [Contrat](colonization-api-ui.md).
+
+Étape 11 : la racine de confiance d'une IA est l'`AIController` persistant, revérifié à chaque tour
+(état, scope, profil, empreinte de politique, absence de binding humain). `controller_type` reste
+descriptif.
+- **Aucune identité factice :** aucun Account, User, Membership, session, ticket, cookie ni
+  permission Portal `ai.*`.
+- **Exclusivité :** un binding humain et un contrôleur actif s'excluent sous le même verrou
+  d'Empire.
+- **Capabilities fixes :** le dispatcher n'expose qu'un jeu fixe de capabilities, jamais
+  d'identité fournie par la politique.
+- **Perception :** le collecteur ne lit que les possessions et la Knowledge propres. Les traces
+  sont privées, sans API.
+
+[Contrat](first-ai.md).
