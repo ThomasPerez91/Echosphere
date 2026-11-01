@@ -11,7 +11,7 @@ Ruleset `v0.5` uniquement ; les univers v0.1–v0.4 restent inchangés, sans auc
 - **`fleets.json` :** ajoute la classe `colonizer`.
 - **`colonization.json` :** rassemble les règles d'expansion :
   - `colonizer_class`, quantité 1 par ordre ;
-  - pas de coût progressif `cost_step_bps` ;
+  - incrément du coût progressif `cost_step_bps` (+0,5 par rang) ;
   - 12 colonies maximum, 1 COLONIZE active ;
   - paquet minimum.
 - **Schéma inchangé :** le schéma des classes v0.4 ne change pas. Les snapshots v0.4 déjà
