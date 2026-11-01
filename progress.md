@@ -4,6 +4,17 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 02/11/2026 — étape 12 COM00 |
+| --- | --- |
+| Objectif | Étape 12 Combat MVP, COM00→COM11, Q02/Q10 closes pour v0.7 |
+| Branche / base / PR | work/step-12-combat depuis master f79d9f6 ; PR Draft unique « Étape 12 — Combat MVP » |
+| Tête / agent | Claude Code seul écrivain ; tête et CI exactes dans la PR |
+| Départ vérifié | PR #14 fusionnée (merge f79d9f6, parents a33a452 + 034438f), CI post-merge 41358533969 success 5/5, master local = GitHub, arbre propre, aucune PR Combat concurrente, branche étape 11 conservée |
+| Décisions | Q02/Q10 closes pour le Combat MVP v0.7 seulement, [transcription](docs/01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026) ; Q03/Q04 global/Q14/Q18/Q25 ouvertes |
+| Suite | COM01 audit et fence temporelle, puis COM02–COM11 ; aucun merge, étape 13 non commencée |
+
+## Ancienne reprise rapide étape 11 — historique avant fusion
+
 | Champ | État au 01/11/2026 — AI02–AI11 réalisés, revue Codex GitHub en attente de crédits |
 | --- | --- |
 | Objectif | Étape 11 Première IA selon Q11 validée avec amendements |

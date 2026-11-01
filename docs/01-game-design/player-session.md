@@ -1,6 +1,6 @@
 # Sessions courtes et longues
 
-**Statut : validé ; construction Q01 close, protections générales Q02 ouvertes.**
+**Statut : validé ; construction Q01 close ; Q02 close pour le Combat MVP v0.7 seulement (02/11/2026), [décisions](combat.md#q02--protection-hors-connexion).**
 
 
 ## Session quotidienne de dix minutes
