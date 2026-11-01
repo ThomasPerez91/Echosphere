@@ -13,8 +13,9 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 | Réalisé | v0.6/ai.json, contrôleur exclusif et bootstrap, migration 0011, collecteur borné, politique pure, dispatcher, orchestrateur, CLI `app.ai.worker`, service Compose `ai-worker` (profil `ai`), recette `smoke_ai_compose.py` en CI. [Contrat](docs/03-technical/first-ai.md) |
 | Anomalies corrigées | (1) CI 86f8e25 : inventaire `test_world` sans les tables `ai_*`. (2) Conversion LOAD : unités entières, pas micro-unités (correctif Codex, désormais couvert par un test). (3) Bootstrap d'une colonie fondée en ordre Données → Flux → Alliages, l'ordre de l'objet JSONB épinglé : ordre explicite Alliages → Flux → Données |
 | Validation locale | Suite Game complète 396 sur l’état final, dont 32 tests IA PostgreSQL et purs, Ruff ; recette Compose IA réelle réussie ; check_docs, diff --check. Frontend non modifié |
-| CI | 9ce7680 : backend, frontend, Portal verts, compose-smoke observé en cours au checkpoint ; nouvelle tête à relire |
-| Suite | AI11 : CI de la tête finale, revue indépendante du diff depuis a33a452, Ready puis revue automatique Codex ; aucun merge, étape 12 non commencée |
+| CI | 767f244 : push 41351837408 et PR 41351842896 success 5/5 (396 Game, 124 Portal, 81 Vitest + 31 Chromium, compose-smoke avec `smoke_ai_compose.py`). Tête finale et CI exactes dans la PR |
+| Revue | Revue indépendante du diff depuis a33a452 : aucune route ni log n'expose traces/observations ; verrous opérations → Research → colonies identiques aux humains, exclusivité sous verrou d'Empire ; clés `ai:` stables ; 128 candidats = somme des pages ; rétention 100 traces ; v0.1–v0.5 intacts. Seul écart corrigé : `--at` futur refusé par la CLI |
+| Suite | AI11 : PR Ready puis revue automatique Codex GitHub, fils traités ; aucun merge, étape 12 non commencée |
 
 ## Reprise Claude Code — étape 11, 01/11/2026
 
