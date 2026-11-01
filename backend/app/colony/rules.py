@@ -8,6 +8,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.colonization.rules import ColonizationRules
 from app.fleet.rules import FleetRules
 from app.galaxy.rules import ExplorationRules, GalaxyRules
 from app.simulation.production import MAX_AMOUNT, MICRO_UNITS, RESOURCES, amount
@@ -176,6 +177,7 @@ class Ruleset(StrictModel):
     galaxy: GalaxyRules | None = None
     exploration: ExplorationRules | None = None
     fleets: FleetRules | None = None
+    colonization: ColonizationRules | None = None
 
     @property
     def version(self) -> str:
@@ -215,6 +217,25 @@ class Ruleset(StrictModel):
             or self.fleets.version != self.version
         ):
             raise ValueError("Missing or mixed Galaxy/Fleet version")
+        # Colonization exists from v0.5 only; v0.1-v0.4 stay strictly unchanged.
+        if self.version in {"v0.1", "v0.2", "v0.3", "v0.4"}:
+            if self.colonization is not None:
+                raise ValueError("Colonization unavailable in historical rulesets")
+        else:
+            x = self.colonization
+            if x is None or x.version != self.version:
+                raise ValueError("Missing or mixed Colonization version")
+            ship = self.fleets.classes.get(x.colonizer_class)
+            if ship is None or ship.survey:
+                raise ValueError("Colonizer must be a non-survey Fleet class")
+            # The founding package travels in the colonizer's own cargo, then seeds the colony.
+            if (
+                sum(x.minimum_package.values()) > ship.cargo
+                or ship.cargo > self.colony.base_capacity
+            ):
+                raise ValueError("Founding package must fit the colonizer and new colony storage")
+            self.fleets.order_quote(x.colonizer_class, x.colonizer_max_quantity)
+            x.multiplier_bps(x.max_colonies)
         c, catalogue = self.colony, self.catalogue.infrastructures
         if set(c.initial_stocks) != RESOURCES or set(c.speeds) != {
             "economy",
@@ -305,9 +326,12 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
                 (location / "rulesets" / version / "research.json").read_text(),
                 object_pairs_hook=_unique_object,
             )
-        extensions = {"v0.3": ("galaxy", "exploration")}.get(
-            version, () if version in {"v0.1", "v0.2"} else ("galaxy", "fleets")
-        )
+        extensions = {
+            "v0.1": (),
+            "v0.2": (),
+            "v0.3": ("galaxy", "exploration"),
+            "v0.4": ("galaxy", "fleets"),
+        }.get(version, ("galaxy", "fleets", "colonization"))
         for name in extensions:
             parts[name] = json.loads(
                 (location / "rulesets" / version / f"{name}.json").read_text(),

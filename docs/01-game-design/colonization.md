@@ -1,8 +1,9 @@
 # Colonisation
 
-**Statut : Q07 ouverte — proposition COL01 du 01/11/2026 en attente de validation explicite.**
-Rien de ce document n'est validé ni implémenté. Les chiffres sont une balance provisoire, à placer
-dans game_data versionné, jamais en constantes métier.
+**Statut : Q07 close pour le périmètre de l'étape 10 — validation explicite du 01/11/2026 avec
+amendements (section ci-dessous), ainsi que la sous-décision Q04. COL02–COL11 autorisés.** Les chiffres
+sont la balance v0.5 dans game_data versionné, jamais des constantes métier ni des vérités du
+produit. La proposition A1–A30 ci-dessous s'applique telle qu'amendée.
 
 Coloniser doit rester un choix d'expansion, pas une collecte automatique de mondes. On compare les
 secteurs, l'accès et la position stratégique. Gérer des dizaines de planètes une par une n'est pas
@@ -18,6 +19,36 @@ continue.
 
 Référence orientative : 1 colonie, puis 2–3, 4–6 et environ 8–12 au fil de la progression. Ces
 repères ne deviennent pas des paliers de technologie sans décision explicite (voir A14).
+
+## Amendements validés le 01/11/2026 (priment sur la proposition)
+
+- **Q04 (v0.5 seulement) :** aucune habitabilité, aucun trait actif, aucune planète interdite ;
+  9/12/15/18 secteurs et 1/2/3 orbitaux valides ; capacités physiques seule différence. Q04 reste
+  ouverte globalement (traits, bonus/malus, orbital jouable, réaffectation, démolition).
+- **Monde déjà possédé par l'Empire :** avec `colony.read`, refus explicite `target_owned` ; sans
+  `colony.read`, refus générique `target_unavailable`, sans code révélateur. `colony.read` n'est
+  pas exigé pour COLONIZE.
+- **Paquet :** au moins le minimum, au plus la capacité cargo ; à la réussite, **tout** le cargo
+  engagé devient le stock initial ; à l'échec ou au rappel, tout reste à bord.
+- **Coût progressif :** N = colonies + colonisateurs existants + ordres de colonisateur ouverts ;
+  consommer un colonisateur laisse N inchangé. Multiplicateur et coût exact figés à l'acceptation,
+  annulation calculée sur le prix accepté (100/80 théoriques, plafond Q39).
+- **Devis de production dynamique :** avant confirmation d'un ordre de colonisateur, le coût
+  serveur courant (avec N) est affiché ; la commande le recalcule sous le verrou de la chronologie
+  d'opérations d'Empire, qui sérialise deux commandes concurrentes (jamais deux fois l'ancien prix).
+- **Colonisation dans le même système :** une autre planète du système où stationne la flotte est
+  colonisable. Exception propre à COLONIZE : chemin vide, 0 saut, 0 trajet, 0 carburant,
+  `travel_arrival_at = due_at = started_at`, mission persistée et résolue par le worker, aucun
+  rappel. DEPLOY/SURVEY/RETURN gardent leurs invariants (chemin non vide).
+- **Concurrence :** seule une mission concurrente `active`, non rappelée et mieux classée bloque.
+  Une mission `completed`, `returning` ou rappelée ne bloque jamais. Une mission restée `active`
+  derrière un événement `blocked` continue de bloquer : incident opérateur, pas résolution de jeu.
+- **Rappel contre arrivée :** sérialisés, jamais colonie créée + rappel accepté, jamais un
+  colonisateur à deux endroits ni deux rapports ; fenêtre de rappel décidée par l'heure serveur.
+- **Projection multi-colonies d'un même système :** CHARGER/DÉCHARGER choisissent explicitement la
+  colonie (`colonies_here`, filtré par `colony.read`), plus de « première colonie » implicite.
+- **Snapshot COLONIZE :** couvre aussi planète cible, paquet minimum, rang et paramètres de
+  plafond/cadence ; toute dérive avant le worker → `TimelineError`, aucun effet partiel.
 
 ## Proposition Q07 (COL01)
 
