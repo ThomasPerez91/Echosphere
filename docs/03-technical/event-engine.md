@@ -144,3 +144,16 @@ un second stream ; le rappel COLONIZE prend le même verrou.
 - **0 saut (même système) :** `due_at = started_at`, résolu par le worker, jamais dans la requête.
 
 [Contrat technique](colonization-api-ui.md).
+
+Étape 11 : aucun type `AI_TURN`. Le rendez-vous stratégique est la ligne `ai_controllers`
+(`next_decision_at` sur une grille de 600 s ancrée au départ), traitée par un orchestrateur
+distinct (`python -m app.ai.worker`) hors de tout handler.
+- **Verrous :** contrôleur `SKIP LOCKED`, puis stream d'opérations → Research → colonies propres
+  triées. Un catch-up complet précède toute décision.
+- **Tour :** une commande au maximum via les services communs. Effet, trace, séquence et prochain
+  créneau sont committés ensemble.
+- **Panne :** un seul tour sur l'état courant, sans tours antidatés.
+- **Événements :** les achèvements Colony, Research et Fleet restent des événements TimeEngine
+  ordinaires, et la pause IA ne les arrête jamais.
+
+[Contrat technique](first-ai.md).

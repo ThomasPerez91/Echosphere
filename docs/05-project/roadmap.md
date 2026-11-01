@@ -21,8 +21,8 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 7 | Galaxy + Exploration — intégré via PR #10 (`773e05c`) | Générateur seedé, missions et connaissances | 30–50 systèmes orientatifs, reproductibilité et non-fuite |
 | 8 | System View — intégré via PR #11 (`e011fd3`) | Lecture des mondes et présences connues | Détails datés selon connaissances, mobile utilisable |
 | 9 | Fleets — intégré via PR #12 (`3a528b6`), Q09 close | Petit catalogue et missions asynchrones | Unités engagées une seule fois et arrivées récupérables |
-| 10 | Colonization — lot courant (PR #13), Q07 close | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
-| 11 | Première AI | Utility/Goals et profils simples | Services communs, décisions reproductibles, connaissance limitée |
+| 10 | Colonization — intégré via PR #13 (`a33a452`), Q07 close | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
+| 11 | Première AI — lot courant documentaire, Q11 ouverte | Utility/Goals et profils simples | Services communs, décisions reproductibles, connaissance limitée |
 | 12 | Combat MVP | Résolution et rapports militaires simples | Q02/Q10 arbitrées, simulation et rejeu des résultats |
 | 13 | Relations IA minimales | Interactions compréhensibles entre civilisations | Q18 arbitrée, pas de diplomatie avancée anticipée |
 | 14 | UX sessions courtes | Bilan, alertes et actions prioritaires | Préparation quotidienne en environ dix minutes sur mobile |
@@ -141,6 +141,19 @@ System View livrée, anciens checkpoints historiques. Étape 9 ensuite menée su
 ## État post-merge étape 9 — 01/11/2026
 
 Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5) ; Flottes v0.4
-livrées, [plan historique](step-9-plan.md). Lot courant : étape 10 Colonisation, branche
+livrées, [plan historique](step-9-plan.md). Historique avant fusion : étape 10 Colonisation, branche
 `work/step-10-colonization`, [plan](step-10-plan.md), PR #13 : Q07 close avec amendements, COL02–COL11
-réalisés. Étape 11 IA non commencée, aucun merge autorisé.
+réalisés. Étape 11 IA alors non commencée, aucun merge autorisé.
+
+## État post-merge étape 10 — 01/11/2026
+
+Étape 10 intégrée via PR #13, merge `a33a452b416ec83d4e8b91d84292913d18db5a40` ;
+CI post-merge 41340653571 success (5/5), vérifiée le 01/11/2026. Colonisation/Q07 et la
+sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, branche
+`work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés ;
+Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
+[Plan AI00–AIxx](step-11-plan.md). Aucun merge ni suppression de branche autorisé.
+
+État courant étape 11 : Q11 close avec amendements le 01/11/2026 ; AI02–AI10 réalisés sur la
+PR #14 (reprise Claude Code après limite Codex, travail local préservé), [contrat technique](../03-technical/first-ai.md).
+AI11 revue/CI/Ready en cours ; aucun merge ni Combat. Les statuts documentaires AI01 ci-dessus sont historiques.

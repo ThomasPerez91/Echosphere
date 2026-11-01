@@ -46,8 +46,8 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   **implémentées dans leur périmètre 5C (C02–C08), fusionnées via PR #7** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
   Q40–Q56 distingue clôtures, détails techniques délégués et reports support/email/modes. 5C
   terminé et fusionné (`ff6ef89`), 5D intégrée via #8 (`0e2ca11`). Lot courant :
-  étape 10 Colonisation (Q07 ouverte) ; étape 9 Flottes intégrée via PR #12 (`3a528b6`) ; étape 8 System View intégrée via PR #11 (`e011fd3`) ; étape 7 Galaxy + Exploration intégrée via PR #10 (`773e05c`), [technique](03-technical/galaxy-api-ui.md).
-  [Research](05-project/step-6-plan.md) intégrée via PR #9 (`437844e4`), Q05 close ; [API/UI](03-technical/research-api-ui.md). Étape 11 non commencée.
+  étape 11 Première IA (AI00/AI01 documentaires, Q11 ouverte) ; Colonisation intégrée via PR #13 (`a33a452`) ; étape 9 Flottes intégrée via PR #12 (`3a528b6`) ; étape 8 System View intégrée via PR #11 (`e011fd3`) ; étape 7 Galaxy + Exploration intégrée via PR #10 (`773e05c`), [technique](03-technical/galaxy-api-ui.md).
+  [Research](05-project/step-6-plan.md) intégrée via PR #9 (`437844e4`), Q05 close ; [API/UI](03-technical/research-api-ui.md). Étape 12 non commencée.
 
 Le [source-map](06-handoff/source-map.md) est le plan de lecture par grande zone et explique les
 sources accessibles/partielles/non accessibles. Pas d’export privé brut ou de garantie d’exhaustivité
@@ -73,9 +73,26 @@ Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
 ## État post-merge étape 9 — 01/11/2026
 
 Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5).
-Lot courant : étape 10 Colonisation, branche `work/step-10-colonization` (PR #13). Q07 close
-avec amendements, COL02–COL11 réalisés. Étape 11 non commencée, aucun merge autorisé.
+Historique avant fusion : étape 10 Colonisation, branche `work/step-10-colonization` (PR #13). Q07 close
+avec amendements, COL02–COL11 réalisés. Étape 11 alors non commencée, aucun merge autorisé.
 
 Étape 10 : [Colonisation Q07](01-game-design/colonization.md), [contrat technique](03-technical/colonization-api-ui.md), [plan COL00–COL11](05-project/step-10-plan.md).
 Étape 9 : [Flottes Q09](01-game-design/fleets.md), [contrat technique](03-technical/fleets-api-ui.md), [plan F00–F11](05-project/step-9-plan.md).
 Étape 8 : [contrat System View](01-game-design/system-view.md), [projection/navigation](03-technical/system-view.md), [plan S00–S09](05-project/step-8-plan.md).
+
+## État post-merge étape 10 — 01/11/2026
+
+Étape 10 intégrée via PR #13, merge `a33a452b416ec83d4e8b91d84292913d18db5a40` ;
+CI post-merge 41340653571 success (5/5), vérifiée le 01/11/2026. Colonisation/Q07 et la
+sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, branche
+`work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés ;
+Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
+[Plan AI00–AIxx](05-project/step-11-plan.md). Aucun merge ni suppression de branche autorisé.
+
+Étape 11 AI01 : [audit/architecture proposés](03-technical/ai-engine.md#ai01--audit-du-code-intégré),
+[Q11 A1–A10 non validée](01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02),
+[plan conditionnel](05-project/step-11-plan.md). Arrêt avant AI02 ; aucun code IA ni étape 12.
+
+État courant étape 11 : Q11 close avec amendements le 01/11/2026 ; AI02–AI10 réalisés sur la
+PR #14 (reprise Claude Code après limite Codex, travail local préservé), [contrat technique](03-technical/first-ai.md).
+AI11 revue/CI/Ready en cours ; aucun merge ni Combat. Les statuts documentaires AI01 ci-dessus sont historiques.

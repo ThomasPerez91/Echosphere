@@ -73,6 +73,23 @@ System View livrée, anciens checkpoints historiques. Étape 9 ensuite menée su
 
 ## État post-merge étape 9 — 01/11/2026
 
-Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5). Lot courant :
+Étape 9 intégrée via PR #12, merge `3a528b6`, CI post-merge 41322146062 success (5/5). Historique de la reprise suivante :
 étape 10 Colonisation, branche `work/step-10-colonization`, PR #13, [plan](../05-project/step-10-plan.md) ;
-Q07 close avec amendements, COL02–COL11 réalisés. Étape 11 non commencée, aucun merge.
+Q07 close avec amendements, COL02–COL11 réalisés. Étape 11 alors non commencée, aucun merge.
+
+## État post-merge étape 10 — 01/11/2026
+
+Étape 10 intégrée via PR #13, merge `a33a452b416ec83d4e8b91d84292913d18db5a40` ;
+CI post-merge 41340653571 success (5/5), vérifiée le 01/11/2026. Colonisation/Q07 et la
+sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, branche
+`work/step-11-first-ai` depuis master propre. AI00/AI01 documentaires seuls autorisés ;
+Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Combat non commencée.
+[Plan AI00–AIxx](../05-project/step-11-plan.md). Aucun merge ni suppression de branche autorisé.
+
+AI00 publié (`6a09b07`) ; AI01 audit/proposition sur PR Draft #14 :
+[Q11 ouverte A1–A10](../01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02),
+[audit/architecture](../03-technical/ai-engine.md), [plan AI02–AI11 conditionnel](../05-project/step-11-plan.md).
+
+État courant étape 11 : Q11 close avec amendements le 01/11/2026 ; AI02–AI10 réalisés sur la
+PR #14 (reprise Claude Code après limite Codex, travail local préservé), [contrat technique](../03-technical/first-ai.md).
+AI11 revue/CI/Ready en cours ; aucun merge ni Combat. Les statuts documentaires AI01 ci-dessus sont historiques.

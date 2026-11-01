@@ -4,6 +4,113 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 01/11/2026 — AI02–AI11 réalisés, revue Codex GitHub en attente de crédits |
+| --- | --- |
+| Objectif | Étape 11 Première IA selon Q11 validée avec amendements |
+| Branche / base / PR | work/step-11-first-ai ; master a33a452 ; PR #14 Ready, unique |
+| Tête / agent | Claude Code, seul écrivain après la limite d'usage de Codex local ; tête et CI exactes dans la PR |
+| Reprise | HEAD local = distant 86f8e25 au départ, travail Codex non commité (perception, politique, dispatcher, orchestrateur, tests) sauvegardé puis publié sans perte (ae00462, 8a5a007, 9ce7680) |
+| Réalisé | v0.6/ai.json, contrôleur exclusif et bootstrap, migration 0011, collecteur borné, politique pure, dispatcher, orchestrateur, CLI `app.ai.worker`, service Compose `ai-worker` (profil `ai`), recette `smoke_ai_compose.py` en CI. [Contrat](docs/03-technical/first-ai.md) |
+| Anomalies corrigées | (1) CI 86f8e25 : inventaire `test_world` sans les tables `ai_*`. (2) Conversion LOAD : unités entières, pas micro-unités (correctif Codex, désormais couvert par un test). (3) Bootstrap d'une colonie fondée en ordre Données → Flux → Alliages, l'ordre de l'objet JSONB épinglé : ordre explicite Alliages → Flux → Données |
+| Validation locale | Suite Game complète 396 sur l’état final, dont 32 tests IA PostgreSQL et purs, Ruff ; recette Compose IA réelle réussie ; check_docs, diff --check. Frontend non modifié |
+| CI | 767f244 : push 41351837408 et PR 41351842896 success 5/5 (396 Game, 124 Portal, 81 Vitest + 31 Chromium, compose-smoke avec `smoke_ai_compose.py`). Tête finale et CI exactes dans la PR |
+| Revue | Revue indépendante du diff depuis a33a452 : aucune route ni log n'expose traces/observations ; verrous opérations → Research → colonies identiques aux humains, exclusivité sous verrou d'Empire ; clés `ai:` stables ; 128 candidats = somme des pages ; rétention 100 traces ; v0.1–v0.5 intacts. Seul écart corrigé : `--at` futur refusé par la CLI |
+| Revue automatique | PR #14 passée Ready sur 6a409e2 (CI push 41353374929 et PR 41353378426 success 5/5) ; revue Codex GitHub déclenchée mais **échouée** : limite d'usage Codex des revues atteinte, aucun fil ouvert |
+| Suite | Relancer `@codex review` quand les crédits Codex le permettent, traiter les fils ; aucun merge sans autorisation, étape 12 non commencée |
+
+## Reprise Claude Code — étape 11, 01/11/2026
+
+Codex local a atteint sa limite d'usage en plein AI05/AI08. Inventaire en lecture seule d'abord :
+branche, HEAD (`86f8e25` = distant), diffs indexés, non indexés et fichiers nouveaux. Le patch et
+les fichiers non suivis ont été sauvegardés hors dépôt avant toute écriture, sans reset, checkout
+ni restore. La base de test laissée par Codex était vide (les fixtures suppriment leurs univers) :
+rien à diagnostiquer dans les données, chaîne autonome relancée par le test.
+
+**Chaîne autonome (72 h d'horloge injectée, deux profils) :** constructions, Research, sonde, SURVEY,
+colonisateur, détachement, CHARGER le paquet, COLONIZE, fondation par le worker, puis producteurs
+de la nouvelle colonie. Le test vérifie :
+- cargo LOAD = 500/250/50 unités entières ;
+- snapshot COLONIZE et stock initial = paquet × 10⁶ micro-unités ;
+- production 0 et aucune infrastructure à la fondation ;
+- trois premiers ordres de construction = Alliages, Flux, Données ;
+- toutes les clés métier en `ai:<controller>:` ;
+- aucune injection.
+
+**Profils :** sur une même observation réelle, les deux profils choisissent différemment, avec des
+utilités et raisons identiques : seuls les poids diffèrent.
+
+**Anti-famine :** avec une page de recherche réduite à 1, chaque technologie est examinée une fois
+en `M` visites, dans l'ordre canonique, puis le parcours reboucle.
+
+**Recette Compose réelle :**
+- départ et absence humaine :
+  - univers provisionné par Portal, bootstrap par la CLI opérateur (rejeu identique), départs égaux ;
+  - humain entré par le handoff réel, page fermée, Portal arrêté ;
+- horizon long par l'horloge de test, preuve en base : chaque IA a 23 constructions, 8 Research
+  (arbre complet), 39 SURVEY (toute la galaxie hors origine) et une fondation qui produit ;
+- processus réels :
+  - `worker` et deux `ai-worker` : exactement un tour coalescé par contrôleur ;
+  - redémarrage sans tour en double ;
+- session humaine valide sans Portal, puis 401 à l'expiration.
+
+Projet et volumes de la recette supprimés, pile conservée.
+
+Limites : équilibrage provisoire (les deux profils plafonnent la galaxie et l'arbre en ~28 h), charge
+de Q17 non démontrée, pas de Combat ni d'interface IA.
+
+## Validation Q11 — 01/11/2026
+
+Instruction explicite reçue avec amendements, synthétisés dans le contrat canonique. Les deux CI
+AI01 ont été réellement vérifiées vertes avant AI02. Paramètres techniques ajustables sur mesure,
+anti-famine des familles et exclusivité IA/humain obligatoires ; aucun retour utilisateur requis
+pour les choix techniques couverts. Les checkpoints AI01 ci-dessous restent historiques.
+
+### Reprise AI01 historique
+
+| Champ | État au 01/11/2026 — AI00/AI01 documentaires terminés, Q11 à valider |
+| --- | --- |
+| Objectif | Étape 11 Première IA : audit du code intégré et proposition Q11 uniquement |
+| Branche / base / PR | work/step-11-first-ai depuis master a33a452b416ec83d4e8b91d84292913d18db5a40 ; PR #14 Draft unique vers master |
+| Tête / agent | AI00 6a09b07ae34d36020867dfb4815e521a5d2d2fbd publié avant audit/code ; tête = commit portant AI01, SHA/CI exacts dans PR #14 ; Codex local seul écrivain autorisé |
+| Départ vérifié | PR #13 MERGED, ancienne tête 04d4b9e, merge a33a452 ; CI post-merge 41340653571 success 5/5 ; aucune PR concurrente ; disque propre, master ff-only et branche neuve ; ancienne branche conservée |
+| Réalisé | Audit indépendant du code a33a452 (services/Knowledge/permissions/locks/worker/versions/migrations/tests/recettes), Q11 A1–A10 proposée, architecture hors handler multi-stream, plan conditionnel AI02–AI11 |
+| Fichiers | AGENTS/context/progress, docs index/roadmap/registre/passation/step-11-plan ; artificial-intelligence (Q11), ai-engine (audit avec preuves et architecture) ; docs uniquement |
+| Décisions / risques | Colonisation/Q07 intégrées ; Q11 reste ouverte, aucun poids/cadence/budget nouveau validé. AI_TURN multi-stream incompatible avec les invariants ; bootstrap à 0/h et identité des scénarios à couvrir ; aucune triche compensatoire |
+| Validation locale | python3 scripts/check_docs.py : 90 documents/liens OK ; git diff --check ; comparaison JSON v0.1→v0.5 en lecture seule. Aucun test runtime/Compose/Alembic/benchmark IA relancé localement pour AI01 |
+| CI observée | Base a33a452 : run 41340653571 success 5/5, journaux 364 Game / 124 Portal / 81 Vitest + 31 Chromium Game ; smokes existants et Alembic dans ce run. AI00 : PR 41342661915 quatre jobs verts, compose-smoke en cours à ce checkpoint ; push 41342656138 observé en cours ; CI AI01 à relire après push, aucun succès anticipé |
+| Suite / limites | Arrêt obligatoire après AI01 : faire valider Q11 A1–A10 avant AI02. PR reste Draft ; aucun code IA, table, worker, scheduler, profil exécutable, migration ou game_data créé. Étape 12 non commencée ; pas de merge, suppression, tag/release ou déploiement |
+
+## AI01 — audit, Q11 et architecture proposés, 01/11/2026
+
+Lectures produit/économie/Fog, technique, contrats identité et projet réalisées ; inventaire du
+code intégré a33a452 et lecture des services/projections, modèles/contraintes, scheduler/worker,
+règles v0.1→v0.5, tests et recettes. Aucune confiance accordée aux anciens statuts lorsque le
+code les contredit. La CI de base a été lue, pas relancée ni confondue avec un nouveau test IA.
+
+Références canoniques : [audit et architecture](docs/03-technical/ai-engine.md#ai01--audit-du-code-intégré),
+[Q11 proposée A1–A10](docs/01-game-design/artificial-intelligence.md#arbitrages-demandés-avant-ai02),
+[AI02–AI11 conditionnels](docs/05-project/step-11-plan.md).
+
+Recommandations non validées : deux profils économique/prudent et expansionniste choisis au
+départ, référence 1 humain + 2 IA et départs communs, un tour/10 min et une commande maximum,
+128 candidats/64 flottes paginées, budgets économiques réels et réserve, bootstrap économique
+prioritaire, nouveau v0.6 sans adoption d'ancien univers. Pas de profil agressif avant Combat.
+Exécution proposée dans un orchestrateur Game transactionnel hors ScheduledEvent handler,
+contrôleur explicite, DTO limité à sa Knowledge et ses possessions, mêmes services, traces privées
+et reprise atomique. Aucun de ces éléments n'est implémenté ni validé implicitement.
+
+Pas d'anomalie runtime supplémentaire prouvée dans les chemins relus ; risques d'intégration et
+écarts documentaires qualifiés dans l'audit. Pas de preuve d'autonomie, balance, charge ou sécurité
+exhaustive. La prochaine action dépend de Q11 : aucune poursuite AI02 sur la seule base de ce plan.
+
+## AI00 — reprise post-merge Colonisation, 01/11/2026
+
+État GitHub vérifié, master locale/origin synchronisées sur a33a452. L'ancienne branche locale
+était encore work/step-10-colonization à 04d4b9e, propre et publiée ; elle est conservée.
+Premier checkpoint documentaire poussé avant audit/proposition et avant tout code IA substantiel.
+
+## Ancienne reprise rapide étape 10 — historique avant fusion
+
 | Champ | État au 01/11/2026 — étape 10 COL00–COL11 réalisés, Q07 close avec amendements |
 | --- | --- |
 | Objectif | Étape 10 Colonisation selon Q07 et la sous-décision Q04 v0.5 (validées le 01/11/2026 avec amendements) |
@@ -1891,3 +1998,26 @@ suit la source validée ; vérifier la CI de sa propre tête avant toute future 
 corrigé, #4 shell responsive. Fusion #3 : 4ee81dd, CI 52 backend/3 frontend/Compose ; fusion #4 :
 54f928e, source 52 backend/10 frontend/5 Chromium/Compose. develop supprimée par l’utilisateur et absence
 vérifiée. master = intégration stable, work/... → PR master → revue/autorisation propre à chaque merge.
+
+## AI02 — ruleset v0.6 et validation stricte, 01/11/2026
+
+v0.6 copie v0.5 sans changement économique et ajoute ai.json strict : profils/poids, grille,
+budgets/familles et normalisations. Charger les données n'active aucun contrôleur. Aucun fichier
+v0.1–v0.5 modifié. Tests réels en image Python de développement, code/règles du dépôt montés :
+67 tests AI/Colony/Colonization/Fleet/Research rules réussis ; Ruff ciblé réussi. Pas encore de
+persistance ou tour IA implémenté à ce checkpoint. Suite : contrôleur exclusif et frontières.
+
+## AI03/AI04/AI07 — identité, migration et bootstrap, 01/11/2026
+
+AIController persistant, traces et reçu de bootstrap ; migration 0011 additive/DDL figé, aucun
+backfill. Activation/grant humain sérialisés par Empire ; contrôleur présent (pause incluse) ne
+constitue jamais un transfert implicite. Bootstrap réel atomique v0.6, sites canoniques, un humain
+et profils explicites, mêmes stocks/infrastructures/date ; aucune unité gratuite. Rejeu stable,
+conflit/refus sans monde partiel, v0.6 seul sans activation implicite. Pause/reprise sur grille
+future et contrôle digest de données épinglées. Recettes existantes attendent la nouvelle tête
+Alembic, sans changer leurs scénarios.
+
+Réellement exécuté sur PostgreSQL 17 echosphere_ai_test dédié : 15 tests AI/contrôle réussis,
+dont course activation/grant, départs, absence de faux comptes/unités, dérive policy, metadata et
+downgrade peuplé refusé ; Alembic upgrade/check sans dérive et Ruff ciblé réussis. Pas encore de
+collecteur/décideur/orchestrateur ni preuve d'autonomie. Suite : ces frontières et leurs tests.

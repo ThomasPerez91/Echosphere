@@ -77,6 +77,19 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+  ai-worker:
+    <<: *backend
+    # Explicit activation only (`--profile ai`); isolated process, bounded CPU/RAM.
+    command: ["python", "-m", "app.ai.worker"]
+    profiles: [ai]
+    cpus: "0.5"
+    mem_limit: 512m
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
   frontend:
     build: ./frontend
     environment:
