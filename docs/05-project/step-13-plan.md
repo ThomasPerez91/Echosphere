@@ -1,7 +1,8 @@
 # Étape 13 — Relations IA minimales
 
-**État courant : R02–R10 implémentés sur la PR #16 (Draft) ; validation locale PostgreSQL/Compose
-attendue avant R11 (revue finale, Ready). Q18 close le 02/11/2026. Aucun merge.**
+**État courant : R02–R10 implémentés sur la PR #16 (Draft) ; validation locale PostgreSQL, Alembic,
+Chromium et Compose réussie le 02/11/2026 ; R11 (revue indépendante, Ready) à faire. Q18 close le
+02/11/2026. Aucun merge.**
 [Contrat technique](../03-technical/relations-api-ui.md).
 Base master `067a4e58863b910785764591d8bf3af4b0ec18e0` : étape 12 Combat MVP intégrée via PR #15
 (tête `589ce60`), merge du 02/11/2026, CI post-merge 41375165508 success sur `067a4e5`
