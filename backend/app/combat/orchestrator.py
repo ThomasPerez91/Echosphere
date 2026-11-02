@@ -13,6 +13,7 @@ from datetime import timedelta
 from uuid import UUID
 
 from sqlalchemy import literal, or_, select, text, tuple_
+from sqlalchemy.orm import aliased
 
 from app.colony.service import rules_for
 from app.combat.models import CombatEngagement, CombatReport
@@ -227,6 +228,7 @@ class CombatOrchestrator:
         retry_seconds=30,
         max_attempts=3,
         scan=20,
+        pages=50,
     ):
         if not (
             1 <= lock_ms <= 60000
@@ -234,34 +236,71 @@ class CombatOrchestrator:
             and 1 <= retry_seconds <= 3600
             and 1 <= max_attempts <= 10
             and 1 <= scan <= 200
+            and 1 <= pages <= 1000
         ):
             raise ValueError("Invalid technical Combat limits")
         self.factory, self.clock = factory, clock
         self.engine = TimeEngine(factory, clock)
         self.lock_ms, self.statement_ms = lock_ms, statement_ms
         self.retry_seconds, self.max_attempts, self.scan = retry_seconds, max_attempts, scan
+        self.pages = pages
 
-    def due(self, engagement_id=None):
+    def due(self, engagement_id=None, after=None):
+        """One page of due engagements in rank order, never one waiting on a better-ranked
+        unresolved engagement of its system or Empires (a local blockage starves nobody)."""
         now = utc(self.clock.now())
-        query = select(CombatEngagement.id).where(
-            CombatEngagement.state == "pending",
-            CombatEngagement.battle_at <= now,
-            or_(CombatEngagement.retry_at.is_(None), CombatEngagement.retry_at <= now),
+        e, better = CombatEngagement, aliased(CombatEngagement)
+        waiting = (
+            select(better.id)
+            .where(
+                better.universe_id == e.universe_id,
+                better.state.in_(["pending", "blocked"]),
+                better.id != e.id,
+                tuple_(better.battle_at, better.started_at, better.id)
+                < tuple_(e.battle_at, e.started_at, e.id),
+                or_(
+                    better.target_system_id == e.target_system_id,
+                    better.attacker_empire_id == e.attacker_empire_id,
+                    better.defender_empire_id == e.attacker_empire_id,
+                    better.attacker_empire_id == e.defender_empire_id,
+                    better.defender_empire_id == e.defender_empire_id,
+                ),
+            )
+            .exists()
+        )
+        query = select(e.id, e.battle_at, e.started_at).where(
+            e.state == "pending",
+            e.battle_at <= now,
+            or_(e.retry_at.is_(None), e.retry_at <= now),
+            ~waiting,
         )
         if engagement_id is not None:
-            query = query.where(CombatEngagement.id == engagement_id)
-        query = query.order_by(
-            CombatEngagement.battle_at, CombatEngagement.started_at, CombatEngagement.id
-        ).limit(self.scan)
+            query = query.where(e.id == engagement_id)
+        if after is not None:
+            query = query.where(
+                tuple_(e.battle_at, e.started_at, e.id)
+                > tuple_(literal(after[0]), literal(after[1]), literal(after[2]))
+            )
+        query = query.order_by(e.battle_at, e.started_at, e.id).limit(self.scan)
         with self.factory() as session:
-            return list(session.scalars(query))
+            return list(session.execute(query))
 
     def process_next(self, *, engagement_id=None, after_resolve=None, raise_errors=False):
-        """after_resolve is an internal crash-injection test seam, never a policy callback."""
-        for candidate in self.due(engagement_id):
-            outcome = self.attempt(candidate, after_resolve, raise_errors)
-            if outcome is not None:
-                return outcome
+        """after_resolve is an internal crash-injection test seam, never a policy callback.
+
+        Pages past candidates that cannot resolve now (blocked event, lock contention), so one
+        stuck engagement never stops independent battles; bounded by `pages` per call."""
+        after = None
+        for _ in range(self.pages):
+            page = self.due(engagement_id, after)
+            for candidate in page:
+                outcome = self.attempt(candidate.id, after_resolve, raise_errors)
+                if outcome is not None:
+                    return outcome
+            if len(page) < self.scan:
+                return None
+            last = page[-1]
+            after = (last.battle_at, last.started_at, last.id)
         return None
 
     def streams(self, session, engagement):

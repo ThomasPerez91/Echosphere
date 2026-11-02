@@ -554,7 +554,7 @@ def collect(session, controller, rules, at):
     if military is not None:
         from app.combat.service import alerts_for
 
-        alerts = [a for a in alerts_for(session, u, e, limit=24) if a["state"] == "pending"]
+        alerts = alerts_for(session, u, e, limit=24, history=False)
         threatened = {a["planet_id"] for a in alerts}
         ship = military.ship_class
         for cid in page("military", list(colonies)):

@@ -677,3 +677,80 @@ def test_populated_combat_data_refuses_downgrade(fleets, migration_config):
     launched(a, attack(a, arm(a, {"interceptor": 1}), planet, {"interceptor": 1}))
     with pytest.raises(RuntimeError, match="live Combat data"):
         command.downgrade(migration_config, "0011_first_ai")
+
+
+def test_stuck_engagements_never_starve_an_independent_battle(fleets):
+    # Universe 1: a blocked better-ranked attack holds two lower-ranked ones on its system, and
+    # a fourth waits on a defender stream stuck on a blocked event. Universe 2 is unrelated.
+    a, b = rivals(fleets)
+    planet, _ = planet_of(b)
+    first, second, third = (arm(a, {"cruiser": 1}) for _ in range(3))
+    m0, _ = launched(a, attack(a, first, planet, {"cruiser": 1}))
+    a.advance(minutes=1)
+    m1, _ = launched(a, attack(a, second, planet, {"cruiser": 1}))
+    m2, _ = launched(a, attack(a, third, planet, {"cruiser": 1}))
+    with a.game.factory.begin() as s:
+        mission = s.get(FleetMission, UUID(m0))
+        mission.snapshot = mission.snapshot | {"travel_us": 1}  # operator incident
+    c, d = rivals(fleets)
+    target, _ = planet_of(d)
+    c.advance(minutes=1)
+    m3, _ = launched(c, attack(c, arm(c, {"frigate": 2}), target, {"frigate": 2}))
+    until_battle(c, m3)
+    runner = CombatOrchestrator(a.game.factory, Clock(a.game), max_attempts=1, scan=1)
+    assert runner.process_next()["outcome"] == "blocked"  # m0, the best rank
+    outcome = runner.process_next()
+    assert outcome["engagement_id"] == str(engagement_of(c, m3).id)
+    assert {engagement_of(a, m).state for m in (m1, m2)} == {"pending"}
+    # A due candidate that cannot catch up (blocked defender event) is paged past as well.
+    e, f = rivals(fleets)
+    goal, _ = planet_of(f)
+    e.advance(minutes=1)
+    m4, _ = launched(e, attack(e, arm(e, {"frigate": 1}), goal, {"frigate": 1}))
+    g_, h = rivals(fleets)
+    other, _ = planet_of(h)
+    g_.advance(minutes=1)
+    m5, _ = launched(g_, attack(g_, arm(g_, {"frigate": 1}), other, {"frigate": 1}))
+    with f.game.factory.begin() as s:
+        stream = g.state_for(s, f.universe, f.empire).stream_id
+        s.add(
+            ScheduledEvent(
+                stream_id=stream,
+                universe_id=f.universe,
+                sequence=999,
+                idempotency_key="test-only-stuck",
+                event_type="SHIP_ORDER_COMPLETE",
+                payload={},
+                due_at=f.game.clock(),
+                next_attempt_at=f.game.clock(),
+                status="blocked",
+                attempts=3,
+            )
+        )
+    until_battle(g_, m5)
+    resolved = runner.process_next()
+    assert resolved["engagement_id"] == str(engagement_of(g_, m5).id)
+    assert engagement_of(e, m4).state == "pending"
+
+
+def test_live_threats_come_before_any_cancellation_history(fleets):
+    from app.combat.service import alerts_for
+
+    a, b = rivals(fleets)
+    planet, _ = planet_of(b)
+    live, _ = launched(a, attack(a, arm(a, {"interceptor": 1}), planet, {"interceptor": 1}))
+    for _ in range(3):
+        a.advance(minutes=10)
+        cancelled, _ = launched(
+            a, attack(a, arm(a, {"interceptor": 1}), planet, {"interceptor": 1})
+        )
+        recall = post(a, f"/missions/{cancelled}/recall", {"idempotency_key": uuid4().hex})
+        assert recall.status_code == 200
+    with b.game.factory() as s:
+        (first,) = alerts_for(s, b.universe, b.empire, limit=1)
+        assert first["state"] == "pending" and first["id"] == str(engagement_of(a, live).id)
+        states = [x["state"] for x in alerts_for(s, b.universe, b.empire, limit=3)]
+        assert states == ["pending", "cancelled", "cancelled"]
+        assert [x["state"] for x in alerts_for(s, b.universe, b.empire, history=False)] == [
+            "pending"
+        ]

@@ -84,19 +84,29 @@ def cancel_engagement(session, mission, at):
 # --- Projections (read-only, never a catch-up) -------------------------------------------------
 
 
-def alerts_for(session, universe_id, empire_id, limit=50):
+def alerts_for(session, universe_id, empire_id, limit=50, *, history=True):
     """Defender view before the battle: target, battle_at and state only. Never the attacker,
-    its origin, route, composition or size."""
-    rows = session.scalars(
-        select(CombatEngagement)
-        .where(
-            CombatEngagement.universe_id == universe_id,
-            CombatEngagement.defender_empire_id == empire_id,
-            CombatEngagement.state.in_(["pending", "blocked", "cancelled"]),
-        )
-        .order_by(CombatEngagement.battle_at.desc(), CombatEngagement.id)
-        .limit(limit)
+    its origin, route, composition or size. Live threats first, nearest battle first; the
+    cancellation history only fills what is left, so it can never hide an actual threat."""
+    scope = (
+        CombatEngagement.universe_id == universe_id,
+        CombatEngagement.defender_empire_id == empire_id,
     )
+    rows = list(
+        session.scalars(
+            select(CombatEngagement)
+            .where(*scope, CombatEngagement.state.in_(["pending", "blocked"]))
+            .order_by(CombatEngagement.battle_at, CombatEngagement.id)
+            .limit(limit)
+        )
+    )
+    if history and len(rows) < limit:
+        rows += session.scalars(
+            select(CombatEngagement)
+            .where(*scope, CombatEngagement.state == "cancelled")
+            .order_by(CombatEngagement.cancelled_at.desc(), CombatEngagement.id)
+            .limit(limit - len(rows))
+        )
     return [
         {
             "id": str(e.id),

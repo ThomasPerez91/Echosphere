@@ -99,7 +99,11 @@ même si le worker Combat ne passe qu'à 10:10. Preuve : test PostgreSQL
 
 Le processus utilise la même image ; c'est le service Compose `combat-worker`, présent par défaut et
 inactif sans engagement. Il tourne hors de tout handler TimeEngine, sans `COMBAT_BARRIER`.
-1. Choisir un engagement dû par rang, puis verrouiller les streams d'opérations impliqués dans
+1. Choisir les engagements dus par rang, en excluant d'emblée ceux qui attendent un engagement
+   mieux classé et non résolu (même système ou même Empire). Paginer au-delà de ceux qui ne
+   peuvent pas aboutir maintenant (événement bloqué, contention). Ainsi, un blocage local
+   n'affame jamais une bataille indépendante.
+   Pour chacun, verrouiller les streams d'opérations impliqués dans
    l'ordre de leurs UUID, puis la ligne de l'engagement.
 2. Refuser tant qu'un engagement mieux classé reste non résolu (`pending` ou `blocked`) sur le même
    système ou avec le même Empire.
@@ -126,6 +130,8 @@ inactif sans engagement. Il tourne hors de tout handler TimeEngine, sans `COMBAT
   - le bloc `combat` contient les classes, la fenêtre, les `alerts` et les `reports`, ces deux
     derniers seulement avec `combat.read` ;
   - les flottes `DESTROYED` sont exclues.
+- **Ordre des alertes :** menaces actives d'abord, bataille la plus proche en tête. L'historique
+  des annulations ne remplit que le reste et ne masque jamais une menace.
 - **Colonie :** `incoming` liste l'instant et l'état des attaques annoncées sur la planète, avec
   `combat.read`.
 - **System View :** expose `combat: true|false` et relaie les droits Combat.
