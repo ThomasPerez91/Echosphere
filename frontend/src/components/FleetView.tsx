@@ -11,6 +11,7 @@ const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY
 const outcomeLabels: Record<string, string> = {
   attacker_win: "Victoire de l’attaquant", defender_win: "Victoire du défenseur",
   mutual_destruction: "Destruction mutuelle", unopposed: "Aucune défense militaire", target_unavailable: "Cible indisponible",
+  voided_by_pact: "Bataille annulée par un pacte",
 };
 const messages: Record<string, string> = {
   accepted: "Ordre accepté par le serveur.",
@@ -413,6 +414,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
             <strong>{outcomeLabels[r.outcome]}</strong> — {r.role === "attacker" ? "votre attaque" : "votre défense"} : {world?.name ?? "monde"} · {place(system ?? null)}
             {r.own && <dl className="fleet-dates"><Losses label="Vos forces" side={r.own} p={p} /><Losses label={`Forces adverses (Empire ${r.opponent_empire_id!.slice(0, 8)})`} side={r.opponent} p={p} />
               <div><dt>Rounds</dt><dd>{r.rounds!.length}</dd></div></dl>}
+            {r.outcome === "voided_by_pact" && <p>Un pacte de non-agression était actif à l’heure de la bataille : aucun tir, aucune perte. {r.role === "attacker" ? "Votre flotte rentre ; le carburant n’est pas remboursé." : "Votre défense n’a pas été engagée."}</p>}
             <p className="panel-meta">Bataille à {time(r.battle_at)} · traitée par le serveur {time(r.processed_at)} · observation datée, sans surveillance durable.</p>
           </li>;
         })}</ul>}

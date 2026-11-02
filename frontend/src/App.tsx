@@ -4,6 +4,7 @@ import { GalaxyView } from './components/GalaxyView';
 import type { GalaxyContext } from './components/GalaxyView';
 import { SystemView } from './components/SystemView';
 import { FleetView } from './components/FleetView';
+import { RelationsView } from './components/RelationsView';
 import { GameAccess } from './components/GameAccess';
 import { useGameSession } from './hooks/useGameSession';
 import { useColony } from './hooks/useColony';
@@ -19,7 +20,7 @@ const sections = [
   { id: 'galaxy', label: 'Galaxie', symbol: '✧', title: 'Au-delà du connu.', description: 'Systèmes connus de votre Empire, routes découvertes et expéditions d’exploration, selon le serveur.' },
   { id: 'fleets', label: 'Flottes', symbol: '↗', title: 'Vos flottes', description: 'Production de vaisseaux, flottes stationnées et missions asynchrones de vos Empires.' },
   { id: 'reports', label: 'Rapports', symbol: '≡', title: 'La mémoire de votre empire.', description: 'Les résultats des missions et les événements importants prendront place ici.' },
-  { id: 'relations', label: 'Relations', symbol: '◇', title: 'D’autres horizons.', description: 'Les civilisations rencontrées et les interactions avec les IA prendront place ici.' },
+  { id: 'relations', label: 'Relations', symbol: '◇', title: 'D’autres horizons.', description: 'Civilisations rencontrées, pactes de non-agression et faits hostiles datés de vos Empires.' },
 ] as const;
 
 function currentRoute() {
@@ -122,6 +123,7 @@ export default function App() {
             : universe && destination === 'empire' && section ? 'Situation de votre colonie et constructions en cours, selon le serveur Game.'
             : systemMatch && section ? 'Structure, mondes et présences propres que votre Empire connaît de ce système, selon le serveur.'
             : universe && destination === 'fleets' && section ? 'Production, flottes stationnées et missions de votre Empire ; déplacements et échéances calculés par le serveur.'
+            : universe && destination === 'relations' && section ? 'Empires que vous avez rencontrés, état de chaque relation et négociations ; échéances arbitrées par le serveur.'
             : section?.description ?? 'Cette destination n’existe pas. Retrouvez les sections dans la navigation.'}</p>
         </div>
         {universe && (destination === 'empire' || access.phase !== 'active') && <GameAccess access={access} />}
@@ -157,11 +159,11 @@ export default function App() {
               <p>Cette vérification indique si les services sont joignables. Elle ne confirme pas qu’une partie est active.</p>
               <Button disabled={status === 'checking'} onClick={retry}>{status === 'checking' ? 'Vérification…' : 'Vérifier la connexion'}</Button>
             </Panel></div>
-        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : destination === 'research' && universe ? <ResearchView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'research' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la recherche de vos Empires.</p></Panel> : destination === 'galaxy' && universe && systemEmpire && systemId ? <SystemView universe={universe} empire={systemEmpire} system={systemId} onSessionLost={access.retry} onColony={navigation} /> : destination === 'galaxy' && universe ? <GalaxyView initialContext={galaxyContexts.current[universe]} onContextChange={context => { galaxyContexts.current[universe] = context; }} universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'galaxy' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la carte de vos Empires.</p></Panel> : destination === 'fleets' && universe ? <FleetView key={sendMatch ? localRoute : 'fleets'} universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} target={sendMatch ? { empire: sendMatch[1], system: sendMatch[2], planet: sendMatch[3], action: localRoute.startsWith('fleets/attack/') ? 'attack' : 'colonize' } : undefined} /> : destination === 'fleets' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter les flottes de vos Empires.</p></Panel> : <section className="panel destination-panel"><Badge>À venir</Badge>
+        </> : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} /> : destination === 'research' && universe ? <ResearchView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'research' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la recherche de vos Empires.</p></Panel> : destination === 'galaxy' && universe && systemEmpire && systemId ? <SystemView universe={universe} empire={systemEmpire} system={systemId} onSessionLost={access.retry} onColony={navigation} /> : destination === 'galaxy' && universe ? <GalaxyView initialContext={galaxyContexts.current[universe]} onContextChange={context => { galaxyContexts.current[universe] = context; }} universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} /> : destination === 'galaxy' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter la carte de vos Empires.</p></Panel> : destination === 'fleets' && universe ? <FleetView key={sendMatch ? localRoute : 'fleets'} universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} target={sendMatch ? { empire: sendMatch[1], system: sendMatch[2], planet: sendMatch[3], action: localRoute.startsWith('fleets/attack/') ? 'attack' : 'colonize' } : undefined} /> : destination === 'fleets' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter les flottes de vos Empires.</p></Panel> : destination === 'relations' && universe ? <RelationsView universe={universe} enabled={access.phase === 'active'} csrf={access.session?.csrf_token} onSessionLost={access.retry} /> : destination === 'relations' ? <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter les relations de vos Empires.</p></Panel> : <section className="panel destination-panel"><Badge>À venir</Badge>
           <EmptyState title={`${section.label} : espace en préparation`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
           <a className="text-link" href={href('empire')}>← Retour à l’Empire</a>
         </section>}
-        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>{universe && access.phase === 'active' ? 'Colonie, Recherche, Galaxie et Flottes · selon droits et ruleset de l’univers' : 'Interface en préparation · Aucun gameplay jouable'}</span></footer>
+        <footer className="page-footer"><span>Echosphere · Nouvel horizon</span><span>{universe && access.phase === 'active' ? 'Colonie, Recherche, Galaxie, Flottes et Relations · selon droits et ruleset de l’univers' : 'Interface en préparation · Aucun gameplay jouable'}</span></footer>
       </main>
     </div>
   </div>;

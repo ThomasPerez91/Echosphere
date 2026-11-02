@@ -569,3 +569,22 @@ test("validator refuses an alert naming the attacker and combat data without com
   (defender.missions![0].attack as Record<string, unknown>).defender_empire_id = otherEmpire;
   expect(validFleets(defender, empire)).toBe(false);
 });
+
+test("a battle voided by a pact is reported without any composition (v0.8)", async () => {
+  const voided = fighting();
+  voided.combat!.reports = [{
+    engagement_id: done, role: "attacker", battle_at: "2098-12-31T00:00:00Z", processed_at: "2098-12-31T00:00:05Z",
+    outcome: "voided_by_pact", target: { planet_id: rivalWorld, system_id: near }, opponent_empire_id: otherEmpire,
+    pact_id: order,
+  }];
+  expect(validFleets(voided, empire)).toBe(true);
+  const leaky = structuredClone(voided);
+  leaky.combat!.reports![0].own = fighting().combat!.reports![0].own;
+  expect(validFleets(leaky, empire)).toBe(false);
+  const fetcher = vi.fn(async (url: string) => url.endsWith("/fleets")
+    ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(voided));
+  vi.stubGlobal("fetch", fetcher);
+  render(<StrictMode><FleetView universe={universe} enabled csrf={"a".repeat(64)} onSessionLost={vi.fn()} /></StrictMode>);
+  expect(await screen.findByText("Bataille annulée par un pacte")).toBeVisible();
+  expect(screen.getByText(/le carburant n’est pas remboursé/)).toBeVisible();
+});

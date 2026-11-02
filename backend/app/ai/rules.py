@@ -122,4 +122,3 @@ class AIRulesV3(AIRulesV2):
         if self.family_pages["diplomacy"] < 2:
             raise ValueError("Diplomacy page must hold an answer and a proposal")
         return self
-

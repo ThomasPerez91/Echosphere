@@ -69,12 +69,14 @@ export type MissionView = {
 /** Defender view before a battle: target and instant only, never the attacker or its force. */
 export type CombatAlert = { id: string; planet_id: string; system_id: string; battle_at: string; state: "pending" | "cancelled" };
 export type CombatSide = { initial: Record<string, number>; losses: Record<string, number>; survivors: Record<string, number> };
-export type CombatOutcome = "attacker_win" | "defender_win" | "mutual_destruction" | "unopposed" | "target_unavailable";
+export type CombatOutcome = "attacker_win" | "defender_win" | "mutual_destruction" | "unopposed" | "target_unavailable" | "voided_by_pact";
 /** Dated observation written by the resolution; military compositions only. */
 export type CombatReport = {
   engagement_id: string; role: "attacker" | "defender"; battle_at: string; processed_at: string; outcome: CombatOutcome;
   target: { planet_id: string; system_id: string };
   opponent_empire_id?: string; own?: CombatSide; opponent?: CombatSide; rounds?: unknown[];
+  /** v0.8: the pact that voided the battle (no composition is ever reported then). */
+  pact_id?: string;
 };
 export type Combat = { classes: string[]; min_warning_seconds: number; alerts: CombatAlert[] | null; reports: CombatReport[] | null };
 export type Colonization = {
@@ -172,12 +174,14 @@ const side = (v: unknown) => object(v) && tally(v.initial) && tally(v.losses) &&
 const alert = (v: unknown) =>
   object(v) && exactKeys(v, ["id", "planet_id", "system_id", "battle_at", "state"]) && id(v.id) && id(v.planet_id) &&
   id(v.system_id) && date(v.battle_at) && ["pending", "cancelled"].includes(String(v.state));
-const OUTCOMES = ["attacker_win", "defender_win", "mutual_destruction", "unopposed", "target_unavailable"];
+const OUTCOMES = ["attacker_win", "defender_win", "mutual_destruction", "unopposed", "target_unavailable", "voided_by_pact"];
 const combatReport = (v: unknown) =>
   object(v) && id(v.engagement_id) && ["attacker", "defender"].includes(String(v.role)) && date(v.battle_at) &&
   date(v.processed_at) && OUTCOMES.includes(String(v.outcome)) && object(v.target) && id(v.target.planet_id) &&
   id(v.target.system_id) &&
   (v.outcome === "target_unavailable" ? !("opponent_empire_id" in v) && !("opponent" in v)
+    // A battle voided by a pact never carries a composition: refused rather than hidden.
+    : v.outcome === "voided_by_pact" ? id(v.opponent_empire_id) && id(v.pact_id) && !("own" in v) && !("opponent" in v) && !("rounds" in v)
     : id(v.opponent_empire_id) && side(v.own) && side(v.opponent) && Array.isArray(v.rounds));
 const combat = (v: unknown, readable: boolean) =>
   v === null || v === undefined || (object(v) && list(v.classes, (c) => typeof c === "string") &&
