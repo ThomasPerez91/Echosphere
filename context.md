@@ -1,6 +1,6 @@
 # Contexte stable — Echosphere
 
-**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-11-01.
+**Statut : référence de reprise, pas autorisation générale.** Mise à jour 2026-11-02.
 Vérifier GitHub réel puis lire AGENTS → context → progress → [passation](docs/06-handoff/README.md).
 
 ## Produit validé, état distinct
@@ -156,12 +156,14 @@ CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026. Q11 close,
 [contrat Q11](docs/01-game-design/artificial-intelligence.md#q11--validation-avec-amendements-01112026),
 [technique](docs/03-technical/first-ai.md). Contrôleur persistant exclusif sans identité humaine
 factice ; mêmes services/Knowledge ; tours sur grille 600 s, une commande maximum ; v0.6 explicite.
-Lot courant : **étape 12 Combat MVP**, branche `work/step-12-combat`, une PR Draft vers master.
-Q02/Q10 closes pour le Combat MVP v0.7 seulement le 02/11/2026,
-[décisions](docs/01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026),
-[plan COM00–COM11](docs/05-project/step-12-plan.md). Étape 13 non commencée, aucun merge.
+Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
+Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Q02/Q10 closes pour v0.7,
+[décisions](docs/01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [technique](docs/03-technical/combat-api-ui.md).
+Lot courant : **étape 13 Relations IA minimales**, branche `work/step-13-ai-relations`, une PR Draft
+vers master. R00/R01 documentaires ; Q18 ouverte, [proposition B1–B12](docs/01-game-design/relations.md),
+[plan R00–R11](docs/05-project/step-13-plan.md). Aucun code relations avant validation Q18, aucun merge.
 
-Q04 (hors sous-décision) et Q10 ouvertes.
+Q04 (hors sous-décision), Q18 et les autres questions non tranchées restent ouvertes.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.
@@ -171,4 +173,4 @@ partage produit et défense futurs, caps/pacing balançables et budgets de perfo
 Aucun nouveau merge autorisé. Références UI Recherche : design-system.png et research-view.png,
 illustrations de composition seulement, jamais catalogue ou règles validés.
 
-Les plans étapes 7 à 10 sont historiques depuis leurs fusions ; Première IA est le lot courant documentaire.
+Les plans étapes 7 à 12 sont historiques depuis leurs fusions ; Relations (étape 13) est le lot courant documentaire.

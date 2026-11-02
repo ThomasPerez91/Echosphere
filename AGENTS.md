@@ -153,10 +153,12 @@ CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026. Q11 close,
 [contrat Q11](docs/01-game-design/artificial-intelligence.md#q11--validation-avec-amendements-01112026),
 [technique](docs/03-technical/first-ai.md). Contrôleur persistant exclusif sans identité humaine
 factice ; mêmes services/Knowledge ; tours sur grille 600 s, une commande maximum ; v0.6 explicite.
-Lot courant : **étape 12 Combat MVP**, branche `work/step-12-combat`, une PR Draft vers master.
-Q02/Q10 closes pour le Combat MVP v0.7 seulement le 02/11/2026,
-[décisions](docs/01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026),
-[plan COM00–COM11](docs/05-project/step-12-plan.md). Étape 13 non commencée, aucun merge.
+Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
+Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Q02/Q10 closes pour v0.7,
+[décisions](docs/01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [technique](docs/03-technical/combat-api-ui.md).
+Lot courant : **étape 13 Relations IA minimales**, branche `work/step-13-ai-relations`, une PR Draft
+vers master. R00/R01 documentaires ; Q18 ouverte, [proposition B1–B12](docs/01-game-design/relations.md),
+[plan R00–R11](docs/05-project/step-13-plan.md). Aucun code relations avant validation Q18, aucun merge.
 
 Ne pas élargir le périmètre sur la seule base de la passation.
 

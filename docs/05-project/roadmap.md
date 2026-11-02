@@ -22,9 +22,9 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 8 | System View — intégré via PR #11 (`e011fd3`) | Lecture des mondes et présences connues | Détails datés selon connaissances, mobile utilisable |
 | 9 | Fleets — intégré via PR #12 (`3a528b6`), Q09 close | Petit catalogue et missions asynchrones | Unités engagées une seule fois et arrivées récupérables |
 | 10 | Colonization — intégré via PR #13 (`a33a452`), Q07 close | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
-| 11 | Première AI — lot courant documentaire, Q11 ouverte | Utility/Goals et profils simples | Services communs, décisions reproductibles, connaissance limitée |
-| 12 | Combat MVP | Résolution et rapports militaires simples | Q02/Q10 arbitrées, simulation et rejeu des résultats |
-| 13 | Relations IA minimales | Interactions compréhensibles entre civilisations | Q18 arbitrée, pas de diplomatie avancée anticipée |
+| 11 | Première AI — intégré via PR #14 (`f79d9f6`), Q11 close | Utility/Goals et profils simples | Services communs, décisions reproductibles, connaissance limitée |
+| 12 | Combat MVP — intégré via PR #15 (`067a4e5`), Q02/Q10 closes v0.7 | Résolution et rapports militaires simples | Q02/Q10 arbitrées, simulation et rejeu des résultats |
+| 13 | Relations IA minimales — lot courant, Q18 proposée | Interactions compréhensibles entre civilisations | Q18 arbitrée, pas de diplomatie avancée anticipée |
 | 14 | UX sessions courtes | Bilan, alertes et actions prioritaires | Préparation quotidienne en environ dix minutes sur mobile |
 | 15 | Onboarding | Démarrage guidé vers première exploration | Premier cycle compris sans surcharge |
 | 16 | Simulation/balance headless | Campagnes multi-seeds et profils | Métriques et versions consignées, écarts discutés |
@@ -166,3 +166,12 @@ CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026 ; Q11 close. L
 `work/step-12-combat`, PR Draft unique. Q02/Q10 closes pour le Combat MVP v0.7 seulement,
 [décisions](../01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [plan COM00–COM11](step-12-plan.md).
 Étape 13 Relations non commencée ; aucun merge ni suppression de branche autorisé.
+
+## État post-merge étape 12 — 02/11/2026
+
+Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
+Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Les états courants étape 12
+ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, branche
+`work/step-13-ai-relations`, PR Draft unique. R00/R01 documentaires : Q18 ouverte,
+[proposition B1–B12](../01-game-design/relations.md), [plan R00–R11](step-13-plan.md).
+Aucun code relations avant validation Q18 ; aucun merge ni suppression de branche autorisé.

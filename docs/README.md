@@ -105,3 +105,12 @@ CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026 ; Q11 close. L
 `work/step-12-combat`, PR Draft unique. Q02/Q10 closes pour le Combat MVP v0.7 seulement,
 [décisions](01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [plan COM00–COM11](05-project/step-12-plan.md).
 Étape 13 Relations non commencée ; aucun merge ni suppression de branche autorisé.
+
+## État post-merge étape 12 — 02/11/2026
+
+Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
+Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Les états courants étape 12
+ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, branche
+`work/step-13-ai-relations`, PR Draft unique. R00/R01 documentaires : Q18 ouverte,
+[proposition B1–B12](01-game-design/relations.md), [plan R00–R11](05-project/step-13-plan.md).
+Aucun code relations avant validation Q18 ; aucun merge ni suppression de branche autorisé.
