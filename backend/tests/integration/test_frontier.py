@@ -943,3 +943,23 @@ def test_an_attack_on_no_empire_of_the_watcher_triggers_no_retreat(fleets):
     response = attack(b, raid, target, {"interceptor": 1})
     assert response.status_code == 200, response.json()
     assert [r for r in encounter_rows(a) if r.kind == "retreat"] == []
+
+
+# --- Migration 0014 -------------------------------------------------------------------------------
+
+
+def test_frontier_migration_matches_metadata_and_populated_downgrade_is_refused(
+    fleets, migration_config, database_engine
+):
+    from alembic import command
+    from alembic.autogenerate import compare_metadata
+    from alembic.migration import MigrationContext
+
+    from app.persistence.models import Base
+
+    with database_engine.connect() as connection:
+        assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
+    a, b = rivals(fleets)
+    deploy(a, arm(a, {"frigate": 1}), far_target(a, b), {"frigate": 1})  # live passages
+    with pytest.raises(RuntimeError, match="live Frontier data"):
+        command.downgrade(migration_config, "0013_relations")

@@ -138,5 +138,7 @@ voulu, base) pour l'explication. `app/ai/dispatcher.py` : opération `protocol` 
 | Pur (Fast CI) | `test_frontier_transit.py`, `test_frontier_rules.py`, `test_frontier_encounter.py` | Exécuté |
 | Frontend (Fast CI) | Vitest Flottes (protocole, panneau Frontière, validateur), lint, build | Exécuté en CI |
 | PostgreSQL | `tests/integration/test_frontier.py` (passages et fences, protocoles, détection, couverture à `t`, présentation, interceptions, embuscade, pacte, civils, rang, bataille après entrée, repli distant et local, ciblage ; concurrence C02 dans les deux ordres, rejeu, crash/redémarrage) | **À exécuter** |
-| Migration | Alembic 0014 upgrade/check/downgrade sur base jetable | **À exécuter** |
-| Compose / Chromium | Aucune recette 13B dédiée encore | **À écrire et exécuter (B09)** |
+| Migration | Alembic 0014 upgrade/check/downgrade sur base jetable ; `test_frontier_migration_matches_metadata_and_populated_downgrade_is_refused` | **À exécuter** |
+| IA (B08) | `tests/integration/test_frontier_ai.py` (deux profils, AMBUSH D4, contact volontaire, commande commune, refus dispatcher, priorités, Fog) | **À exécuter** |
+| Compose | `scripts/smoke_frontier_compose.py` : 1 humain + 2 IA, détection anonyme, contact volontaire, embuscade, interception sans comparaison, pacte (réponse IA réelle), civil épargné, militaire détruit, mission avec pertes, repli réussi, ATTACK locale et repli impossible, postures IA, interruption/reprise des workers réels | **Écrit, non exécuté** ; à ajouter à la Full CI après succès local |
+| Chromium | `frontend/e2e/frontier.spec.ts` (4 largeurs, clavier/tactile, corps `ProtocolChoice`, panneau Frontière, cibles 44 px, débordement) | **Écrit, non exécuté** |

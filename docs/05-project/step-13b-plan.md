@@ -46,7 +46,7 @@ encore, 0014 se rebase sans transformation de données.
 | B06 | Repli amical (D7), carburant normal débité à l'instant logique | Code + tests |
 | B07 | UI Flottes : protocole, quatre modes, détections, rapports d'interception et de repli | Code + tests Vitest |
 | B08 | IA : policy v4 (v0.9), protocoles dans la famille militaire, dispatcher borné par profil | Code + tests (PostgreSQL non exécutés) |
-| B09 | Recette runtime, revue indépendante, Ready | À faire sur poste local |
+| B09 | Recette Compose `smoke_frontier_compose.py` + `frontier_game_fixture.py`, Chromium `e2e/frontier.spec.ts`, test migration 0014 ; puis exécution locale, revue indépendante, Ready | Écrits, **non exécutés** ; exécution sur poste local |
 
 « Code + tests » : tests purs exécutés ici et en Fast CI ; scénarios PostgreSQL écrits
 (`tests/integration/test_frontier.py`) **non exécutés** (pas de PostgreSQL/Docker dans
