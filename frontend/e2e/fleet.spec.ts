@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { colonizing, empire, fleets, freeWorld, garrison, near, order, origin, otherEmpire, otherFleets, session, universe } from '../tests/fleetFixture';
+import { colonizing, empire, fighting, fleets, freeWorld, garrison, near, order, origin, otherEmpire, otherFleets, rivalWorld, session, universe } from '../tests/fleetFixture';
 import { projection } from '../tests/galaxyFixture';
 
 for (const width of [320, 390, 768, 1440]) {
@@ -152,6 +152,53 @@ for (const width of [320, 390, 768, 1440]) {
     await page.screenshot({ path: testInfo.outputPath(`colonize-${width}.png`), fullPage: true });
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
+    expect(writes).toEqual([]);
+    await context.close();
+  });
+}
+
+for (const width of [320, 390, 768, 1440]) {
+  test(`combat ${width}px: ATTACK dialog, threat, report, recall, targets and no overflow`, async ({ browser }, testInfo) => {
+    const context = await browser.newContext({ viewport: { width, height: 850 }, hasTouch: true });
+    const page = await context.newPage();
+    const writes: string[] = [];
+    page.on('request', r => { if (r.url().includes('/api/game/') && r.method() !== 'GET') writes.push(r.url()); });
+    await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));
+    await page.route(`**/api/game/${universe}/session`, r => r.fulfill({ json: session }));
+    await page.route(`**/api/game/${universe}/colonies`, r => r.fulfill({ json: { colonies: [] } }));
+    await page.route(`**/api/game/${universe}/fleets`, r => r.fulfill({ json: { empires: [{ id: empire, name: 'Empire test' }] } }));
+    await page.route(`**/api/game/${universe}/fleets/${empire}`, r => r.fulfill({ json: fighting() }));
+    await page.goto(`/#universe/${universe}/fleets/attack/${empire}/${near}/${rivalWorld}`);
+    const dialog = page.getByRole('dialog', { name: 'Envoyer une flotte' });
+    await expect(dialog.getByRole('radio', { name: 'Attaque' })).toBeChecked();
+    await expect(dialog.getByRole('combobox', { name: 'Monde visé' })).toHaveValue(rivalWorld);
+    await expect(dialog.getByText(/Occupation et défense non confirmées/)).toBeVisible();
+    await expect(dialog.getByRole('spinbutton', { name: /Sonde/ })).toHaveCount(0);
+    for (const control of await dialog.locator('button, select, input:not([type=radio]), label.fleet-choice').all()) {
+      const box = await control.boundingBox();
+      if (box) expect(box.height, await control.getAttribute('name') ?? '').toBeGreaterThanOrEqual(44);
+    }
+    const leaks = await dialog.evaluate((box) => {
+      const edge = box.getBoundingClientRect().right;
+      return [...box.querySelectorAll('*')].filter((e) => e.getBoundingClientRect().right > edge + 1).map((e) => e.tagName);
+    });
+    expect(leaks).toEqual([]);
+    await page.screenshot({ path: testInfo.outputPath(`attack-${width}.png`), fullPage: true });
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    // Threat, attack in approach (recall until battle) and dated report: readable, keyboard, no overflow.
+    await expect(page.getByText('Force hostile en approche')).toBeVisible();
+    await expect(page.getByText('Approche — bataille prévue')).toBeVisible();
+    await expect(page.getByText('Victoire du défenseur')).toBeVisible();
+    const recall = page.locator('.fleet-card').filter({ hasText: 'Approche — bataille prévue' }).getByRole('button', { name: 'Rappeler…' });
+    expect((await recall.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await recall.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Rappeler la flotte' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    const overflow = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.width);
+    await page.screenshot({ path: testInfo.outputPath(`combat-${width}.png`), fullPage: true });
     expect(writes).toEqual([]);
     await context.close();
   });

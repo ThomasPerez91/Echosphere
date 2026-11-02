@@ -49,7 +49,11 @@ def operations(session, engine, universe_id, empire_id, at):
     """Command path: lock and fully catch up the Empire Operations stream before deciding."""
     state = galaxy.state_for(session, universe_id, empire_id)
     lock_stream(session, state.stream_id, universe_id)
-    if not engine.catch_up_stream(session, state.stream_id, universe_id, utc(at)).complete:
+    progress = engine.catch_up_stream(session, state.stream_id, universe_id, utc(at))
+    if progress.fenced:
+        # A due Combat is not resolved yet: never let military state move past the battle.
+        raise FleetError("A combat must be resolved first", "combat_pending")
+    if not progress.complete:
         raise FleetError("Operations need retry/operator", "fleet_busy")
     return state
 
@@ -650,10 +654,71 @@ def plan_colonize(session, rules, fleet, destination_id, stacks, target_planet_i
     return known.system_id, path, cost, travel, 0
 
 
+def round_trip(cost):
+    """ATTACK pays its way back at launch: twice the one-way fuel, never debited again."""
+    return {r: amount(2 * v) for r, v in cost.items()}
+
+
+def plan_attack(session, rules, fleet, destination_id, stacks, target_planet_id):
+    k = rules.combat
+    if k is None:
+        raise FleetError("Combat absent from pinned ruleset", "combat_unavailable")
+    if target_planet_id is None:
+        raise FleetError("Target planet required", "invalid_request")
+    # A known planet only (PlanetKnowledge exists once its system is MAPPED or better).
+    known = session.get(PlanetKnowledge, (fleet.empire_id, target_planet_id))
+    if known is None or known.universe_id != fleet.universe_id:
+        raise FleetError("Planet not found", "planet_not_found")
+    if destination_id not in (None, known.system_id):
+        raise FleetError("Destination is the target planet's system", "invalid_request")
+    if not stacks or any(c not in k.classes for c in stacks):
+        raise FleetError("ATTACK engages military units only", "attack_units")
+    if known.system_id == fleet.system_id:
+        # Same system: 0 hop, no travel, no fuel; the battle still waits the warning window.
+        return known.system_id, [], dict(NO_COST), 0, 0
+    path = galaxy.known_path(
+        session, fleet.universe_id, fleet.empire_id, fleet.system_id, known.system_id, mapped=True
+    )
+    cost, travel, _ = rules.fleets.mission_quote(
+        stacks, len(path), rules.colony.speeds["fleet"], False
+    )
+    return known.system_id, path, round_trip(cost), travel, 0
+
+
+def battle_time(rules, started_at, travel_arrival_at):
+    """Q02: never less than the minimum warning after launch, never before the arrival."""
+    return max(
+        utc(travel_arrival_at),
+        utc(started_at) + timedelta(seconds=rules.combat.min_warning_seconds),
+    )
+
+
+def attack_terms(rules, target_planet_id, battle_at):
+    """ATTACK-only snapshot part: target, accepted Combat rules and the battle instant."""
+    return {
+        "target_planet_id": str(target_planet_id),
+        "combat": rules.combat.model_dump(),
+        "battle_at": utc(battle_at).isoformat(),
+    }
+
+
+def check_attack(session, empire_id, target_planet_id, colony_read):
+    """Own-knowledge refusal only. Under the planet row lock shared with COLONIZE, the
+    occupant at launch is bound internally as the defender; nothing about it is returned."""
+    session.scalar(select(Planet.id).where(Planet.id == target_planet_id).with_for_update())
+    owner = session.scalar(select(Colony.empire_id).where(Colony.planet_id == target_planet_id))
+    if owner == empire_id:
+        code = "target_owned" if colony_read else "target_unavailable"
+        raise FleetError("Target unavailable", code)
+    return owner
+
+
 def plan_mission(session, rules, fleet, kind, destination_id, stacks, target_planet_id=None):
     """Server path and quote; the client never chooses routes, durations or costs."""
     if kind == "COLONIZE":
         return plan_colonize(session, rules, fleet, destination_id, stacks, target_planet_id)
+    if kind == "ATTACK":
+        return plan_attack(session, rules, fleet, destination_id, stacks, target_planet_id)
     if kind not in ("DEPLOY", "SURVEY", "RETURN") or target_planet_id is not None:
         raise FleetError("Unknown mission", "invalid_request")
     home = colony_system(session, session.get(Colony, fleet.home_colony_id))
@@ -770,12 +835,19 @@ def launch(
                 cargo_of(session, source.id) if whole else moved_cargo,
                 colony_read,
             )
+        defender = None
+        if kind == "ATTACK":
+            if moved_cargo or (whole and cargo_of(session, source.id)):
+                raise FleetError("ATTACK carries no cargo", "attack_cargo")
+            defender = check_attack(session, empire_id, target_planet_id, colony_read)
         origin = source.system_id
         fleet = source if whole else detach(session, rules, source, wanted, moved_cargo)
         catch_up_owned(session, engine, universe_id, empire_id, fleet.home_colony_id, at)
         debit(session, fleet.home_colony_id, quote[0])
         travel_arrival = utc(at) + timedelta(microseconds=quote[1])
         due = travel_arrival + timedelta(microseconds=quote[2])
+        if kind == "ATTACK":
+            due = battle_time(rules, at, travel_arrival)
         mission_id = uuid4()
         snapshot = mission_snapshot(
             rules,
@@ -790,6 +862,8 @@ def launch(
         )
         if kind == "COLONIZE":
             snapshot |= colonize_terms(rules, target_planet_id, due, utc(at), mission_id)
+        if kind == "ATTACK":
+            snapshot |= attack_terms(rules, target_planet_id, due)
         snapshot["request"] = request
         mission = FleetMission(
             id=mission_id,
@@ -822,6 +896,12 @@ def launch(
             )
         fleet.status, fleet.system_id, fleet.active_mission_id = "MOVING", None, mission.id
         session.flush()
+        if kind == "ATTACK":
+            # No arrival event: the Combat orchestrator resolves the engagement at battle_at.
+            from app.combat.service import open_engagement
+
+            open_engagement(session, mission, state.stream_id, defender)
+            return mission
         schedule(
             session,
             state.stream_id,
@@ -886,9 +966,16 @@ def preview(
     if kind == "COLONIZE":
         # The package aboard is chosen at launch; the launch checks it against the minimum.
         check_colonize(session, rules, empire_id, target_planet_id, None, colony_read)
+    if kind == "ATTACK":
+        # Read-only: own target only; a foreign occupant or defence is never consulted.
+        owner = session.scalar(select(Colony.empire_id).where(Colony.planet_id == target_planet_id))
+        if owner == empire_id:
+            raise FleetError(
+                "Target unavailable", "target_owned" if colony_read else "target_unavailable"
+            )
     estimate = estimated_balances(session, source.home_colony_id, at)
     travel_arrival = utc(at) + timedelta(microseconds=travel)
-    return {
+    quote = {
         "kind": kind,
         "destination_id": str(destination),
         "hops": len(path),
@@ -899,9 +986,14 @@ def preview(
         "due_at": (travel_arrival + timedelta(microseconds=survey)).isoformat(),
         "payer_colony_id": str(source.home_colony_id),
         "affordable": all(estimate[r].stock >= cost[r] for r in cost),
-        "target_planet_id": str(target_planet_id) if kind == "COLONIZE" else None,
+        "target_planet_id": str(target_planet_id) if kind in ("COLONIZE", "ATTACK") else None,
         "package_minimum": rules.colonization.package_minimum() if kind == "COLONIZE" else None,
     }
+    if kind == "ATTACK":
+        quote["due_at"] = battle_time(rules, at, travel_arrival).isoformat()
+        quote["battle_at"] = quote["due_at"]
+        quote["units"] = wanted
+    return quote
 
 
 def check_mission_event(session, event, prefix):
@@ -964,39 +1056,51 @@ SNAPSHOT_KEYS = {
     "request",
 }
 COLONIZE_KEYS = SNAPSHOT_KEYS | {"target_planet_id", "colonization", "rank"}
+ATTACK_KEYS = SNAPSHOT_KEYS | {"target_planet_id", "combat", "battle_at"}
 
 
-def verify_mission_snapshot(session, mission):
+def verify_mission_snapshot(session, mission, engaged=None):
     """Worker check of the accepted intention: the snapshot is rebuilt from the pinned ruleset,
     the persisted legs and the engaged composition, then compared exactly. Any drift is a
-    TimelineError (rollback, retry then blocked), never a silent repositioning."""
+    TimelineError (rollback, retry then blocked), never a silent repositioning.
+
+    `engaged`: after a battle, an ATTACK is checked against the composition it launched with
+    (recorded in the resolved engagement), not against its survivors."""
     snapshot, fleet = mission.snapshot, session.get(Fleet, mission.fleet_id)
     rules = ruleset_for(session, mission.universe_id)
-    colonize = mission.kind == "COLONIZE"
+    colonize, attack = mission.kind == "COLONIZE", mission.kind == "ATTACK"
+    keys = COLONIZE_KEYS if colonize else (ATTACK_KEYS if attack else SNAPSHOT_KEYS)
     if (
         rules.fleets is None
         or (colonize and rules.colonization is None)
+        or (attack and rules.combat is None)
         or not isinstance(snapshot, dict)
-        or set(snapshot) != (COLONIZE_KEYS if colonize else SNAPSHOT_KEYS)
+        or set(snapshot) != keys
         or fleet is None
         or (fleet.universe_id, fleet.empire_id) != (mission.universe_id, mission.empire_id)
         or fleet.home_colony_id != mission.payer_colony_id
     ):
         raise TimelineError("Inconsistent mission snapshot")
-    path = verified_path(session, mission, local=colonize)
-    stacks = stacks_of(session, fleet.id)
+    path = verified_path(session, mission, local=colonize or attack)
+    stacks = stacks_of(session, fleet.id) if engaged is None else engaged
     survey = mission.kind == "SURVEY"
     try:
         if survey and not all(rules.fleets.classes[c].survey for c in stacks):
             raise ValueError("SURVEY with a non-survey class")
         if colonize and stacks != {rules.colonization.colonizer_class: 1}:
             raise ValueError("COLONIZE engages exactly one colonizer")
-        if colonize and not path:
+        if attack and (not stacks or any(c not in rules.combat.classes for c in stacks)):
+            raise ValueError("ATTACK engages military units only")
+        if attack and cargo_of(session, fleet.id):
+            raise ValueError("ATTACK carries no cargo")
+        if (colonize or attack) and not path:
             quote = (dict(NO_COST), 0, 0)
         else:
             quote = rules.fleets.mission_quote(
                 stacks, len(path), rules.colony.speeds["fleet"], survey
             )
+            if attack:
+                quote = (round_trip(quote[0]), quote[1], quote[2])
     except (KeyError, ValueError):
         raise TimelineError("Inconsistent mission snapshot") from None
     expected = mission_snapshot(
@@ -1017,6 +1121,8 @@ def verify_mission_snapshot(session, mission):
         minimum = rules.colonization.package_minimum()
         if any(cargo_of(session, fleet.id).get(r, 0) < v for r, v in minimum.items()):
             raise TimelineError("Inconsistent mission snapshot")
+    if attack:
+        expected |= attack_terms(rules, mission.target_planet_id, mission.due_at)
     if any(snapshot[k] != v for k, v in expected.items()):
         raise TimelineError("Inconsistent mission snapshot")
     if mission.kind == "RETURN" and mission.destination_id != colony_system(
@@ -1024,9 +1130,14 @@ def verify_mission_snapshot(session, mission):
     ):
         raise TimelineError("Inconsistent mission snapshot")
     _, travel, survey_us = quote
-    if mission.travel_arrival_at - mission.started_at != timedelta(
-        microseconds=travel
-    ) or mission.due_at - mission.travel_arrival_at != timedelta(microseconds=survey_us):
+    if mission.travel_arrival_at - mission.started_at != timedelta(microseconds=travel):
+        raise TimelineError("Inconsistent mission deadlines")
+    due = (
+        battle_time(rules, mission.started_at, mission.travel_arrival_at)
+        if attack
+        else mission.travel_arrival_at + timedelta(microseconds=survey_us)
+    )
+    if mission.due_at != due:
         raise TimelineError("Inconsistent mission deadlines")
 
 
@@ -1157,12 +1268,17 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         mission = session.get(FleetMission, mission_id, populate_existing=True)
         if mission is None or mission.empire_id != empire_id or mission.universe_id != universe_id:
             raise FleetError("Mission unavailable", "mission_not_found")
+        if done is None and mission.kind == "ATTACK" and mission.status == "returning":
+            if mission.recalled_at is None:
+                raise FleetError("The battle already took place", "recall_too_late")
         if done is not None or mission.status == "returning":
             return mission
         if mission.status == "completed":
             raise FleetError("Fleet already arrived", "recall_too_late")
         if mission.kind == "RETURN":
             raise FleetError("A return cannot be recalled", "recall_refused")
+        if mission.kind == "ATTACK":
+            return recall_attack(session, state, mission, key, request, at)
         if mission.kind == "COLONIZE":
             lock_target(session, mission)  # visible to a competing claim only once committed
         # DEPLOY until arrival; SURVEY only while travelling, never during the analysis.
@@ -1195,10 +1311,97 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         return mission
 
 
+def recall_attack(session, state, mission, key, request, at):
+    """Until battle_at: symmetric way back while travelling, one full travel once arrived;
+    a local (0 hop) attack is stationed at once. The engagement is cancelled, fences lifted."""
+    from app.combat.service import cancel_engagement
+
+    now = utc(at)
+    if now >= mission.due_at:
+        raise FleetError("The battle is due", "recall_too_late")
+    verify_mission_snapshot(session, mission)
+    cancel_engagement(session, mission, now)
+    origin = mission.origin_id
+    if origin == mission.destination_id:
+        mission.recalled_at = mission.return_at = now
+        session.add(
+            FleetReport(
+                mission_id=mission.id,
+                empire_id=mission.empire_id,
+                universe_id=mission.universe_id,
+                observed_at=now,
+                processed_at=now,
+                result={"kind": "RECALLED", "destination_id": str(origin)},
+            )
+        )
+        settle_fleet(session, mission, origin, now)
+    else:
+        travelled = (
+            now - mission.started_at
+            if now < mission.travel_arrival_at
+            else mission.travel_arrival_at - mission.started_at
+        )
+        mission.status, mission.recalled_at = "returning", now
+        mission.return_at = now + travelled
+        session.flush()
+        schedule(
+            session,
+            state.stream_id,
+            mission.universe_id,
+            key=f"fleet-return:{mission.id}",
+            kind="FLEET_RETURN",
+            due_at=mission.return_at,
+            payload={"mission_id": str(mission.id)},
+        )
+    record(session, mission.universe_id, mission.empire_id, key, "recall", request, request, at)
+    return mission
+
+
+def complete_attack_return(session, mission, event, processed_at):
+    from app.combat.models import CombatEngagement
+
+    engagement = session.scalar(
+        select(CombatEngagement).where(CombatEngagement.mission_id == mission.id)
+    )
+    travel = mission.travel_arrival_at - mission.started_at
+    recalled = mission.recalled_at
+    if engagement is None or mission.status != "returning" or mission.return_at != event.due_at:
+        raise TimelineError("Inconsistent return deadline")
+    if recalled is not None:
+        back = recalled - mission.started_at if recalled < mission.travel_arrival_at else travel
+        valid = engagement.state == "cancelled" and mission.return_at == recalled + back
+        engaged, result = None, {"kind": "RECALLED"}
+    else:
+        valid = engagement.state == "resolved" and mission.return_at == mission.due_at + travel
+        engaged = {c: n for c, n in engagement.snapshot["attacker"]["units"].items() if n}
+        result = {
+            "kind": "ATTACK",
+            "engagement_id": str(engagement.id),
+            "outcome": engagement.result["outcome"],
+        }
+    if not valid:
+        raise TimelineError("Inconsistent return deadline")
+    verify_mission_snapshot(session, mission, engaged)
+    origin = UUID(mission.snapshot["origin_id"])
+    session.add(
+        FleetReport(
+            mission_id=mission.id,
+            empire_id=mission.empire_id,
+            universe_id=mission.universe_id,
+            observed_at=event.due_at,
+            processed_at=utc(processed_at),
+            result=result | {"destination_id": str(origin)},
+        )
+    )
+    settle_fleet(session, mission, origin, event.due_at)
+
+
 def complete_return(session, event, processed_at):
     mission = check_mission_event(session, event, "fleet-return")
     if mission.status == "completed" and session.get(FleetReport, mission.id) is not None:
         return
+    if mission.kind == "ATTACK":
+        return complete_attack_return(session, mission, event, processed_at)
     if (
         mission.status != "returning"
         or mission.return_at != event.due_at

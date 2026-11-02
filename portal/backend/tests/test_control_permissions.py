@@ -20,13 +20,13 @@ def test_unknown_or_duplicated_rights_are_refused(rights):
         normalized_bindings([{"empire_id": EMPIRE, "permissions": rights}])
 
 
-def test_thirteen_rights_including_expansion_accepted_fourteenth_refused():
+def test_fifteen_rights_including_combat_accepted_sixteenth_refused():
     from portal_app.control.service import PERMISSIONS
 
-    assert len(PERMISSIONS) == 13
+    assert len(PERMISSIONS) == 15
     (binding,) = normalized_bindings([{"empire_id": EMPIRE, "permissions": sorted(PERMISSIONS)}])
-    assert {"fleet.command", "colony.expand"} <= set(binding["permissions"])
-    for extra in ["colony.abandon", "colony.expand"]:
+    assert {"colony.expand", "combat.read", "combat.attack"} <= set(binding["permissions"])
+    for extra in ["combat.loot", "combat.attack"]:
         with pytest.raises(PublicError):
             normalized_bindings(
                 [{"empire_id": EMPIRE, "permissions": [*sorted(PERMISSIONS), extra]}]

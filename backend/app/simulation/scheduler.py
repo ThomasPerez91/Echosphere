@@ -1,6 +1,8 @@
 """Universe-scoped generic event streams; no dependency on colony economics or ownership types.
 
 Handlers are trusted in-transaction code: no commit, external side effect or other stream lock.
+An unreleased stream fence freezes its stream at `fence_at`: events due later are never applied
+and the cursor never passes it, whoever processes the stream (worker or command catch-up).
 """
 
 import json
@@ -9,11 +11,11 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select, true
+from sqlalchemy import exists, func, select, true
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.simulation.clock import Clock, utc
-from app.simulation.models import EventStream, ScheduledEvent
+from app.simulation.models import EventStream, ScheduledEvent, StreamFence
 
 
 class TimelineError(ValueError):
@@ -38,6 +40,8 @@ class Outcome:
 class CatchUp:
     processed: int
     complete: bool
+    # True when an unreleased fence stopped the stream before the requested instant.
+    fenced: bool = False
 
 
 Handler = Callable[[Session, ScheduledEvent], None]
@@ -122,6 +126,15 @@ def schedule(
     return event
 
 
+def open_fence(session: Session, stream_id: UUID) -> datetime | None:
+    """Earliest unreleased fence of a stream, read after the stream lock."""
+    return session.scalar(
+        select(func.min(StreamFence.fence_at)).where(
+            StreamFence.stream_id == stream_id, StreamFence.released_at.is_(None)
+        )
+    )
+
+
 def first_pending(session: Session, stream_id: UUID, universe_id: UUID) -> ScheduledEvent | None:
     return session.scalar(
         select(ScheduledEvent)
@@ -191,6 +204,11 @@ class Scheduler:
             .limit(1)
         )
         first = first.correlate(EventStream).lateral()
+        fenced = exists().where(
+            StreamFence.stream_id == EventStream.id,
+            StreamFence.released_at.is_(None),
+            StreamFence.fence_at < first.c.due_at,
+        )
         query = (
             select(EventStream)
             .join(first, true())
@@ -198,6 +216,7 @@ class Scheduler:
                 first.c.status == "pending",
                 first.c.due_at <= now,
                 first.c.next_attempt_at <= now,
+                ~fenced,
             )
             .order_by(first.c.due_at, first.c.sequence, EventStream.id)
             .limit(1)
@@ -212,6 +231,9 @@ class Scheduler:
             if event is None or event.status != "pending" or event.due_at > now:
                 return None
             if event.next_attempt_at > now:
+                return None
+            fence = open_fence(session, stream.id)
+            if fence is not None and event.due_at > fence:
                 return None
             return self._apply(session, stream, event, now)
 
@@ -230,21 +252,25 @@ class Scheduler:
         if target > now:
             raise TimelineError("Cannot advance a stream into the future")
         stream = lock_stream(session, stream_id, universe_id)
+        fence = open_fence(session, stream_id)
+        # Inclusive: everything due at or before the fence is applied, nothing after it.
+        fenced = fence is not None and target > fence
+        reach = fence if fenced else target
         for count in range(limit):
             event = first_pending(session, stream_id, universe_id)
-            if event is None or event.due_at > target:
-                advance_cursor(session, stream, target)
-                return CatchUp(count, True)
+            if event is None or event.due_at > reach:
+                advance_cursor(session, stream, reach)
+                return CatchUp(count, not fenced, fenced)
             if event.status == "blocked" or event.next_attempt_at > now:
                 return CatchUp(count, False)
             result = self._apply(session, stream, event, now)
             if result.status != "completed":
                 return CatchUp(count + 1, False)
         event = first_pending(session, stream_id, universe_id)
-        complete = event is None or event.due_at > target
-        if complete:
-            advance_cursor(session, stream, target)
-        return CatchUp(limit, complete)
+        settled = event is None or event.due_at > reach
+        if settled:
+            advance_cursor(session, stream, reach)
+        return CatchUp(limit, settled and not fenced, settled and fenced)
 
 
 def retry_blocked(session: Session, event_id: UUID, now: datetime) -> None:

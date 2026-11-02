@@ -16,7 +16,7 @@ Checkpoint 5A : Ruff et 101 tests backend (42 unitaires, 59 intégrations Postgr
 remplace pas le SELECT 1 réel du smoke Compose.
 Frontend : ESLint, TypeScript strict, build Vite, 11 tests Vitest et 5 scénarios Chromium.
 Documentation : script vérifiant les liens Markdown locaux et les fichiers obligatoires.
-CI : jobs backend, frontend/documentation et smoke Docker avec PostgreSQL réel. Le smoke vérifie
+CI (avant la [stratégie à deux niveaux](#stratégie-ci-à-deux-niveaux--décision-du-02112026), désormais seule valable) : jobs backend, frontend/documentation et smoke Docker avec PostgreSQL réel. Le smoke vérifie
 la reprise après arrêt/redémarrage de PostgreSQL et préserve /health pendant l'indisponibilité.
 
 ## Intégrations PostgreSQL (étapes 1–2)
@@ -124,3 +124,37 @@ capacité. UI : théorique/récupérable/perte et liste complète avant confirma
 Smoke réel Colony étendu à l’overflow avec Portal arrêté : remplissage de la seule base jetable,
 confirmation UI à 390 px, annulation et retry sans crédit supplémentaire. Les commandes de fixture
 refusent toute autre base ; aucune donnée runtime fictive introduite.
+
+## Stratégie CI à deux niveaux — décision du 02/11/2026
+
+Un seul workflow, un seul run par événement (plus de double run push + pull_request).
+
+**Fast CI — chaque commit d'une PR vers master (`pull_request`) :** feedback de développement
+rapide, visé en 5 à 10 minutes. **Ce n'est pas une recette intégrale du jeu.**
+- **Game backend :** `ruff check backend scripts`, puis `pytest -q` sans `RUN_DB_TESTS`. Les tests
+  PostgreSQL sautent par la garde existante ; restent les tests purs (règles, résolveur Combat,
+  politique IA, validations, sérialisation).
+- **Portal backend :** Ruff, puis `pytest -q` sans `RUN_DB_TESTS` (mêmes sauts).
+- **Frontends Game et Portal :** `npm ci`, lint, Vitest, build. Pas de Chromium.
+- **Statique :** `python scripts/check_docs.py`, `git diff --check` de la PR (hors DDL Alembic figé, recopié tel quel),
+  `docker compose config --quiet` et `docker compose --profile ai config --quiet`. Jamais de
+  `docker compose up` ni de build d'image.
+
+**Full CI — chaque `push` sur master (après un merge) :** la preuve exhaustive, de 30 à 40 minutes
+acceptées.
+- suites Game et Portal complètes sur PostgreSQL (`RUN_DB_TESTS=1`) ;
+- frontends avec Chromium et Playwright ;
+- démarrage Compose réel, Alembic upgrade et check ;
+- worker et tous les smokes : Compose, Portal, Control, Handoff, Colony, Research, Galaxy, Fleet,
+  Colonization, IA, Combat.
+
+**Conséquence assumée :** une régression que seules ces preuves exhaustives détectent (PostgreSQL,
+navigateur, Compose, autonomie IA, gameplay cross-domain) est découverte **après le merge**, sur
+master. Une tête de PR n'a donc plus nécessairement de suite PostgreSQL complète ni de smoke Compose.
+
+Si la Full CI de master est rouge :
+- ne pas commencer le lot suivant ;
+- corriger master immédiatement par une branche courte et une PR (Fast CI), puis merger ;
+- relire la nouvelle Full CI de master.
+
+Les validations locales réellement exécutées restent à consigner comme telles.

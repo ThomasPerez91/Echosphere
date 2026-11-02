@@ -103,3 +103,51 @@ export function colonizing(permissions?: string[]): FleetProjection {
     ],
   };
 }
+
+export const rivalWorld = "dddddddd-0000-4000-8000-000000000001";
+export const engagement = "dddddddd-0000-4000-8000-000000000002";
+export const attacking = "dddddddd-0000-4000-8000-000000000003";
+export const COMBAT_RIGHTS = ["colony.read", "galaxy.read", "fleet.read", "fleet.build", "fleet.command", "combat.read", "combat.attack"];
+/** v0.7 projection: military classes in the garrison, a known foreign-candidate world, an attack in approach. */
+export function fighting(permissions: string[] = COMBAT_RIGHTS): FleetProjection {
+  const p = fleets([], permissions);
+  const readable = permissions.includes("combat.read");
+  const attack: MissionView = {
+    ...surveying("2098-12-31T12:00:00Z"), id: attacking, kind: "ATTACK", fleet_id: task,
+    destination: { id: near, state: "MAPPED", name: "Système voisin" }, stacks: { frigate: 2 },
+    travel_arrival_at: "2098-12-31T12:18:00Z", due_at: "2099-01-01T12:00:00Z", cost: amounts(0, 48, 0),
+    target_planet: { id: rivalWorld, name: "Monde rival" },
+    attack: { engagement_id: engagement, battle_at: "2099-01-01T12:00:00Z", state: "pending" },
+  };
+  return {
+    ...p,
+    catalogue: {
+      ...p.catalogue,
+      interceptor: { name: "Intercepteur", cost: amounts(180, 90, 30), build_us: String(1800e6), hop_seconds: 720, flux_per_hop: 6, cargo: "0", survey: false },
+      frigate: { name: "Frégate", cost: amounts(450, 200, 80), build_us: String(3600e6), hop_seconds: 1080, flux_per_hop: 12, cargo: "0", survey: false },
+      cruiser: { name: "Croiseur", cost: amounts(1000, 450, 180), build_us: String(7200e6), hop_seconds: 1500, flux_per_hop: 25, cargo: "0", survey: false },
+    },
+    fleets: [
+      { ...p.fleets![0], stacks: { interceptor: 3, probe: 1 } },
+      { ...p.fleets![1], stacks: { frigate: 2 }, mission_id: attacking },
+    ],
+    missions: [attack],
+    combat: {
+      classes: ["interceptor", "frigate", "cruiser"], min_warning_seconds: 86400,
+      alerts: readable ? [{ id: engagement, planet_id: rivalWorld, system_id: near, battle_at: "2099-01-02T00:00:00Z", state: "pending" }] : null,
+      reports: readable ? [{
+        engagement_id: done, role: "defender", battle_at: "2098-12-31T00:00:00Z", processed_at: "2098-12-31T00:00:05Z",
+        outcome: "defender_win", target: { planet_id: rivalWorld, system_id: near }, opponent_empire_id: otherEmpire,
+        own: { initial: { interceptor: 3 }, losses: { interceptor: 1 }, survivors: { interceptor: 2 } },
+        opponent: { initial: { cruiser: 1 }, losses: { cruiser: 1 }, survivors: { cruiser: 0 } },
+        rounds: [{}, {}],
+      }] : null,
+    },
+    systems: [
+      { id: origin, state: "MONITORED", name: "Système d’origine" },
+      { id: near, state: "MAPPED", name: "Système voisin", planets: [
+        { id: rivalWorld, name: "Monde rival", sector_capacity: 12, orbital_capacity: 2, colony_id: null },
+      ] },
+    ],
+  };
+}

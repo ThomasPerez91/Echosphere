@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, expect, test, vi } from 'vitest';
 import App from './App';
 import type { Projection } from './colony/api';
+import { validProjection } from './colony/api';
 import { exactUnits } from './colony/format';
 
 const universe = '052d4535-79c7-413b-ace3-47c732561fbd';
@@ -253,4 +254,22 @@ test('a colony founded meanwhile joins the existing selector on the next refresh
   const selector = await screen.findByRole('combobox', { name: 'Colonie' });
   expect(within(selector).getByRole('option', { name: 'Monde fondé' })).toBeInTheDocument();
   expect(selector).toHaveValue(colonyId);
+});
+
+test('an announced hostile force shows its battle time only, never the attacker', async () => {
+  setup('colony/overview', { colony: [{ body: projection({
+    permissions: ['colony.read', 'combat.read'],
+    incoming: [{ id: 'e1', battle_at: '2099-01-02T00:00:00Z', state: 'pending' }],
+  }) }] });
+  const panel = (await screen.findByRole('heading', { name: 'Force hostile en approche' })).closest('section')!;
+  expect(panel).toHaveAttribute('role', 'alert');
+  expect(panel.textContent).toMatch(/Bataille prévue/);
+  expect(panel.textContent).toMatch(/aucune ressource, aucun bâtiment ni aucune recherche ne peut être perdu/);
+});
+
+test('incoming attacks without combat.read are a leak and refused', () => {
+  expect(validProjection(projection({ permissions: ['colony.read'],
+    incoming: [{ id: 'e1', battle_at: '2099-01-02T00:00:00Z', state: 'pending' }] }), colonyId)).toBe(false);
+  expect(validProjection(projection({ permissions: ['colony.read', 'combat.read'],
+    incoming: [{ id: 'e1', battle_at: '2099-01-02T00:00:00Z', state: 'pending', attacker: 'x' } as never] }), colonyId)).toBe(false);
 });

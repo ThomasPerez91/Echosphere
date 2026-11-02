@@ -96,3 +96,12 @@ Q11 ouverte, aucun code IA engageant avant sa validation explicite. Étape 12 Co
 État courant étape 11 : Q11 close avec amendements le 01/11/2026 ; AI02–AI10 réalisés sur la
 PR #14 (reprise Claude Code après limite Codex, travail local préservé), [contrat technique](03-technical/first-ai.md).
 AI11 revue/CI/Ready en cours ; aucun merge ni Combat. Les statuts documentaires AI01 ci-dessus sont historiques.
+
+## État post-merge étape 11 — 02/11/2026
+
+Étape 11 Première IA intégrée via PR #14, merge `f79d9f6d0c3ebd9d230344b5a0c2aeaef9f4ce6b` ;
+CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026 ; Q11 close. Les états courants
+étape 11 ci-dessus sont historiques. Lot courant : **étape 12 Combat MVP**, branche
+`work/step-12-combat`, PR Draft unique. Q02/Q10 closes pour le Combat MVP v0.7 seulement,
+[décisions](01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [plan COM00–COM11](05-project/step-12-plan.md).
+Étape 13 Relations non commencée ; aucun merge ni suppression de branche autorisé.

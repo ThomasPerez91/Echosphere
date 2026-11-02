@@ -134,3 +134,17 @@ test('no colonization offer without the ruleset or without colony.expand', async
   await waitFor(() => expect(screen.getByText(/Occupation actuelle inconnue/)).toBeVisible());
   expect(screen.queryByRole('link', { name: 'Coloniser…' })).not.toBeInTheDocument();
 });
+
+test('v0.7: "Attaquer…" opens the Fleet ATTACK flow and never states occupation or defence', async () => {
+  setup({ ...detail(), colonization: true, combat: true,
+    permissions: ['galaxy.read', 'colony.read', 'fleet.command', 'combat.read', 'combat.attack'] });
+  (await screen.findByRole('button', { name: /1 · Rocher Pâle/ })).click();
+  const link = await screen.findByRole('link', { name: 'Attaquer…' });
+  expect(link).toHaveAttribute('href', `#universe/${universe}/fleets/attack/${empire}/${origin}/0aaaaaaa-0000-4000-8000-000000000001`);
+  expect(screen.getByText('Occupation et défense non confirmées.')).toBeVisible();
+  cleanup();
+  setup({ ...detail(), colonization: true, combat: true, permissions: ['galaxy.read', 'colony.read', 'fleet.command', 'combat.read'] });
+  (await screen.findByRole('button', { name: /1 · Rocher Pâle/ })).click();
+  await waitFor(() => expect(screen.getByRole('heading', { name: 'Rocher Pâle' })).toBeVisible());
+  expect(screen.queryByRole('link', { name: 'Attaquer…' })).not.toBeInTheDocument();
+});

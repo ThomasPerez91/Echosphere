@@ -204,3 +204,14 @@ descriptif.
   sont privées, sans API.
 
 [Contrat](first-ai.md).
+
+Étape 12 : ATTACK exige `fleet.command`, `galaxy.read`, `combat.read` et `combat.attack`, sans
+attribution automatique (15 permissions).
+- **Lancement :** il ne révèle jamais l'occupation ni la défense ; devis et réponse sont identiques
+  pour une cible vide ou occupée.
+- **Avant la bataille :** le défenseur lié est interne. L'attaquant ne le voit jamais ; le défenseur
+  ne voit que la cible, `battle_at` et l'état.
+- **Après la bataille :** les rapports révèlent l'Empire adverse et les forces militaires engagées,
+  jamais les stocks, infrastructures, Research, cargo, civils ou autres colonies. Ce sont des
+  observations datées, sans MONITORED.
+- **IA :** aucune capability d'attaque. [Contrat](combat-api-ui.md).

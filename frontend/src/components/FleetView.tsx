@@ -3,11 +3,15 @@ import type { FormEvent, ReactNode } from "react";
 import { useFleets } from "../hooks/useFleets";
 import { ApiError, previewMission } from "../fleet/api";
 import type { Amounts } from "../colony/api";
-import type { FleetProjection, MissionKind, MissionView, Quote, ShipOrder } from "../fleet/api";
+import type { CombatReport, FleetProjection, MissionKind, MissionView, Quote, ShipOrder } from "../fleet/api";
 import { duration, exactUnits, resourceKeys, resourceLabels, time, units } from "../colony/format";
 import { Badge, Button, EmptyState, Panel } from "./ui";
 
-const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation" };
+const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation", ATTACK: "Attaque" };
+const outcomeLabels: Record<string, string> = {
+  attacker_win: "Victoire de l’attaquant", defender_win: "Victoire du défenseur",
+  mutual_destruction: "Destruction mutuelle", unopposed: "Aucune défense militaire", target_unavailable: "Cible indisponible",
+};
 const messages: Record<string, string> = {
   accepted: "Ordre accepté par le serveur.",
   insufficient_resources: "Ressources insuffisantes dans la colonie concernée.",
@@ -39,6 +43,10 @@ const messages: Record<string, string> = {
   package_insufficient: "Le paquet de fondation à bord est inférieur au minimum requis.",
   colonize_units: "Une colonisation engage exactement un colonisateur, sans autre vaisseau.",
   colonization_unavailable: "Les règles de cette partie n’incluent pas la colonisation.",
+  attack_units: "Une attaque n’engage que des vaisseaux militaires.",
+  attack_cargo: "Une attaque ne transporte aucune cargaison.",
+  combat_pending: "Une bataille due attend sa résolution par le serveur. Réessayez dans un instant.",
+  combat_unavailable: "Les règles de cette partie n’incluent pas le combat.",
 };
 const message = (code: string) => messages[code] ?? "Service Game indisponible. Réessayer n’enverra pas l’action deux fois.";
 
@@ -79,6 +87,7 @@ function reportTitle(m: MissionView) {
   const result = m.report!.result;
   if (result.kind === "RECALLED") return "Rappel terminé";
   if (result.kind === "COLONIZE") return result.outcome === "founded" ? "Colonie fondée" : "Monde indisponible à l’arrivée";
+  if (result.kind === "ATTACK") return result.destroyed ? "Flotte détruite au combat" : `Attaque — ${outcomeLabels[result.outcome ?? ""] ?? "terminée"}`;
   return kindLabels[m.kind];
 }
 
@@ -107,9 +116,15 @@ function Counter({ label, value, max, onChange }: { label: string; value: number
   </label>;
 }
 
+function Losses({ label, side, p }: { label: string; side: CombatReport["own"]; p: FleetProjection }) {
+  const rows = Object.entries(side?.initial ?? {}).filter(([, n]) => n > 0);
+  return <div><dt>{label}</dt><dd>{rows.length ? rows.map(([c, n]) =>
+    `${p.catalogue![c]?.name ?? c} : ${n} engagés, ${side!.losses[c] ?? 0} perdus, ${side!.survivors[c] ?? 0} survivants`).join(" · ") : "aucune unité militaire"}</dd></div>;
+}
+
 export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyChanged, target }: {
   universe: string; enabled: boolean; csrf?: string; onSessionLost: () => void; onEconomyChanged?: () => void;
-  target?: { empire: string; system: string; planet?: string };
+  target?: { empire: string; system: string; planet?: string; action?: "colonize" | "attack" };
 }) {
   const fleets = useFleets(universe, enabled, csrf, onSessionLost, target?.empire);
   const p = fleets.projection;
@@ -149,6 +164,16 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     if (prefilled.current || !p?.available || !target || p.empire.id !== target.empire || dialog) return;
     const system = p.systems!.find((s) => s.id === target.system);
     if (!system || !p.permissions.includes("fleet.command")) return;
+    if (target.planet && target.action === "attack") {
+      // "Attaquer…" from System View: a stationed fleet with military units, the same ATTACK flow.
+      const military = p.combat?.classes ?? [];
+      const fleet = p.fleets!.find((f) => f.status === "STATIONED" && military.some((c) => f.stacks[c]));
+      if (!fleet || !system.planets?.some((pl) => pl.id === target.planet) || !p.permissions.includes("combat.attack")) return;
+      prefilled.current = true;
+      setDialog({ mode: "send", fleet: fleet.id, kind: "ATTACK", destination: "", planet: target.planet,
+        units: {}, cargo: {}, quote: null, quoted: null, error: null });
+      return;
+    }
     if (target.planet) {
       // "Coloniser…" from System View: a fleet carrying a colonizer, the same COLONIZE flow.
       const colonizer = p.colonization?.colonizer_class;
@@ -174,7 +199,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     const now = Date.parse(p.server_time) + (Date.now() - fleets.receivedAt);
     const next = p.missions!
       .filter((m) => m.status === "active" && m.kind !== "RETURN")
-      .map((m) => Date.parse(m.travel_arrival_at))
+      .flatMap((m) => [Date.parse(m.travel_arrival_at), Date.parse(m.due_at)])
       .filter((at) => at > now)
       .sort((x, y) => x - y)[0];
     if (next === undefined) return;
@@ -200,7 +225,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     const fleet = p?.fleets?.find((f) => f.id === d.fleet);
     return fleet?.kind === "TASK" && JSON.stringify(positive(d.units)) === JSON.stringify(positive(fleet.stacks));
   };
-  const target_of = (d: Send) => d.kind === "COLONIZE" ? { target_planet_id: d.planet }
+  const target_of = (d: Send) => d.kind === "COLONIZE" || d.kind === "ATTACK" ? { target_planet_id: d.planet }
     : d.kind === "RETURN" ? {} : { destination_id: d.destination };
 
   async function quote(d: Send) {
@@ -298,10 +323,10 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           }}>
             <label className="galaxy-field">Classe
               <select value={choice.ship} onChange={(e) => setOrder({ ...order, [colony.id]: { ...choice, ship: e.target.value } })}>
-                {Object.entries(p.catalogue!).map(([key, c]) => <option key={key} value={key}>{c.name}</option>)}
+                {Object.entries(p.catalogue!).map(([key, c]) => <option key={key} value={key}>{c.name}{p.combat?.classes.includes(key) ? " (militaire)" : ""}</option>)}
               </select></label>
             <Counter label="Quantité" value={colonizer ? 1 : choice.quantity} max={colonizer ? 1 : p.max_quantity!} onChange={(n) => setOrder({ ...order, [colony.id]: { ...choice, quantity: Math.max(1, n) } })} />
-            <p className="fleet-unit">{colonizer ? "Prix serveur actuel" : "Par unité"} : {resourceKeys.map((k) => `${units(unitCost[k])} ${resourceLabels[k]}`).join(" · ")} · {duration(ship.build_us)} de fabrication · {units(ship.cargo)} de cargo{ship.survey ? " · cartographie" : ""}</p>
+            <p className="fleet-unit">{colonizer ? "Prix serveur actuel" : "Par unité"} : {resourceKeys.map((k) => `${units(unitCost[k])} ${resourceLabels[k]}`).join(" · ")} · {duration(ship.build_us)} de fabrication · {units(ship.cargo)} de cargo{ship.survey ? " · cartographie" : ""}{p.combat?.classes.includes(choice.ship) ? " · militaire" : ""}</p>
             {colonizer && p.colonization?.colonizer_quote && <p className="panel-meta">Coût progressif : rang {p.colonization.colonizer_quote.rank} (colonies, colonisateurs et ordres en cours), ×{p.colonization.colonizer_quote.multiplier_bps / 10000}. Recalculé et figé par le serveur à la confirmation.</p>}
             <Button className="button--primary" type="submit" disabled={fleets.pending || colony.orders.length >= p.queue_limit!}>Commander</Button>
           </form>}
@@ -339,24 +364,59 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
         <span className="panel-meta">{moving.length}</span></div>
         {moving.length === 0 ? <p>Aucune flotte en mission.</p> : <ul className="fleet-list">{moving.map((m) => {
           const analysing = m.kind === "SURVEY" && m.status === "active" && server >= Date.parse(m.travel_arrival_at);
+          const attack = m.kind === "ATTACK";
+          const approaching = attack && m.status === "active" && server >= Date.parse(m.travel_arrival_at);
+          const badge = m.status === "returning" ? (attack && !m.recalled_at ? "Retour après la bataille" : "Retour après rappel")
+            : analysing ? "Analyse en cours" : approaching ? (server >= Date.parse(m.due_at) ? "Bataille en résolution" : "Approche — bataille prévue")
+            : attack ? "Attaque — en route" : kindLabels[m.kind];
+          // ATTACK: recall until battle_at; every other mission only while travelling.
+          const recallable = m.status === "active" && m.kind !== "RETURN" &&
+            server < Date.parse(attack ? m.due_at : m.travel_arrival_at) && (!attack || m.attack?.state === "pending");
           return <li key={m.id} className="fleet-card">
             <div className="panel-head"><h3>{fleetName(m.fleet_id)}</h3>
-              <Badge tone="accent">{m.status === "returning" ? "Retour après rappel" : analysing ? "Analyse en cours" : kindLabels[m.kind]}</Badge></div>
+              <Badge tone={attack ? "warning" : "accent"}>{badge}</Badge></div>
             <p>{place(m.origin)} → {place(m.destination)}{m.target_planet ? ` · monde ${m.target_planet.name}` : ""} · {m.hops} saut(s)</p>
             <Composition stacks={m.stacks} p={p} />
             <dl className="fleet-dates">
               <div><dt>Départ</dt><dd>{time(m.started_at)}</dd></div>
               {m.status === "returning" ? <div><dt>Retour prévu</dt><dd>{time(m.return_at!)}</dd></div> : <>
                 <div><dt>{m.kind === "SURVEY" ? "Arrivée dans le système" : "Arrivée"}</dt><dd>{time(m.travel_arrival_at)}</dd></div>
-                {m.kind === "SURVEY" && <div><dt>Fin d’analyse</dt><dd>{time(m.due_at)}</dd></div>}</>}
+                {m.kind === "SURVEY" && <div><dt>Fin d’analyse</dt><dd>{time(m.due_at)}</dd></div>}
+                {attack && <div><dt>Bataille</dt><dd>{time(m.due_at)}</dd></div>}</>}
             </dl>
-            <Clock start={m.status === "returning" ? m.recalled_at! : m.started_at} end={m.status === "returning" ? m.return_at! : m.due_at}
+            <Clock start={m.status === "returning" ? (m.recalled_at ?? m.due_at) : m.started_at} end={m.status === "returning" ? m.return_at! : m.due_at}
               serverTime={p.server_time} receivedAt={fleets.receivedAt} label="Avancement estimé de la mission" />
-            {can("fleet.command") && m.status === "active" && m.kind !== "RETURN" && server < Date.parse(m.travel_arrival_at) &&
+            {can("fleet.command") && recallable &&
               <Button disabled={fleets.pending} onClick={(e) => open({ mode: "recall", mission: m }, e)}>Rappeler…</Button>}
           </li>;
         })}</ul>}
       </section>
+      {p.combat?.alerts && <section className="panel" aria-labelledby="alerts-title"><div className="panel-head"><h2 id="alerts-title">Menaces annoncées</h2>
+        <span className="panel-meta">{p.combat.alerts.filter((a) => a.state === "pending").length}</span></div>
+        {p.combat.alerts.length === 0 ? <p>Aucune force hostile annoncée.</p> : <ul className="fleet-list">{p.combat.alerts.map((a) => {
+          const system = p.systems!.find((s) => s.id === a.system_id);
+          const world = system?.planets?.find((pl) => pl.id === a.planet_id);
+          return <li key={a.id} className="fleet-card combat-alert" role={a.state === "pending" ? "alert" : undefined}>
+            <div className="panel-head"><h3>{a.state === "pending" ? "Force hostile en approche" : "Menace levée"}</h3>
+              <Badge tone={a.state === "pending" ? "danger" : "neutral"}>{a.state === "pending" ? "En attente" : "Annulée"}</Badge></div>
+            <p>Cible : {world?.name ?? "votre monde"} — {place(system ?? null)}</p>
+            <p>Bataille : {time(a.battle_at)}</p>
+            <p className="panel-meta">Ni l’attaquant, ni son origine, ni sa force ne sont connus avant la bataille. Seules vos unités militaires stationnées dans ce système à l’échéance combattront.</p>
+          </li>;
+        })}</ul>}
+      </section>}
+      {p.combat?.reports && <section className="panel" aria-labelledby="combat-reports-title"><h2 id="combat-reports-title">Rapports de combat</h2>
+        {p.combat.reports.length === 0 ? <p>Aucun rapport de combat.</p> : <ul className="fleet-reports">{p.combat.reports.map((r) => {
+          const system = p.systems!.find((s) => s.id === r.target.system_id);
+          const world = system?.planets?.find((pl) => pl.id === r.target.planet_id);
+          return <li key={`${r.engagement_id}-${r.role}`} className="combat-report">
+            <strong>{outcomeLabels[r.outcome]}</strong> — {r.role === "attacker" ? "votre attaque" : "votre défense"} : {world?.name ?? "monde"} · {place(system ?? null)}
+            {r.own && <dl className="fleet-dates"><Losses label="Vos forces" side={r.own} p={p} /><Losses label={`Forces adverses (Empire ${r.opponent_empire_id!.slice(0, 8)})`} side={r.opponent} p={p} />
+              <div><dt>Rounds</dt><dd>{r.rounds!.length}</dd></div></dl>}
+            <p className="panel-meta">Bataille à {time(r.battle_at)} · traitée par le serveur {time(r.processed_at)} · observation datée, sans surveillance durable.</p>
+          </li>;
+        })}</ul>}
+      </section>}
       <section className="panel" aria-labelledby="reports-title"><h2 id="reports-title">Rapports récents</h2>
         {reports.length === 0 ? <p>Aucun rapport de flotte.</p> : <ul className="fleet-reports">{reports.map((m) => <li key={m.id}>
           <strong>{reportTitle(m)}</strong> — {fleetName(m.fleet_id)} : {place(m.report!.result.kind === "RECALLED" ? m.origin : m.destination)}{m.target_planet ? ` · monde ${m.target_planet.name}` : ""}
@@ -384,7 +444,9 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
         <ul>{resourceKeys.map((k) => <li key={k}>{resourceLabels[k]} : {exactUnits(c.recoverable[k])} récupérés sur {exactUnits(c.theoretical[k])}{BigInt(c.lost[k]) > 0n ? `, ${exactUnits(c.lost[k])} perdus définitivement` : ""}</li>)}</ul>
         <p className="panel-meta">Estimation serveur au {time(p.server_time)} ; le résultat exact est calculé à la confirmation.</p></>;
     }
-    if (dialog.mode === "recall") return <p>La flotte refera le chemin déjà parcouru : retour vers {place(dialog.mission.origin)} sans coût ni remboursement, cargaison conservée. Possible seulement pendant le trajet.</p>;
+    if (dialog.mode === "recall") return dialog.mission.kind === "ATTACK"
+      ? <p>L’attaque est annulée avant la bataille. {dialog.mission.hops === 0 ? "Même système : la flotte reste stationnée sur place immédiatement." : `Retour vers ${place(dialog.mission.origin)} : chemin déjà parcouru, ou un trajet complet si la flotte est arrivée. Carburant aller-retour déjà payé, sans remboursement.`}</p>
+      : <p>La flotte refera le chemin déjà parcouru : retour vers {place(dialog.mission.origin)} sans coût ni remboursement, cargaison conservée. Possible seulement pendant le trajet.</p>;
     if (!current) return <p role="alert">Flotte indisponible. Actualisez.</p>;
     const capacityNote = <p className="panel-meta">Capacité de cargo : {units(current.capacity)} · à bord : <Cargo cargo={current.cargo} /></p>;
     const colonyChoice = (value: string, set: (colony: string) => void) => current.colonies_here.length > 1 ?
@@ -424,7 +486,10 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     const colonizer = p.colonization?.colonizer_class;
     // COLONIZE is offered only by the pinned ruleset, the rights and a colonizer aboard.
     const canColonize = !!colonizer && !!current.stacks[colonizer] && can("colony.expand") && can("galaxy.read");
-    const kinds: MissionKind[] = ["DEPLOY", "SURVEY", "RETURN", ...(canColonize ? ["COLONIZE" as const] : [])];
+    // ATTACK: pinned ruleset, explicit combat rights and military units aboard; civilians never fight.
+    const military = p.combat?.classes ?? [];
+    const canAttack = military.some((c) => current.stacks[c]) && can("combat.attack") && can("combat.read") && can("galaxy.read");
+    const kinds: MissionKind[] = ["DEPLOY", "SURVEY", "RETURN", ...(canColonize ? ["COLONIZE" as const] : []), ...(canAttack ? ["ATTACK" as const] : [])];
     // Worlds from Knowledge only; an own colony is excluded only when colony.read names it.
     const worlds = p.systems!.flatMap((s) => (s.planets ?? []).filter((pl) => !pl.colony_id).map((pl) => ({ ...pl, system: s })));
     // Same rule as the server: only a task fleet sent whole carries its cargo implicitly; any
@@ -438,7 +503,16 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
       <fieldset className="fleet-fieldset"><legend>Mission</legend>{kinds.map((k) =>
         <label key={k} className="fleet-choice"><input type="radio" name="kind" checked={dialog.kind === k}
           onChange={() => edit({ kind: k, destination: "", planet: "", units: k === "COLONIZE" && colonizer ? { [colonizer]: 1 } : {} })} /> {kindLabels[k]}</label>)}</fieldset>
-      {dialog.kind === "COLONIZE" ? <>
+      {dialog.kind === "ATTACK" ? <>
+        <label className="galaxy-field">Monde visé
+          <select required value={dialog.planet} onChange={(e) => edit({ planet: e.target.value })}>
+            <option value="">Choisir…</option>
+            {worlds.map((w) => <option key={w.id} value={w.id}>{w.name} — {place(w.system)}</option>)}
+          </select></label>
+        <p className="panel-meta">Occupation et défense non confirmées. Elles ne sont jamais révélées avant la bataille ; un monde sans colonie étrangère fait échouer l’attaque, au même coût.</p>
+        <fieldset className="fleet-fieldset"><legend>Unités militaires engagées</legend>{Object.entries(current.stacks).filter(([c]) => military.includes(c)).map(([c, n]) =>
+          <Counter key={c} label={p.catalogue![c]?.name ?? c} value={dialog.units[c] ?? 0} max={n} onChange={(v) => edit({ units: { ...dialog.units, [c]: v } })} />)}</fieldset>
+      </> : dialog.kind === "COLONIZE" ? <>
         <label className="galaxy-field">Monde visé
           <select required value={dialog.planet} onChange={(e) => edit({ planet: e.target.value })}>
             <option value="">Choisir…</option>
@@ -451,17 +525,18 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           <option value="">Choisir…</option>
           {destinations.map((s) => <option key={s.id} value={s.id}>{place(s)}</option>)}
         </select></label> : <p>Retour vers le système de la colonie d’attache.</p>}
-      {dialog.kind !== "COLONIZE" && unitInputs(dialog.units, (units) => edit({ units }))}
-      {hasCargo && !whole && cargoInputs(dialog.cargo, cargoMax, (cargo) => edit({ cargo }))}
+      {dialog.kind !== "COLONIZE" && dialog.kind !== "ATTACK" && unitInputs(dialog.units, (units) => edit({ units }))}
+      {hasCargo && !whole && dialog.kind !== "ATTACK" && cargoInputs(dialog.cargo, cargoMax, (cargo) => edit({ cargo }))}
       {dialog.kind === "COLONIZE" && minimum && <p className={short ? "feedback feedback--error" : "panel-meta"}>
         Paquet de fondation (tout le cargo engagé devient le stock initial) : minimum {resourceKeys.map((k) => `${units(minimum[k])} ${resourceLabels[k]}`).join(" · ")}{short ? " — insuffisant, chargez d’abord le colonisateur." : "."}</p>}
       {dialog.error && <p role="alert" className="feedback feedback--error">{message(dialog.error)}</p>}
       {dialog.quote && dialog.quoted === intentOf(dialog) && <div className="fleet-quote" aria-live="polite">
         <p><strong>{dialog.quote.hops} saut(s)</strong> · trajet {duration(dialog.quote.travel_us)}{dialog.quote.kind === "SURVEY" ? ` · analyse ${duration(dialog.quote.survey_us)}` : ""}</p>
-        <p>Carburant payé au départ par la colonie d’attache : {resourceKeys.filter((k) => BigInt(dialog.quote!.cost[k]) > 0n).map((k) => `${units(dialog.quote!.cost[k])} ${resourceLabels[k]}`).join(" · ") || "aucun"}</p>
+        <p>Carburant payé au départ par la colonie d’attache{dialog.quote.kind === "ATTACK" ? " (aller et retour)" : ""} : {resourceKeys.filter((k) => BigInt(dialog.quote!.cost[k]) > 0n).map((k) => `${units(dialog.quote!.cost[k])} ${resourceLabels[k]}`).join(" · ") || "aucun"}</p>
         <p>Arrivée estimée : {time(dialog.quote.travel_arrival_at)}{dialog.quote.kind === "SURVEY" ? ` · cartographie à ${time(dialog.quote.due_at)}` : ""}</p>
+        {dialog.quote.kind === "ATTACK" && dialog.quote.battle_at && <p><strong>Bataille : {time(dialog.quote.battle_at)}</strong> · {Object.entries(dialog.quote.units ?? {}).map(([c, n]) => `${n} ${p.catalogue![c]?.name ?? c}`).join(" · ")}</p>}
         {!dialog.quote.affordable && <p className="feedback feedback--error">Stock probablement insuffisant dans la colonie d’attache.</p>}
-        <p className="panel-meta">{dialog.quote.hops === 0 ? "Même système : aucun trajet, aucun carburant, résolution par le serveur dès sa prise en charge, sans rappel possible." : "Aucun remboursement après le départ. Rappel possible uniquement pendant le trajet."}</p>
+        <p className="panel-meta">{dialog.quote.kind === "ATTACK" ? "Au moins 24 h entre le départ et la bataille. Rappel possible jusqu’à la bataille ; aucun remboursement. Seules des unités militaires peuvent être perdues ; ni butin ni conquête." : dialog.quote.hops === 0 ? "Même système : aucun trajet, aucun carburant, résolution par le serveur dès sa prise en charge, sans rappel possible." : "Aucun remboursement après le départ. Rappel possible uniquement pendant le trajet."}</p>
       </div>}
     </>;
   }

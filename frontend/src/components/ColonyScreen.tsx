@@ -209,6 +209,11 @@ export function ColonyScreen({ colony, view, link, onNavigate }: { colony: Colon
     <nav aria-label="Sections de la colonie" className="colony-navigation">
       {colonyViews.map(item => <a key={item.id} href={link(`colony/${item.id}`)} onClick={onNavigate} aria-current={item.id === view ? 'page' : undefined}>{item.label}</a>)}
     </nav>
+    {data.incoming?.some(a => a.state === 'pending') && <section className="panel combat-alert" role="alert" aria-labelledby="incoming-title">
+      <h2 id="incoming-title">Force hostile en approche</h2>
+      <ul>{data.incoming.filter(a => a.state === 'pending').map(a => <li key={a.id}>Bataille prévue : {time(a.battle_at)}</li>)}</ul>
+      <p className="panel-meta">Ni l’attaquant ni sa force ne sont connus avant la bataille. Seules les unités militaires stationnées dans ce système combattront ; aucune ressource, aucun bâtiment ni aucune recherche ne peut être perdu.</p>
+    </section>}
     <div className="feedback-zone" aria-live="polite">
       {colony.feedback && <div className={`feedback feedback--${colony.feedback.tone}`} role={colony.feedback.tone === 'success' ? 'status' : 'alert'}>
         <p>{colony.feedback.tone === 'success' ? colony.feedback.text : colony.feedback.tone === 'unknown'

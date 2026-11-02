@@ -227,3 +227,14 @@ Game 0011 :
 
 Aucun inventaire ni identité IA, aucune donnée ajoutée aux anciens univers. Downgrade refusé avec
 des données IA. [Contrat Première IA](first-ai.md).
+
+Game 0012 :
+- **`stream_fences` :** fences génériques de stream.
+- **`combat_engagements` :** mission ATTACK unique, défenseur interne nullable, cible, rang
+  `(battle_at, started_at, id)`, état, snapshot, résultat, `processed_at`.
+- **`combat_reports` :** un rapport par camp.
+- **Missions et flottes :** branches ATTACK dans les CHECK de `fleet_missions` ; statut `DESTROYED`
+  pour les flottes opérationnelles.
+- **Bindings :** `combat.read` et `combat.attack` (15 permissions).
+
+Downgrade refusé avec des données ou des droits Combat. [Contrat Combat](combat-api-ui.md).

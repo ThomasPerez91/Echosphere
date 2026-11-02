@@ -22,7 +22,7 @@ Le tableau Q40–Q56 distingue décisions closes, détails techniques délégué
 | ID | Question ouverte | À traiter avant | Référence |
 | --- | --- | --- | --- |
 | Q01 | **Clos construction** : 3 ordres actif inclus, 1 actif/colonie, 100 % queued / 80 % active théoriques, cascade des seuls upgrades dépendants validée ; colonies parallèles futures ; pacing onboarding secondes–5 min, début 5–30 min, intermédiaire 30 min–8 h, avancé 8–72 h, projets majeurs jours ; valeurs exactes game_data balançables. Recherche distincte Q05 | 3 puis 5 | [Sessions](../01-game-design/player-session.md) |
-| Q02 | Protection hors connexion, réaction à une attaque, absence prolongée | 12, cadrage dès 1 | [Sessions](../01-game-design/player-session.md) |
+| Q02 | **Close pour le Combat MVP v0.7 (02/11/2026)** : protection indépendante de la présence, 24 h minimum avant toute bataille, destruction limitée aux unités militaires engagées ; à rouvrir pour pillage/conquête/siège/bombardement | 12 | [Combat](../01-game-design/combat.md#q02--protection-hors-connexion) |
 | Q03 | Taux/coûts, stockage, entretien, précision et arrondis des trois ressources | 3/5 | [Calcul](../03-technical/resource-calculation.md) |
 | Q04 | Catalogue/niveaux, traits, capacités exactes, slots orbitaux et réaffectation — sous-décision v0.5 close (aucune habitabilité/trait, tout monde colonisable), reste ouvert | 2/5 | [Planètes](../01-game-design/planets-colonies.md) |
 | Q05 | **Clos produit — livré via PR #9 (`437844e4`)** : validation utilisateur explicite ; file Empire 1+1, financement Colony, annulation 100/80 plafonnée, 8 technologies et snapshots à l’acceptation | 6 avant code | [Recherche/Q05](../01-game-design/research.md), [plan R00–R09](step-6-plan.md) |
@@ -30,7 +30,7 @@ Le tableau Q40–Q56 distingue décisions closes, détails techniques délégué
 | Q07 | **Close pour l'étape 10 — validation explicite du 01/11/2026 avec amendements** : v0.5, colonisateur consommé, COLONIZE (y compris 0 saut), paquet cargo, coût progressif, 12 colonies et 1 COLONIZE active par Empire, rang déterministe, abandon/transfert reportés, `colony.expand` ; sous-décision Q04 v0.5 | 10 avant COL02 | [Colonisation/Q07](../01-game-design/colonization.md), [plan](step-10-plan.md) |
 | Q08 | **Clos produit, futur** : UNKNOWN sans fuite ; DETECTED existence/position approximative ; MAPPED structure durable ; MONITORED dynamique actualisée ; perte MONITORED → MAPPED, last_seen_at et aucun partage automatique | 7/8 | [Fog](../01-game-design/fog-of-war.md) |
 | Q09 | **Close produit étape 9 — validation explicite du 31/10/2026 avec amendements** : catalogue sonde/cargo léger, production batch, garnisons, DEPLOY/SURVEY/RETURN, cargo, rappel, v0.4, GET non mutatif | 9 avant F02 | [Flottes/Q09](../01-game-design/fleets.md), [plan F00–F11](step-9-plan.md) |
-| Q10 | Résolution combat, aléatoire, ciblage, retraite, pertes et butin | 12 | [Combat](../01-game-design/combat.md) |
+| Q10 | **Close pour le Combat MVP v0.7 (02/11/2026)** : résolution déterministe en rounds simultanés, matchups, pas de retraite pendant le Combat, pertes militaires seulement, aucun butin/occupation/siège | 12 | [Combat](../01-game-design/combat.md#q10--résolution-déterministe) |
 | Q11 | **Close étape 11 — validation explicite avec amendements du 01/11/2026** : profils/poids, départs, contrôleur exclusif, cadence/grille, budgets/anti-famine, perception limitée et reprise | 11 AI02–AI11 autorisés | [Contrat](../01-game-design/artificial-intelligence.md#q11--validation-avec-amendements-01112026), [plan](step-11-plan.md) |
 | Q12 | Mesure du ratio 80/20, métriques et format validé de game_data | 5 puis 16 | [Balance](../01-game-design/balance-philosophy.md) |
 | Q13 | Ordre simultané, locks, rattrapage, retries et compatibilité des versions | 3 | [Événements](../03-technical/event-engine.md) |
@@ -184,3 +184,10 @@ utilisateur du 31/10/2026 clôt les décisions indiquées ci-dessous, sans renum
 
 Colonisation/Q07 intégrées via PR #13, merge a33a452 ; CI post-merge 41340653571 success 5/5
 vérifiée. AI00/AI01 autorisés uniquement pour audit/proposition Q11 ; aucune proposition ne clôt Q11.
+
+## Reprise étape 12 — 02/11/2026
+
+Étape 11 intégrée via PR #14, merge `f79d9f6`, CI post-merge 41358533969 success 5/5 ; Q11 close.
+Lot courant : étape 12 Combat MVP, branche `work/step-12-combat`. Q02 et Q10 closes uniquement pour
+le Combat MVP v0.7 par validation utilisateur explicite. Q03, Q04 global, Q14, Q18 et Q25 restent
+ouvertes ou futures. Étape 13 non commencée.

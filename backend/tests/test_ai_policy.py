@@ -60,3 +60,18 @@ def test_no_retroactive_turns_grid_does_not_drift():
         hours=3, minutes=10
     )
     assert next_slot(start, start + timedelta(minutes=10)) == start + timedelta(minutes=20)
+
+
+def test_v07_priority_defence_preempts_without_changing_v06_choices():
+    rules = load_ruleset("v0.7").ai
+    grow = candidate("grow", "economy")
+    defend = candidate("defend", "military") | {"priority": True}
+    assert (
+        choose({"candidates": [grow, defend]}, {}, "economic_cautious", rules)["choice"] == "defend"
+    )
+    calm = candidate("defend", "military")
+    assert choose({"candidates": [grow, calm]}, {}, "economic_cautious", rules)["choice"] == "grow"
+    blocked = defend | {"reason": "insufficient_resources"}
+    assert (
+        choose({"candidates": [grow, blocked]}, {}, "economic_cautious", rules)["choice"] == "grow"
+    )

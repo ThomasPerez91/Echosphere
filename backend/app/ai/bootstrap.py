@@ -16,11 +16,20 @@ from app.simulation.clock import utc
 from app.simulation.scheduler import IdempotencyConflict
 
 
+def pinned(rules):
+    """Ruleset digest input; the v0.7 `combat` key is omitted when absent, so v0.6 bootstrap
+    receipts recorded before Combat existed still replay identically."""
+    data = rules.model_dump()
+    if data.get("combat") is None:
+        data.pop("combat", None)
+    return data
+
+
 def bootstrap(session, engine, universe_id, name, seed, profiles, at, *, rules=None):
     """`rules` permits explicit injected test timings, never runtime defaults from fixtures."""
     rules = rules or load_ruleset("v0.6")
     if (
-        rules.version != "v0.6"
+        rules.version not in {"v0.6", "v0.7"}
         or rules.ai is None
         or not 0 <= len(profiles) <= 3
         or any(p not in rules.ai.profiles for p in profiles)
@@ -30,7 +39,7 @@ def bootstrap(session, engine, universe_id, name, seed, profiles, at, *, rules=N
         "name": name,
         "seed": seed,
         "profiles": list(profiles),
-        "rules_digest": fingerprint(rules.model_dump()),
+        "rules_digest": fingerprint(pinned(rules)),
     }
     session.execute(
         text("SELECT pg_advisory_xact_lock(:key)"),

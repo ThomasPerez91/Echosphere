@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import { FleetView } from "./components/FleetView";
 import { ApiError, previewMission, validFleets } from "./fleet/api";
-import { colony, colonizing, done, empire, fleets, freeWorld, garrison, mission, near, order, origin, otherEmpire, otherFleets, secondColony, surveying, universe } from "../tests/fleetFixture";
+import { colony, colonizing, done, empire, fighting, fleets, freeWorld, garrison, mission, near, order, origin, otherEmpire, otherFleets, rivalWorld, secondColony, surveying, universe } from "../tests/fleetFixture";
 
 const json = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body });
 beforeAll(() => {
@@ -495,4 +495,77 @@ test("a task fleet sent whole carries its cargo implicitly: no inputs, no cargo 
   await screen.findByText("Ordre accepté par le serveur.");
   const launch = JSON.parse(String(calls().find(([url, init]) => url.endsWith("/missions") && init?.method === "POST")![1]!.body));
   expect(launch).not.toHaveProperty("cargo");
+});
+
+const combatRoute = (permissions?: string[]) => (url: string, init?: RequestInit) => {
+  if (url.endsWith("/missions/preview")) return json({
+    kind: "ATTACK", destination_id: near, hops: 1, cost: { alloys: "0", flux: "24000000", data: "0" }, travel_us: String(720e6),
+    survey_us: "0", travel_arrival_at: "2099-01-01T00:12:00Z", due_at: "2099-01-02T00:00:00Z", battle_at: "2099-01-02T00:00:00Z",
+    payer_colony_id: colony, affordable: true, target_planet_id: rivalWorld, package_minimum: null, units: { interceptor: 2 },
+  });
+  if (init?.method === "POST") return json({ result: { mission_id: mission, fleet_id: garrison }, fleets: fighting(permissions) });
+  return url.endsWith("/fleets") ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(fighting(permissions));
+};
+
+test("ATTACK engages military units only, says nothing about the target and launches the quoted intention", async () => {
+  const { calls } = setup(combatRoute());
+  const card = (await screen.findByText("Garnison Nouvelle Aube")).closest("li")!;
+  fireEvent.click(within(card).getByRole("button", { name: "Envoyer…" }));
+  const dialog = screen.getByRole("dialog");
+  fireEvent.click(within(dialog).getByRole("radio", { name: "Attaque" }));
+  expect(within(dialog).getByText(/Occupation et défense non confirmées/)).toBeVisible();
+  // Civilians never fight: no probe counter, no cargo field.
+  expect(within(dialog).queryByRole("spinbutton", { name: /Sonde/ })).not.toBeInTheDocument();
+  expect(within(dialog).queryByRole("spinbutton", { name: /Alliages/ })).not.toBeInTheDocument();
+  fireEvent.change(within(dialog).getByRole("combobox", { name: "Monde visé" }), { target: { value: rivalWorld } });
+  fireEvent.change(within(dialog).getByRole("spinbutton", { name: /Intercepteur/ }), { target: { value: "2" } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Calculer le devis" }));
+  expect(await within(dialog).findByText(/Bataille :/)).toBeVisible();
+  expect(within(dialog).getByText(/aller et retour/)).toBeVisible();
+  expect(within(dialog).getByText(/Au moins 24 h entre le départ et la bataille/)).toBeVisible();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Confirmer" }));
+  await screen.findByText("Ordre accepté par le serveur.");
+  const preview = JSON.parse(String(calls().find(([url]) => url.endsWith("/missions/preview"))![1]!.body));
+  expect(preview).toEqual({ fleet_id: garrison, kind: "ATTACK", units: { interceptor: 2 }, target_planet_id: rivalWorld });
+  const launch = JSON.parse(String(calls().find(([url, init]) => url.endsWith("/missions") && init?.method === "POST")![1]!.body));
+  expect(launch).toMatchObject({ kind: "ATTACK", target_planet_id: rivalWorld, units: { interceptor: 2 } });
+  expect(launch).not.toHaveProperty("cargo");
+  expect(launch).not.toHaveProperty("destination_id");
+});
+
+test("ATTACK needs combat.attack and combat.read; neither is implied by fleet.command", async () => {
+  setup(combatRoute(["colony.read", "galaxy.read", "fleet.read", "fleet.build", "fleet.command", "combat.read"]));
+  const card = (await screen.findByText("Garnison Nouvelle Aube")).closest("li")!;
+  fireEvent.click(within(card).getByRole("button", { name: "Envoyer…" }));
+  expect(within(screen.getByRole("dialog")).queryByRole("radio", { name: "Attaque" })).not.toBeInTheDocument();
+});
+
+test("a hostile force is announced with target and battle time only; reports are dated observations", async () => {
+  setup(combatRoute());
+  const alert = (await screen.findByText("Force hostile en approche")).closest("li")!;
+  expect(within(alert).getByText(/Monde rival/)).toBeVisible();
+  expect(within(alert).getByText(/Ni l’attaquant, ni son origine, ni sa force/)).toBeVisible();
+  expect(alert.textContent).not.toMatch(/Frégate|Croiseur|Empire B/);
+  const report = screen.getByText("Victoire du défenseur").closest("li")!;
+  expect(within(report).getByText(/Intercepteur : 3 engagés, 1 perdus, 2 survivants/)).toBeVisible();
+  expect(within(report).getByText(/observation datée/)).toBeVisible();
+});
+
+test("an attack in approach keeps its recall until the battle, never after", async () => {
+  setup(combatRoute());
+  const card = (await screen.findByText("Approche — bataille prévue")).closest("li")!;
+  expect(within(card).getByText("Bataille")).toBeVisible();
+  expect(within(card).getByRole("button", { name: "Rappeler…" })).toBeVisible();
+});
+
+test("validator refuses an alert naming the attacker and combat data without combat.read", () => {
+  const leaky = fighting();
+  (leaky.combat!.alerts![0] as Record<string, unknown>).attacker_empire_id = otherEmpire;
+  expect(validFleets(leaky, empire)).toBe(false);
+  const unreadable = fighting(["colony.read", "galaxy.read", "fleet.read", "fleet.command"]);
+  expect(validFleets(unreadable, empire)).toBe(true);
+  expect(validFleets({ ...unreadable, combat: { ...fighting().combat } }, empire)).toBe(false);
+  const defender = fighting();
+  (defender.missions![0].attack as Record<string, unknown>).defender_empire_id = otherEmpire;
+  expect(validFleets(defender, empire)).toBe(false);
 });

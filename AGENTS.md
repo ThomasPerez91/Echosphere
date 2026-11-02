@@ -147,15 +147,16 @@ CI post-merge 41322146062 success (5/5), vérifiée le 01/11/2026 ; Q09 close,
 [règles](docs/01-game-design/fleets.md), [technique](docs/03-technical/fleets-api-ui.md).
 Étape 10 intégrée via PR #13, merge `a33a452b416ec83d4e8b91d84292913d18db5a40` ;
 CI post-merge 41340653571 success (5/5), vérifiée le 01/11/2026. Colonisation/Q07 et la
-sous-décision Q04 v0.5 livrées. Lot courant : **étape 11 Première IA**, branche
-`work/step-11-first-ai`, PR #14. Q11 close avec amendements le 01/11/2026 ; AI02–AI11
-explicitement autorisés après CI AI01 push 41343195071 et PR 41343200391 vérifiées success 5/5.
-[Contrat Q11](docs/01-game-design/artificial-intelligence.md#q11--validation-avec-amendements-01112026),
-[architecture](docs/03-technical/ai-engine.md), [plan](docs/05-project/step-11-plan.md),
-[contrat technique réalisé](docs/03-technical/first-ai.md) : AI02–AI10 réalisés, AI11 en cours.
-Contrôleur persistant exclusif sans identité humaine factice ; mêmes services/Knowledge ; tours
-sur grille 600 s, une commande maximum, pagination circulaire anti-famine, aucun AI_TURN
-multi-stream. v0.6 explicite sans adoption d'anciens univers. Étape 12 non commencée, aucun merge.
+sous-décision Q04 v0.5 livrées.
+Étape 11 Première IA intégrée via PR #14, merge `f79d9f6d0c3ebd9d230344b5a0c2aeaef9f4ce6b` ;
+CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026. Q11 close,
+[contrat Q11](docs/01-game-design/artificial-intelligence.md#q11--validation-avec-amendements-01112026),
+[technique](docs/03-technical/first-ai.md). Contrôleur persistant exclusif sans identité humaine
+factice ; mêmes services/Knowledge ; tours sur grille 600 s, une commande maximum ; v0.6 explicite.
+Lot courant : **étape 12 Combat MVP**, branche `work/step-12-combat`, une PR Draft vers master.
+Q02/Q10 closes pour le Combat MVP v0.7 seulement le 02/11/2026,
+[décisions](docs/01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026),
+[plan COM00–COM11](docs/05-project/step-12-plan.md). Étape 13 non commencée, aucun merge.
 
 Ne pas élargir le périmètre sur la seule base de la passation.
 
@@ -192,6 +193,12 @@ Ne pas élargir le périmètre sur la seule base de la passation.
   colonies propres, catch-up complet), une commande max par tour via services communs, clé
   `ai:<controller>:<sequence>:<op>`, grille 600 s sans rattrapage. Collecteur borné aux possessions/
   Knowledge propres, curseurs circulaires, politique pure JSON ; aucune ressource/flotte offerte.
+- Étape 12 : Combat v0.7 = ATTACK (planète connue, militaires seuls, cargo nul, carburant
+  aller-retour, `battle_at = max(arrivée, départ + 24 h)`), défenseur lié au lancement sous verrou
+  Planet sans verrou de son stream ; `stream_fences` gèlent les streams d'opérations à battle_at
+  (inclusif, worker et rattrapage) ; résolution hors handler par `app.combat.worker` (streams triés
+  UUID → engagement, rang, rattrapage exact, une transaction). Pertes militaires seules, aucun
+  butin/occupation/écriture Colony ; rapports après bataille seulement ; IA sans offensive.
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède
@@ -213,6 +220,10 @@ python3 scripts/check_docs.py
 (cd frontend && npx playwright install chromium && npm run test:e2e)
 ```
 
+CI à deux niveaux (02/11/2026) : PR → Fast CI seule (lint, tests sans PostgreSQL, builds, docs,
+Compose config) ; push master → Full CI exhaustive (PostgreSQL, Chromium, tous les smokes dont IA
+et Combat). Une régression exhaustive peut apparaître après merge : master rouge = correction
+immédiate avant tout nouveau lot. [Stratégie](docs/04-quality/testing-strategy.md).
 Intégrations : PostgreSQL dédié *_test et RUN_DB_TESTS=1, jamais les données à conserver.
 Compose/migrations/smoke et commandes détaillées dans [reprise](docs/06-handoff/work-codex-handoff.md).
 Ne pas lancer down -v ou downgrade sur données à garder. Toujours distinguer passé vérifié,

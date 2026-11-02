@@ -84,7 +84,12 @@ export function SystemView({ universe, empire, system, onSessionLost, onColony }
             {/* Never "Libre": the current occupation of a structure-only world is not known. */}
             <p className="panel-meta">Occupation actuelle inconnue : elle n’est vérifiée qu’à l’arrivée d’un colonisateur.</p>
             {data.permissions?.includes('fleet.command') && data.permissions.includes('colony.expand') &&
-              <a className="button" href={`#universe/${universe}/fleets/colonize/${empire}/${system}/${selected.id}`}>Coloniser…</a>}</>}</>}
+              <a className="button" href={`#universe/${universe}/fleets/colonize/${empire}/${system}/${selected.id}`}>Coloniser…</a>}</>}
+          {!link && data.combat && data.permissions?.includes('fleet.command') && data.permissions.includes('combat.attack') &&
+            data.permissions.includes('combat.read') && <>
+            {/* Occupation and defence are never shown: the attack itself is the only way to learn. */}
+            <p className="panel-meta">Occupation et défense non confirmées.</p>
+            <a className="button" href={`#universe/${universe}/fleets/attack/${empire}/${system}/${selected.id}`}>Attaquer…</a></>}</>}
       </section>
     </div>
     <section className="panel" aria-labelledby="system-worlds-title"><h2 id="system-worlds-title">Mondes connus</h2>

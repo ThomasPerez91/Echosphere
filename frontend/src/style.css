@@ -53,6 +53,7 @@ main { max-width: 1500px; margin: auto; padding: 36px; }
 .badge { display: inline-block; border: 1px solid var(--border); background: #162538; color: #c4d1e2; border-radius: 5px; padding: 3px 8px; font-size: .67rem; font-weight: 550; }
 .badge--accent { background: #173438; border-color: #396268; color: #a6f0f2; }
 .badge--warning { background: #302a20; border-color: #6c5937; color: var(--gold); }
+.badge--danger { background: #2d1417; border-color: #7a3438; color: #ffd0d0; }
 .orbital-art { position: relative; display: grid; place-items: center; min-width: 0; overflow: hidden; }
 .planet { width: clamp(130px, 17vw, 240px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 30% 28%, #9cb9af, #4e858b 30%, #1b435b 53%, #0b1829 72%); box-shadow: -8px -3px 25px #8fe3e633, 32px 20px 50px #030b18; transform: rotate(-25deg); }
 .orbit { position: absolute; width: 85%; aspect-ratio: 1; border: 1px solid #5b9ca74d; border-radius: 50%; transform: rotate(-30deg) scaleY(.55); }
@@ -386,3 +387,7 @@ html { scroll-padding-bottom: 24px; }
 @media (max-width: 600px) {
   .fleet-actions .button, .dialog-actions .button { flex: 1 1 140px; }
 }
+/* Combat: a threat is readable without colour alone (title, badge text and role=alert). */
+.combat-alert { border-left: 3px solid var(--danger); }
+.combat-report dl { margin: 8px 0; }
+.combat-report dd, .combat-alert p { overflow-wrap: anywhere; }

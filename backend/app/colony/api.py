@@ -41,6 +41,8 @@ STATUS = {
     "order_not_found": 404,
     "invalid_request": 422,
     "colony_busy": 503,
+    "combat_pending": 409,
+    "combat_unavailable": 409,
 }
 
 

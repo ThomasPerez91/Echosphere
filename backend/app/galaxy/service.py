@@ -50,7 +50,10 @@ def state_for(session, universe_id, empire_id):
 def catch_up(session, engine, universe_id, empire_id, at):
     state = state_for(session, universe_id, empire_id)
     lock_stream(session, state.stream_id, universe_id)
-    if not engine.catch_up_stream(session, state.stream_id, universe_id, utc(at)).complete:
+    progress = engine.catch_up_stream(session, state.stream_id, universe_id, utc(at))
+    if progress.fenced:
+        raise GalaxyError("A combat must be resolved first", "combat_pending")
+    if not progress.complete:
         raise GalaxyError("Exploration needs retry/operator", "exploration_busy")
     return state
 

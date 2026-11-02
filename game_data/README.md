@@ -41,3 +41,9 @@ immuables, univers existants jamais migrés. `speeds.fleet` ne touche que les d�
 minimum 500/250/50). Les données propres au colonisateur restent dans `colonization.json` : le
 schéma des classes v0.4 est inchangé, donc les snapshots v0.4 en cours restent valides.
 v0.1–v0.4 immuables, univers existants jamais migrés.
+
+Étape 12 : ruleset complet `v0.7` = v0.6 (versions seules changées) + classes militaires
+`interceptor`, `frigate`, `cruiser` dans `fleets.json` (format des classes inchangé, cargo 0) +
+`combat.json` (`combat-v1` : coque/attaque, matrice des matchups en bps, fenêtre minimale de 24 h,
+borne de rounds) + `ai.json` `utility-goals-v2` (objectif défensif `military`, sans offensive).
+Balance provisoire. v0.1–v0.6 immuables, univers existants jamais migrés.

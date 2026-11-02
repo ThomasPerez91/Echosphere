@@ -161,11 +161,14 @@ class Orchestrator:
                     "sequence": claimed[1],
                     "outcome": outcome,
                 }
-        except Exception:
+        except Exception as error:
             if raise_errors:
                 raise
             if claimed is None:
                 raise
+            # A due Combat freezes this Empire's Operations stream: wait, never a technical
+            # failure, never a decision on a state behind the battle.
+            waiting = getattr(error, "code", None) == "combat_pending"
             # All gameplay, memory and trace effects rolled back. No exception/payload in logs.
             with self.factory.begin() as session:
                 controller = session.get(AIController, claimed[0], with_for_update=True)
@@ -175,6 +178,15 @@ class Orchestrator:
                     or controller.state != "enabled"
                 ):
                     return {"outcome": "superseded"}
+                if waiting:
+                    controller.retry_at = utc(self.clock.now()) + timedelta(
+                        seconds=self.retry_seconds
+                    )
+                    return {
+                        "controller_id": str(controller.id),
+                        "sequence": claimed[1],
+                        "outcome": "combat_pending",
+                    }
                 controller.attempts += 1
                 controller.error_code = "turn_failed"
                 controller.retry_at = utc(self.clock.now()) + timedelta(seconds=self.retry_seconds)

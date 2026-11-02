@@ -41,7 +41,9 @@ export type FleetView = {
   /** Every own Colony of this system (colony.read only): load/unload always name one. */
   colonies_here: { id: string; name: string; unload: { credited: Amounts; kept: Amounts } | null }[];
 };
-export type MissionKind = "DEPLOY" | "SURVEY" | "RETURN" | "COLONIZE";
+export type MissionKind = "DEPLOY" | "SURVEY" | "RETURN" | "COLONIZE" | "ATTACK";
+/** Own engagement only: battle instant and state; the defender is never projected. */
+export type AttackState = { engagement_id: string; battle_at: string; state: "pending" | "resolved" | "cancelled" };
 export type MissionView = {
   id: string;
   fleet_id: string;
@@ -61,8 +63,20 @@ export type MissionView = {
   completed_at: string | null;
   payer_colony_id: string | null;
   target_planet: { id: string; name: string } | null;
-  report: { observed_at: string; processed_at: string; result: { kind: string; outcome?: string; reason?: string; colony_id?: string | null } } | null;
+  attack?: AttackState | null;
+  report: { observed_at: string; processed_at: string; result: { kind: string; outcome?: string; reason?: string; colony_id?: string | null; destroyed?: boolean } } | null;
 };
+/** Defender view before a battle: target and instant only, never the attacker or its force. */
+export type CombatAlert = { id: string; planet_id: string; system_id: string; battle_at: string; state: "pending" | "cancelled" };
+export type CombatSide = { initial: Record<string, number>; losses: Record<string, number>; survivors: Record<string, number> };
+export type CombatOutcome = "attacker_win" | "defender_win" | "mutual_destruction" | "unopposed" | "target_unavailable";
+/** Dated observation written by the resolution; military compositions only. */
+export type CombatReport = {
+  engagement_id: string; role: "attacker" | "defender"; battle_at: string; processed_at: string; outcome: CombatOutcome;
+  target: { planet_id: string; system_id: string };
+  opponent_empire_id?: string; own?: CombatSide; opponent?: CombatSide; rounds?: unknown[];
+};
+export type Combat = { classes: string[]; min_warning_seconds: number; alerts: CombatAlert[] | null; reports: CombatReport[] | null };
 export type Colonization = {
   colonizer_class: string;
   package_minimum: Amounts;
@@ -82,6 +96,7 @@ export type FleetProjection = {
   fleets?: FleetView[];
   missions?: MissionView[];
   colonization?: Colonization | null;
+  combat?: Combat | null;
   systems?: SystemRef[];
 };
 export type Quote = {
@@ -97,6 +112,8 @@ export type Quote = {
   affordable: boolean;
   target_planet_id: string | null;
   package_minimum: Amounts | null;
+  battle_at?: string;
+  units?: Record<string, number>;
 };
 
 type Value = Record<string, unknown>;
@@ -134,15 +151,38 @@ const fleet = (v: unknown) =>
   amounts(v.cargo) && micro(v.capacity) && (v.mission_id === null || id(v.mission_id)) &&
   list(v.colonies_here, (c) => object(c) && id(c.id) && typeof c.name === "string" &&
     (c.unload === null || (object(c.unload) && amounts(c.unload.credited) && amounts(c.unload.kept))));
+const exactKeys = (v: Value, keys: string[]) => Object.keys(v).sort().join() === [...keys].sort().join();
+const attackState = (v: unknown) =>
+  object(v) && exactKeys(v, ["engagement_id", "battle_at", "state"]) && id(v.engagement_id) && date(v.battle_at) &&
+  ["pending", "resolved", "cancelled"].includes(String(v.state));
 const mission = (v: unknown) =>
-  object(v) && id(v.id) && id(v.fleet_id) && ["DEPLOY", "SURVEY", "RETURN", "COLONIZE"].includes(String(v.kind)) &&
-  (v.kind === "COLONIZE" ? object(v.target_planet) && id(v.target_planet.id) && typeof v.target_planet.name === "string" : v.target_planet === null) &&
+  object(v) && id(v.id) && id(v.fleet_id) && ["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK"].includes(String(v.kind)) &&
+  (["COLONIZE", "ATTACK"].includes(String(v.kind)) ? object(v.target_planet) && id(v.target_planet.id) && typeof v.target_planet.name === "string" : v.target_planet === null) &&
+  (v.kind === "ATTACK" ? attackState(v.attack) : v.attack === null || v.attack === undefined) &&
   ["active", "returning", "completed"].includes(String(v.status)) && nullableRef(v.origin) &&
   nullableRef(v.destination) && integer(v.hops) && counts(v.stacks) && amounts(v.cargo) && amounts(v.cost) &&
   date(v.started_at) && date(v.travel_arrival_at) && date(v.due_at) && optionalDate(v.recalled_at) &&
   optionalDate(v.return_at) && optionalDate(v.completed_at) &&
   (v.payer_colony_id === null || id(v.payer_colony_id)) &&
   (v.report === null || (object(v.report) && date(v.report.observed_at) && date(v.report.processed_at) && object(v.report.result)));
+
+const tally = (v: unknown) => object(v) && Object.values(v).every((n) => integer(n) && n >= 0);
+const side = (v: unknown) => object(v) && tally(v.initial) && tally(v.losses) && tally(v.survivors);
+// An alert carrying anything beyond target, instant and state would leak the attacker: refused.
+const alert = (v: unknown) =>
+  object(v) && exactKeys(v, ["id", "planet_id", "system_id", "battle_at", "state"]) && id(v.id) && id(v.planet_id) &&
+  id(v.system_id) && date(v.battle_at) && ["pending", "cancelled"].includes(String(v.state));
+const OUTCOMES = ["attacker_win", "defender_win", "mutual_destruction", "unopposed", "target_unavailable"];
+const combatReport = (v: unknown) =>
+  object(v) && id(v.engagement_id) && ["attacker", "defender"].includes(String(v.role)) && date(v.battle_at) &&
+  date(v.processed_at) && OUTCOMES.includes(String(v.outcome)) && object(v.target) && id(v.target.planet_id) &&
+  id(v.target.system_id) &&
+  (v.outcome === "target_unavailable" ? !("opponent_empire_id" in v) && !("opponent" in v)
+    : id(v.opponent_empire_id) && side(v.own) && side(v.opponent) && Array.isArray(v.rounds));
+const combat = (v: unknown, readable: boolean) =>
+  v === null || v === undefined || (object(v) && list(v.classes, (c) => typeof c === "string") &&
+    integer(v.min_warning_seconds) &&
+    (readable ? list(v.alerts, alert) && list(v.reports, combatReport) : v.alerts === null && v.reports === null));
 
 export function validFleets(value: unknown, empire: string): value is FleetProjection {
   if (!object(value) || !date(value.server_time) || !object(value.empire) || value.empire.id !== empire ||
@@ -162,7 +202,7 @@ export function validFleets(value: unknown, empire: string): value is FleetProje
       amounts(value.colonization.package_minimum) && integer(value.colonization.max_colonies) &&
       (value.colonization.colonizer_quote === null || (object(value.colonization.colonizer_quote) &&
         integer(value.colonization.colonizer_quote.rank) && amounts(value.colonization.colonizer_quote.cost)))));
-  if (!shapes) return false;
+  if (!shapes || !combat(value.combat, v.permissions.includes("combat.read"))) return false;
   // Colony data belongs to colony.read: present without it is a leak, refused rather than hidden.
   if (!v.permissions.includes("colony.read") && (v.colonies!.length || v.fleets!.some((f) =>
     f.home_colony_id || f.colonies_here.length) || v.missions!.some((m) => m.payer_colony_id || m.report?.result.colony_id) ||

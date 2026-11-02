@@ -98,12 +98,16 @@ class Fleet(Record, Base):
         UniqueConstraint("id", "empire_id", "universe_id", name="uq_fleet_scope"),
         UniqueConstraint("active_mission_id", name="uq_fleet_active_mission"),
         CheckConstraint("kind IN ('GARRISON','TASK')", name="kind"),
-        # SETTLED: a task Fleet whose colonizer founded a Colony; history kept, never deleted.
-        CheckConstraint("status IN ('STATIONED','MOVING','MERGED','SETTLED')", name="status"),
+        # SETTLED: a task Fleet whose colonizer founded a Colony; DESTROYED: a task Fleet emptied
+        # by a Combat. History kept, never deleted.
+        CheckConstraint(
+            "status IN ('STATIONED','MOVING','MERGED','SETTLED','DESTROYED')", name="status"
+        ),
         CheckConstraint("(status = 'STATIONED') = (system_id IS NOT NULL)", name="location"),
         CheckConstraint("(status = 'MOVING') = (active_mission_id IS NOT NULL)", name="engagement"),
         CheckConstraint("kind <> 'GARRISON' OR status = 'STATIONED'", name="garrison"),
         CheckConstraint("status <> 'SETTLED' OR kind = 'TASK'", name="settled"),
+        CheckConstraint("status <> 'DESTROYED' OR kind = 'TASK'", name="destroyed"),
         CheckConstraint("length(trim(name)) > 0", name="name"),
         Index(
             "ix_fleet_garrison",
@@ -173,30 +177,55 @@ class FleetMission(Record, Base):
         UniqueConstraint("id", "fleet_id", name="uq_fleet_mission_fleet"),
         UniqueConstraint("id", "empire_id", "universe_id", name="uq_fleet_mission_scope"),
         UniqueConstraint("empire_id", "idempotency_key", name="uq_fleet_mission_key"),
-        CheckConstraint("kind IN ('DEPLOY','SURVEY','RETURN','COLONIZE')", name="kind"),
+        CheckConstraint("kind IN ('DEPLOY','SURVEY','RETURN','COLONIZE','ATTACK')", name="kind"),
         CheckConstraint("status IN ('active','returning','completed')", name="status"),
-        CheckConstraint("(kind = 'COLONIZE') = (target_planet_id IS NOT NULL)", name="target"),
-        # Only COLONIZE may target the current system: 0 hop, arrival = start, no recall window.
-        CheckConstraint("origin_id <> destination_id OR kind = 'COLONIZE'", name="route"),
+        CheckConstraint(
+            "(kind IN ('COLONIZE','ATTACK')) = (target_planet_id IS NOT NULL)", name="target"
+        ),
+        # Only COLONIZE and ATTACK may target the current system: 0 hop, arrival = start.
+        CheckConstraint(
+            "origin_id <> destination_id OR kind IN ('COLONIZE','ATTACK')", name="route"
+        ),
         CheckConstraint(
             "(origin_id <> destination_id AND travel_arrival_at > started_at) "
             "OR (origin_id = destination_id AND travel_arrival_at = started_at)",
             name="travel",
         ),
+        # ATTACK: due_at is battle_at, after the arrival and strictly after the start.
         CheckConstraint(
             "(kind = 'SURVEY' AND due_at > travel_arrival_at) "
-            "OR (kind <> 'SURVEY' AND due_at = travel_arrival_at)",
+            "OR (kind = 'ATTACK' AND due_at >= travel_arrival_at AND due_at > started_at) "
+            "OR (kind NOT IN ('SURVEY','ATTACK') AND due_at = travel_arrival_at)",
             name="deadline",
         ),
-        CheckConstraint("(recalled_at IS NULL) = (return_at IS NULL)", name="recall_pair"),
-        # Recall only while travelling, never an analysis or a return; time-symmetric way back.
+        # A return without recall exists only after an ATTACK's battle.
         CheckConstraint(
-            "recalled_at IS NULL OR (kind <> 'RETURN' AND recalled_at >= started_at "
-            "AND recalled_at < travel_arrival_at "
-            "AND return_at = recalled_at + (recalled_at - started_at))",
+            "(recalled_at IS NULL) = (return_at IS NULL) "
+            "OR (kind = 'ATTACK' AND recalled_at IS NULL AND return_at IS NOT NULL)",
+            name="recall_pair",
+        ),
+        # Recall only while travelling, never an analysis or a return; time-symmetric way back.
+        # ATTACK: until battle_at; once arrived, the way back costs one full travel duration.
+        CheckConstraint(
+            "recalled_at IS NULL OR (kind NOT IN ('RETURN','ATTACK') "
+            "AND recalled_at >= started_at AND recalled_at < travel_arrival_at "
+            "AND return_at = recalled_at + (recalled_at - started_at)) "
+            "OR (kind = 'ATTACK' AND recalled_at >= started_at AND recalled_at < due_at "
+            "AND return_at = CASE WHEN recalled_at < travel_arrival_at "
+            "THEN recalled_at + (recalled_at - started_at) "
+            "ELSE recalled_at + (travel_arrival_at - started_at) END)",
             name="recall",
         ),
-        CheckConstraint("status <> 'returning' OR recalled_at IS NOT NULL", name="returning"),
+        CheckConstraint(
+            "kind <> 'ATTACK' OR recalled_at IS NOT NULL OR return_at IS NULL "
+            "OR return_at = due_at + (travel_arrival_at - started_at)",
+            name="attack_return",
+        ),
+        CheckConstraint(
+            "status <> 'returning' OR recalled_at IS NOT NULL "
+            "OR (kind = 'ATTACK' AND return_at IS NOT NULL)",
+            name="returning",
+        ),
         CheckConstraint("(status = 'completed') = (completed_at IS NOT NULL)", name="completion"),
         Index(
             "ix_fleet_mission_open",

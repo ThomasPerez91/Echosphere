@@ -630,3 +630,161 @@ def test_autonomous_profiles_pay_build_research_survey_colonize_and_bootstrap(ai
             ]
             # Every strategic effect came through the AI dispatcher's common service calls.
             assert keys and all(k.startswith(f"ai:{actor['controller_id']}:") for k in keys)
+
+
+@pytest.fixture
+def ai_world_v07(database_engine):
+    factory = create_session_factory(database_engine)
+    clock = Clock()
+    engine = TimeEngine(factory, clock)
+    universe = uuid4()
+    with factory.begin() as session:
+        result = bootstrap(
+            session,
+            engine,
+            universe,
+            "AI v0.7 test",
+            "test-galaxy",
+            ["economic_cautious", "expansionist"],
+            clock.now(),
+            rules=load_ruleset("v0.7"),
+        )
+    try:
+        yield factory, clock, engine, result
+    finally:
+        with factory.begin() as session:
+            session.execute(text("TRUNCATE universes, game_principals, control_operations CASCADE"))
+
+
+def test_v07_defensive_military_goal_alert_and_no_offensive_capability(ai_world_v07):
+    from app.ai.controller import authorize
+    from app.ai.dispatcher import dispatch
+    from app.ai.observation import collect
+    from app.combat.models import CombatEngagement
+    from app.fleet.models import Fleet, FleetMission
+
+    factory, clock, engine, result = ai_world_v07
+    actor = result["actors"][1]
+    cid = UUID(actor["controller_id"])
+
+    def observe():
+        with factory() as s:
+            c = s.get(AIController, cid)
+            rules = authorize(s, c)
+            assert rules.ai.policy_version == "utility-goals-v2" and "military" in rules.ai.goals
+            return collect(s, c, rules, clock.now())[0]
+
+    calm = observe()
+    military = [c for c in calm["candidates"] if c["goal"] == "military"]
+    assert military and {c["utility"] for c in military} == {500}
+    assert all(c["body"]["ship"] == "interceptor" for c in military)
+    assert calm["alerts"] == []
+    assert not any(
+        c["operation"] == "launch" and c["body"].get("kind") == "ATTACK" for c in calm["candidates"]
+    )
+    # A hostile force announced on the AI colony (test-placed engagement row): urgent defence.
+    with factory.begin() as s:
+        human = UUID(result["actors"][0]["empire_id"])
+        colony = s.get(Colony, UUID(actor["colony_id"]))
+        from app.persistence.models import Planet
+
+        planet = s.get(Planet, colony.planet_id)
+        home = s.get(Colony, UUID(result["actors"][0]["colony_id"]))
+        fleet = Fleet(
+            empire_id=human,
+            universe_id=colony.universe_id,
+            home_colony_id=home.id,
+            kind="TASK",
+            status="STATIONED",
+            system_id=s.get(Planet, home.planet_id).system_id,
+            name="Test-only",
+        )
+        s.add(fleet)
+        s.flush()
+        from app.galaxy.service import map_system
+
+        map_system(s, colony.universe_id, human, planet.system_id, clock.now())
+        mission = FleetMission(
+            empire_id=human,
+            universe_id=colony.universe_id,
+            fleet_id=fleet.id,
+            kind="ATTACK",
+            status="completed",
+            origin_id=fleet.system_id,
+            destination_id=planet.system_id,
+            payer_colony_id=home.id,
+            target_planet_id=planet.id,
+            idempotency_key="test-only-alert",
+            snapshot={},
+            started_at=clock.now(),
+            travel_arrival_at=clock.now() + timedelta(hours=1),
+            due_at=clock.now() + timedelta(hours=24),
+            completed_at=clock.now(),
+        )
+        s.add(mission)
+        s.flush()
+        s.add(
+            CombatEngagement(
+                universe_id=colony.universe_id,
+                mission_id=mission.id,
+                attacker_empire_id=human,
+                defender_empire_id=colony.empire_id,
+                target_planet_id=planet.id,
+                target_system_id=planet.system_id,
+                started_at=mission.started_at,
+                travel_arrival_at=mission.travel_arrival_at,
+                battle_at=mission.due_at,
+                state="pending",
+                attempts=0,
+            )
+        )
+    alerted = observe()
+    assert {a["planet_id"] for a in alerted["alerts"]} == {str(planet.id)}
+    assert str(human) not in str(alerted["alerts"])  # never the attacker's identity
+    urgent = [c for c in alerted["candidates"] if c["goal"] == "military"]
+    assert {c["utility"] for c in urgent} == {1000}
+    assert all(c["priority"] for c in urgent) and "priority" not in str(calm["candidates"])
+    # An eligible under-defended colony under attack preempts every other goal this turn.
+    with factory() as s:
+        c = s.get(AIController, cid)
+        from app.ai.policy import choose
+
+        choice = choose(alerted, {}, c.profile, authorize(s, c).ai)
+    chosen = next(x for x in alerted["candidates"] if x["key"] == choice["choice"])
+    assert chosen["goal"] == "military" or all(x["reason"] for x in urgent)
+    # Even a forged offensive candidate is refused by the dispatcher's fixed capabilities.
+    with pytest.raises(AIDenied, match="ai_mission_denied"), factory.begin() as s:
+        c = s.get(AIController, cid)
+        forged = {
+            "operation": "launch",
+            "body": {"fleet_id": str(fleet.id), "kind": "ATTACK", "units": {"interceptor": 1}},
+        }
+        dispatch(s, engine, c, forged, "ai:forged", clock.now())
+
+
+def test_v07_ai_builds_defence_through_common_production_and_never_attacks(ai_world_v07):
+    from app.ai.orchestrator import Orchestrator
+    from app.fleet.models import FleetMission, ShipOrder
+
+    factory, clock, engine, result = ai_world_v07
+    runner = Orchestrator(factory, clock)
+    actors = result["actors"][1:]
+    for _ in range(288):  # 48 h of injected clock
+        clock.at += timedelta(minutes=10)
+        while engine.process_next() is not None:
+            pass
+        for actor in actors:
+            runner.process_next(controller_id=UUID(actor["controller_id"]), raise_errors=True)
+    with factory() as s:
+        for actor in actors:
+            e = UUID(actor["empire_id"])
+            ordered = s.scalars(
+                select(ShipOrder.idempotency_key).where(
+                    ShipOrder.empire_id == e, ShipOrder.ship_class == "interceptor"
+                )
+            ).all()
+            assert ordered and all(k.startswith(f"ai:{actor['controller_id']}:") for k in ordered)
+            attacks = select(func.count()).where(
+                FleetMission.empire_id == e, FleetMission.kind == "ATTACK"
+            )
+            assert s.scalar(attacks) == 0

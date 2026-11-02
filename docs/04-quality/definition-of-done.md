@@ -2,6 +2,17 @@
 
 **Statut : règle de travail.**
 
+## Niveaux de CI (02/11/2026)
+
+- **Avant merge :** une PR exige une Fast CI verte sur sa tête (lint, tests sans PostgreSQL,
+  builds, docs, contrôles statiques), ainsi que les validations locales pertinentes réellement
+  exécutées et consignées.
+- **Après merge :** la validation exhaustive est la Full CI du push sur master (PostgreSQL,
+  Chromium, Compose, IA, Combat). Une Full CI rouge bloque le lot suivant et impose une correction
+  immédiate de master. Détail : [stratégie de tests](testing-strategy.md#stratégie-ci-à-deux-niveaux--décision-du-02112026).
+- **Historique :** les mentions « CI de tête 5/5 avec smokes » des lots antérieurs décrivent
+  l'ancienne CI unique.
+
 ## Chaque changement
 
 - Périmètre explicite, pas de feature non documentée ; hypothèses et arbitrages identifiés.

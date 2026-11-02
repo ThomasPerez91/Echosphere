@@ -11,6 +11,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     Uuid,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -104,3 +105,31 @@ class ScheduledEvent(Record, Base):
     next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error_code: Mapped[str | None] = mapped_column(String(32))
+
+
+class StreamFence(Record, Base):
+    """Generic time fence: while unreleased, its stream never applies an event due after
+    `fence_at` nor moves its cursor beyond it. The owner key names who holds it, nothing else."""
+
+    __tablename__ = "stream_fences"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["stream_id", "universe_id"],
+            ["event_streams.id", "event_streams.universe_id"],
+            name="fk_stream_fences_stream_universe",
+        ),
+        UniqueConstraint("stream_id", "owner", name="uq_stream_fences_owner"),
+        CheckConstraint("length(owner) BETWEEN 1 AND 160", name="owner"),
+        Index(
+            "ix_stream_fences_open",
+            "stream_id",
+            "fence_at",
+            postgresql_where=text("released_at IS NULL"),
+        ),
+    )
+
+    stream_id: Mapped[UUID] = mapped_column(Uuid)
+    universe_id: Mapped[UUID] = mapped_column(Uuid)
+    fence_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    owner: Mapped[str] = mapped_column(String(160))
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

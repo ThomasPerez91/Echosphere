@@ -212,4 +212,19 @@ def project(
         "queue": queue_view(state, permissions),
         "queue_limit": rules.colony.queue_limit,
         "options": options(rules, state, permissions),
+        "incoming": incoming(session, rules, colony, permissions),
     }
+
+
+def incoming(session, rules, colony, permissions):
+    """Hostile force announced on this Colony's planet: battle instant and state only."""
+    if rules.combat is None or "combat.read" not in permissions:
+        return None
+    from app.combat.service import alerts_for
+
+    planet = str(colony.planet_id)
+    return [
+        {k: a[k] for k in ("id", "battle_at", "state")}
+        for a in alerts_for(session, colony.universe_id, colony.empire_id)
+        if a["planet_id"] == planet
+    ]

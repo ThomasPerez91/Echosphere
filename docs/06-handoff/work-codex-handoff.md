@@ -118,7 +118,7 @@ contestation, puis conclut : validé, validé avec réserves listées, ou nouvel
 validation n’est pas une autorisation de fusion : la fusion reste une instruction utilisateur.
 
 **Règle commune** : aucun agent ne déclare un test réussi sans l’avoir réellement exécuté ou sans
-avoir vérifié son exécution dans la CI du SHA concerné. Une CI configurée n’est pas une CI exécutée ;
+avoir vérifié son exécution dans la CI du SHA concerné. Depuis le 02/11/2026, la CI d'une PR est la Fast CI (sans PostgreSQL exhaustif, Chromium ni Compose) ; la Full CI ne tourne qu'au push master ([stratégie](../04-quality/testing-strategy.md#stratégie-ci-à-deux-niveaux--décision-du-02112026)). Une CI configurée n’est pas une CI exécutée ;
 un test ignoré (RUN_DB_TESTS absent, par exemple) n’est pas réussi.
 
 ## Travail parallèle, branches et worktrees
