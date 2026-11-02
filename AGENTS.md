@@ -220,6 +220,10 @@ python3 scripts/check_docs.py
 (cd frontend && npx playwright install chromium && npm run test:e2e)
 ```
 
+CI à deux niveaux (02/11/2026) : PR → Fast CI seule (lint, tests sans PostgreSQL, builds, docs,
+Compose config) ; push master → Full CI exhaustive (PostgreSQL, Chromium, tous les smokes dont IA
+et Combat). Une régression exhaustive peut apparaître après merge : master rouge = correction
+immédiate avant tout nouveau lot. [Stratégie](docs/04-quality/testing-strategy.md).
 Intégrations : PostgreSQL dédié *_test et RUN_DB_TESTS=1, jamais les données à conserver.
 Compose/migrations/smoke et commandes détaillées dans [reprise](docs/06-handoff/work-codex-handoff.md).
 Ne pas lancer down -v ou downgrade sur données à garder. Toujours distinguer passé vérifié,

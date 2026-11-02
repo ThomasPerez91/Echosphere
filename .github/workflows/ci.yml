@@ -1,17 +1,35 @@
 name: CI
+# Two levels, one workflow, one run per event:
+# - pull_request to master: Fast CI (lint, pure tests without PostgreSQL, builds, docs,
+#   static Compose/whitespace checks). Developer feedback, not a full game acceptance.
+# - push to master (after a merge): Full CI, the exhaustive proof (PostgreSQL suites,
+#   Chromium, real Compose startup, migrations and every recipe including AI and Combat).
+# A regression only these exhaustive checks can catch is found after the merge, on master.
 on:
   push:
-    branches: [master, 'work/**']
+    branches:
+      - master
   pull_request:
-    branches: [master]
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
 permissions:
   contents: read
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  # A newer PR commit supersedes the previous Fast CI; a master Full CI always completes.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   backend:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:17-alpine
+        # Full CI only: an empty image never starts the service on pull requests.
+        image: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && 'postgres:17-alpine' || '' }}
         env:
           POSTGRES_DB: echosphere_test
           POSTGRES_USER: echosphere
@@ -25,7 +43,8 @@ jobs:
       POSTGRES_DB: echosphere_test
       POSTGRES_USER: echosphere
       POSTGRES_PASSWORD: ci_only
-      RUN_DB_TESTS: '1'
+      # Fast CI: PostgreSQL tests skip through the existing RUN_DB_TESTS gate.
+      RUN_DB_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -53,8 +72,10 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: npx playwright install --with-deps chromium
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: npm run test:e2e
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -64,7 +85,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       accounts:
-        image: postgres:17-alpine
+        image: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && 'postgres:17-alpine' || '' }}
         env:
           POSTGRES_DB: echosphere_accounts_test
           POSTGRES_USER: echosphere_accounts
@@ -78,7 +99,7 @@ jobs:
       PORTAL_POSTGRES_DB: echosphere_accounts_test
       PORTAL_POSTGRES_USER: echosphere_accounts
       PORTAL_POSTGRES_PASSWORD: portal_ci_only
-      RUN_DB_TESTS: '1'
+      RUN_DB_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && '1' || '0' }}
     defaults:
       run:
         working-directory: portal/backend
@@ -108,9 +129,25 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: npx playwright install --with-deps chromium
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: npm run test:e2e
+  static-checks:
+    # Fast CI only: cheap static checks; never `docker compose up` nor an image build.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git diff --check ${{ github.event.pull_request.base.sha }} HEAD
+      - run: cp .env.example .env
+      - run: docker compose config --quiet
+      - run: docker compose --profile ai config --quiet
   compose-smoke:
+    # Full CI only: real startup, migrations and every recipe, after a merge on master.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
