@@ -12,6 +12,9 @@ on:
   pull_request:
     branches:
       - master
+      # Temporary (02/11/2026): 13B (PR #17) depends on the unmerged step 13 branch (PR #16).
+      # Fast CI only; Full CI stays reserved to pushes on master. Remove once #16 is merged.
+      - work/step-13-ai-relations
     types:
       - opened
       - synchronize
