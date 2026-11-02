@@ -396,3 +396,10 @@ html { scroll-padding-bottom: 24px; }
 .relation-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .relation-actions .feedback { flex-basis: 100%; }
 .relation-actions .button { min-height: 44px; }
+
+/* Frontier (13B): protocol control in the fleet card; same tokens as the Fleet forms. */
+.fleet-protocol { display: grid; gap: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
+.fleet-protocol p { margin: 0; }
+.fleet-protocol-form { display: grid; gap: 8px; }
+.fleet-protocol-form .button { justify-self: start; min-height: 44px; }
+@media (max-width: 600px) { .fleet-protocol-form .button { justify-self: stretch; } }

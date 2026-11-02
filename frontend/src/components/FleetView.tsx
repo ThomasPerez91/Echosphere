@@ -3,7 +3,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useFleets } from "../hooks/useFleets";
 import { ApiError, previewMission } from "../fleet/api";
 import type { Amounts } from "../colony/api";
-import type { CombatReport, FleetProjection, MissionKind, MissionView, Quote, ShipOrder } from "../fleet/api";
+import type { CombatReport, FleetProjection, Frontier, MissionKind, MissionView, Protocol, Quote, ShipOrder } from "../fleet/api";
 import { duration, exactUnits, resourceKeys, resourceLabels, time, units } from "../colony/format";
 import { Badge, Button, EmptyState, Panel } from "./ui";
 
@@ -48,6 +48,27 @@ const messages: Record<string, string> = {
   attack_cargo: "Une attaque ne transporte aucune cargaison.",
   combat_pending: "Une bataille due attend sa résolution par le serveur. Réessayez dans un instant.",
   combat_unavailable: "Les règles de cette partie n’incluent pas le combat.",
+  protocol_unavailable: "Ce protocole n’est pas disponible dans les règles de cette partie.",
+  protocol_task: "Seule une flotte opérationnelle stationnée peut tenir un protocole.",
+  frontier_unavailable: "Les règles de cette partie n’incluent pas la présence frontalière.",
+};
+/** 13B: four distinct postures, described by what they do and never do (Q57). */
+const protocols: Record<Protocol, { label: string; help: string; tone: "neutral" | "accent" | "warning" | "danger" }> = {
+  SURVEILLANCE: { label: "Surveillance", tone: "accent",
+    help: "Détecte les flottes étrangères qui entrent dans le système et vous alerte. N’attaque jamais ; se défend si elle est attaquée." },
+  AMBUSH: { label: "Embuscade", tone: "warning",
+    help: "Détecte, puis attaque seulement un Empire connu qui a commis un acte hostile contre vous depuis moins de 72 h. Jamais un inconnu, jamais sous pacte." },
+  INTERCEPTION: { label: "Interception", tone: "danger",
+    help: "Attaque toute flotte étrangère militaire détectée à son entrée, même inconnue ou plus forte. Posture très agressive ; un pacte actif l’empêche." },
+  FRIENDLY_CONTACT: { label: "Contact amical", tone: "neutral",
+    help: "Se présente volontairement aux flottes détectées (identité, système, date). N’attaque jamais ; se replie si une force hostile entre dans le système." },
+};
+const engagementLabels: Record<string, string> = {
+  victory: "Victoire", defeat: "Défaite", mutual_destruction: "Destruction mutuelle",
+};
+const retreatLabels: Record<string, string> = {
+  retreated: "Repli effectué", retreat_failed: "Repli impossible : départ refusé",
+  retreat_impossible: "Repli impossible : aucune destination accessible", void: "Repli sans objet",
 };
 const message = (code: string) => messages[code] ?? "Service Game indisponible. Réessayer n’enverra pas l’action deux fois.";
 
@@ -89,6 +110,7 @@ function reportTitle(m: MissionView) {
   if (result.kind === "RECALLED") return "Rappel terminé";
   if (result.kind === "COLONIZE") return result.outcome === "founded" ? "Colonie fondée" : "Monde indisponible à l’arrivée";
   if (result.kind === "ATTACK") return result.destroyed ? "Flotte détruite au combat" : `Attaque — ${outcomeLabels[result.outcome ?? ""] ?? "terminée"}`;
+  if (result.kind === "INTERCEPTED") return "Flotte détruite par une interception en route";
   return kindLabels[m.kind];
 }
 
@@ -123,6 +145,42 @@ function Losses({ label, side, p }: { label: string; side: CombatReport["own"]; 
     `${p.catalogue![c]?.name ?? c} : ${n} engagés, ${side!.losses[c] ?? 0} perdus, ${side!.survivors[c] ?? 0} survivants`).join(" · ") : "aucune unité militaire"}</dd></div>;
 }
 
+/** 13B: detections (anonymous unless identified) and own frontier reports (D3). */
+function FrontierPanel({ frontier, p }: { frontier: Frontier; p: FleetProjection }) {
+  const forces = (side: CombatReport["own"]) => {
+    const rows = Object.entries(side?.initial ?? {}).filter(([, n]) => n > 0);
+    return rows.length ? rows.map(([c, n]) =>
+      `${p.catalogue![c]?.name ?? c} : ${n} engagés, ${side!.losses[c] ?? 0} perdus, ${side!.survivors[c] ?? 0} survivants`).join(" · ")
+      : "aucune unité militaire";
+  };
+  return <section className="panel" aria-labelledby="frontier-title">
+    <div className="panel-head"><h2 id="frontier-title">Frontière</h2>
+      <span className="panel-meta">{frontier.detections.length} détection(s)</span></div>
+    <p className="panel-meta">Une détection donne le système, l’instant et une signature : l’Empire n’est nommé que s’il vous était déjà connu ou s’il s’est présenté. Ni composition, ni origine, ni destination.</p>
+    <h3>Détections</h3>
+    {frontier.detections.length === 0 ? <p>Aucune flotte étrangère détectée.</p> : <ul className="fleet-reports">{frontier.detections.map((d) =>
+      <li key={d.id}><strong>{d.empire ? `Flotte de ${d.empire.name ?? "Empire connu"}` : "Signature étrangère détectée"}</strong>
+        {" — "}{d.role === "watch" ? "entrée dans votre zone surveillée" : "votre flotte en transit a été repérée"} : {place(d.system)}
+        {d.friendly && <Badge tone="accent">Contact amical</Badge>}
+        <p className="panel-meta">Instant logique {time(d.detected_at)}</p>
+      </li>)}</ul>}
+    <h3>Rencontres et replis</h3>
+    {frontier.encounters.length === 0 ? <p>Aucune rencontre frontalière.</p> : <ul className="fleet-reports">{frontier.encounters.map((e) =>
+      e.kind === "retreat" ? <li key={e.id}><strong>{retreatLabels[e.outcome] ?? e.outcome}</strong> — {place(e.system)}
+        {e.destination && <> → {place(e.destination)}</>}
+        <p className="panel-meta">Force hostile entrée à {time(e.at)}{e.reason ? ` · ${message(e.reason)}` : ""} · carburant normal, aucune téléportation.</p>
+      </li> : <li key={e.id} className="combat-report">
+        <strong>{e.role === "watcher" ? `${protocols[e.protocol ?? "INTERCEPTION"].label} — ${engagementLabels[e.outcome] ?? e.outcome}` : `Interceptée en route — ${engagementLabels[e.outcome] ?? e.outcome}`}</strong>
+        {" — "}{place(e.system)} · contre {e.opponent.name ?? "un Empire"}
+        <dl className="fleet-dates"><div><dt>Vos forces</dt><dd>{forces(e.own)}</dd></div>
+          <div><dt>Forces adverses</dt><dd>{forces(e.opponent_forces)}</dd></div>
+          <div><dt>Rounds</dt><dd>{e.rounds}</dd></div></dl>
+        {e.destroyed && <p role="status">Votre flotte a été détruite.</p>}
+        <p className="panel-meta">Rencontre à l’instant d’entrée {time(e.at)} · pertes militaires seulement.</p>
+      </li>)}</ul>}
+  </section>;
+}
+
 export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyChanged, target }: {
   universe: string; enabled: boolean; csrf?: string; onSessionLost: () => void; onEconomyChanged?: () => void;
   target?: { empire: string; system: string; planet?: string; action?: "colonize" | "attack" };
@@ -131,6 +189,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
   const p = fleets.projection;
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [order, setOrder] = useState<Record<string, { ship: string; quantity: number }>>({});
+  const [protocolChoice, setProtocolChoice] = useState<Record<string, Protocol | "">>({});
   const box = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const prefilled = useRef(false);
@@ -347,6 +406,27 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
             <p>Stationnée : {place(f.system)}</p>
             <Composition stacks={f.stacks} p={p} />
             <p className="panel-meta">Cargo : <Cargo cargo={f.cargo} /> · capacité {units(f.capacity)}</p>
+            {p.frontier && f.kind === "TASK" && (() => {
+              const active = f.protocol ?? null;
+              const chosen = protocolChoice[f.id] ?? (active ?? "");
+              return <div className="fleet-protocol">
+                <p>Protocole : {active ? <Badge tone={protocols[active].tone}>{protocols[active].label}</Badge> : <span className="muted">aucun</span>}</p>
+                {can("fleet.command") && <form className="fleet-protocol-form" onSubmit={async (e) => {
+                  e.preventDefault();
+                  const value = chosen === "" ? null : chosen;
+                  await fleets.run(`/${f.id}/protocol`, { protocol: value }, JSON.stringify([f.id, value]));
+                }}>
+                  <label className="galaxy-field">Protocole de premier contact
+                    <select value={chosen} disabled={fleets.pending} aria-describedby={`protocol-help-${f.id}`}
+                      onChange={(e) => setProtocolChoice({ ...protocolChoice, [f.id]: e.target.value as Protocol | "" })}>
+                      <option value="">Aucun</option>
+                      {p.frontier!.protocols.map((key) => <option key={key} value={key}>{protocols[key].label}</option>)}
+                    </select></label>
+                  <p id={`protocol-help-${f.id}`} className="panel-meta">{chosen ? protocols[chosen].help : "Sans protocole, la flotte ne détecte rien et ne réagit à aucun passage."}</p>
+                  <Button type="submit" disabled={fleets.pending || chosen === (active ?? "")}>Appliquer</Button>
+                </form>}
+              </div>;
+            })()}
             {can("fleet.command") && <div className="fleet-actions">
               {Object.keys(f.stacks).length > 0 && <Button className="button--primary" disabled={fleets.pending}
                 onClick={(e) => open({ mode: "send", fleet: f.id, kind: "DEPLOY", destination: "", planet: "", units: {}, cargo: {}, quote: null, quoted: null, error: null }, e)}>Envoyer…</Button>}
@@ -419,6 +499,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           </li>;
         })}</ul>}
       </section>}
+      {p.frontier && <FrontierPanel frontier={p.frontier} p={p} />}
       <section className="panel" aria-labelledby="reports-title"><h2 id="reports-title">Rapports récents</h2>
         {reports.length === 0 ? <p>Aucun rapport de flotte.</p> : <ul className="fleet-reports">{reports.map((m) => <li key={m.id}>
           <strong>{reportTitle(m)}</strong> — {fleetName(m.fleet_id)} : {place(m.report!.result.kind === "RECALLED" ? m.origin : m.destination)}{m.target_planet ? ` · monde ${m.target_planet.name}` : ""}

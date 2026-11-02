@@ -7,9 +7,8 @@ younger than `ambush_hostility_seconds` at the logical encounter instant (72 h i
 Q58: detection levels, technology, costs and stealth stay open (level 0 for all, D1).
 """
 
-from typing import Literal
-
 from datetime import timedelta
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
