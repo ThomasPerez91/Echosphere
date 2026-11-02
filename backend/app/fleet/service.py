@@ -547,7 +547,8 @@ def merge(session, engine, universe_id, empire_id, fleet_id, target_id, *, key, 
         set_cargo(session, target.id, total)
         set_stacks(session, source.id, {})
         set_cargo(session, source.id, {})
-        source.status, source.system_id, source.protocol = "MERGED", None, None
+        frontier.end_protocol(session, source, at)
+        source.status, source.system_id = "MERGED", None
         session.flush()
         return record(
             session, universe_id, empire_id, key, "merge", request, {"fleet_id": str(target.id)}, at
@@ -568,8 +569,7 @@ def set_protocol(session, engine, universe_id, empire_id, fleet_id, protocol, *,
         fleet = stationed(owned_fleet(session, universe_id, empire_id, fleet_id))
         if fleet.kind != "TASK":
             raise FleetError("Only an operational (task) fleet holds a protocol", "protocol_task")
-        fleet.protocol = protocol
-        session.flush()
+        frontier.start_protocol(session, fleet, protocol, at)
         result = {"fleet_id": str(fleet.id), "protocol": protocol}
         return record(session, universe_id, empire_id, key, "protocol", request, result, at)
 
@@ -916,10 +916,10 @@ def launch(
                 )
             )
         # A departing Fleet ends its stationing, hence any frontier protocol (13B).
+        frontier.end_protocol(session, fleet, at)
         fleet.status, fleet.system_id, fleet.active_mission_id = "MOVING", None, mission.id
-        fleet.protocol = None
         session.flush()
-        frontier.record_outbound(session, rules, mission, path, quote[1])
+        frontier.record_outbound(session, rules, mission, state.stream_id, path, quote[1])
         if kind == "ATTACK":
             # No arrival event: the Combat orchestrator resolves the engagement at battle_at.
             from app.combat.service import open_engagement
@@ -1326,7 +1326,7 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         mission.status, mission.recalled_at = "returning", utc(at)
         mission.return_at = utc(at) + (utc(at) - mission.started_at)
         session.flush()
-        frontier.record_way_back(session, rules, mission, utc(at), utc(at))
+        frontier.record_way_back(session, rules, mission, state.stream_id, utc(at), utc(at))
         schedule(
             session,
             state.stream_id,
@@ -1377,6 +1377,7 @@ def recall_attack(session, state, mission, key, request, at):
             session,
             ruleset_for(session, mission.universe_id),
             mission,
+            state.stream_id,
             now,
             min(now, mission.travel_arrival_at),
         )

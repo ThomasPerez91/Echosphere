@@ -21,6 +21,7 @@ from app.combat import service as combat
 from app.control.models import EmpireBinding
 from app.fleet import service
 from app.fleet.models import Fleet, FleetMission, FleetReport, ShipOrder
+from app.frontier import service as frontier
 from app.galaxy import service as galaxy
 from app.galaxy.models import PlanetKnowledge, SystemKnowledge
 from app.persistence.models import Colony, Empire, Planet
@@ -332,10 +333,31 @@ def project(session, universe_id, empire_id, permissions, at):
         "fleets": fleet_views,
         "missions": [mission_view(session, m, permissions) for m in missions],
         "colonization": colonization,
-        "frontier": {"protocols": list(rules.frontier.protocols)} if rules.frontier else None,
+        "frontier": frontier_view(session, rules, universe_id, empire_id),
         "combat": combat_view(session, rules, universe_id, empire_id, permissions),
         # Destinations come from Knowledge only; DETECTED signals need galaxy.read (SURVEY).
         "systems": systems_view,
+    }
+
+
+def frontier_view(session, rules, universe_id, empire_id):
+    """13B: enabled protocols and this Empire's own detections (anonymous unless identified)."""
+    if rules.frontier is None:
+        return None
+
+    def name(empire):
+        row = session.get(Empire, empire)
+        return row.name if row else None
+
+    return {
+        "protocols": list(rules.frontier.protocols),
+        "detections": frontier.detections_for(
+            session,
+            universe_id,
+            empire_id,
+            name,
+            lambda system: system_ref(session, empire_id, system),
+        ),
     }
 
 

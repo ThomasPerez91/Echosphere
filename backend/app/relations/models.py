@@ -47,7 +47,9 @@ class RelationContact(Base):
             name="fk_relation_contacts_presence_planet",
         ),
         CheckConstraint("observer_empire_id <> observed_empire_id", name="sides"),
-        CheckConstraint("first_source IN ('combat','presence','diplomacy')", name="source"),
+        CheckConstraint(
+            "first_source IN ('combat','presence','diplomacy','frontier')", name="source"
+        ),
         CheckConstraint("last_seen_at >= first_seen_at", name="seen"),
         CheckConstraint(
             "(presence_planet_id IS NULL) = (presence_observed_at IS NULL)", name="presence"

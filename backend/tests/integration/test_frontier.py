@@ -1,24 +1,30 @@
 """Real PostgreSQL tests for 13B B01 (per-hop passages) and B02 (stationed protocol), v0.9."""
 
 # ruff: noqa: F811
+from datetime import timedelta
 from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import select
 from test_colony_api import Clock, game  # noqa: F401
 from test_combat import arm, attack, launched, planet_of, resolve_due, until_battle
-from test_fleet import FULL, fleets, post, view  # noqa: F401
+from test_fleet import FULL, fleets, post, view, worker  # noqa: F401
 
 from app.fleet.models import Fleet, FleetMission, FleetMissionLeg
-from app.frontier.models import FleetPassage
+from app.frontier.models import FleetPassage, FleetProtocolPeriod, FrontierDetection
 from app.galaxy import service as g
 from app.galaxy.models import GalaxyRoute
 from app.persistence.models import StellarSystem
+from app.relations import service as relations
+from app.relations.models import RelationContact
 from app.simulation.models import ResourceBalance
 
 pytestmark = pytest.mark.integration
 M = 1_000_000
-RIGHTS = [*FULL, "colony.expand", "combat.read", "combat.attack"]
+RIGHTS = [
+    *FULL,
+    *("colony.expand", "combat.read", "combat.attack", "relations.read", "relations.negotiate"),
+]
 
 
 def rivals(fleets, ruleset="v0.9"):
@@ -28,7 +34,8 @@ def rivals(fleets, ruleset="v0.9"):
         for system in s.scalars(
             select(StellarSystem.id).where(StellarSystem.universe_id == a.universe)
         ):
-            g.map_system(s, a.universe, a.empire, system, a.game.clock())
+            for w in (a, b):  # test-only knowledge so either side can route anywhere
+                g.map_system(s, w.universe, w.empire, system, w.game.clock())
         for w in (a, b):  # test-only funds; spending still goes through the services
             for r in ("alloys", "flux", "data"):
                 s.get(ResourceBalance, (w.colony, r)).stock = 9_000 * M
@@ -157,7 +164,9 @@ def fleet_view(w, fleet):
 def test_protocol_is_set_changed_cleared_and_ends_with_the_stationing(fleets):
     a, b = rivals(fleets)
     watch = arm(a, {"frigate": 1})
-    assert view(a).json()["frontier"] == {"protocols": ["SURVEILLANCE", "FRIENDLY_CONTACT"]}
+    frontier = view(a).json()["frontier"]
+    assert frontier["protocols"] == ["SURVEILLANCE", "FRIENDLY_CONTACT"]
+    assert frontier["detections"] == []
     key = uuid4().hex
     assert protocol(a, watch, "SURVEILLANCE", key).status_code == 200
     assert protocol(a, watch, "SURVEILLANCE", key).status_code == 200  # same intention
@@ -211,3 +220,128 @@ def test_database_refuses_a_protocol_outside_a_stationed_task_fleet(fleets):
         )
         garrison.protocol = "SURVEILLANCE"
         s.flush()
+
+
+# --- B03/B04 detection -------------------------------------------------------------------------
+
+
+def encounter(fleets, protocol="SURVEILLANCE", *, protocol_late=False):
+    """A watches its home system; B deploys a frigate into it. Returns (a, b, mission, passage)."""
+    a, b = rivals(fleets)
+    _, home = planet_of(a)
+    watch = arm(a, {"frigate": 1})
+    if not protocol_late:
+        assert protocol_set(a, watch, protocol).status_code == 200
+    mover = arm(b, {"frigate": 1})
+    mission_id, _ = deploy(b, mover, home, {"frigate": 1})
+    entry = passages(b, mission_id)[-1]
+    assert entry.system_id == home
+    return a, b, watch, mission_id, entry
+
+
+def protocol_set(w, fleet, value):
+    return post(w, f"/{fleet}/protocol", {"idempotency_key": uuid4().hex, "protocol": value})
+
+
+def detections(w):
+    return view(w).json()["frontier"]["detections"]
+
+
+def rows(w):
+    with w.game.factory() as s:
+        return list(
+            s.scalars(select(FrontierDetection).where(FrontierDetection.universe_id == w.universe))
+        )
+
+
+def test_surveillance_detects_a_real_entry_mutually_and_anonymously_at_its_instant(fleets):
+    a, b, watch, mission_id, entry = encounter(fleets)
+    assert rows(a) == []  # nothing before the logical entry instant
+    a.game.test_clock[0] = entry.entered_at + timedelta(minutes=5)  # worker late: same result
+    worker(b, limit=50)
+    seen = detections(a)
+    assert len(seen) == 1 and seen[0]["detected_at"] == entry.entered_at.isoformat()
+    assert seen[0]["role"] == "watch" and seen[0]["empire"] is None and not seen[0]["friendly"]
+    assert set(seen[0]) == {"id", "system", "detected_at", "role", "friendly", "empire"}
+    other = detections(b)
+    assert len(other) == 1 and other[0]["role"] == "transit" and other[0]["empire"] is None
+    leak = str(view(a).json()["frontier"])
+    assert str(b.empire) not in leak and str(mission_id) not in leak and "frigate" not in leak
+    # An anonymous detection creates no named contact.
+    with a.game.factory() as s:
+        assert s.get(RelationContact, (a.empire, b.empire)) is None
+
+
+def test_detection_replay_never_duplicates(fleets):
+    from app.frontier.service import complete_passage
+    from app.simulation.models import ScheduledEvent
+
+    a, b, _, mission_id, entry = encounter(fleets)
+    a.game.test_clock[0] = entry.entered_at
+    worker(b, limit=50)
+    with a.game.factory.begin() as s:
+        event = s.scalar(
+            select(ScheduledEvent).where(
+                ScheduledEvent.idempotency_key == f"frontier-passage:{mission_id}:{entry.sequence}"
+            )
+        )
+        complete_passage(s, event, entry.entered_at)  # replayed handler
+    assert len(rows(a)) == 2
+
+
+def test_identity_only_when_already_known_at_the_instant(fleets):
+    a, b, _, _, entry = encounter(fleets)
+    with a.game.factory.begin() as s:
+        relations.record_contact(s, a.universe, a.empire, b.empire, "presence", a.game.clock())
+    a.game.test_clock[0] = entry.entered_at
+    worker(b, limit=50)
+    assert detections(a)[0]["empire"]["id"] == str(b.empire)  # A knew B
+    assert detections(b)[0]["empire"] is None  # B did not know A
+
+
+def test_protocol_set_after_the_entry_never_detects_retroactively(fleets):
+    a, b, watch, _, entry = encounter(fleets, protocol_late=True)
+    a.game.test_clock[0] = entry.entered_at + timedelta(seconds=1)
+    assert protocol_set(a, watch, "SURVEILLANCE").status_code == 200  # set after the entry
+    worker(b, limit=50)
+    assert rows(a) == []
+
+
+def test_watcher_gone_before_the_entry_never_detects(fleets):
+    a, b, watch, _, entry = encounter(fleets)
+    deploy(a, watch, planet_of(b)[1], {"frigate": 1})
+    with a.game.factory() as s:
+        period = s.scalar(select(FleetProtocolPeriod).where(FleetProtocolPeriod.fleet_id == watch))
+        assert period.ended_at is not None and period.ended_at < entry.entered_at
+    a.game.test_clock[0] = entry.entered_at
+    worker(b, limit=50)
+    assert [d for d in rows(a) if d.watch_fleet_id == watch] == []
+
+
+def test_cancelled_entry_never_detects(fleets):
+    a, b, _, mission_id, entry = encounter(fleets)
+    with b.game.factory() as s:
+        mission = s.get(FleetMission, UUID(mission_id))
+    b.game.test_clock[0] = mission.started_at + timedelta(seconds=1)
+    recalled = post(b, f"/missions/{mission_id}/recall", {"idempotency_key": uuid4().hex})
+    assert recalled.status_code == 200
+    a.game.test_clock[0] = entry.entered_at + timedelta(minutes=1)
+    worker(b, limit=50)
+    assert rows(a) == []
+
+
+def test_friendly_contact_introduces_both_empires_after_the_encounter(fleets):
+    a, b, _, _, entry = encounter(fleets, "FRIENDLY_CONTACT")
+    a.game.test_clock[0] = entry.entered_at
+    worker(b, limit=50)
+    assert detections(a)[0]["friendly"] and detections(a)[0]["empire"]["id"] == str(b.empire)
+    assert detections(b)[0]["empire"]["id"] == str(a.empire)
+    # Contacts are materialised at read points (never inside the handler), dated at the encounter.
+    for w in (a, b):
+        path = f"/game/{w.universe}/relations/{w.empire}"
+        assert w.client.get(path, headers={"X-Game-Request": "bootstrap"}).status_code == 200
+    with a.game.factory() as s:
+        for observer, observed in ((a.empire, b.empire), (b.empire, a.empire)):
+            contact = s.get(RelationContact, (observer, observed))
+            assert contact.first_source == "frontier" and contact.first_seen_at == entry.entered_at
+            assert contact.presence_planet_id is None

@@ -157,6 +157,7 @@ class TimeEngine(Scheduler):
     def __init__(self, *args, handlers=None, **kwargs):
         from app.colony.service import complete_construction
         from app.fleet.service import complete_arrival, complete_order, complete_return
+        from app.frontier.service import complete_passage
         from app.galaxy.service import complete_exploration
         from app.research.service import complete_research
 
@@ -177,6 +178,10 @@ class TimeEngine(Scheduler):
                     session, event, self.clock.now()
                 ),
                 "FLEET_RETURN": lambda session, event: complete_return(
+                    session, event, self.clock.now()
+                ),
+                # 13B (v0.9): a real system entry, evaluated at its logical instant.
+                "FRONTIER_PASSAGE": lambda session, event: complete_passage(
                     session, event, self.clock.now()
                 ),
             },

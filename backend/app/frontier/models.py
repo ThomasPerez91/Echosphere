@@ -9,10 +9,19 @@ marked `cancelled_at` instead of being deleted. Only non-cancelled rows ever hap
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKeyConstraint, Index, String, Uuid, text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKeyConstraint,
+    Index,
+    String,
+    UniqueConstraint,
+    Uuid,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.persistence.models import Base
+from app.persistence.models import Base, Record
 
 
 class FleetPassage(Base):
@@ -52,3 +61,96 @@ class FleetPassage(Base):
     entered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     direction: Mapped[str] = mapped_column(String(8))
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class FleetProtocolPeriod(Record, Base):
+    """Dated history of a stationed Fleet's protocol: what was active at any logical instant.
+
+    Opened by the protocol command, closed (`ended_at`) by a change, a departure, a merge or a
+    destruction. A passage is evaluated against the period covering its `entered_at`
+    (started_at <= t < ended_at), so a protocol set after a passage, or a Fleet gone before it,
+    never detects retroactively."""
+
+    __tablename__ = "fleet_protocol_periods"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["fleet_id", "empire_id", "universe_id"],
+            ["fleets.id", "fleets.empire_id", "fleets.universe_id"],
+            name="fk_fleet_protocol_periods_fleet",
+        ),
+        ForeignKeyConstraint(
+            ["system_id", "universe_id"],
+            ["galaxy_systems.system_id", "galaxy_systems.universe_id"],
+            name="fk_fleet_protocol_periods_system",
+        ),
+        CheckConstraint(
+            "protocol IN ('SURVEILLANCE','AMBUSH','INTERCEPTION','FRIENDLY_CONTACT')",
+            name="protocol",
+        ),
+        CheckConstraint("ended_at IS NULL OR ended_at >= started_at", name="period"),
+        Index(
+            "uq_fleet_protocol_periods_open",
+            "fleet_id",
+            unique=True,
+            postgresql_where=text("ended_at IS NULL"),
+        ),
+        Index("ix_fleet_protocol_periods_system", "universe_id", "system_id", "started_at"),
+    )
+
+    fleet_id: Mapped[UUID] = mapped_column(Uuid)
+    empire_id: Mapped[UUID] = mapped_column(Uuid)
+    universe_id: Mapped[UUID] = mapped_column(Uuid)
+    system_id: Mapped[UUID] = mapped_column(Uuid)
+    protocol: Mapped[str] = mapped_column(String(20))
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class FrontierDetection(Record, Base):
+    """One side of an encounter between a passage and a protocol-holding stationed Fleet.
+
+    Detection levels are all 0 (D1, Q58 open): equal levels, so each encounter is mutual and
+    yields two rows, one per observer (`watch`: the stationed Fleet's Empire, `transit`: the
+    moving Fleet's Empire). `observed_empire_id` is internal truth, projected only when
+    `identified` (already a contact of the observer at `detected_at`, or a FRIENDLY_CONTACT
+    introduction). No composition, cargo, origin, destination, route or direction is kept."""
+
+    __tablename__ = "frontier_detections"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["mission_id", "sequence"],
+            ["fleet_mission_passages.mission_id", "fleet_mission_passages.sequence"],
+            name="fk_frontier_detections_passage",
+        ),
+        ForeignKeyConstraint(
+            ["watch_fleet_id"], ["fleets.id"], name="fk_frontier_detections_watch_fleet"
+        ),
+        ForeignKeyConstraint(
+            ["observer_empire_id", "universe_id"],
+            ["empires.id", "empires.universe_id"],
+            name="fk_frontier_detections_observer",
+        ),
+        ForeignKeyConstraint(
+            ["observed_empire_id", "universe_id"],
+            ["empires.id", "empires.universe_id"],
+            name="fk_frontier_detections_observed",
+        ),
+        UniqueConstraint(
+            "mission_id", "sequence", "watch_fleet_id", "role", name="uq_frontier_detections"
+        ),
+        CheckConstraint("role IN ('watch','transit')", name="role"),
+        CheckConstraint("observer_empire_id <> observed_empire_id", name="sides"),
+        Index("ix_frontier_detections_observer", "observer_empire_id", "detected_at"),
+    )
+
+    universe_id: Mapped[UUID] = mapped_column(Uuid)
+    mission_id: Mapped[UUID] = mapped_column(Uuid)
+    sequence: Mapped[int] = mapped_column()
+    watch_fleet_id: Mapped[UUID] = mapped_column(Uuid)
+    role: Mapped[str] = mapped_column(String(8))
+    observer_empire_id: Mapped[UUID] = mapped_column(Uuid)
+    observed_empire_id: Mapped[UUID] = mapped_column(Uuid)
+    system_id: Mapped[UUID] = mapped_column(Uuid)
+    detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    identified: Mapped[bool] = mapped_column()
+    friendly: Mapped[bool] = mapped_column()

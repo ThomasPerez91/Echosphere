@@ -176,7 +176,8 @@ def resolve_engagement(session, engagement, processed_at):
         left = {c: n - lost.get(c, 0) for c, n in stacks.items()}
         fleet_service.set_stacks(session, row.id, left)
         if row.kind == "TASK" and not any(left.values()):
-            row.status, row.system_id, row.protocol = "DESTROYED", None, None
+            frontier.end_protocol(session, row, at)
+            row.status, row.system_id = "DESTROYED", None
     engagement.result = {"outcome": outcome, "combat": combat, "defender_losses": allocation}
     engagement.state, engagement.processed_at = "resolved", utc(processed_at)
     engagement.error_code = engagement.retry_at = None
@@ -249,9 +250,11 @@ def resolve_engagement(session, engagement, processed_at):
         mission.status = "returning"
         mission.return_at = at + (mission.travel_arrival_at - mission.started_at)
         session.flush()
-        # 13B (v0.9): the full way back from the target, entered system by system.
-        frontier.record_way_back(session, rules, mission, at, mission.travel_arrival_at)
         state = galaxy.state_for(session, mission.universe_id, mission.empire_id)
+        # 13B (v0.9): the full way back from the target, entered system by system.
+        frontier.record_way_back(
+            session, rules, mission, state.stream_id, at, mission.travel_arrival_at
+        )
         schedule(
             session,
             state.stream_id,
