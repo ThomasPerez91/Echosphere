@@ -163,7 +163,7 @@ def drive(universe_id, hours):
                 )
         # SURVEY step by step along the world-truth route; Knowledge only from the missions.
         if not known and probes and not surveying:
-            fleet_id, where = probes[0]
+            fleet_id, _ = probes[0]
             nxt = next((sys for sys in route if sys not in mapped), None)
             if nxt is not None:
                 act(
