@@ -24,7 +24,8 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 10 | Colonization — intégré via PR #13 (`a33a452`), Q07 close | Expansion significative et intégration colonie | Concurrence sur un monde résolue sans double propriétaire |
 | 11 | Première AI — intégré via PR #14 (`f79d9f6`), Q11 close | Utility/Goals et profils simples | Services communs, décisions reproductibles, connaissance limitée |
 | 12 | Combat MVP — intégré via PR #15 (`067a4e5`), Q02/Q10 closes v0.7 | Résolution et rapports militaires simples | Q02/Q10 arbitrées, simulation et rejeu des résultats |
-| 13 | Relations IA minimales — lot courant, Q18 proposée | Interactions compréhensibles entre civilisations | Q18 arbitrée, pas de diplomatie avancée anticipée |
+| 13 | Relations IA minimales — lot courant, Q18 close | Interactions compréhensibles entre civilisations | Q18 arbitrée, pas de diplomatie avancée anticipée |
+| 13B | Présence frontalière & Premier contact — pré-MVP, après 13 | Flottes stationnées à protocole, détection déterministe, premier contact | Q57/Q58 arbitrées, transit par saut observable, détection déterministe, quatre protocoles, auto-engagement/repli reproductibles, aucune fuite Fog, mêmes règles humain/IA |
 | 14 | UX sessions courtes | Bilan, alertes et actions prioritaires | Préparation quotidienne en environ dix minutes sur mobile |
 | 15 | Onboarding | Démarrage guidé vers première exploration | Premier cycle compris sans surcharge |
 | 16 | Simulation/balance headless | Campagnes multi-seeds et profils | Métriques et versions consignées, écarts discutés |
@@ -172,6 +173,7 @@ CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026 ; Q11 close. L
 Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
 Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Les états courants étape 12
 ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, branche
-`work/step-13-ai-relations`, PR Draft unique. R00/R01 documentaires : Q18 ouverte,
+`work/step-13-ai-relations`, PR Draft unique. Q18 close pour l'étape 13 le 02/11/2026 avec amendements,
 [proposition B1–B12](../01-game-design/relations.md), [plan R00–R11](step-13-plan.md).
-Aucun code relations avant validation Q18 ; aucun merge ni suppression de branche autorisé.
+R02–R11 autorisés. Lot 13B pré-MVP [premier contact](../01-game-design/first-contact.md) (Q57/Q58) documenté,
+non implémenté avant fusion de l'étape 13. Aucun merge ni suppression de branche autorisé.

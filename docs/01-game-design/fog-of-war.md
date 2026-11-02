@@ -26,3 +26,10 @@ Q37 rattache le renseignement défensif à ces états, avec données datées et 
 Q36 conditionne le ciblage fin au renseignement ; aucun détail omniscient de module par défaut.
 Voir [défense](planetary-defense.md), [exploration](exploration.md), [temps serveur](../03-technical/event-engine.md)
 et [registre](../05-project/open-questions.md).
+
+## Contacts et détection — Q18 et 13B
+
+Q18 (étape 13) : une colonie étrangère observée dans un système réellement MONITORED crée un contact
+orienté limité à Empire, planète et `observed_at` ; perdre MONITORED n'efface pas le contact.
+[Relations](relations.md). Détection de flottes, niveaux comparés et observation de flotte datée :
+[présence frontalière et premier contact](first-contact.md) (Q57/Q58, lot 13B). Détection ≠ contact nommé.

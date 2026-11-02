@@ -139,3 +139,9 @@ sous-décisions déjà prises), Q14, Q18 et Q25 restent ouvertes ou futures.
   état (en attente ou annulée). Ni attaquant, ni origine, ni route, ni composition.
 - **Hors périmètre :** butin, occupation, siège, bombardement, conquête, modules de défense
   (Q30–Q38 restent reportés au runtime), relations (étape 13), offensive IA (Q18 ouverte).
+
+## Relations et premier contact
+
+Étape 13 : un pacte actif à `battle_at` annule la bataille (`voided_by_pact`), jamais un refus au
+lancement ; une bataille résolue est un acte hostile daté et crée les contacts. [Relations Q18](relations.md).
+Engagements automatiques futurs (AMBUSH, INTERCEPTION) et repli amical : [présence frontalière et premier contact](first-contact.md), lot 13B.

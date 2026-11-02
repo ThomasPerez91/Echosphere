@@ -159,11 +159,12 @@ factice ; mêmes services/Knowledge ; tours sur grille 600 s, une commande maxim
 Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
 Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Q02/Q10 closes pour v0.7,
 [décisions](docs/01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [technique](docs/03-technical/combat-api-ui.md).
-Lot courant : **étape 13 Relations IA minimales**, branche `work/step-13-ai-relations`, une PR Draft
-vers master. R00/R01 documentaires ; Q18 ouverte, [proposition B1–B12](docs/01-game-design/relations.md),
-[plan R00–R11](docs/05-project/step-13-plan.md). Aucun code relations avant validation Q18, aucun merge.
+Lot courant : **étape 13 Relations IA minimales**, branche `work/step-13-ai-relations`, PR #16 Draft
+vers master. Q18 close pour l'étape 13 le 02/11/2026, [décisions](docs/01-game-design/relations.md#q18--validation-avec-amendements-02112026),
+[plan R00–R11](docs/05-project/step-13-plan.md) ; R02–R11 autorisés. Lot 13B pré-MVP documenté, hors
+étape 13 : [premier contact](docs/01-game-design/first-contact.md), Q57/Q58. Aucun merge.
 
-Q04 (hors sous-décision), Q18 et les autres questions non tranchées restent ouvertes.
+Q04 (hors sous-décision) et les autres questions non tranchées restent ouvertes ; Q57/Q58 orientées pour 13B.
 
 Le [registre](docs/05-project/open-questions.md), la [roadmap](docs/05-project/roadmap.md) et [progress](progress.md)
 portent l’état réel ; une PR fusionnée ne doit pas être reprise sur la foi d’un ancien checkpoint.

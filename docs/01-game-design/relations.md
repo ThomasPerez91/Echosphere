@@ -1,9 +1,9 @@
 # Relations entre civilisations
 
-**Statut : Q18 ouverte. Proposition R01 du 02/11/2026, non validée ; rien n'est implémenté.**
-Audit du code intégré `067a4e5` et plan conditionnel : [étape 13](../05-project/step-13-plan.md).
-Une proposition d'assistant ne vaut pas décision : seuls les arbitrages validés explicitement par
-l'utilisateur seront transcrits dans une section « validation » de ce document.
+**Statut : Q18 close pour l'étape 13 le 02/11/2026 (validation explicite avec amendements).**
+Les [décisions validées](#q18--validation-avec-amendements-02112026) priment sur la proposition R01
+conservée plus bas comme historique. Plan : [étape 13](../05-project/step-13-plan.md). Présence
+frontalière et protocoles de premier contact : [lot 13B](first-contact.md), hors étape 13.
 
 ## Situation actuelle (v0.7)
 
@@ -14,7 +14,7 @@ L'identité d'un adversaire n'apparaît que dans un rapport de combat, après ba
 
 ## Q18 — proposition R01 du 02/11/2026, non validée
 
-**Proposition uniquement.** Valeurs numériques = première balance provisoire, à mesurer.
+**Historique : proposition remplacée par la validation ci-dessous.** Valeurs numériques = première balance provisoire, à mesurer.
 
 ### Principe
 
@@ -100,7 +100,62 @@ Mémoire limitée aux faits de ses propres contacts/rapports ; aucune connaissan
 
 Une validation Q18 ne vaut pas autorisation de merge. R02–R11 restent conditionnels.
 
+## Q18 — validation avec amendements, 02/11/2026
+
+**Q18 close pour l'étape 13.** Provenance : instruction utilisateur explicite. R02 → fin du lot
+autorisés sans nouvelle validation produit intermédiaire, sauf contradiction réelle. Aucun merge.
+
+- **B1 Périmètre :** contacts, état minimal de chaque relation, pacte de non-agression. Ni alliance,
+  commerce, tribut, transfert de ressources/Colony/Fleet, partage de Fog, messagerie libre ou vote.
+- **B2 Contact par Combat :** le modèle est **orienté** (A connaît B n'implique pas B connaît A),
+  durable et jamais oublié. Une vraie bataille v0.7 produisant un rapport pour chaque camp, elle
+  crée en pratique les deux contacts dans la même résolution. Le modèle orienté sert aux futurs
+  contacts asymétriques (observation, détection, premier contact). `target_unavailable` : aucun
+  contact.
+- **B3 Contact par proximité :** une Colony étrangère observée dans un système réellement MONITORED
+  grâce à la présence légitime propre crée un contact orienté. Seuls Empire, planète et
+  `observed_at` sont accessibles, jamais stocks, infrastructures, Research, flottes, cargo,
+  activité ou autres colonies. La donnée reste datée ; perdre MONITORED n'efface pas le contact.
+  La détection future d'une flotte inconnue ne crée pas nécessairement un contact nommé (13B).
+- **B4 États :** `NO_AGREEMENT` et `PACT` seulement ; pas d'`AT_WAR`, `HOSTILE`, `ALLY` ni
+  `NEUTRAL`. L'hostilité est un fait historique daté par camp (dernier acte hostile de chacun), sans
+  duplication incohérente. À l'étape 13, un acte hostile = bataille effectivement résolue entre les
+  deux Empires ; `target_unavailable` et `voided_by_pact` n'en sont pas. Les futurs engagements
+  automatiques (embuscade, interception) compteront lorsqu'ils existeront. Pas de déclaration de
+  guerre.
+- **B5 Proposition :** une seule ouverte par paire, vers un Empire déjà connu ; expiration 72 h,
+  retrait par l'auteur ; après refus, le même auteur ne repropose pas au même Empire pendant 24 h.
+  Ni conditions, ressources, tribut, durée négociée ou clause spéciale.
+- **B6 Rupture :** unilatérale, préavis 24 h pendant lequel le pacte reste intégralement actif ;
+  à l'échéance `PACT → NO_AGREEMENT`. Date logique autoritaire côté serveur.
+- **B7 Combat :** ATTACK jamais refusée au lancement selon un pacte avec l'occupant caché. À
+  `battle_at`, pacte actif entre les deux Empires → `voided_by_pact` : aucune perte, aucun tir,
+  aucune composition révélée, retour de l'attaquant, carburant non remboursé, alerte du défenseur
+  close, rapports datés des deux côtés. Décision selon l'état logique à `battle_at` seulement.
+- **B8 IA policy v3 :** famille `diplomacy`, grille 10 min, une commande maximum par tour. Réponse à
+  une proposition prioritaire sur les candidats ordinaires et consommant le tour : `ACCEPT` sans
+  acte hostile du proposant envers l'IA depuis 72 h, sinon `REFUSE`. Proposition spontanée :
+  `economic_cautious` vers un contact sans grief récent ; `expansionist` seulement si sa dernière
+  attaque subie de ce contact a plus de 72 h. Aucune rupture par l'IA. Poids v3 :
+
+| Profil | Économie | Recherche | Exploration | Expansion | Logistique | Militaire | Diplomatie |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| economic_cautious | 35 | 20 | 15 | 10 | 5 | 10 | 5 |
+| expansionist | 20 | 15 | 15 | 30 | 5 | 10 | 5 |
+
+- **B9 Ruleset :** v0.8 = copie complète v0.7 + `relations.json` + `ai.json` policy v3 ; v0.1–v0.7
+  inchangés, aucune adoption rétroactive ni migration d'ancien Universe vers v0.8.
+- **B10 Offensive IA :** aucune à l'étape 13. L'IA produit, défend, négocie, accepte ou refuse ; elle
+  ne choisit pas de cible ATTACK. `INTERCEPTION` (13B) est distincte d'une stratégie offensive.
+- **B11 Droits :** `relations.read` et `relations.negotiate`, total 17 ; CHECK/DTO/schéma/Portal/tests
+  mis à jour. Migration 0013 : migration métier non destructive et sans transformation des données
+  historiques, avec extension contrôlée des contraintes de permissions existantes. Aucun grant
+  humain automatique ; l'IA reçoit ses capabilities internes par son seul dispatcher.
+- **B12 Interface :** contacts connus, état, derniers faits hostiles datés, propositions reçues/
+  envoyées, expiration, rupture en préavis, historique, alertes, actions disponibles. Design dérivé
+  du design system existant, responsive et clavier, sans esthétique nouvelle.
+
 ## Références
 
 - [Combat Q02/Q10](combat.md) · [Brouillard Q08](fog-of-war.md) · [Modes Q25/Q28](game-modes.md)
-- [Civilisations IA](artificial-intelligence.md) · [Registre](../05-project/open-questions.md)
+- [Civilisations IA](artificial-intelligence.md) · [Premier contact 13B](first-contact.md) · [Registre](../05-project/open-questions.md)

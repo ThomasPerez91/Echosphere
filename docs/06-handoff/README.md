@@ -108,6 +108,7 @@ CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026 ; Q11 close. L
 Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
 Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Les états courants étape 12
 ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, branche
-`work/step-13-ai-relations`, PR Draft unique. R00/R01 documentaires : Q18 ouverte,
+`work/step-13-ai-relations`, PR Draft unique. Q18 close pour l'étape 13 le 02/11/2026 avec amendements,
 [proposition B1–B12](../01-game-design/relations.md), [plan R00–R11](../05-project/step-13-plan.md).
-Aucun code relations avant validation Q18 ; aucun merge ni suppression de branche autorisé.
+R02–R11 autorisés. Lot 13B pré-MVP [premier contact](../01-game-design/first-contact.md) (Q57/Q58) documenté,
+non implémenté avant fusion de l'étape 13. Aucun merge ni suppression de branche autorisé.

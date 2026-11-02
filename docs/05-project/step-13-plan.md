@@ -1,6 +1,7 @@
 # Étape 13 — Relations IA minimales
 
-**État courant : R00/R01 documentaires réalisés ; Q18 proposée, non validée. Arrêt avant R02.**
+**État courant : Q18 close le 02/11/2026 avec amendements ; R02–R11 autorisés sans validation
+produit intermédiaire (sauf contradiction réelle). Aucun merge.**
 Base master `067a4e58863b910785764591d8bf3af4b0ec18e0` : étape 12 Combat MVP intégrée via PR #15
 (tête `589ce60`), merge du 02/11/2026, CI post-merge 41375165508 success sur `067a4e5`
 (backend, frontend, portal-backend, portal-frontend, compose-smoke ; `static-checks` sauté par
@@ -8,29 +9,29 @@ conception sur push master). Branche unique `work/step-13-ai-relations`, une PR 
 Claude Code seul écrivain du lot. Aucun merge autorisé.
 
 Sortie roadmap : interactions compréhensibles entre civilisations ; Q18 arbitrée, pas de diplomatie
-avancée anticipée. **Q18 reste ouverte** : [proposition R01](../01-game-design/relations.md#q18--proposition-r01-du-02112026-non-validée).
-Contrairement à COM01, R01 est un gate produit : aucun code relations engageant avant validation
-explicite des arbitrages B1–B12.
+avancée anticipée. **Q18 close pour l'étape 13** : [décisions validées](../01-game-design/relations.md#q18--validation-avec-amendements-02112026)
+(la proposition R01 reste historique). R01 était un gate produit, levé par cette validation.
 
 | Ticket | Travail et preuve attendue |
 | --- | --- |
 | R00 | Synchro post-merge PR #15, branche, statuts canoniques, ce plan ; checkpoint publié avant code |
-| R01 | Audit du code intégré `067a4e5`, proposition Q18 (B1–B12) ; **arrêt pour validation** |
+| R01 | Audit du code intégré `067a4e5`, proposition Q18 (B1–B12) ; validée avec amendements, cadrage 13B documenté |
 | R02 | Ruleset v0.8 (copie v0.7, `relations.json`, `ai.json` v3) et règles pures de relation |
-| R03 | Migration 0013 : contacts, relations par paire, propositions/journal, droits `relations.*` (17) |
-| R04 | Sources de contact : rapports de combat et présence étrangère observée (si B3 validé) |
+| R03 | Migration 0013 (métier non destructive, extension contrôlée du CHECK des droits) : contacts, relations, journal, `relations.*` (17) |
+| R04 | Sources de contact : rapports de combat et colonie étrangère dans un système MONITORED |
 | R05 | Négociation : proposer/retirer/accepter/refuser/rompre, idempotence, échéances logiques |
 | R06 | Intégration Combat : pacte effectif à `battle_at`, issue `voided_by_pact`, rapports/alertes |
 | R07 | API et UI section Relations (liste, détail daté, actions), responsive/clavier |
-| R08 | IA v0.8 : famille `diplomacy`, réponses déterministes, aucune offensive (sauf B10 contraire) |
+| R08 | IA policy v3 : famille `diplomacy`, poids validés, réponses prioritaires, aucune offensive |
 | R09 | Concurrence, Fog/non-fuite, rejeu, régressions et compatibilité v0.1–v0.7 |
 | R10 | Recette Compose réelle Relations (humain + 2 IA, Portal coupé) |
 | R11 | Revue indépendante, CI, docs, passation ; Ready ; aucun merge |
 
-R02–R11 sont conditionnels à la validation Q18 et pourront être ajustés par ses amendements.
-Hors périmètre proposé : alliances, commerce, tribut, transfert de ressources/colonies/flottes,
-partage de Fog, messagerie libre, vote, espionnage, conquête, protection Q25, offensive IA
-(sauf arbitrage B10), dialogue génératif. Q03, Q04 global, Q14, Q25 et Q30–Q38 inchangées.
+Hors périmètre validé : alliances, commerce, tribut, transfert de ressources/colonies/flottes,
+partage de Fog, messagerie libre, vote, conquête, protection Q25, offensive IA, dialogue génératif.
+**Lot 13B ([premier contact](../01-game-design/first-contact.md), Q57/Q58) documenté mais exclu** :
+aucun champ de protocole, nouvelle mission, technologie d'espionnage, furtivité, événement de
+passage, auto-interception/embuscade/repli, worker de patrouille, UI de protocole ni ruleset v0.9. Q03, Q04 global, Q14, Q25 et Q30–Q38 inchangées.
 
 ## R00 — reprise post-merge Combat, 02/11/2026
 

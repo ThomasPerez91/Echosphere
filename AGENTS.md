@@ -156,9 +156,10 @@ factice ; mêmes services/Knowledge ; tours sur grille 600 s, une commande maxim
 Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
 Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Q02/Q10 closes pour v0.7,
 [décisions](docs/01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [technique](docs/03-technical/combat-api-ui.md).
-Lot courant : **étape 13 Relations IA minimales**, branche `work/step-13-ai-relations`, une PR Draft
-vers master. R00/R01 documentaires ; Q18 ouverte, [proposition B1–B12](docs/01-game-design/relations.md),
-[plan R00–R11](docs/05-project/step-13-plan.md). Aucun code relations avant validation Q18, aucun merge.
+Lot courant : **étape 13 Relations IA minimales**, branche `work/step-13-ai-relations`, PR #16 Draft
+vers master. Q18 close pour l'étape 13 le 02/11/2026, [décisions](docs/01-game-design/relations.md#q18--validation-avec-amendements-02112026),
+[plan R00–R11](docs/05-project/step-13-plan.md) ; R02–R11 autorisés. Lot 13B pré-MVP documenté, hors
+étape 13 : [premier contact](docs/01-game-design/first-contact.md), Q57/Q58. Aucun merge.
 
 Ne pas élargir le périmètre sur la seule base de la passation.
 
@@ -201,6 +202,9 @@ Ne pas élargir le périmètre sur la seule base de la passation.
   (inclusif, worker et rattrapage) ; résolution hors handler par `app.combat.worker` (streams triés
   UUID → engagement, rang, rattrapage exact, une transaction). Pertes militaires seules, aucun
   butin/occupation/écriture Colony ; rapports après bataille seulement ; IA sans offensive.
+- Étape 13 (en cours) : relations `NO_AGREEMENT`/`PACT` seulement, contacts orientés durables,
+  hostilité = fait daté ; pacte jamais vérifié au lancement d'ATTACK, seulement à `battle_at` sur
+  dates logiques. 13B (protocoles frontaliers) documenté, jamais implémenté dans l'étape 13.
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède

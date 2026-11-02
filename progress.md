@@ -4,6 +4,19 @@ Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
+| Champ | État au 02/11/2026 — Q18 close avec amendements, R02 en cours |
+| --- | --- |
+| Objectif | Étape 13 Relations IA minimales : contacts, `NO_AGREEMENT`/`PACT`, pacte de non-agression, IA diplomacy, UI Relations |
+| Branche / base / PR | work/step-13-ai-relations depuis master 067a4e58863b910785764591d8bf3af4b0ec18e0 ; [PR #16](https://github.com/ThomasPerez91/Echosphere/pull/16) Draft, unique |
+| Tête / agent | Claude Code seul écrivain ; tête et CI exactes dans la PR |
+| Décisions | Q18 close pour l'étape 13 (B1–B12 avec amendements) : [relations](docs/01-game-design/relations.md#q18--validation-avec-amendements-02112026). Lot 13B pré-MVP (Q57/Q58) documenté, **non implémenté** : [premier contact](docs/01-game-design/first-contact.md) |
+| Réalisé | R00 checkpoint, R01 audit/proposition ; transcription Q18 et cadrage 13B (relations, first-contact, pointeurs Flottes/Fog/Combat/IA/Recherche, registre, roadmap 13B, backlog B12B) |
+| CI | 812de73 (R00/R01) : Fast CI PR 41423462118 success (5 jobs PR, compose-smoke sauté par conception) |
+| Validation locale | check_docs, diff --check |
+| Suite | R02 ruleset v0.8 → R11 ; aucun merge |
+
+## Ancienne reprise R00/R01 étape 13 — historique
+
 | Champ | État au 02/11/2026 — étape 13 R00/R01 documentaires réalisés, Q18 proposée, arrêt avant R02 |
 | --- | --- |
 | Objectif | Étape 13 Relations IA minimales : audit du code intégré et proposition Q18 uniquement |
