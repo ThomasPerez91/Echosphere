@@ -229,3 +229,9 @@ A1–A15 validés comme proposés, avec ces précisions qui font foi :
   CHARGER/DÉCHARGER) ; 12 droits au total, aucune attribution automatique.
 - **A9 = oui** : cargo/transport livrés ; recettes avec seconde colonie strictement de test, l’UI
   n’invente aucune colonie. Première boucle v0.4 : fabriquer une sonde → garnison → SURVEY.
+
+## Présence frontalière — lot 13B, non implémentée
+
+Orientation validée le 02/11/2026 (Q57) : flotte stationnée avec protocole de premier contact,
+détection à l'entrée dans un système y compris en transit intermédiaire, repli amical physique.
+Règles canoniques : [présence frontalière et premier contact](first-contact.md). Aucun champ de protocole, mission ou événement de passage avant 13B.

@@ -15,6 +15,7 @@ from app.colony.service import ColonyError, catch_up_owned
 from app.fleet.service import operations
 from app.galaxy import service as galaxy
 from app.persistence.models import Colony
+from app.relations import service as relations
 from app.research.service import catch_up as catch_up_research
 from app.research.service import lock_research
 from app.simulation.clock import utc
@@ -95,7 +96,9 @@ class Orchestrator:
                     raise ObservationLimit("own_colony_budget")
                 for colony in colonies:
                     catch_up_owned(session, self.engine, u, e, colony.id, at)
-                galaxy.refresh_monitoring(session, u, e, at)
+                # Presence contacts are written after the dispatch (which may lock a relation
+                # pair): global order pair → contact, never the reverse.
+                monitored = galaxy.refresh_monitoring(session, u, e, at, contacts=False)
                 observation, memory = collect(session, controller, rules, at)
                 trace = choose(observation, memory, controller.profile, rules.ai)
                 trace.update(
@@ -130,6 +133,8 @@ class Orchestrator:
                         outcome, receipt = "refusal", {"reason": error.code}
                     if after_command is not None:
                         after_command(session)
+                if rules.relations is not None:
+                    relations.observe_presences(session, u, e, monitored, at)
                 trace.update(result=receipt, outcome=outcome, memory_after=deepcopy(memory))
                 if len(canonical(trace).encode()) > rules.ai.result_bytes:
                     raise ObservationLimit("result_bytes")

@@ -1244,7 +1244,11 @@ def resolve_colonize(session, mission, event, processed_at):
     session.flush()
     result = base | {"outcome": "founded", "colony_id": str(colony.id)}
     session.add(report_for(mission, event, processed_at, result))
-    galaxy.refresh_monitoring(session, mission.universe_id, mission.empire_id, event.due_at)
+    # Handlers may run inside a Combat catch-up that locks a relation pair afterwards: no
+    # presence contact here (pair → contact order); the next own refresh records it.
+    galaxy.refresh_monitoring(
+        session, mission.universe_id, mission.empire_id, event.due_at, contacts=False
+    )
     session.flush()
 
 

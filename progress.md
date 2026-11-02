@@ -1,8 +1,52 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
 ## Reprise rapide
+
+| Champ | État au 02/11/2026 — étape 13 R02–R10 + amendement Q18 (contact `diplomacy`) implémentés, validation locale attendue |
+| --- | --- |
+| Objectif | Étape 13 Relations IA minimales selon Q18 close (contacts, `NO_AGREEMENT`/`PACT`, pacte, IA diplomacy v3, UI Relations) |
+| Branche / base / PR | work/step-13-ai-relations depuis master 067a4e5 ; [PR #16](https://github.com/ThomasPerez91/Echosphere/pull/16) **Draft**, unique |
+| Tête / agent | Claude Code seul écrivain ; tête et CI exactes dans la PR |
+| Réalisé | v0.8 (relations.json, ai.json v3), domaine `app.relations`, migration 0013 (4 tables, 17 droits), contacts Combat/présence, pacte à `battle_at` (`voided_by_pact`), API et UI Relations, IA diplomacy, suite PostgreSQL et recette Compose écrites. [Contrat](docs/03-technical/relations-api-ui.md) |
+| Amendement | 02/11/2026 : contact `diplomacy` créé par une proposition valide (CHECK 0013 corrigé en place, ORM, projection, UI, docs, tests PostgreSQL) ; priorité de réponse IA préemptable par bootstrap/défense urgente prouvée par test pur ; pages IA v0.8 et borne anti-famine testées |
+| Reprise 02/11 après-midi | Même environnement cloud (pas de Docker ni de registres) : validations runtime toujours impossibles ici. Revue **interne** complète depuis 067a4e5 : (1) **Majeure, corrigée** : risque d'interblocage paire/contact (proposition vs tour IA ou rattrapage Combat écrivant le même contact avant la paire) → ordre global paire → contact (handlers sans contact, contacts IA après la commande), test PostgreSQL ajouté ; (2) **Mineure, corrigée** : contact de présence absent tant que Galaxie n'était pas lue → lecture Relations rafraîchit la surveillance propre (test adapté) ; (3) **Mineure, corrigée** : aucun test Chromium Relations → `e2e/relations.spec.ts` (4 largeurs, clavier, cibles 44 px, sans débordement), exécuté seulement en Full CI ou localement |
+| Validé ici | Fast CI de la PR (ruff backend/scripts, tests purs dont `test_relations_rules.py`, Vitest 8 fichiers dont `Relations.test.tsx` 7 tests et `Fleet.test.tsx` 33, lint et builds, docs, diff --check) ; check_docs local |
+| Validation locale 02/11/2026 | Claude Code sur poste WSL2 + Docker (conteneurs Python 3.12/Playwright, PostgreSQL 17 jetable) : Alembic 0013 base vide → head, `alembic check`, downgrade 0012 et retour ; Game PostgreSQL complet **483/483** (dont `test_relations.py`) ; Portal 124/124 ; Vitest 97/97, lint (1 avertissement préexistant), build, Chromium 39/39 ; recettes Compose `smoke_relations` (646 s), `smoke_combat`, `smoke_ai` réussies sur les images de cette branche. Aucune anomalie produit ni test à corriger sur #16. Non exécutés localement : `smoke_compose`/`smoke_portal`/`smoke_control` (agiraient sur la pile conservée `echosphere`) |
+| Contrôle local à faire | `cd backend && RUN_DB_TESTS=1 POSTGRES_DB=<base>_test .venv/bin/pytest -q` (suite complète, dont `tests/integration/test_relations.py`) ; `alembic upgrade head && alembic check` puis downgrade 0012 sur base vide ; `(cd frontend && npm ci && npm run lint && npm test && npm run build && npm run test:e2e)` ; `docker compose build && python3 scripts/smoke_relations_compose.py` (et `smoke_combat_compose.py`, `smoke_ai_compose.py` en non-régression) |
+| Risques | Code SQL des relations jamais exécuté contre PostgreSQL ; la recette attend jusqu'à 25 min la réponse IA (une priorité de survie ou de défense peut passer avant) ; balance 72 h/24 h non simulée |
+| R10 / R11 | R10 recette **exécutée et réussie** localement ; R11 à faire : revue indépendante (Codex, lecture seule, SHA noté), traitement des constats, puis Ready sur décision de l'utilisateur — PR maintenue en **Draft** |
+| Suite | Après contrôle local réussi : corrections éventuelles, R11 (revue indépendante complète depuis 067a4e5, Fast CI du nouveau HEAD, Ready, revue Codex GitHub, tous les fils traités) ; aucun merge. 13B non commencé |
+
+## Ancienne reprise Q18 close étape 13 — historique
+
+| Champ | État au 02/11/2026 — Q18 close avec amendements, R02 en cours |
+| --- | --- |
+| Objectif | Étape 13 Relations IA minimales : contacts, `NO_AGREEMENT`/`PACT`, pacte de non-agression, IA diplomacy, UI Relations |
+| Branche / base / PR | work/step-13-ai-relations depuis master 067a4e58863b910785764591d8bf3af4b0ec18e0 ; [PR #16](https://github.com/ThomasPerez91/Echosphere/pull/16) Draft, unique |
+| Tête / agent | Claude Code seul écrivain ; tête et CI exactes dans la PR |
+| Décisions | Q18 close pour l'étape 13 (B1–B12 avec amendements) : [relations](docs/01-game-design/relations.md#q18--validation-avec-amendements-02112026). Lot 13B pré-MVP (Q57/Q58) documenté, **non implémenté** : [premier contact](docs/01-game-design/first-contact.md) |
+| Réalisé | R00 checkpoint, R01 audit/proposition ; transcription Q18 et cadrage 13B (relations, first-contact, pointeurs Flottes/Fog/Combat/IA/Recherche, registre, roadmap 13B, backlog B12B) |
+| CI | 812de73 (R00/R01) : Fast CI PR 41423462118 success (5 jobs PR, compose-smoke sauté par conception) |
+| Validation locale | check_docs, diff --check |
+| Suite | R02 ruleset v0.8 → R11 ; aucun merge |
+
+## Ancienne reprise R00/R01 étape 13 — historique
+
+| Champ | État au 02/11/2026 — étape 13 R00/R01 documentaires réalisés, Q18 proposée, arrêt avant R02 |
+| --- | --- |
+| Objectif | Étape 13 Relations IA minimales : audit du code intégré et proposition Q18 uniquement |
+| Branche / base / PR | work/step-13-ai-relations depuis master 067a4e58863b910785764591d8bf3af4b0ec18e0 ; [PR #16](https://github.com/ThomasPerez91/Echosphere/pull/16) Draft, unique |
+| Tête / agent | Claude Code seul écrivain ; R00/R01 en 52767bc, publié après rétablissement de l'accès GitHub (push d'abord refusé 403). Tête et CI exactes dans la PR |
+| Départ vérifié | PR #15 fusionnée (merge 067a4e5, parents f79d9f6 / 589ce60) ; Full CI post-merge 41375165508 : 5 jobs success sur 067a4e5, `static-checks` sauté par conception (PR seulement) ; aucune PR ouverte ; clone neuf, arbre propre |
+| Réalisé | R00 statuts canoniques (étape 12 historique, étape 13 courante) ; R01 audit prouvé et proposition Q18 B1–B12. [Plan](docs/05-project/step-13-plan.md), [proposition Q18](docs/01-game-design/relations.md) |
+| Constats clés | Aucun contact/relation en base ; hostilité universelle implicite ; identité étrangère seulement par rapport de combat ; aucune présence étrangère projetée ; une relation ne peut filtrer ATTACK qu'à `battle_at` (non-fuite) |
+| Validation locale | python3 scripts/check_docs.py ; git diff --check. Aucun test runtime, Compose ou Alembic relancé (lot documentaire) |
+| Limites | Q18 ouverte ; aucun code, migration, ruleset ou UI relations. Valeurs 72 h/24 h provisoires non simulées |
+| Suite | Faire valider Q18 B1–B12 (avec amendements éventuels) avant R02 ; aucun merge |
+
+## Ancienne reprise rapide étape 12 — historique avant fusion
 
 | Champ | État au 02/11/2026 — étape 12 COM00–COM11 réalisés, PR Ready, en attente d'autorisation de merge |
 | --- | --- |

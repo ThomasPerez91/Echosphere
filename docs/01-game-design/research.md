@@ -172,3 +172,9 @@ acceptés ; le worker n’a besoin ni de session, ni de présence, ni de Portal.
 
 Validation utilisateur reçue : contrat clos côté produit, implémentation R02–R09 autorisée.
 Laboratoires hors étape 6. Future IA soumise aux mêmes services et limites d’information.
+
+## Détection et espionnage — Q58, lot 13B
+
+Principe validé le 02/11/2026 : un niveau de détection/espionnage comparé de façon déterministe.
+Nom, domaine, niveaux, coûts, durées et furtivité restent ouverts (Q58). L'arbre Research v0.8 de
+l'étape 13 est une copie inchangée de v0.7. [présence frontalière et premier contact](first-contact.md).

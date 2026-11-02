@@ -24,6 +24,7 @@ from app.galaxy.models import (
     SystemKnowledge,
 )
 from app.persistence.models import Colony, Empire, Planet, StellarSystem
+from app.relations import service as relations
 from app.research import service as research
 from app.simulation.clock import utc
 from app.simulation.models import ResourceBalance
@@ -174,14 +175,20 @@ def initialize_empire(session, engine, universe_id, empire_id, colony_id, at):
         return state
 
 
-def refresh_monitoring(session, universe_id, empire_id, at):
+def refresh_monitoring(session, universe_id, empire_id, at, *, contacts=True):
+    """Own legitimate observation. Returns the systems MONITORED now.
+
+    `contacts=False` defers the v0.8 presence contacts: a transaction that may later lock a
+    relation pair (Combat catch-up handlers, AI turn) must write contacts only after that pair
+    (global order pair → contact), then call `relations.observe_presences` itself.
+    """
     # Only the Empire's OWN legitimate Colony presence grants observation; no remote sensors.
     owned = session.execute(
         select(Planet.system_id, Colony.id)
         .join(Colony, Colony.planet_id == Planet.id)
         .where(Colony.universe_id == universe_id, Colony.empire_id == empire_id)
     ).all()
-    by_system = {}
+    by_system, monitored = {}, []
     for system_id, colony_id in owned:
         by_system.setdefault(system_id, []).append(str(colony_id))
     for known in session.scalars(
@@ -192,8 +199,14 @@ def refresh_monitoring(session, universe_id, empire_id, at):
         if known.system_id in by_system and known.state != "DETECTED":
             known.state, known.last_seen_at = "MONITORED", utc(at)
             known.observation = {"own_colony_ids": sorted(by_system[known.system_id])}
+            monitored.append(known.system_id)
         elif known.state == "MONITORED":
             known.state = "MAPPED"  # preserve structure and the dated observation
+    # v0.8 (Q18 B3): a foreign Colony seen in a system MONITORED by an own Colony is a dated,
+    # oriented contact (Empire, planet, date only). Earlier rulesets observe nothing more.
+    if contacts and monitored and rules_for(session, universe_id).relations is not None:
+        relations.observe_presences(session, universe_id, empire_id, monitored, utc(at))
+    return monitored
 
 
 def project_system(session, known, colony_read=True):

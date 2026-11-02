@@ -1,0 +1,42 @@
+{
+  "version": "v0.8",
+  "combat_version": "combat-v1",
+  "min_warning_seconds": 86400,
+  "max_rounds": 1000,
+  "classes": [
+    "interceptor",
+    "frigate",
+    "cruiser"
+  ],
+  "stats": {
+    "interceptor": {
+      "hull": 100,
+      "attack": 50
+    },
+    "frigate": {
+      "hull": 300,
+      "attack": 100
+    },
+    "cruiser": {
+      "hull": 800,
+      "attack": 260
+    }
+  },
+  "matchups_bps": {
+    "interceptor": {
+      "interceptor": 10000,
+      "frigate": 7500,
+      "cruiser": 15000
+    },
+    "frigate": {
+      "interceptor": 15000,
+      "frigate": 10000,
+      "cruiser": 7500
+    },
+    "cruiser": {
+      "interceptor": 7500,
+      "frigate": 15000,
+      "cruiser": 10000
+    }
+  }
+}

@@ -38,7 +38,14 @@ Le tableau Q40–Q56 distingue décisions closes, détails techniques délégué
 | Q15 | Validation finale de la navigation proposée étape 4, carte tactile, libellés et tokens | 4 | [UX](../02-ux-ui/information-architecture.md) |
 | Q16 | Cadrage identité/session/autorisation 5B clos ; réalisation 5C/5D et reports explicites Q48/Q49/Q55 ; modes et partage futurs distincts | 5B avant 5C/5D | [Sécurité](../03-technical/security.md) |
 | Q17 | **Clos comme objectifs non démontrés** : 1 persistent, 200 memberships humaines, 50 sessions, jusqu’à 500 Empires ; p95 lecture <250 ms, mutation <500 ms, erreurs serveur hors métier <0,1 %, worker p95 <2 s/p99 <5 s, handoff p95 <1 s, sondes <100 ms ; benchmark séparé Portal/Game HTTP/workers/PostgreSQL/IA | 3 puis 17 | [Performance](../04-quality/performance.md) |
-| Q18 | Contenu exact des relations minimales, hostilité et négociation | 13 | [Roadmap](roadmap.md) |
+| Q18 | **Close pour l'étape 13 — validation explicite avec amendements du 02/11/2026** : contacts orientés (Combat, présence MONITORED), états `NO_AGREEMENT`/`PACT`, hostilité = fait daté, pacte 72 h/24 h/préavis 24 h, `voided_by_pact` à `battle_at`, IA policy v3 sans offensive, v0.8, 17 droits | 13 avant R02 | [Relations/Q18](../01-game-design/relations.md#q18--validation-avec-amendements-02112026), [plan](step-13-plan.md) |
+
+## Lot 13B — orientation validée le 02/11/2026, runtime futur
+
+| ID | Question | À traiter avant | Référence |
+| --- | --- | --- | --- |
+| Q57 | **Orientation produit validée, détails runtime pré-MVP en 13B** : flotte stationnée, SURVEILLANCE, AMBUSH, INTERCEPTION, FRIENDLY_CONTACT, alertes, auto-engagement, repli, compatibilité pactes | 13B | [Premier contact](../01-game-design/first-contact.md) |
+| Q58 | **Principe de comparaison déterministe validé ; catalogue Research/balance/runtime ouverts pour 13B** : technologie, niveaux, détection, furtivité éventuelle, information obtenue, interaction Fog | 13B | [Premier contact](../01-game-design/first-contact.md#fc7fc8--détection-et-technologie-despionnage) |
 
 ## Modes futurs : décisions produit closes, réalisation future
 

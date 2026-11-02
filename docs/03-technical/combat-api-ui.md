@@ -181,3 +181,6 @@ L'équilibrage est provisoire. Il n'y a ni modules de défense (Q30–Q38 report
 occupation, siège ou bombardement, ni relations (étape 13), ni offensive IA (Q18). Un engagement
 `blocked` gèle les streams concernés jusqu'à l'intervention de l'opérateur, choix d'intégrité
 documenté. Résultats et CI dans [progress](../../progress.md).
+
+v0.8 (étape 13) : un pacte couvrant `battle_at` annule la bataille (`voided_by_pact`) ; une bataille
+résolue date l'acte hostile de l'attaquant et crée les contacts. [Relations](relations-api-ui.md).

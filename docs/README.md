@@ -76,6 +76,7 @@ Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
 Historique avant fusion : étape 10 Colonisation, branche `work/step-10-colonization` (PR #13). Q07 close
 avec amendements, COL02–COL11 réalisés. Étape 11 alors non commencée, aucun merge autorisé.
 
+Étape 13 : [Relations Q18](01-game-design/relations.md), [contrat technique](03-technical/relations-api-ui.md), [plan R00–R11](05-project/step-13-plan.md) ; lot 13B : [premier contact](01-game-design/first-contact.md).
 Étape 10 : [Colonisation Q07](01-game-design/colonization.md), [contrat technique](03-technical/colonization-api-ui.md), [plan COL00–COL11](05-project/step-10-plan.md).
 Étape 9 : [Flottes Q09](01-game-design/fleets.md), [contrat technique](03-technical/fleets-api-ui.md), [plan F00–F11](05-project/step-9-plan.md).
 Étape 8 : [contrat System View](01-game-design/system-view.md), [projection/navigation](03-technical/system-view.md), [plan S00–S09](05-project/step-8-plan.md).
@@ -105,3 +106,13 @@ CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026 ; Q11 close. L
 `work/step-12-combat`, PR Draft unique. Q02/Q10 closes pour le Combat MVP v0.7 seulement,
 [décisions](01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [plan COM00–COM11](05-project/step-12-plan.md).
 Étape 13 Relations non commencée ; aucun merge ni suppression de branche autorisé.
+
+## État post-merge étape 12 — 02/11/2026
+
+Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
+Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Les états courants étape 12
+ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, branche
+`work/step-13-ai-relations`, PR Draft unique. Q18 close pour l'étape 13 le 02/11/2026 avec amendements,
+[proposition B1–B12](01-game-design/relations.md), [plan R00–R11](05-project/step-13-plan.md).
+R02–R11 autorisés. Lot 13B pré-MVP [premier contact](01-game-design/first-contact.md) (Q57/Q58) documenté,
+non implémenté avant fusion de l'étape 13. Aucun merge ni suppression de branche autorisé.

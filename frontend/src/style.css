@@ -391,3 +391,8 @@ html { scroll-padding-bottom: 24px; }
 .combat-alert { border-left: 3px solid var(--danger); }
 .combat-report dl { margin: 8px 0; }
 .combat-report dd, .combat-alert p { overflow-wrap: anywhere; }
+
+/* Relations (step 13): same cards as Fleets; actions wrap on narrow screens, 44px targets. */
+.relation-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.relation-actions .feedback { flex-basis: 100%; }
+.relation-actions .button { min-height: 44px; }

@@ -17,6 +17,7 @@
 | B10 | P1 / 11 | IA simple autonome | Mêmes commandes, traces de décision et moyens produits |
 | B11 | P0 / avant 12 | Résoudre protection hors connexion | Q02 conciliée avec combat persistant |
 | B12 | P1 / 12–13 | Combat et relations minimales | Q10/Q18 arbitrées, rapports et règles explicables |
+| B12B | P1 / 13B (pré-MVP) | Présence frontalière et premier contact ([cadrage](../01-game-design/first-contact.md)) | Q57/Q58 arbitrées, transit par saut, quatre protocoles, aucune fuite Fog ; pas avant fusion de l'étape 13 |
 | B13 | P1 / 14–15 | Session courte et onboarding | Tâches essentielles en dix minutes sur téléphone |
 | B14 | P1 / 16–17 | Simulations et stabilisation | Campagnes rejouables, risques de balance suivis |
 

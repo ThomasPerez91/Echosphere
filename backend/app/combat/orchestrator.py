@@ -7,6 +7,12 @@ One engagement per transaction, in rank order (battle_at, started_at, id):
 4. snapshot the military forces, resolve purely, apply losses, write reports, schedule the
    attacker's return and release the fences — all atomically. A crash before commit changes
    nothing; after commit the engagement is resolved and never fought again.
+
+v0.8 (Q18): after the engagement, the pair row of both Empires is locked (streams → engagement
+→ pair, never the reverse). A pact covering `battle_at` (accepted_at <= battle_at < ends_at)
+voids the battle (`voided_by_pact`): no shot, no loss, no composition reported, the attacker
+returns, fuel is not refunded. A fought battle records the attacker's dated hostile act and the
+two oriented contacts. The decision depends on logical dates only, never on worker delay.
 """
 
 from datetime import timedelta
@@ -22,6 +28,7 @@ from app.combat.service import release_fences
 from app.fleet import service as fleet_service
 from app.fleet.models import Fleet, FleetMission, FleetReport
 from app.galaxy import service as galaxy
+from app.relations import service as relations
 from app.simulation.clock import utc
 from app.simulation.scheduler import TimelineError, lock_stream, schedule
 from app.simulation.service import TimeEngine
@@ -114,9 +121,23 @@ def resolve_engagement(session, engagement, processed_at):
             if units:
                 defenders[str(row.id)] = units
     total = {c: sum(u.get(c, 0) for u in defenders.values()) for c in k.classes}
-    spec = combat = None
+    spec = combat = pact = relation = None
+    if rules.relations is not None and engagement.defender_empire_id is not None:
+        relation = relations.ensure_pair(
+            session,
+            engagement.universe_id,
+            engagement.attacker_empire_id,
+            engagement.defender_empire_id,
+        )
+        pact = relations.covering_pact(
+            session, relation.low_empire_id, relation.high_empire_id, at
+        )
     if engagement.defender_empire_id is None:
         outcome = "target_unavailable"
+        attacker_left = attacking
+    elif pact is not None:
+        # Q18 B7: a pact active at battle_at forbids the battle; nothing is fought or revealed.
+        outcome = "voided_by_pact"
         attacker_left = attacking
     else:
         spec = spec_from_rules(k, attacking, total)
@@ -159,7 +180,23 @@ def resolve_engagement(session, engagement, processed_at):
     engagement.state, engagement.processed_at = "resolved", utc(processed_at)
     engagement.error_code = engagement.retry_at = None
     base = {"outcome": outcome, "target": target}
-    if combat is None:
+    if pact is not None:
+        # Dated reports on both sides, without any composition: the signatories already know
+        # each other (a pact requires a contact), so naming the counterpart reveals nothing.
+        for role, empire, opponent in (
+            ("attacker", engagement.attacker_empire_id, engagement.defender_empire_id),
+            ("defender", engagement.defender_empire_id, engagement.attacker_empire_id),
+        ):
+            session.add(
+                report(
+                    engagement,
+                    empire,
+                    role,
+                    processed_at,
+                    base | {"opponent_empire_id": str(opponent), "pact_id": str(pact.id)},
+                )
+            )
+    elif combat is None:
         session.add(
             report(engagement, engagement.attacker_empire_id, "attacker", processed_at, base)
         )
@@ -182,6 +219,17 @@ def resolve_engagement(session, engagement, processed_at):
                         "rounds": combat["rounds"],
                     },
                 )
+            )
+    if relation is not None and combat is not None:
+        # Q18 B2/B4: a fought battle is the attacker's hostile act, dated at battle_at, and both
+        # reports name the opponent: each side now knows the other (oriented, durable contacts).
+        relations.record_hostile(relation, engagement.attacker_empire_id, at)
+        for observer, observed in (
+            (engagement.attacker_empire_id, engagement.defender_empire_id),
+            (engagement.defender_empire_id, engagement.attacker_empire_id),
+        ):
+            relations.record_contact(
+                session, engagement.universe_id, observer, observed, "combat", at
             )
     # Attacker: survivors return to the mission origin (already paid), never stay at the target.
     origin = UUID(mission.snapshot["origin_id"])
