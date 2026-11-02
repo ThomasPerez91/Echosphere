@@ -76,6 +76,7 @@ Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
 Historique avant fusion : étape 10 Colonisation, branche `work/step-10-colonization` (PR #13). Q07 close
 avec amendements, COL02–COL11 réalisés. Étape 11 alors non commencée, aucun merge autorisé.
 
+Étape 13 : [Relations Q18](01-game-design/relations.md), [contrat technique](03-technical/relations-api-ui.md), [plan R00–R11](05-project/step-13-plan.md) ; lot 13B : [premier contact](01-game-design/first-contact.md).
 Étape 10 : [Colonisation Q07](01-game-design/colonization.md), [contrat technique](03-technical/colonization-api-ui.md), [plan COL00–COL11](05-project/step-10-plan.md).
 Étape 9 : [Flottes Q09](01-game-design/fleets.md), [contrat technique](03-technical/fleets-api-ui.md), [plan F00–F11](05-project/step-9-plan.md).
 Étape 8 : [contrat System View](01-game-design/system-view.md), [projection/navigation](03-technical/system-view.md), [plan S00–S09](05-project/step-8-plan.md).

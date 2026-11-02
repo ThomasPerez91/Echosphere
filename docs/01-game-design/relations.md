@@ -159,3 +159,4 @@ autorisés sans nouvelle validation produit intermédiaire, sauf contradiction r
 
 - [Combat Q02/Q10](combat.md) · [Brouillard Q08](fog-of-war.md) · [Modes Q25/Q28](game-modes.md)
 - [Civilisations IA](artificial-intelligence.md) · [Premier contact 13B](first-contact.md) · [Registre](../05-project/open-questions.md)
+- [Contrat technique (implémentation PR #16)](../03-technical/relations-api-ui.md)

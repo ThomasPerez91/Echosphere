@@ -1,7 +1,8 @@
 # Étape 13 — Relations IA minimales
 
-**État courant : Q18 close le 02/11/2026 avec amendements ; R02–R11 autorisés sans validation
-produit intermédiaire (sauf contradiction réelle). Aucun merge.**
+**État courant : R02–R10 implémentés sur la PR #16 (Draft) ; validation locale PostgreSQL/Compose
+attendue avant R11 (revue finale, Ready). Q18 close le 02/11/2026. Aucun merge.**
+[Contrat technique](../03-technical/relations-api-ui.md).
 Base master `067a4e58863b910785764591d8bf3af4b0ec18e0` : étape 12 Combat MVP intégrée via PR #15
 (tête `589ce60`), merge du 02/11/2026, CI post-merge 41375165508 success sur `067a4e5`
 (backend, frontend, portal-backend, portal-frontend, compose-smoke ; `static-checks` sauté par
@@ -12,7 +13,7 @@ Sortie roadmap : interactions compréhensibles entre civilisations ; Q18 arbitr�
 avancée anticipée. **Q18 close pour l'étape 13** : [décisions validées](../01-game-design/relations.md#q18--validation-avec-amendements-02112026)
 (la proposition R01 reste historique). R01 était un gate produit, levé par cette validation.
 
-| Ticket | Travail et preuve attendue |
+| Ticket | Travail et preuve attendue (R02–R10 réalisés, R11 en attente de validation locale) |
 | --- | --- |
 | R00 | Synchro post-merge PR #15, branche, statuts canoniques, ce plan ; checkpoint publié avant code |
 | R01 | Audit du code intégré `067a4e5`, proposition Q18 (B1–B12) ; validée avec amendements, cadrage 13B documenté |
