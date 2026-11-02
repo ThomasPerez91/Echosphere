@@ -2,6 +2,17 @@
 
 Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
+## Reprise rapide — branche 13B (work/step-13b-first-contact)
+
+| Champ | État au 02/11/2026 — 13B B00–B02 implémentés, non validés |
+| --- | --- |
+| Branche / base | work/step-13b-first-contact depuis a434e06 (tête de PR #16, **non fusionnée**) ; worktree séparé ; PR Draft vers `work/step-13-ai-relations`, pas master |
+| Réalisé | B00 audit/plan ; B01 ruleset v0.9, passages par saut (migration 0014) ; B02 protocole de flotte stationnée. [Plan](docs/05-project/step-13b-plan.md) |
+| Exécuté ici | Tests purs `test_frontier_transit.py`, `test_frontier_rules.py` et règles existantes |
+| Non exécuté | `tests/integration/test_frontier.py`, Alembic 0014, toutes suites PostgreSQL/Chromium/Compose (pas de Docker ni registres) |
+| Bloquant | Arbitrages D1–D7 (dont D5 qui rouvre Q02) avant B03–B06 |
+| Étape 13 | Inchangée : PR #16 Draft, ses validations runtime restent à faire |
+
 ## Reprise rapide
 
 | Champ | État au 02/11/2026 — étape 13 R02–R10 + amendement Q18 (contact `diplomacy`) implémentés, validation locale attendue |

@@ -1,7 +1,7 @@
 # Présence frontalière et premier contact
 
-**Statut : orientation produit pré-MVP validée le 02/11/2026 (Q57, Q58). Lot futur 13B, non
-implémenté.** Provenance : instruction utilisateur explicite accompagnant la validation de Q18.
+**Statut : orientation produit pré-MVP validée le 02/11/2026 (Q57, Q58). Lot 13B démarré en
+avance sur une branche dédiée (B01–B02 implémentés, non validés) : [plan et arbitrages](../05-project/step-13b-plan.md).** Provenance : instruction utilisateur explicite accompagnant la validation de Q18.
 Ce document est la référence canonique : Flottes, Fog, Combat, IA et Recherche y renvoient sans
 recopier de règles divergentes. Il n'autorise aucune implémentation pendant l'étape 13.
 
