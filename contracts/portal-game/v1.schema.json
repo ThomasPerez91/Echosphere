@@ -107,11 +107,13 @@
               "fleet.command",
               "colony.expand",
               "combat.read",
-              "combat.attack"
+              "combat.attack",
+              "relations.read",
+              "relations.negotiate"
             ],
             "type": "string"
           },
-          "maxItems": 15,
+          "maxItems": 17,
           "minItems": 1,
           "title": "Permissions",
           "type": "array"

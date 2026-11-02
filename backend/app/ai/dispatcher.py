@@ -5,6 +5,7 @@ from uuid import UUID
 from app.ai.controller import AIDenied, authorize
 from app.colony import service as colony
 from app.fleet import service as fleet
+from app.relations import service as relations
 from app.research import service as research
 
 CAPABILITIES = frozenset(
@@ -18,6 +19,9 @@ CAPABILITIES = frozenset(
         "fleet.build",
         "fleet.command",
         "colony.expand",
+        # v0.8 diplomacy only: answer or propose a pact. No rupture, no combat capability.
+        "relations.read",
+        "relations.negotiate",
     }
 )
 REQUIRED = {
@@ -28,7 +32,10 @@ REQUIRED = {
     "load": {"fleet.read", "fleet.command", "colony.read"},
     "unload": {"fleet.read", "fleet.command", "colony.read"},
     "launch": {"fleet.read", "fleet.command"},
+    "relation": {"relations.read", "relations.negotiate"},
 }
+# Q18 B8/B10: the policy may answer or propose; it never withdraws or breaks a pact.
+RELATION_ACTIONS = {"propose", "accept", "refuse"}
 
 
 def dispatch(session, engine, controller, candidate, key, at):
@@ -86,6 +93,12 @@ def dispatch(session, engine, controller, candidate, key, at):
             b["cargo"],
             key=key,
             at=at,
+        )
+    if operation == "relation":
+        if b["action"] not in RELATION_ACTIONS:
+            raise AIDenied("ai_relation_denied")
+        return relations.OPERATIONS[b["action"]](
+            session, u, e, uid(b["counterpart_id"]), key=key, at=at
         )
     if operation == "unload":
         return fleet.unload(

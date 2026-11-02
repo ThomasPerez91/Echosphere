@@ -81,7 +81,7 @@ class EmpireBinding(Base):
             '"research.read","research.start","research.cancel",'
             '"galaxy.read","exploration.read","exploration.start",'
             '"fleet.read","fleet.build","fleet.command","colony.expand",'
-            '"combat.read","combat.attack"]\'::jsonb',
+            '"combat.read","combat.attack","relations.read","relations.negotiate"]\'::jsonb',
             name="binding_permissions",
         ),
     )

@@ -16,6 +16,7 @@ from app.core.config import Settings
 from app.fleet.api import router as fleet_router
 from app.galaxy.api import router as galaxy_router
 from app.persistence.database import create_database_engine, create_session_factory
+from app.relations.api import router as relations_router
 from app.research.api import router as research_router
 from app.simulation.clock import SystemClock
 
@@ -77,6 +78,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(research_router)
     application.include_router(galaxy_router)
     application.include_router(fleet_router)
+    application.include_router(relations_router)
     application.state.database_engine = engine
     application.state.session_factory = create_session_factory(engine)
     application.include_router(router)

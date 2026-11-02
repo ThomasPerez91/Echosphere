@@ -5,9 +5,10 @@ loads the world, another Empire's holdings, or a Fleet×Planet product.
 """
 
 from copy import deepcopy
+from datetime import timedelta
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 
 from app.ai.policy import circular_page
 from app.ai.rules import BOOTSTRAP_ORDER, fingerprint
@@ -17,6 +18,9 @@ from app.fleet.models import Fleet, FleetMission, FleetReport, FleetStack, ShipO
 from app.galaxy import service as galaxy
 from app.galaxy.models import PlanetKnowledge, RouteKnowledge, SystemKnowledge
 from app.persistence.models import Colony
+from app.relations import service as relations
+from app.relations.models import RelationContact, RelationPair
+from app.relations.rules import cooled_down, pair, proposal_open, recent
 from app.research import service as research
 from app.simulation.production import MICRO_UNITS as M
 from app.simulation.production import RESOURCES
@@ -579,6 +583,100 @@ def collect(session, controller, rules, at):
                 military.alert_utility if urgent else military.baseline_utility,
                 priority=urgent,
             )
+    # v0.8 diplomacy (Q18 B8): only this Empire's own contacts and pairs. One slot answers the
+    # oldest open incoming proposal (priority, consumes the turn); the rest of the page visits own
+    # contacts circularly for a spontaneous proposal. Never a withdrawal, a rupture or an attack.
+    diplomacy = getattr(cfg, "diplomacy", None)
+    seen = []
+    if diplomacy is not None:
+        window = timedelta(seconds=diplomacy.grievance_seconds)
+
+        def theirs(row, other):
+            if row is None:
+                return None
+            if other == row.low_empire_id:
+                return row.last_hostile_by_low_at
+            return row.last_hostile_by_high_at
+
+        received = session.scalar(
+            select(RelationPair)
+            .where(
+                RelationPair.universe_id == u,
+                or_(RelationPair.low_empire_id == e, RelationPair.high_empire_id == e),
+                RelationPair.proposal_by_empire_id.is_not(None),
+                RelationPair.proposal_by_empire_id != e,
+                RelationPair.proposal_expires_at > at,
+            )
+            .order_by(
+                RelationPair.proposed_at, RelationPair.low_empire_id, RelationPair.high_empire_id
+            )
+            .limit(1)
+        )
+        if received is not None:
+            other = received.proposal_by_empire_id
+            grievance = recent(theirs(received, other), at, window)
+            add(
+                "diplomacy",
+                "relation",
+                {"action": "refuse" if grievance else "accept", "counterpart_id": str(other)},
+                diplomacy.response_utility,
+                priority=True,
+            )
+            seen.append(
+                {
+                    "counterpart_id": str(other),
+                    "incoming_proposal": True,
+                    "hostile_by_counterpart_at": theirs(received, other).isoformat()
+                    if theirs(received, other)
+                    else None,
+                }
+            )
+        rule = diplomacy.proposal_rules[controller.profile]
+        contacts = sql_page(
+            session,
+            select(RelationContact).where(
+                RelationContact.universe_id == u, RelationContact.observer_empire_id == e
+            ),
+            RelationContact.observed_empire_id,
+            cursors.get("contacts"),
+            cfg.family_pages["diplomacy"] - 1,
+        )
+        if contacts:
+            cursors["contacts"] = str(contacts[-1].observed_empire_id)
+        for contact in contacts:
+            other = contact.observed_empire_id
+            low, high = pair(e, other)
+            row = session.get(RelationPair, (low, high))
+            fact = theirs(row, other)
+            mine = None
+            if row is not None:
+                mine = row.low_cooldown_until if e == low else row.high_cooldown_until
+            reason = None
+            if row is not None and relations.covering_pact(session, low, high, at) is not None:
+                reason = "pact_active"
+            elif row is not None and proposal_open(row.proposal_expires_at, at):
+                reason = "proposal_open"
+            elif not cooled_down(mine, at):
+                reason = "proposal_cooldown"
+            elif recent(fact, at, window):
+                reason = "recent_grievance"
+            elif rule == "past_grievance_only" and fact is None:
+                reason = "no_past_grievance"
+            add(
+                "diplomacy",
+                "relation",
+                {"action": "propose", "counterpart_id": str(other)},
+                diplomacy.proposal_utility,
+                reason=reason,
+            )
+            seen.append(
+                {
+                    "counterpart_id": str(other),
+                    "incoming_proposal": False,
+                    "hostile_by_counterpart_at": fact.isoformat() if fact else None,
+                    "reason": reason,
+                }
+            )
     # Reject rather than silently truncate oversized/unbounded entity state.
     routes = list(
         session.scalars(
@@ -603,5 +701,6 @@ def collect(session, controller, rules, at):
         "unit_counts": counts,
         "candidates": candidates,
         **({"alerts": alerts} if military is not None else {}),
+        **({"relations": seen} if diplomacy is not None else {}),
     }
     return observation, memory

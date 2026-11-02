@@ -9,6 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 GOALS = ("economy", "research", "exploration", "expansion", "logistics")
 # v0.7 (utility-goals-v2) adds a defensive military goal; never an offensive one.
 GOALS_V2 = (*GOALS, "military")
+# v0.8 (utility-goals-v3) adds diplomacy: answering and proposing pacts, never breaking one.
+GOALS_V3 = (*GOALS_V2, "diplomacy")
 PROFILES = {"economic_cautious", "expansionist"}
 # Q11 bootstrap order; never the order of a pinned dict (JSONB reorders object keys).
 BOOTSTRAP_ORDER = ("alloys", "flux", "data")
@@ -87,3 +89,37 @@ def canonical(value):
 
 def fingerprint(value):
     return hashlib.sha256(canonical(value).encode()).hexdigest()
+
+
+class DiplomacyPolicy(BaseModel):
+    """Q18 B8. Incoming answers are priority candidates; a spontaneous proposal follows the
+    profile rule: `no_recent_grievance` (no hostile act of that contact within the window) or
+    `past_grievance_only` (an attack suffered from that contact, older than the window)."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+    grievance_seconds: Positive
+    response_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
+    proposal_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
+    proposal_rules: dict[str, Literal["no_recent_grievance", "past_grievance_only"]]
+
+
+class AIRulesV3(AIRulesV2):
+    """v0.8: separate model so v0.6/v0.7 dumps (and pinned policy digests) never change."""
+
+    version: Literal["v0.8"]
+    policy_version: Literal["utility-goals-v3"]
+    diplomacy: DiplomacyPolicy
+
+    @property
+    def goals(self):
+        return GOALS_V3
+
+    @model_validator(mode="after")
+    def diplomatic(self):
+        if set(self.diplomacy.proposal_rules) != PROFILES:
+            raise ValueError("Each profile needs an explicit proposal rule")
+        # One slot answers the oldest incoming proposal, the others page own contacts.
+        if self.family_pages["diplomacy"] < 2:
+            raise ValueError("Diplomacy page must hold an answer and a proposal")
+        return self
+

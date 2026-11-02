@@ -43,6 +43,8 @@ STATUS = {
     "colony_busy": 503,
     "combat_pending": 409,
     "combat_unavailable": 409,
+    "relations_unavailable": 409,
+    "relation_not_found": 404,
 }
 
 

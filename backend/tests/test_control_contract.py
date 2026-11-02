@@ -12,12 +12,18 @@ def test_versioned_shared_schema_matches_the_game_admission_contract():
     assert json.loads(source.read_text()) == Operation.model_json_schema()
 
 
-def test_fifteen_rights_accepted_sixteenth_refused():
+def test_seventeen_rights_accepted_eighteenth_refused():
     empire = "00000000-0000-4000-8000-000000000001"
-    assert len(PERMISSIONS) == 15
+    assert len(PERMISSIONS) == 17
     assert {"fleet.command", "colony.expand", "combat.read", "combat.attack"} <= PERMISSIONS
+    assert {"relations.read", "relations.negotiate"} <= PERMISSIONS
     binding = Binding(empire_id=empire, permissions=sorted(PERMISSIONS))
-    assert len(binding.permissions) == 15
-    for rights in [[*PERMISSIONS, "combat.loot"], [*PERMISSIONS, "combat.attack"]]:
+    assert len(binding.permissions) == 17
+    for rights in [
+        [*PERMISSIONS, "combat.loot"],
+        [*PERMISSIONS, "combat.attack"],
+        [*PERMISSIONS, "relations.ally"],
+        [*PERMISSIONS, "relations.negotiate"],
+    ]:
         with pytest.raises(ValidationError):
             Binding(empire_id=empire, permissions=rights)
