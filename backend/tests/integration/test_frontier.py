@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy import select
 from test_colony_api import Clock, game  # noqa: F401
 from test_combat import arm, attack, launched, planet_of, resolve_due, until_battle
-from test_fleet import FULL, fleets, post, view, worker  # noqa: F401
+from test_fleet import FULL, fleets, post, rebind, view, worker  # noqa: F401
 
 from app.fleet.models import Fleet, FleetMission, FleetMissionLeg
 from app.frontier.models import FleetPassage, FleetProtocolPeriod, FrontierDetection
@@ -40,7 +40,15 @@ def rivals(fleets, ruleset="v0.9"):
         for w in (a, b):  # test-only funds; spending still goes through the services
             for r in ("alloys", "flux", "data"):
                 s.get(ResourceBalance, (w.colony, r)).stock = 9_000 * M
+    a.peers = b.peers = (a, b)
     return a, b
+
+
+def reenter(*worlds):
+    """After a long wait the access window lapsed: a new binding revision and session."""
+    for w in worlds:
+        w.revision = getattr(w, "revision", 1) + 1
+        rebind(w, RIGHTS, revision=w.revision)
 
 
 def deploy(w, fleet, destination, units):
@@ -233,8 +241,8 @@ def test_protocol_is_set_changed_cleared_and_ends_with_the_stationing(fleets):
     assert protocol(a, watch, None).status_code == 200
     assert fleet_view(a, watch)["protocol"] is None
     # A garrison never holds a protocol.
-    garrison = next(f for f in view(a).json()["fleets"] if f["kind"] == "GARRISON")
-    assert protocol(a, garrison["id"], "SURVEILLANCE").json()["error"]["code"] == "protocol_task"
+    garrison = arm(a, {"frigate": 1}, kind="GARRISON")
+    assert protocol(a, garrison, "SURVEILLANCE").json()["error"]["code"] == "protocol_task"
     # Departure ends the stationing and the protocol.
     assert protocol(a, watch, "SURVEILLANCE").status_code == 200
     deploy(a, watch, far_target(a, b), {"frigate": 1})
@@ -265,10 +273,9 @@ def test_database_refuses_a_protocol_outside_a_stationed_task_fleet(fleets):
     from sqlalchemy.exc import IntegrityError
 
     a, _ = rivals(fleets)
+    garrison_id = arm(a, {"frigate": 1}, kind="GARRISON")
     with pytest.raises(IntegrityError), a.game.factory.begin() as s:
-        garrison = s.scalar(
-            select(Fleet).where(Fleet.empire_id == a.empire, Fleet.kind == "GARRISON")
-        )
+        garrison = s.get(Fleet, garrison_id)
         garrison.protocol = "SURVEILLANCE"
         s.flush()
 
@@ -312,6 +319,7 @@ def watched_rows(w, entry):
 def through(w, entry, extra=timedelta(0)):
     """Clock just after `entry`, every earlier entry resolved."""
     w.game.test_clock[0] = entry.entered_at + extra
+    reenter(*w.peers)
     advance(w)
 
 
@@ -358,6 +366,7 @@ def test_identity_only_when_already_known_at_the_instant(fleets):
 def test_protocol_set_after_the_entry_never_detects_retroactively(fleets):
     a, b, watch, _, entry = encounter(fleets, protocol_late=True)
     a.game.test_clock[0] = entry.entered_at + timedelta(seconds=1)
+    reenter(a)
     assert protocol_set(a, watch, "SURVEILLANCE").status_code == 200  # set after the entry
     advance(a)
     assert watched_rows(a, entry) == []
@@ -497,6 +506,8 @@ def test_protocol_dated_before_an_already_resolved_entry_is_refused(fleets):
 
     a, b, watch, _, entry = encounter(fleets, protocol_late=True)
     t = entry.entered_at
+    a.game.test_clock[0] = t - timedelta(seconds=1)
+    entries(a)  # earlier entries of the route first: the watcher's stream is not part of them
     a.game.test_clock[0] = t + timedelta(seconds=1)
     holding, go = threading.Event(), threading.Event()
 
@@ -536,6 +547,7 @@ def test_protocol_dated_before_an_already_resolved_entry_is_refused(fleets):
             select(FleetProtocolPeriod).where(FleetProtocolPeriod.fleet_id == watch)
         ) is None
     assert watched_rows(a, entry) == []  # consistent: nothing covered t
+    reenter(a)
     assert protocol_set(a, watch, "SURVEILLANCE").status_code == 200  # a fresh instant is fine
 
 
@@ -653,6 +665,7 @@ def stacks_now(w, fleet):
 def fight(w, entry, extra=timedelta(0)):
     """Clock at `entry` (+extra), earlier entries resolved, then this entry: its engagements."""
     w.game.test_clock[0] = entry.entered_at + extra
+    reenter(*w.peers)
     out = []
     for outcome in entries(w):
         if outcome.get("passage") == f"{entry.mission_id}:{entry.sequence}":
@@ -765,6 +778,7 @@ def test_ambush_engages_an_empire_that_attacked_us_within_72_hours(fleets):
     until_battle(b, raid_id)
     entries(b)  # the raid's own entries first (C04)
     assert resolve_due(b) is not None  # a fought battle: B's dated hostile act against A
+    reenter(a, b)
     watch = arm(a, {"frigate": 4})
     assert protocol_set(a, watch, "AMBUSH").status_code == 200
     mover = arm(b, {"interceptor": 1})
@@ -889,6 +903,8 @@ def test_recalled_attack_before_its_entry_cancels_the_retreat(fleets):
 def test_local_attack_triggers_the_friendly_retreat_at_launch_before_the_battle(fleets):
     a, b, friend, neighbour = friendly_home(fleets)
     planet, home = planet_of(a)
+    # C04: a protocol covers only what happens strictly after its start, not at the same instant.
+    a.game.test_clock[0] += timedelta(minutes=1)
     raid = arm(b, {"interceptor": 1}, system=home)  # B already stands in A's home system
     raid_id, _ = launched(b, attack(b, raid, planet, {"interceptor": 1}))
     with b.game.factory() as s:

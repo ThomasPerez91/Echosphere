@@ -13,6 +13,7 @@ from app.ai.policy import choose
 from app.colony.rules import load_ruleset
 from app.fleet import service as fleet_service
 from app.fleet.models import Fleet, FleetOperation, FleetStack
+from app.galaxy import service as g
 from app.persistence.database import create_session_factory
 from app.persistence.models import Colony, Planet, StellarSystem
 from app.relations import service as relations
@@ -249,8 +250,11 @@ def test_hidden_foreign_fleets_never_change_the_posture(ai_world_v09):
     human, actor = result["actors"][0], result["actors"][2]
     station(factory, actor, {"interceptor": 1})
     before, _, _ = observe(factory, clock, actor)
-    with factory() as s:
+    with factory.begin() as s:
         here = home_system(s, actor)
+        # Test-only knowledge: a Fleet only stands in a system its own Empire knows.
+        universe = s.get(Colony, UUID(human["colony_id"])).universe_id
+        g.map_system(s, universe, UUID(human["empire_id"]), here, clock.now())
     hidden = station(factory, human, {"interceptor": 5}, system=here)  # never detected
     after, _, _ = observe(factory, clock, actor)
     assert after["frontier"] == before["frontier"]
