@@ -18,8 +18,20 @@ Ces JPG sont des **miniatures de validation artistique à faible résolution** e
 ## B — Premium cosmétique : opéra impérial
 ![Ambiance aristocratique](aristo/fonds/imperial__moodboard__concept-v01.jpg)
 
+**Études B (non attribuées à une classe de jeu tant que la silhouette n'est pas validée) :**
+
+| Portrait | Étude de coque |
+|---|---|
+| ![Commandant impérial](aristo/commandants/commander__portrait__concept-v01.jpg) | ![Coque impériale, étude libre](aristo/vaisseaux/ship__style-study__concept-v01.jpg) |
+
 ## C — Premium cosmétique : atlas holographique
 ![Ambiance cyber](cyber/fonds/holographic__moodboard__concept-v01.jpg)
+
+**Études C (non attribuées à une classe de jeu tant que la silhouette n'est pas validée) :**
+
+| Portrait | Étude de coque |
+|---|---|
+| ![Commandant synthétique](cyber/commandants/commander__portrait__concept-v01.jpg) | ![Coque cyber, étude libre](cyber/vaisseaux/ship__style-study__concept-v01.jpg) |
 
 ## Statut de la collection
 - `concept-v01` = proposition en cours de validation, NON jouable.
