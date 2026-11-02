@@ -136,7 +136,7 @@ rapide, visé en 5 à 10 minutes. **Ce n'est pas une recette intégrale du jeu.*
   politique IA, validations, sérialisation).
 - **Portal backend :** Ruff, puis `pytest -q` sans `RUN_DB_TESTS` (mêmes sauts).
 - **Frontends Game et Portal :** `npm ci`, lint, Vitest, build. Pas de Chromium.
-- **Statique :** `python scripts/check_docs.py`, `git diff --check` de la PR,
+- **Statique :** `python scripts/check_docs.py`, `git diff --check` de la PR (hors DDL Alembic figé, recopié tel quel),
   `docker compose config --quiet` et `docker compose --profile ai config --quiet`. Jamais de
   `docker compose up` ni de build d'image.
 
