@@ -1,0 +1,51 @@
+{
+  "version": "art-proposal-v0.1",
+  "status": "design-only",
+  "date": "2026-11-02",
+  "themes": [
+    {
+      "id": "realiste",
+      "access": "free",
+      "name": "Réalisme orbital"
+    },
+    {
+      "id": "aristo",
+      "access": "premium-cosmetic",
+      "name": "Opéra impérial"
+    },
+    {
+      "id": "cyber",
+      "access": "premium-cosmetic",
+      "name": "Atlas holographique"
+    }
+  ],
+  "gameplay_reference": "game_data/rulesets/v0.7",
+  "categories": [
+    "commandants",
+    "emblemes",
+    "vaisseaux",
+    "batiments",
+    "planetes",
+    "orbite",
+    "recherches",
+    "rapports",
+    "diplomatie",
+    "fonds"
+  ],
+  "classes": [
+    "probe",
+    "freighter",
+    "colonizer",
+    "interceptor",
+    "frigate",
+    "cruiser"
+  ],
+  "infrastructures": [
+    "extraction_complex",
+    "flux_reactor",
+    "data_node",
+    "industrial_complex",
+    "logistics_center"
+  ],
+  "warning": "No runtime integration or ownership permission implied. All entries provisional."
+}
