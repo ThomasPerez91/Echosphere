@@ -4,34 +4,43 @@ Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide — branche 13B (work/step-13b-first-contact)
 
-| Champ | État au 02/11/2026 soir — 13B B00–B07 implémentés, **non validés à l'exécution** |
+| Champ | État au 02/11/2026 soir — 13B B00–B09 écrits + correctifs C01–C05, **rien de PostgreSQL/Compose/Chromium exécuté** |
 | --- | --- |
-| Branche / base / PR | work/step-13b-first-contact depuis a434e06 (tête de PR #16, **non fusionnée**) ; [PR #17](https://github.com/ThomasPerez91/Echosphere/pull/17) **Draft** vers `work/step-13-ai-relations`, pas master. Fast CI déclenchée sur cette base (commit CI 0006e77, autorisé) |
-| Tête / agent | Claude Code (sessions cloud successives), seul écrivain ; tête et CI exactes dans la PR |
-| Décisions | D1–D7 validées le 02/11/2026 : [transcription](docs/01-game-design/first-contact.md#décisions-d1d7--02112026), exception D5 à Q02 dans le registre et `combat.md` |
-| Réalisé | B01 passages par saut ; B02 protocoles et périodes datées ; B03 détection déterministe ; B04 présentation amicale ; B05 interceptions/embuscades (`frontier_encounters`, orchestrateur dans `combat-worker`) ; B06 repli amical ; B07 UI Flottes. [Plan](docs/05-project/step-13b-plan.md), [contrat](docs/03-technical/frontier-api-ui.md) |
-| Exécuté ici | Tests purs : `test_frontier_transit.py` (6), `test_frontier_rules.py` (13), `test_frontier_encounter.py` (4) et suites de règles existantes |
-| Fast CI | Ruff + tests purs backend, Vitest/lint/build frontend : SHA et résultat exacts dans la PR |
-| **Non exécuté** | `tests/integration/test_frontier.py` (scénarios B01–B06), Alembic 0014, toutes suites PostgreSQL, Chromium, Compose ; aucune recette Compose 13B écrite (B09) |
-| À arbitrer | Écart D2 (évaluation sur le stream de l'Empire en mouvement), fenêtre de course à l'activation d'un protocole, déclencheur du repli (ATTACK entrant dans son système cible), politique IA B08 — détail dans le plan |
-| Étape 13 | Inchangée : PR #16 Draft, validations runtime et R11 à faire |
+| Branche / base / PR | `work/step-13b-first-contact` depuis a434e06 (tête de PR #16, **non fusionnée**) ; [PR #17](https://github.com/ThomasPerez91/Echosphere/pull/17) **Draft** vers `work/step-13-ai-relations` (pas master). PR #16 et master non touchées |
+| Tête code | `ea997bb` (B09) ; le commit de passation qui suit ne change que `progress.md` et la passation. Fast CI : `b477e6e` run 41474892191 **success**, `2f1f20e` run 41476221582 **success**, `ea997bb` run 41477152738 **success** |
+| Agent | Claude Code (session cloud, sans Docker ni registres pip/npm), seul écrivain de la branche |
+| Décisions produit | D1–D7 et B08 validées par l'utilisateur ([premier contact](docs/01-game-design/first-contact.md)) ; exigences C01–C05 de l'utilisateur ; **règles de départage C04 et lecture des termes B08 proposées par l'implémentation, à confirmer en revue** |
+| Nouveau depuis 79d25c8 | **C01/C02** : plus de handler de passage ; chaque entrée fige le stream de l'Empire en mouvement à `t − 1 µs` (fence sur son propre stream) et `FrontierOrchestrator` la résout en verrouillant (UUID, `lock_timeout`) ce stream et ceux de tous les Empires pouvant tenir un protocole dans le système, réglés à `t − 1 µs` ; engagements décidés à l'entrée (plus planifiés) ; flotte surveillante figée (`guard_fleet_change`) ; couverture unique `started_at < t <= ended_at` ; commande datée derrière une entrée résolue refusée (`fleet_busy`) ; fence posée après `FOR KEY SHARE`. **C03** : ligne `local` et repli à l'instant d'une ATTACK de 0 saut. **C04** : entrée (état avant `t`) → repli à `t` → bataille à `t` (bloqueur Combat). **C05** : plus de fence tierce tardive ; `--lag`, `--retry-passage`, alerte de retard dans `combat-worker`. **B08** : policy `utility-goals-v4` (v0.9 seulement), protocoles dans la page militaire, dispatcher borné par profil. **B09** : recette Compose, spec Chromium, test migration |
+| Migrations | 0014_frontier (non fusionnée, au-dessus de 0013 non fusionnée) **modifiée** : colonnes d'état de résolution sur `fleet_mission_passages`, direction `local`, index `ix_fleet_mission_passages_due`. Toute base locale déjà montée en 0014 avant ce soir : `alembic downgrade 0013_relations` (base jetable vide seulement) puis `upgrade head` |
+| Exécuté ici | `ruff check` backend + scripts ; tests purs `test_frontier_rules.py` (22), `test_frontier_transit.py` (6), `test_frontier_encounter.py` (4) et suites pures importables ; `scripts/check_docs.py` |
+| **Non exécuté** | `tests/integration/test_frontier.py` (passages/fences, détection, couverture à `t`, concurrence C02 dans les deux ordres, rejeu, crash/redémarrage, engagements, bataille après entrée, replis distant et local, ciblage, migration 0014), `tests/integration/test_frontier_ai.py` (B08), non-régression PostgreSQL complète (Flottes, Combat, Relations, IA), Alembic 0014, Vitest/lint/build local (seulement en Fast CI), `e2e/frontier.spec.ts`, `scripts/smoke_frontier_compose.py` |
+| Problèmes ouverts | Gel de l'Empire en mouvement à chaque entrée jusqu'à résolution (≈ intervalle `combat-worker`, 2 s) ; interblocage PostgreSQL possible entre deux lancements ATTACK croisés (préexistant v0.7, commande rejouable) ; recette Compose jamais exécutée (sélecteurs, durées, réponse IA au pacte à vérifier) ; smoke 13B pas encore dans la Full CI (à ajouter après succès local) ; R11 de l'étape 13 toujours en attente |
+| Interdits | Pas de merge, pas de Ready, pas d'étape 14, PR #16/master intactes, pas de `down -v` sur une pile à conserver |
 
-### Vérifications à lancer sur le poste local (WSL2, Docker)
+### Reprise locale (Windows 11 + Ubuntu WSL2 + Docker + Claude Code VS Code)
 
 ```bash
-git fetch origin && git switch work/step-13b-first-contact     # ou un worktree dédié
-cd backend && python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.lock && .venv/bin/pip install --no-deps -e .
+git fetch origin && git worktree add ../echosphere-13b work/step-13b-first-contact   # ou git switch, arbre propre
+cd ../echosphere-13b/backend && python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.lock && .venv/bin/pip install --no-deps -e .
 .venv/bin/ruff check . ../scripts
-RUN_DB_TESTS=1 POSTGRES_DB=<base_jetable>_test .venv/bin/pytest -q                 # complet, dont test_frontier.py et test_relations.py
-RUN_DB_TESTS=1 POSTGRES_DB=<base_jetable>_test .venv/bin/pytest -q tests/integration/test_frontier.py
-.venv/bin/alembic upgrade head && .venv/bin/alembic check && .venv/bin/alembic downgrade 0013_relations && .venv/bin/alembic upgrade head   # base jetable seulement
-cd ../frontend && npm ci && npm run lint && npm test && npm run build && npx playwright install chromium && npm run test:e2e
-cd .. && docker compose build && python3 scripts/smoke_relations_compose.py && python3 scripts/smoke_combat_compose.py && python3 scripts/smoke_ai_compose.py
+# PostgreSQL jetable *_test seulement (jamais une base à conserver)
+RUN_DB_TESTS=1 POSTGRES_DB=echosphere_13b_test .venv/bin/pytest -q tests/integration/test_frontier.py tests/integration/test_frontier_ai.py
+RUN_DB_TESTS=1 POSTGRES_DB=echosphere_13b_test .venv/bin/pytest -q          # suite complète, non-régression
+POSTGRES_DB=echosphere_13b_test .venv/bin/alembic upgrade head && .venv/bin/alembic check
+POSTGRES_DB=echosphere_13b_test .venv/bin/alembic downgrade 0013_relations && .venv/bin/alembic upgrade head   # base vide
+cd ../frontend && npm ci && npm run lint && npm test && npm run build
+npx playwright install chromium && npx playwright test e2e/frontier.spec.ts e2e/fleet.spec.ts && npm run test:e2e
+cd .. && docker compose build
+python3 scripts/smoke_frontier_compose.py          # projet Compose propre, bases *_test, supprimé à la fin
+python3 scripts/smoke_combat_compose.py && python3 scripts/smoke_relations_compose.py && python3 scripts/smoke_ai_compose.py
 ```
 
-Recette manuelle suggérée (univers v0.9 via `python -m app.ai.worker --bootstrap … --ruleset v0.9`) :
-protocole Surveillance puis Interception sur une flotte opérationnelle stationnée, passage d'une
-flotte d'un autre Empire, `combat-worker` actif, section Flottes → Frontière.
+Ordre conseillé : `test_frontier.py` d'abord (le cœur C01–C05), puis `test_frontier_ai.py`, la suite
+complète, Alembic, frontend, Chromium, recette Compose. En cas d'échec : corriger sur cette branche
+par commits ciblés, sans réinterpréter D1–D7/B08 ni réécrire l'historique. Recette manuelle :
+univers v0.9 (`python -m app.ai.worker --bootstrap … --ruleset v0.9`), protocole sur une flotte
+opérationnelle stationnée, passage d'une flotte étrangère, `combat-worker` actif, Flottes → Frontière ;
+`python -m app.combat.worker --lag` / `--blocked` pour le diagnostic.
 
 ## Reprise rapide
 
