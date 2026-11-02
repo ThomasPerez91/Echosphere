@@ -179,6 +179,8 @@ class TimeEngine(Scheduler):
                 "FLEET_RETURN": lambda session, event: complete_return(
                     session, event, self.clock.now()
                 ),
+                # 13B (v0.9): system entries are resolved by the frontier orchestrator, the
+                # mover's stream being fenced just before each entry (no handler).
             },
             **kwargs,
         )

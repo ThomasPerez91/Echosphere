@@ -45,6 +45,9 @@ STATUS = {
     "combat_unavailable": 409,
     "relations_unavailable": 409,
     "relation_not_found": 404,
+    "frontier_unavailable": 409,
+    "protocol_unavailable": 409,
+    "protocol_task": 409,
 }
 
 

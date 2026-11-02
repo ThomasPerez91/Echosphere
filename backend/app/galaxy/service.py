@@ -11,6 +11,7 @@ from uuid import UUID
 from sqlalchemy import select
 
 from app.colony.service import ColonyError, catch_up_owned, owned_colony, rules_for
+from app.frontier import service as frontier
 from app.galaxy.models import (
     EmpireExploration,
     ExplorationMission,
@@ -204,9 +205,19 @@ def refresh_monitoring(session, universe_id, empire_id, at, *, contacts=True):
             known.state = "MAPPED"  # preserve structure and the dated observation
     # v0.8 (Q18 B3): a foreign Colony seen in a system MONITORED by an own Colony is a dated,
     # oriented contact (Empire, planet, date only). Earlier rulesets observe nothing more.
-    if contacts and monitored and rules_for(session, universe_id).relations is not None:
-        relations.observe_presences(session, universe_id, empire_id, monitored, utc(at))
+    if contacts:
+        record_contacts(session, universe_id, empire_id, monitored, at)
     return monitored
+
+
+def record_contacts(session, universe_id, empire_id, monitored, at):
+    """Contacts this Empire legitimately acquired: presences (v0.8+) and FRIENDLY_CONTACT
+    introductions (v0.9+). Only where no relation pair is locked afterwards."""
+    rules = rules_for(session, universe_id)
+    if rules.relations is not None and monitored:
+        relations.observe_presences(session, universe_id, empire_id, monitored, utc(at))
+    if frontier.enabled(rules):
+        frontier.materialise_introductions(session, universe_id, empire_id, at)
 
 
 def project_system(session, known, colony_read=True):

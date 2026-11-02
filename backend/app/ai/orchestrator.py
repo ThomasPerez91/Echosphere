@@ -15,7 +15,6 @@ from app.colony.service import ColonyError, catch_up_owned
 from app.fleet.service import operations
 from app.galaxy import service as galaxy
 from app.persistence.models import Colony
-from app.relations import service as relations
 from app.research.service import catch_up as catch_up_research
 from app.research.service import lock_research
 from app.simulation.clock import utc
@@ -133,8 +132,7 @@ class Orchestrator:
                         outcome, receipt = "refusal", {"reason": error.code}
                     if after_command is not None:
                         after_command(session)
-                if rules.relations is not None:
-                    relations.observe_presences(session, u, e, monitored, at)
+                galaxy.record_contacts(session, u, e, monitored, at)
                 trace.update(result=receipt, outcome=outcome, memory_after=deepcopy(memory))
                 if len(canonical(trace).encode()) > rules.ai.result_bytes:
                     raise ObservationLimit("result_bytes")

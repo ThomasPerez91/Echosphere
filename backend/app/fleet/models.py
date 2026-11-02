@@ -109,6 +109,13 @@ class Fleet(Record, Base):
         CheckConstraint("status <> 'SETTLED' OR kind = 'TASK'", name="settled"),
         CheckConstraint("status <> 'DESTROYED' OR kind = 'TASK'", name="destroyed"),
         CheckConstraint("length(trim(name)) > 0", name="name"),
+        # 13B (v0.9): a first-contact protocol only on a stationed operational (TASK) Fleet; it
+        # ends with the stationing (departure, merge, destruction).
+        CheckConstraint(
+            "protocol IS NULL OR (kind = 'TASK' AND status = 'STATIONED' AND protocol IN "
+            "('SURVEILLANCE','AMBUSH','INTERCEPTION','FRIENDLY_CONTACT'))",
+            name="protocol",
+        ),
         Index(
             "ix_fleet_garrison",
             "home_colony_id",
@@ -124,6 +131,7 @@ class Fleet(Record, Base):
     system_id: Mapped[UUID | None] = mapped_column(Uuid)
     active_mission_id: Mapped[UUID | None] = mapped_column(Uuid)
     name: Mapped[str] = mapped_column(String(80))
+    protocol: Mapped[str | None] = mapped_column(String(20))
 
 
 class FleetStack(Base):
@@ -309,7 +317,9 @@ class FleetOperation(Base):
     __tablename__ = "fleet_operations"
     __table_args__ = (
         ForeignKeyConstraint(["empire_id", "universe_id"], OPERATIONS),
-        CheckConstraint("kind IN ('split','merge','load','unload','recall')", name="kind"),
+        CheckConstraint(
+            "kind IN ('split','merge','load','unload','recall','protocol')", name="kind"
+        ),
     )
     empire_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
     idempotency_key: Mapped[str] = mapped_column(String(160), primary_key=True)

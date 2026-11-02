@@ -40,7 +40,23 @@ export type FleetView = {
   mission_id: string | null;
   /** Every own Colony of this system (colony.read only): load/unload always name one. */
   colonies_here: { id: string; name: string; unload: { credited: Amounts; kept: Amounts } | null }[];
+  /** 13B (v0.9): first-contact protocol of a stationed task Fleet; absent before v0.9. */
+  protocol?: Protocol | null;
 };
+export type Protocol = "SURVEILLANCE" | "AMBUSH" | "INTERCEPTION" | "FRIENDLY_CONTACT";
+/** One side of a detection: system, instant, anonymous signature; the Empire only if identified. */
+export type FrontierDetection = {
+  id: string; system: SystemRef | null; detected_at: string; role: "watch" | "transit"; friendly: boolean; empire: Empire | null;
+};
+export type FrontierEngagement = {
+  id: string; kind: "engagement"; at: string; system: SystemRef | null; role: "watcher" | "mover"; protocol: Protocol | null;
+  outcome: string; opponent: Empire; own: CombatSide; opponent_forces: CombatSide; destroyed: boolean; rounds: number;
+};
+export type FrontierRetreat = {
+  id: string; kind: "retreat"; at: string; system: SystemRef | null;
+  outcome: "retreated" | "retreat_failed" | "retreat_impossible" | "void"; reason: string | null; destination: SystemRef | null;
+};
+export type Frontier = { protocols: Protocol[]; detections: FrontierDetection[]; encounters: (FrontierEngagement | FrontierRetreat)[] };
 export type MissionKind = "DEPLOY" | "SURVEY" | "RETURN" | "COLONIZE" | "ATTACK";
 /** Own engagement only: battle instant and state; the defender is never projected. */
 export type AttackState = { engagement_id: string; battle_at: string; state: "pending" | "resolved" | "cancelled" };
@@ -99,6 +115,7 @@ export type FleetProjection = {
   missions?: MissionView[];
   colonization?: Colonization | null;
   combat?: Combat | null;
+  frontier?: Frontier | null;
   systems?: SystemRef[];
 };
 export type Quote = {
@@ -188,6 +205,32 @@ const combat = (v: unknown, readable: boolean) =>
     integer(v.min_warning_seconds) &&
     (readable ? list(v.alerts, alert) && list(v.reports, combatReport) : v.alerts === null && v.reports === null));
 
+const PROTOCOLS = ["SURVEILLANCE", "AMBUSH", "INTERCEPTION", "FRIENDLY_CONTACT"];
+const empireRef = (v: unknown) => object(v) && exactKeys(v, ["id", "name"]) && id(v.id) && (v.name === null || typeof v.name === "string");
+// D3: a detection carries system, instant and an anonymous signature only. Any composition,
+// origin, destination, route or direction is a leak, refused rather than hidden.
+const detection = (v: unknown) =>
+  object(v) && exactKeys(v, ["id", "system", "detected_at", "role", "friendly", "empire"]) && id(v.id) && nullableRef(v.system) &&
+  date(v.detected_at) && ["watch", "transit"].includes(String(v.role)) && typeof v.friendly === "boolean" &&
+  (v.empire === null || empireRef(v.empire));
+const encounter = (v: unknown) => {
+  if (!object(v) || !id(v.id) || !date(v.at) || !nullableRef(v.system)) return false;
+  if (v.kind === "retreat")
+    return exactKeys(v, ["id", "kind", "at", "system", "outcome", "reason", "destination"]) &&
+      ["retreated", "retreat_failed", "retreat_impossible", "void"].includes(String(v.outcome)) &&
+      (v.reason === null || typeof v.reason === "string") && nullableRef(v.destination);
+  return v.kind === "engagement" &&
+    exactKeys(v, ["id", "kind", "at", "system", "role", "protocol", "outcome", "opponent", "own", "opponent_forces", "destroyed", "rounds"]) &&
+    ["watcher", "mover"].includes(String(v.role)) && (v.protocol === null || PROTOCOLS.includes(String(v.protocol))) &&
+    // The moving side never learns the protocol that stopped it.
+    (v.role === "watcher" || v.protocol === null) &&
+    typeof v.outcome === "string" && empireRef(v.opponent) && side(v.own) && side(v.opponent_forces) &&
+    typeof v.destroyed === "boolean" && Number.isSafeInteger(v.rounds);
+};
+const frontier = (v: unknown) =>
+  v === null || v === undefined || (object(v) && list(v.protocols, (x) => PROTOCOLS.includes(String(x))) &&
+    list(v.detections, detection) && list(v.encounters, encounter));
+
 export function validFleets(value: unknown, empire: string): value is FleetProjection {
   if (!object(value) || !date(value.server_time) || !object(value.empire) || value.empire.id !== empire ||
     typeof value.empire.name !== "string" || !list(value.permissions, (p) => typeof p === "string") ||
@@ -206,7 +249,11 @@ export function validFleets(value: unknown, empire: string): value is FleetProje
       amounts(value.colonization.package_minimum) && integer(value.colonization.max_colonies) &&
       (value.colonization.colonizer_quote === null || (object(value.colonization.colonizer_quote) &&
         integer(value.colonization.colonizer_quote.rank) && amounts(value.colonization.colonizer_quote.cost)))));
-  if (!shapes || !combat(value.combat, v.permissions.includes("combat.read"))) return false;
+  if (!shapes || !combat(value.combat, v.permissions.includes("combat.read")) || !frontier(value.frontier)) return false;
+  // A protocol exists only on a stationed task Fleet, and only where the ruleset has frontiers.
+  if (v.fleets!.some((f) => f.protocol !== undefined && f.protocol !== null &&
+    (!PROTOCOLS.includes(f.protocol) || f.kind !== "TASK" || f.status !== "STATIONED" || !v.frontier)))
+    return false;
   // Colony data belongs to colony.read: present without it is a leak, refused rather than hidden.
   if (!v.permissions.includes("colony.read") && (v.colonies!.length || v.fleets!.some((f) =>
     f.home_colony_id || f.colonies_here.length) || v.missions!.some((m) => m.payer_colony_id || m.report?.result.colony_id) ||

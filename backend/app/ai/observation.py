@@ -43,6 +43,110 @@ def sql_page(session, query, column, cursor, size):
     return rows
 
 
+LOGISTICS_FLEET_LIMIT = 64
+
+
+def protocol_fleets(session, rules, u, e, colonies):
+    """B08: own operational (TASK) Fleets stationed in a system holding an own colony, except
+    pure logistics (a lone colonizer, or a Fleet carrying cargo). Own data only, bounded."""
+    systems = sorted({UUID(c["system_id"]) for c in colonies.values()}, key=str)
+    if not systems:
+        return []
+    found = []
+    for f in session.scalars(
+        select(Fleet)
+        .where(
+            Fleet.universe_id == u,
+            Fleet.empire_id == e,
+            Fleet.kind == "TASK",
+            Fleet.status == "STATIONED",
+            Fleet.system_id.in_(systems),
+        )
+        .order_by(Fleet.id)
+        .limit(LOGISTICS_FLEET_LIMIT)
+    ):
+        units = fleet.stacks_of(session, f.id)
+        if fleet.cargo_of(session, f.id) or set(units) == {rules.colonization.colonizer_class}:
+            continue
+        found.append(str(f.id))
+    return found
+
+
+def protocol_posture(session, rules, profile, u, e, fleet_id, alerts, at):
+    """B08 deterministic posture of one own Fleet, from facts this Empire really knows: its own
+    contacts and relation pairs (dated hostile acts against it, pacts), its own anonymous
+    detections in that system, its own Combat alerts. Never another Empire's holdings."""
+    from app.frontier.encounter import known_enemy
+    from app.frontier.models import FrontierDetection
+
+    policy, f = rules.ai.frontier, session.get(Fleet, fleet_id)
+    allowed = policy.protocols[profile]
+    units = fleet.stacks_of(session, f.id)
+    armed = any(c in rules.combat.classes and n for c, n in units.items())
+    window = rules.frontier.ambush_window
+    enemy = None
+    if "AMBUSH" in allowed and armed:
+        for contact in session.scalars(
+            select(RelationContact)
+            .where(RelationContact.universe_id == u, RelationContact.observer_empire_id == e)
+            .order_by(RelationContact.observed_empire_id)
+            .limit(LOGISTICS_FLEET_LIMIT)
+        ):
+            other = contact.observed_empire_id
+            low, high = pair(e, other)
+            row = session.get(RelationPair, (low, high))
+            if row is None or relations.covering_pact(session, low, high, at) is not None:
+                continue
+            act = row.last_hostile_by_low_at if other == low else row.last_hostile_by_high_at
+            if known_enemy(contact.first_seen_at, [act] if act else [], at, window):
+                enemy = other
+                break
+    # Acceptable risk: no announced attack and no recent hostile act suffered from anyone.
+    grievance_window = timedelta(seconds=rules.ai.diplomacy.grievance_seconds)
+    grievance = bool(alerts) or any(
+        recent(
+            row.last_hostile_by_low_at if row.high_empire_id == e else row.last_hostile_by_high_at,
+            at,
+            grievance_window,
+        )
+        for row in session.scalars(
+            select(RelationPair)
+            .where(
+                RelationPair.universe_id == u,
+                or_(RelationPair.low_empire_id == e, RelationPair.high_empire_id == e),
+            )
+            .order_by(RelationPair.low_empire_id, RelationPair.high_empire_id)
+            .limit(LOGISTICS_FLEET_LIMIT)
+        )
+    )
+    sighted = session.scalar(
+        select(FrontierDetection.id)
+        .where(
+            FrontierDetection.universe_id == u,
+            FrontierDetection.observer_empire_id == e,
+            FrontierDetection.system_id == f.system_id,
+            FrontierDetection.identified.is_(False),
+            FrontierDetection.detected_at > at - timedelta(seconds=policy.sighting_seconds),
+            FrontierDetection.detected_at <= at,
+        )
+        .limit(1)
+    )
+    if enemy is not None:
+        desired, basis, utility = "AMBUSH", "known_enemy", policy.ambush_utility
+    elif "FRIENDLY_CONTACT" in allowed and sighted is not None and not grievance:
+        desired, basis, utility = "FRIENDLY_CONTACT", "anonymous_sighting", policy.friendly_utility
+    else:
+        desired, basis, utility = "SURVEILLANCE", "presence", policy.surveillance_utility
+    return {
+        "fleet_id": str(f.id),
+        "system_id": str(f.system_id),
+        "current": f.protocol,
+        "desired": desired,
+        "basis": basis,
+        "utility": utility,
+    }
+
+
 def collect(session, controller, rules, at):
     u, e, cfg = controller.universe_id, controller.empire_id, rules.ai
     memory = deepcopy(controller.memory)
@@ -555,13 +659,34 @@ def collect(session, controller, rules, at):
     # Never an offensive candidate: the dispatcher has no combat capability at all.
     alerts = []
     military = getattr(cfg, "military", None)
+    watch = getattr(cfg, "frontier", None)
+    postures = []
     if military is not None:
         from app.combat.service import alerts_for
 
         alerts = alerts_for(session, u, e, limit=24, history=False)
         threatened = {a["planet_id"] for a in alerts}
         ship = military.ship_class
-        for cid in page("military", list(colonies)):
+        references = list(colonies)
+        if watch is not None:
+            # v0.9 (B08): protocol choices share the military page and budget, after colonies.
+            watched = protocol_fleets(session, rules, u, e, colonies)
+            references += [f"fleet:{fid}" for fid in watched]
+        for ref in page("military", references):
+            if ref.startswith("fleet:"):
+                posture = protocol_posture(
+                    session, rules, controller.profile, u, e, UUID(ref[6:]), alerts, at
+                )
+                postures.append(posture)
+                if posture["desired"] != posture["current"]:
+                    add(
+                        "military",
+                        "protocol",
+                        {"fleet_id": posture["fleet_id"], "protocol": posture["desired"]},
+                        posture["utility"],
+                    )
+                continue
+            cid = ref
             here = session.scalar(
                 select(func.coalesce(func.sum(FleetStack.count), 0))
                 .join(Fleet, Fleet.id == FleetStack.fleet_id)
@@ -702,5 +827,6 @@ def collect(session, controller, rules, at):
         "candidates": candidates,
         **({"alerts": alerts} if military is not None else {}),
         **({"relations": seen} if diplomacy is not None else {}),
+        **({"frontier": postures} if watch is not None else {}),
     }
     return observation, memory

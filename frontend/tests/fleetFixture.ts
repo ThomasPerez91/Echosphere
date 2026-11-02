@@ -151,3 +151,37 @@ export function fighting(permissions: string[] = COMBAT_RIGHTS): FleetProjection
     ],
   };
 }
+
+export const sentinel = "eeeeeeee-0000-4000-8000-000000000001";
+export const sighting = "eeeeeeee-0000-4000-8000-000000000002";
+export const meeting = "eeeeeeee-0000-4000-8000-000000000003";
+export const withdrawal = "eeeeeeee-0000-4000-8000-000000000004";
+/** v0.9 projection (13B): a stationed task Fleet holding a protocol, detections and reports. */
+export function frontierFleets(): FleetProjection {
+  const p = fighting();
+  const home = { id: origin, state: "MONITORED" as const, name: "Système d’origine" };
+  return {
+    ...p,
+    fleets: [...p.fleets!, {
+      id: sentinel, name: "Sentinelle", kind: "TASK", status: "STATIONED", home_colony_id: colony, system: home,
+      stacks: { frigate: 2 }, cargo: amounts(0, 0, 0), capacity: "0", mission_id: null, colonies_here: [], protocol: "SURVEILLANCE",
+    }],
+    frontier: {
+      protocols: ["SURVEILLANCE", "AMBUSH", "INTERCEPTION", "FRIENDLY_CONTACT"],
+      detections: [
+        { id: sighting, system: home, detected_at: "2098-12-31T23:00:00Z", role: "watch", friendly: false, empire: null },
+      ],
+      encounters: [
+        {
+          id: meeting, kind: "engagement", at: "2098-12-31T23:30:00Z", system: home, role: "watcher", protocol: "INTERCEPTION",
+          outcome: "victory", opponent: { id: otherEmpire, name: "Empire B" },
+          own: { initial: { frigate: 2 }, losses: { frigate: 0 }, survivors: { frigate: 2 } },
+          opponent_forces: { initial: { interceptor: 1 }, losses: { interceptor: 1 }, survivors: { interceptor: 0 } },
+          destroyed: false, rounds: 1,
+        },
+        { id: withdrawal, kind: "retreat", at: "2098-12-31T23:45:00Z", system: home, outcome: "retreated", reason: null,
+          destination: { id: near, state: "MAPPED", name: "Système voisin" } },
+      ],
+    },
+  };
+}

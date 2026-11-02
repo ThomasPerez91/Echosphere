@@ -20,7 +20,7 @@ def pinned(rules):
     """Ruleset digest input; the v0.7 `combat` and v0.8 `relations` keys are omitted when
     absent, so bootstrap receipts recorded before those domains existed replay identically."""
     data = rules.model_dump()
-    for key in ("combat", "relations"):
+    for key in ("combat", "relations", "frontier"):
         if data.get(key) is None:
             data.pop(key, None)
     return data
@@ -30,7 +30,7 @@ def bootstrap(session, engine, universe_id, name, seed, profiles, at, *, rules=N
     """`rules` permits explicit injected test timings, never runtime defaults from fixtures."""
     rules = rules or load_ruleset("v0.6")
     if (
-        rules.version not in {"v0.6", "v0.7", "v0.8"}
+        rules.version not in {"v0.6", "v0.7", "v0.8", "v0.9"}
         or rules.ai is None
         or not 0 <= len(profiles) <= 3
         or any(p not in rules.ai.profiles for p in profiles)

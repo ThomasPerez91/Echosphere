@@ -8,10 +8,11 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.ai.rules import AIRules, AIRulesV2, AIRulesV3
+from app.ai.rules import AIRules, AIRulesV2, AIRulesV3, AIRulesV4
 from app.colonization.rules import ColonizationRules
 from app.combat.rules import CombatRules
 from app.fleet.rules import FleetRules
+from app.frontier.rules import FrontierRules
 from app.galaxy.rules import ExplorationRules, GalaxyRules
 from app.relations.rules import RelationsRules
 from app.simulation.production import MAX_AMOUNT, MICRO_UNITS, RESOURCES, amount
@@ -181,9 +182,10 @@ class Ruleset(StrictModel):
     exploration: ExplorationRules | None = None
     fleets: FleetRules | None = None
     colonization: ColonizationRules | None = None
-    ai: AIRulesV3 | AIRulesV2 | AIRules | None = None
+    ai: AIRulesV4 | AIRulesV3 | AIRulesV2 | AIRules | None = None
     combat: CombatRules | None = None
     relations: RelationsRules | None = None
+    frontier: FrontierRules | None = None
 
     @property
     def version(self) -> str:
@@ -242,7 +244,7 @@ class Ruleset(StrictModel):
                 raise ValueError("Founding package must fit the colonizer and new colony storage")
             self.fleets.order_quote(x.colonizer_class, x.colonizer_max_quantity)
             x.multiplier_bps(x.max_colonies)
-        if self.version in {"v0.6", "v0.7", "v0.8"}:
+        if self.version in {"v0.6", "v0.7", "v0.8", "v0.9"}:
             if self.ai is None or self.ai.version != self.version:
                 raise ValueError("Pinned AI configuration required, not an active controller")
             ai_kinds = {*self.ai.producers.values(), self.ai.industry_kind, self.ai.storage_kind}
@@ -251,7 +253,7 @@ class Ruleset(StrictModel):
         elif self.ai is not None:
             raise ValueError("AI configuration unavailable in historical rulesets")
         # Combat exists from v0.7: military classes with Combat stats, no offensive AI.
-        if self.version in {"v0.7", "v0.8"}:
+        if self.version in {"v0.7", "v0.8", "v0.9"}:
             k = self.combat
             if k is None or k.version != self.version:
                 raise ValueError("Missing or mixed Combat version")
@@ -264,13 +266,20 @@ class Ruleset(StrictModel):
         elif self.combat is not None:
             raise ValueError("Combat unavailable in historical rulesets")
         # Relations exist from v0.8 only (Q18): contacts, NO_AGREEMENT/PACT, AI diplomacy v3.
-        if self.version == "v0.8":
+        if self.version in {"v0.8", "v0.9"}:
             if self.relations is None or self.relations.version != self.version:
                 raise ValueError("Missing or mixed Relations version")
-            if type(self.ai) is not AIRulesV3:
-                raise ValueError("Relations require the diplomacy AI policy")
+            expected = AIRulesV4 if self.version == "v0.9" else AIRulesV3
+            if type(self.ai) is not expected:
+                raise ValueError("Relations require the diplomacy AI policy of this version")
         elif self.relations is not None:
             raise ValueError("Relations unavailable in historical rulesets")
+        # Frontier presence (13B) exists from v0.9 only; v0.1-v0.8 stay strictly unchanged.
+        if self.version == "v0.9":
+            if self.frontier is None or self.frontier.version != self.version:
+                raise ValueError("Missing or mixed Frontier version")
+        elif self.frontier is not None:
+            raise ValueError("Frontier unavailable in historical rulesets")
         c, catalogue = self.colony, self.catalogue.infrastructures
         if set(c.initial_stocks) != RESOURCES or set(c.speeds) != {
             "economy",
@@ -373,6 +382,8 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
             extensions += ("ai", "combat")
         if version == "v0.8":
             extensions += ("ai", "combat", "relations")
+        if version == "v0.9":
+            extensions += ("ai", "combat", "relations", "frontier")
         for name in extensions:
             parts[name] = json.loads(
                 (location / "rulesets" / version / f"{name}.json").read_text(),

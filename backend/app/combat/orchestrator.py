@@ -27,6 +27,7 @@ from app.combat.resolver import allocate_losses, resolve, spec_from_rules
 from app.combat.service import release_fences
 from app.fleet import service as fleet_service
 from app.fleet.models import Fleet, FleetMission, FleetReport
+from app.frontier import service as frontier
 from app.galaxy import service as galaxy
 from app.relations import service as relations
 from app.simulation.clock import utc
@@ -34,8 +35,43 @@ from app.simulation.scheduler import TimelineError, lock_stream, schedule
 from app.simulation.service import TimeEngine
 
 
+def frontier_blocker(session, engagement):
+    """C04 (13B): at equal or earlier instants, frontier first. An unresolved entry into the
+    target system at or before battle_at (it sees the state strictly before its own instant) and
+    an unresolved friendly retreat of the defender at or before battle_at (the watcher leaves at
+    the hostile act) are both resolved before the battle. No row exists before v0.9."""
+    from app.frontier.models import FleetPassage, FrontierEncounter
+
+    entry = session.scalar(
+        select(FleetPassage.mission_id)
+        .where(
+            FleetPassage.universe_id == engagement.universe_id,
+            FleetPassage.system_id == engagement.target_system_id,
+            FleetPassage.state.in_(["pending", "blocked"]),
+            FleetPassage.entered_at <= engagement.battle_at,
+        )
+        .limit(1)
+    )
+    if entry is not None or engagement.defender_empire_id is None:
+        return entry
+    return session.scalar(
+        select(FrontierEncounter.id)
+        .where(
+            FrontierEncounter.universe_id == engagement.universe_id,
+            FrontierEncounter.watcher_empire_id == engagement.defender_empire_id,
+            FrontierEncounter.state.in_(["pending", "blocked"]),
+            FrontierEncounter.encounter_at <= engagement.battle_at,
+        )
+        .limit(1)
+    )
+
+
 def blocker(session, engagement):
-    """A better-ranked engagement still awaiting resolution on the same system or Empire."""
+    """A better-ranked engagement still awaiting resolution on the same system or Empire, or an
+    earlier (or simultaneous) frontier entry/retreat that must come first."""
+    frontier_first = frontier_blocker(session, engagement)
+    if frontier_first is not None:
+        return frontier_first
     rank = tuple_(
         literal(engagement.battle_at), literal(engagement.started_at), literal(engagement.id)
     )
@@ -175,6 +211,7 @@ def resolve_engagement(session, engagement, processed_at):
         left = {c: n - lost.get(c, 0) for c, n in stacks.items()}
         fleet_service.set_stacks(session, row.id, left)
         if row.kind == "TASK" and not any(left.values()):
+            frontier.end_protocol(session, row, at)
             row.status, row.system_id = "DESTROYED", None
     engagement.result = {"outcome": outcome, "combat": combat, "defender_losses": allocation}
     engagement.state, engagement.processed_at = "resolved", utc(processed_at)
@@ -249,6 +286,10 @@ def resolve_engagement(session, engagement, processed_at):
         mission.return_at = at + (mission.travel_arrival_at - mission.started_at)
         session.flush()
         state = galaxy.state_for(session, mission.universe_id, mission.empire_id)
+        # 13B (v0.9): the full way back from the target, entered system by system.
+        frontier.record_way_back(
+            session, rules, mission, state.stream_id, at, mission.travel_arrival_at
+        )
         schedule(
             session,
             state.stream_id,
@@ -258,6 +299,8 @@ def resolve_engagement(session, engagement, processed_at):
             due_at=mission.return_at,
             payload={"mission_id": str(mission.id)},
         )
+        # Entries on the way back fence only the attacker's own stream (at or after battle_at,
+        # where it stands): a late resolution never depends on another Empire's cursor.
     session.flush()
     release_fences(session, engagement, processed_at)
     return outcome
