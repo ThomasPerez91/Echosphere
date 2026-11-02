@@ -24,6 +24,7 @@ from app.fleet.models import (
     ShipOrder,
 )
 from app.frontier import service as frontier
+from app.frontier.encounter import add as frontier_add
 from app.galaxy import service as galaxy
 from app.galaxy.models import GalaxyRoute, PlanetKnowledge
 from app.persistence.models import Colony, Planet
@@ -925,6 +926,8 @@ def launch(
             from app.combat.service import open_engagement
 
             open_engagement(session, mission, state.stream_id, defender)
+            # After the engagement exists: a friendly watcher may react to this hostile entry.
+            frontier.plan_for_mission(session, rules, mission)
             return mission
         schedule(
             session,
@@ -935,6 +938,7 @@ def launch(
             due_at=due,
             payload={"mission_id": str(mission.id)},
         )
+        frontier.plan_for_mission(session, rules, mission)
         return mission
 
 
@@ -1107,6 +1111,8 @@ def verify_mission_snapshot(session, mission, engaged=None):
         raise TimelineError("Inconsistent mission snapshot")
     path = verified_path(session, mission, local=colonize or attack)
     stacks = stacks_of(session, fleet.id) if engaged is None else engaged
+    # 13B: units destroyed by frontier engagements on the way were part of the launch.
+    stacks = frontier_add(stacks, frontier.intercepted_losses(session, mission.id))
     survey = mission.kind == "SURVEY"
     try:
         if survey and not all(rules.fleets.classes[c].survey for c in stacks):
@@ -1336,6 +1342,7 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
             due_at=mission.return_at,
             payload={"mission_id": str(mission.id)},
         )
+        frontier.plan_for_mission(session, rules, mission)
         record(session, universe_id, empire_id, key, "recall", request, request, at)
         return mission
 
@@ -1373,13 +1380,9 @@ def recall_attack(session, state, mission, key, request, at):
         mission.status, mission.recalled_at = "returning", now
         mission.return_at = now + travelled
         session.flush()
+        rules = ruleset_for(session, mission.universe_id)
         frontier.record_way_back(
-            session,
-            ruleset_for(session, mission.universe_id),
-            mission,
-            state.stream_id,
-            now,
-            min(now, mission.travel_arrival_at),
+            session, rules, mission, state.stream_id, now, min(now, mission.travel_arrival_at)
         )
         schedule(
             session,
@@ -1390,6 +1393,7 @@ def recall_attack(session, state, mission, key, request, at):
             due_at=mission.return_at,
             payload={"mission_id": str(mission.id)},
         )
+        frontier.plan_for_mission(session, rules, mission)
     record(session, mission.universe_id, mission.empire_id, key, "recall", request, request, at)
     return mission
 

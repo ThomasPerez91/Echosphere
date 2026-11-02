@@ -165,8 +165,8 @@ def test_protocol_is_set_changed_cleared_and_ends_with_the_stationing(fleets):
     a, b = rivals(fleets)
     watch = arm(a, {"frigate": 1})
     frontier = view(a).json()["frontier"]
-    assert frontier["protocols"] == ["SURVEILLANCE", "FRIENDLY_CONTACT"]
-    assert frontier["detections"] == []
+    assert frontier["protocols"] == ["SURVEILLANCE", "AMBUSH", "INTERCEPTION", "FRIENDLY_CONTACT"]
+    assert frontier["detections"] == [] and frontier["encounters"] == []
     key = uuid4().hex
     assert protocol(a, watch, "SURVEILLANCE", key).status_code == 200
     assert protocol(a, watch, "SURVEILLANCE", key).status_code == 200  # same intention
@@ -174,10 +174,9 @@ def test_protocol_is_set_changed_cleared_and_ends_with_the_stationing(fleets):
         "idempotency_conflict"
     )
     assert fleet_view(a, watch)["protocol"] == "SURVEILLANCE"
-    # Not enabled by v0.9 yet (runtime not implemented): never silently accepted.
-    assert protocol(a, watch, "AMBUSH").json()["error"]["code"] == "protocol_unavailable"
-    assert protocol(a, watch, "INTERCEPTION").json()["error"]["code"] == "protocol_unavailable"
-    assert protocol(a, watch, "FRIENDLY_CONTACT").status_code == 200
+    for value in ("AMBUSH", "INTERCEPTION", "FRIENDLY_CONTACT"):  # B05/B06 implemented
+        assert protocol(a, watch, value).status_code == 200
+        assert fleet_view(a, watch)["protocol"] == value
     assert fleet_view(a, watch)["protocol"] == "FRIENDLY_CONTACT"
     assert protocol(a, watch, None).status_code == 200
     assert fleet_view(a, watch)["protocol"] is None
@@ -345,3 +344,245 @@ def test_friendly_contact_introduces_both_empires_after_the_encounter(fleets):
             contact = s.get(RelationContact, (observer, observed))
             assert contact.first_source == "frontier" and contact.first_seen_at == entry.entered_at
             assert contact.presence_planet_id is None
+
+
+# --- B05 automatic engagements, B06 friendly retreat ------------------------------------------
+
+
+def reactions(w):
+    from app.frontier.orchestrator import FrontierOrchestrator
+
+    return FrontierOrchestrator(w.game.factory, Clock(w.game))
+
+
+def encounter_rows(w):
+    from app.frontier.models import FrontierEncounter
+
+    with w.game.factory() as s:
+        return list(
+            s.scalars(
+                select(FrontierEncounter)
+                .where(FrontierEncounter.universe_id == w.universe)
+                .order_by(FrontierEncounter.encounter_at, FrontierEncounter.id)
+            )
+        )
+
+
+def meet(fleets, protocol, watcher_units, mover_units):
+    """A's watch Fleet holds `protocol` in A's home; B deploys `mover_units` into it."""
+    a, b = rivals(fleets)
+    _, home = planet_of(a)
+    watch = arm(a, watcher_units)
+    assert protocol_set(a, watch, protocol).status_code == 200
+    mover = arm(b, mover_units)
+    mission_id, fleet_id = deploy(b, mover, home, mover_units)
+    entry = passages(b, mission_id)[-1]
+    return a, b, watch, mission_id, fleet_id, entry
+
+
+def stacks_now(w, fleet):
+    from app.fleet import service as fleet_service
+
+    with w.game.factory() as s:
+        return fleet_service.stacks_of(s, UUID(str(fleet)))
+
+
+def test_interception_is_planned_at_launch_and_fences_both_empires_until_resolved(fleets):
+    a, b, watch, _, _, entry = meet(fleets, "INTERCEPTION", {"frigate": 4}, {"interceptor": 1})
+    (row,) = encounter_rows(a)
+    assert row.kind == "engagement" and row.encounter_at == entry.entered_at
+    assert row.state == "pending" and row.mover_empire_id == b.empire
+    # Before the instant both sides command freely; after it, until the worker resolves, neither
+    # can move past the meeting (no state beyond the entry while it is pending).
+    a.game.test_clock[0] = entry.entered_at + timedelta(seconds=30)
+    assert protocol_set(a, watch, "SURVEILLANCE").json()["error"]["code"] == "combat_pending"
+    assert reactions(a).process_next()["outcome"] == "fought"
+    assert reactions(a).process_next() is None  # never applied twice
+    assert protocol_set(a, watch, "INTERCEPTION").status_code == 200
+
+
+def test_interception_destroys_an_unknown_military_mover_at_the_entry_instant(fleets):
+    a, b, watch, mission_id, fleet_id, entry = meet(
+        fleets, "INTERCEPTION", {"frigate": 4}, {"interceptor": 1}
+    )
+    a.game.test_clock[0] = entry.entered_at + timedelta(minutes=10)  # late worker: same result
+    assert reactions(a).process_next()["outcome"] == "fought"
+    (row,) = encounter_rows(a)
+    assert row.result["mover"]["destroyed"] is True
+    with b.game.factory() as s:
+        fleet, mission = s.get(Fleet, UUID(fleet_id)), s.get(FleetMission, UUID(mission_id))
+        assert fleet.status == "DESTROYED" and mission.status == "completed"
+        assert mission.completed_at == entry.entered_at
+    worker(b, limit=50)  # the cancelled arrival never happens
+    with b.game.factory() as s:
+        assert s.get(Fleet, UUID(fleet_id)).status == "DESTROYED"
+    # Both sides get a battle report naming the other; the interception is A's hostile act.
+    mine = view(a).json()["frontier"]["encounters"][0]
+    theirs = view(b).json()["frontier"]["encounters"][0]
+    assert mine["role"] == "watcher" and mine["opponent"]["id"] == str(b.empire)
+    assert theirs["role"] == "mover" and theirs["destroyed"] is True
+    with a.game.factory() as s:
+        low, high = sorted([a.empire, b.empire], key=lambda u: u.bytes)
+        from app.relations.models import RelationPair
+
+        pair = s.get(RelationPair, (low, high))
+        by_a = pair.last_hostile_by_low_at if a.empire == low else pair.last_hostile_by_high_at
+        assert by_a == entry.entered_at
+        assert s.get(RelationContact, (a.empire, b.empire)).first_source == "combat"
+
+
+def test_surviving_mover_continues_its_mission_with_its_losses(fleets):
+    a, b, _, mission_id, fleet_id, entry = meet(
+        fleets, "INTERCEPTION", {"interceptor": 1}, {"frigate": 3}
+    )
+    a.game.test_clock[0] = entry.entered_at
+    assert reactions(a).process_next()["outcome"] == "fought"
+    (row,) = encounter_rows(a)
+    assert row.result["mover"]["destroyed"] is False
+    left = stacks_now(b, fleet_id)
+    lost = row.result["mover"]["losses"]
+    assert {c: left.get(c, 0) + lost.get(c, 0) for c in {"frigate"}} == {"frigate": 3}
+    worker(b, limit=50)  # the arrival verifies the launch = survivors + losses, then settles
+    with b.game.factory() as s:
+        fleet = s.get(Fleet, UUID(fleet_id))
+        assert fleet.status == "STATIONED" and fleet.system_id == entry.system_id
+
+
+def test_purely_civilian_mover_is_never_engaged_nor_reported(fleets):
+    a, b, _, _, fleet_id, entry = meet(fleets, "INTERCEPTION", {"frigate": 4}, {"freighter": 1})
+    a.game.test_clock[0] = entry.entered_at
+    assert reactions(a).process_next()["outcome"] == "no_military_target"
+    assert stacks_now(b, fleet_id) == {"freighter": 1}
+    assert view(a).json()["frontier"]["encounters"] == []  # the reason would reveal the force
+    assert view(b).json()["frontier"]["encounters"] == []
+
+
+def test_active_pact_prevents_the_interception(fleets):
+    a, b, _, _, fleet_id, entry = meet(fleets, "INTERCEPTION", {"frigate": 4}, {"interceptor": 1})
+    with a.game.factory.begin() as s:
+        at = a.game.clock()
+        relations.record_contact(s, a.universe, a.empire, b.empire, "presence", at)
+        relations.propose(s, a.universe, a.empire, b.empire, key="test:pact", at=at)
+        relations.accept(s, a.universe, b.empire, a.empire, key="test:accept", at=at)
+    a.game.test_clock[0] = entry.entered_at
+    assert reactions(a).process_next()["outcome"] == "pact"
+    assert stacks_now(b, fleet_id) == {"interceptor": 1}
+
+
+def test_ambush_ignores_an_empire_without_recent_hostility(fleets):
+    a, b, _, _, fleet_id, entry = meet(fleets, "AMBUSH", {"frigate": 4}, {"interceptor": 1})
+    with a.game.factory.begin() as s:  # known, but never hostile: not an enemy (D4)
+        relations.record_contact(s, a.universe, a.empire, b.empire, "presence", a.game.clock())
+    a.game.test_clock[0] = entry.entered_at
+    assert reactions(a).process_next()["outcome"] == "not_enemy"
+    assert stacks_now(b, fleet_id) == {"interceptor": 1}
+
+
+def test_ambush_engages_an_empire_that_attacked_us_within_72_hours(fleets):
+    a, b = rivals(fleets)
+    with a.game.factory.begin() as s:  # B needs A's map to attack
+        for system in s.scalars(
+            select(StellarSystem.id).where(StellarSystem.universe_id == a.universe)
+        ):
+            g.map_system(s, a.universe, b.empire, system, a.game.clock())
+    planet, home = planet_of(a)
+    raid = arm(b, {"interceptor": 1})
+    arm(a, {"frigate": 2}, kind="GARRISON")
+    raid_id, _ = launched(b, attack(b, raid, planet, {"interceptor": 1}))
+    until_battle(b, raid_id)
+    assert resolve_due(b) is not None  # a fought battle: B's dated hostile act against A
+    watch = arm(a, {"frigate": 4})
+    assert protocol_set(a, watch, "AMBUSH").status_code == 200
+    mover = arm(b, {"interceptor": 1})
+    mission_id, _ = deploy(b, mover, home, {"interceptor": 1})
+    entry = passages(b, mission_id)[-1]
+    a.game.test_clock[0] = entry.entered_at
+    assert reactions(a).process_next()["outcome"] == "fought"
+
+
+def test_successive_watchers_resolve_in_rank_order_on_the_survivors(fleets):
+    a, b = rivals(fleets)
+    _, home = planet_of(a)
+    first, second = arm(a, {"interceptor": 1}), arm(a, {"interceptor": 1})
+    for watch in (first, second):
+        assert protocol_set(a, watch, "INTERCEPTION").status_code == 200
+    mover = arm(b, {"frigate": 3})
+    mission_id, fleet_id = deploy(b, mover, home, {"frigate": 3})
+    entry = passages(b, mission_id)[-1]
+    a.game.test_clock[0] = entry.entered_at
+    runner = reactions(a)
+    outcomes = [runner.process_next(), runner.process_next()]
+    assert all(o is not None for o in outcomes)
+    rows_ = encounter_rows(a)
+    assert sorted(str(r.watch_fleet_id) for r in rows_) == sorted(map(str, (first, second)))
+    resolved = [r for r in rows_ if r.outcome == "fought"]
+    if len(resolved) == 2:  # the second watcher met the survivors of the first meeting
+        one, two = sorted(resolved, key=lambda r: str(r.watch_fleet_id))
+        assert two.result["mover"]["initial"] == one.result["mover"]["survivors"]
+
+
+def friendly_home(fleets):
+    """A's friendly Fleet came home from a neighbour by a real v0.9 move, then watches home."""
+    a, b = rivals(fleets)
+    _, home = planet_of(a)
+    with a.game.factory.begin() as s:
+        neighbour = s.scalar(
+            select(GalaxyRoute.b_id).where(
+                GalaxyRoute.universe_id == a.universe, GalaxyRoute.a_id == home
+            )
+        ) or s.scalar(
+            select(GalaxyRoute.a_id).where(
+                GalaxyRoute.universe_id == a.universe, GalaxyRoute.b_id == home
+            )
+        )
+        for system in s.scalars(
+            select(StellarSystem.id).where(StellarSystem.universe_id == a.universe)
+        ):
+            g.map_system(s, a.universe, b.empire, system, a.game.clock())
+    friend = arm(a, {"frigate": 1})
+    out_id, _ = deploy(a, friend, neighbour, {"frigate": 1})
+    a.game.test_clock[0] = passages(a, out_id)[-1].entered_at + timedelta(minutes=1)
+    worker(a, limit=50)
+    back_id, _ = deploy(a, friend, home, {"frigate": 1})
+    a.game.test_clock[0] = passages(a, back_id)[-1].entered_at + timedelta(minutes=1)
+    worker(a, limit=50)
+    assert fleet_view(a, friend)["system"]["id"] == str(home)
+    assert protocol_set(a, friend, "FRIENDLY_CONTACT").status_code == 200
+    return a, b, friend, neighbour
+
+
+def test_friendly_fleet_retreats_to_its_previous_system_when_a_hostile_force_enters(fleets):
+    a, b, friend, neighbour = friendly_home(fleets)
+    planet, _ = planet_of(a)
+    raid = arm(b, {"interceptor": 1})
+    raid_id, _ = launched(b, attack(b, raid, planet, {"interceptor": 1}))
+    entry = [p for p in passages(b, raid_id) if p.direction == "outbound"][-1]
+    (row,) = [r for r in encounter_rows(a) if r.kind == "retreat"]
+    assert row.encounter_at == entry.entered_at and row.watch_fleet_id == friend
+    with a.game.factory() as s:
+        flux_before = s.get(ResourceBalance, (a.colony, "flux")).stock
+    a.game.test_clock[0] = entry.entered_at + timedelta(minutes=3)
+    assert reactions(a).process_next()["outcome"] == "retreated"
+    with a.game.factory() as s:
+        fleet = s.get(Fleet, friend)
+        mission = s.get(FleetMission, fleet.active_mission_id)
+        assert fleet.status == "MOVING" and mission.destination_id == neighbour
+        assert mission.started_at == entry.entered_at  # left at the logical entry instant
+        assert s.get(ResourceBalance, (a.colony, "flux")).stock != flux_before  # paid, not free
+    report = [e for e in view(a).json()["frontier"]["encounters"] if e["kind"] == "retreat"][0]
+    assert report["outcome"] == "retreated" and report["destination"]["id"] == str(neighbour)
+    assert [e for e in view(b).json()["frontier"]["encounters"] if e["kind"] == "retreat"] == []
+    assert reactions(a).process_next() is None  # one aggression, one retreat, one debit
+
+
+def test_recalled_attack_before_its_entry_cancels_the_retreat(fleets):
+    a, b, friend, _ = friendly_home(fleets)
+    planet, _ = planet_of(a)
+    raid = arm(b, {"interceptor": 1})
+    raid_id, _ = launched(b, attack(b, raid, planet, {"interceptor": 1}))
+    with b.game.factory() as s:
+        started = s.get(FleetMission, UUID(raid_id)).started_at
+    b.game.test_clock[0] = started + timedelta(seconds=1)
+    recalled = post(b, f"/missions/{raid_id}/recall", {"idempotency_key": uuid4().hex})
+    assert recalled.status_code == 200
+    assert [r.state for r in encounter_rows(a) if r.kind == "retreat"] == ["cancelled"]

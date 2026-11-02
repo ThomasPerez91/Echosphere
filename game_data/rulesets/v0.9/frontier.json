@@ -3,6 +3,9 @@
   "frontier_version": "frontier-v1",
   "protocols": [
     "SURVEILLANCE",
+    "AMBUSH",
+    "INTERCEPTION",
     "FRIENDLY_CONTACT"
-  ]
+  ],
+  "ambush_hostility_seconds": 259200
 }

@@ -2,8 +2,8 @@
 
 `fleet_mission_passages`: every system a moving Fleet enters, at its logical instant, written
 when the movement is decided (launch, recall, return after battle) from the pure transit rules.
-Immutable facts, except that an outbound entry the Fleet never reaches (recalled before it) is
-marked `cancelled_at` instead of being deleted. Only non-cancelled rows ever happened or will.
+Immutable facts, except that an entry the Fleet never reaches (recalled or destroyed before it)
+is marked `cancelled_at` instead of being deleted. Only non-cancelled rows ever happened or will.
 """
 
 from datetime import datetime
@@ -19,6 +19,7 @@ from sqlalchemy import (
     Uuid,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.persistence.models import Base, Record
@@ -40,7 +41,7 @@ class FleetPassage(Base):
         CheckConstraint("sequence >= 0", name="sequence"),
         CheckConstraint("direction IN ('outbound','return')", name="direction"),
         CheckConstraint(
-            "cancelled_at IS NULL OR (direction = 'outbound' AND cancelled_at < entered_at)",
+            "cancelled_at IS NULL OR cancelled_at < entered_at",
             name="cancellation",
         ),
         # Who entered a system and when: the future detection query (B03).
@@ -154,3 +155,87 @@ class FrontierDetection(Record, Base):
     detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     identified: Mapped[bool] = mapped_column()
     friendly: Mapped[bool] = mapped_column()
+
+
+class FrontierEncounter(Record, Base):
+    """B05/B06: an automatic frontier reaction to one real passage, resolved outside handlers.
+
+    `engagement` (AMBUSH, INTERCEPTION): a meeting of two Fleets physically in the same system at
+    the logical entry instant (D5: no 24 h delay, never a planetary attack). Both Operations
+    streams are fenced just before `encounter_at` (state strictly before the entry, so a mover's
+    arrival at that instant cannot settle it first) until the resolution.
+    `retreat` (FRIENDLY_CONTACT, D7): the stationed Fleet leaves when a hostile force enters its
+    system. The watcher's Operations stream and home Colony are fenced at `encounter_at`
+    (inclusive) so the move is paid at that exact logical instant, whatever the worker delay.
+    Created only by decisions taken before the instant (launch, recall, protocol command), or by an
+    orchestrator decision whose involved streams have not passed it (otherwise a TimelineError)."""
+
+    __tablename__ = "frontier_encounters"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["mission_id", "sequence"],
+            ["fleet_mission_passages.mission_id", "fleet_mission_passages.sequence"],
+            name="fk_frontier_encounters_passage",
+        ),
+        ForeignKeyConstraint(
+            ["period_id"], ["fleet_protocol_periods.id"], name="fk_frontier_encounters_period"
+        ),
+        ForeignKeyConstraint(
+            ["watch_fleet_id"], ["fleets.id"], name="fk_frontier_encounters_watch_fleet"
+        ),
+        ForeignKeyConstraint(
+            ["watcher_empire_id", "universe_id"],
+            ["empires.id", "empires.universe_id"],
+            name="fk_frontier_encounters_watcher",
+        ),
+        ForeignKeyConstraint(
+            ["mover_empire_id", "universe_id"],
+            ["empires.id", "empires.universe_id"],
+            name="fk_frontier_encounters_mover",
+        ),
+        UniqueConstraint(
+            "mission_id", "sequence", "watch_fleet_id", "kind", name="uq_frontier_encounters"
+        ),
+        CheckConstraint("kind IN ('engagement','retreat')", name="kind"),
+        CheckConstraint(
+            "(kind = 'engagement' AND protocol IN ('AMBUSH','INTERCEPTION')) "
+            "OR (kind = 'retreat' AND protocol = 'FRIENDLY_CONTACT')",
+            name="protocol",
+        ),
+        CheckConstraint("state IN ('pending','resolved','cancelled','blocked')", name="state"),
+        CheckConstraint("watcher_empire_id <> mover_empire_id", name="sides"),
+        CheckConstraint(
+            "(state = 'resolved') = (processed_at IS NOT NULL AND outcome IS NOT NULL)",
+            name="resolution",
+        ),
+        CheckConstraint("(state = 'cancelled') = (cancelled_at IS NOT NULL)", name="cancellation"),
+        CheckConstraint("attempts >= 0", name="attempts"),
+        Index(
+            "ix_frontier_encounters_due",
+            "encounter_at",
+            "id",
+            postgresql_where=text("state = 'pending'"),
+        ),
+        Index("ix_frontier_encounters_watcher", "watcher_empire_id", "encounter_at"),
+        Index("ix_frontier_encounters_mover", "mover_empire_id", "encounter_at"),
+    )
+
+    universe_id: Mapped[UUID] = mapped_column(Uuid)
+    kind: Mapped[str] = mapped_column(String(12))
+    mission_id: Mapped[UUID] = mapped_column(Uuid)
+    sequence: Mapped[int] = mapped_column()
+    period_id: Mapped[UUID] = mapped_column(Uuid)
+    watch_fleet_id: Mapped[UUID] = mapped_column(Uuid)
+    protocol: Mapped[str] = mapped_column(String(20))
+    watcher_empire_id: Mapped[UUID] = mapped_column(Uuid)
+    mover_empire_id: Mapped[UUID] = mapped_column(Uuid)
+    system_id: Mapped[UUID] = mapped_column(Uuid)
+    encounter_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    state: Mapped[str] = mapped_column(String(12))
+    attempts: Mapped[int] = mapped_column(default=0)
+    retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(32))
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    outcome: Mapped[str | None] = mapped_column(String(24))
+    result: Mapped[dict | None] = mapped_column(JSONB)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

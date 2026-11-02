@@ -358,6 +358,13 @@ def frontier_view(session, rules, universe_id, empire_id):
             name,
             lambda system: system_ref(session, empire_id, system),
         ),
+        "encounters": frontier.encounters_for(
+            session,
+            universe_id,
+            empire_id,
+            name,
+            lambda system: system_ref(session, empire_id, system),
+        ),
     }
 
 

@@ -4,7 +4,8 @@ Revision ID: 0014_frontier
 Revises: 0013_relations
 Frozen DDL; independent of runtime ORM models. Additive: one new table, one nullable column and
 its CHECK, the 'protocol' kind in the Fleet operation ledger, dated protocol periods,
-frontier detections and the 'frontier' contact source (extension of a CHECK). No backfill: only missions launched in v0.9 Universes record passages, and no
+frontier detections, the 'frontier' contact source (extension of a CHECK) and automatic
+frontier encounters (B05 engagements, B06 retreats). No backfill: only missions launched in v0.9 Universes record passages, and no
 existing Fleet has a protocol. No right is added (protocols use fleet.command).
 """
 
@@ -84,6 +85,52 @@ CREATE TABLE frontier_detections (
 ]
 
 
+ENCOUNTERS = [
+    """
+CREATE TABLE frontier_encounters (
+	universe_id UUID NOT NULL, 
+	kind VARCHAR(12) NOT NULL, 
+	mission_id UUID NOT NULL, 
+	sequence INTEGER NOT NULL, 
+	period_id UUID NOT NULL, 
+	watch_fleet_id UUID NOT NULL, 
+	protocol VARCHAR(20) NOT NULL, 
+	watcher_empire_id UUID NOT NULL, 
+	mover_empire_id UUID NOT NULL, 
+	system_id UUID NOT NULL, 
+	encounter_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+	state VARCHAR(12) NOT NULL, 
+	attempts INTEGER NOT NULL, 
+	retry_at TIMESTAMP WITH TIME ZONE, 
+	error_code VARCHAR(32), 
+	cancelled_at TIMESTAMP WITH TIME ZONE, 
+	outcome VARCHAR(24), 
+	result JSONB, 
+	processed_at TIMESTAMP WITH TIME ZONE, 
+	id UUID DEFAULT gen_random_uuid() NOT NULL, 
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+	CONSTRAINT pk_frontier_encounters PRIMARY KEY (id), 
+	CONSTRAINT fk_frontier_encounters_passage FOREIGN KEY(mission_id, sequence) REFERENCES fleet_mission_passages (mission_id, sequence), 
+	CONSTRAINT fk_frontier_encounters_period FOREIGN KEY(period_id) REFERENCES fleet_protocol_periods (id), 
+	CONSTRAINT fk_frontier_encounters_watch_fleet FOREIGN KEY(watch_fleet_id) REFERENCES fleets (id), 
+	CONSTRAINT fk_frontier_encounters_watcher FOREIGN KEY(watcher_empire_id, universe_id) REFERENCES empires (id, universe_id), 
+	CONSTRAINT fk_frontier_encounters_mover FOREIGN KEY(mover_empire_id, universe_id) REFERENCES empires (id, universe_id), 
+	CONSTRAINT uq_frontier_encounters UNIQUE (mission_id, sequence, watch_fleet_id, kind), 
+	CONSTRAINT ck_frontier_encounters_kind CHECK (kind IN ('engagement','retreat')), 
+	CONSTRAINT ck_frontier_encounters_protocol CHECK ((kind = 'engagement' AND protocol IN ('AMBUSH','INTERCEPTION')) OR (kind = 'retreat' AND protocol = 'FRIENDLY_CONTACT')), 
+	CONSTRAINT ck_frontier_encounters_state CHECK (state IN ('pending','resolved','cancelled','blocked')), 
+	CONSTRAINT ck_frontier_encounters_sides CHECK (watcher_empire_id <> mover_empire_id), 
+	CONSTRAINT ck_frontier_encounters_resolution CHECK ((state = 'resolved') = (processed_at IS NOT NULL AND outcome IS NOT NULL)), 
+	CONSTRAINT ck_frontier_encounters_cancellation CHECK ((state = 'cancelled') = (cancelled_at IS NOT NULL)), 
+	CONSTRAINT ck_frontier_encounters_attempts CHECK (attempts >= 0)
+)
+""",
+    "CREATE INDEX ix_frontier_encounters_due ON frontier_encounters (encounter_at, id) WHERE state = 'pending'",
+    "CREATE INDEX ix_frontier_encounters_watcher ON frontier_encounters (watcher_empire_id, encounter_at)",
+    "CREATE INDEX ix_frontier_encounters_mover ON frontier_encounters (mover_empire_id, encounter_at)",
+]
+
+
 def sources(kinds):
     op.execute("ALTER TABLE relation_contacts DROP CONSTRAINT ck_relation_contacts_source")
     op.execute(
@@ -107,7 +154,7 @@ CREATE TABLE fleet_mission_passages (
 	CONSTRAINT fk_fleet_mission_passages_system FOREIGN KEY(system_id, universe_id) REFERENCES galaxy_systems (system_id, universe_id), 
 	CONSTRAINT ck_fleet_mission_passages_sequence CHECK (sequence >= 0), 
 	CONSTRAINT ck_fleet_mission_passages_direction CHECK (direction IN ('outbound','return')), 
-	CONSTRAINT ck_fleet_mission_passages_cancellation CHECK (cancelled_at IS NULL OR (direction = 'outbound' AND cancelled_at < entered_at))
+	CONSTRAINT ck_fleet_mission_passages_cancellation CHECK (cancelled_at IS NULL OR cancelled_at < entered_at)
 )
 """)
     op.execute(
@@ -120,6 +167,8 @@ CREATE TABLE fleet_mission_passages (
     for ddl in DETECTION:
         op.execute(ddl)
     sources(SOURCES + ",'frontier'")
+    for ddl in ENCOUNTERS:
+        op.execute(ddl)
 
 
 def downgrade():
@@ -131,9 +180,11 @@ def downgrade():
         "SELECT EXISTS (SELECT 1 FROM fleet_protocol_periods)",
         "SELECT EXISTS (SELECT 1 FROM frontier_detections)",
         "SELECT EXISTS (SELECT 1 FROM relation_contacts WHERE first_source = 'frontier')",
+        "SELECT EXISTS (SELECT 1 FROM frontier_encounters)",
     ]:
         if connection.execute(sa.text(check)).scalar():
             raise RuntimeError("Cannot downgrade live Frontier data; archive explicitly")
+    op.drop_table("frontier_encounters")
     sources(SOURCES)
     op.drop_table("frontier_detections")
     op.drop_table("fleet_protocol_periods")

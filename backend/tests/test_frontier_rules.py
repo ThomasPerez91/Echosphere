@@ -15,11 +15,12 @@ def test_v09_is_v08_plus_frontier_only():
             continue
         assert {**new[part], "version": "v0.8"} == old[part], part
     assert old["frontier"] is None
-    # Only protocols whose runtime exists are enabled; nothing numeric is invented (Q58 open).
+    # The four protocols are implemented; the only number is D4's validated 72 h window.
     assert new["frontier"] == {
         "version": "v0.9",
         "frontier_version": "frontier-v1",
-        "protocols": ["SURVEILLANCE", "FRIENDLY_CONTACT"],
+        "protocols": ["SURVEILLANCE", "AMBUSH", "INTERCEPTION", "FRIENDLY_CONTACT"],
+        "ambush_hostility_seconds": 72 * 3600,
     }
     assert type(load_ruleset("v0.9").ai) is AIRulesV3
 
@@ -44,6 +45,8 @@ def test_historical_rulesets_and_pinned_ai_digests_are_unchanged():
         lambda d: d["frontier"].update(protocols=["PATROL"]),
         lambda d: d["frontier"].update(frontier_version="frontier-v2"),
         lambda d: d["frontier"].update(detection_level=1),
+        lambda d: d["frontier"].update(ambush_hostility_seconds=0),
+        lambda d: d["frontier"].pop("ambush_hostility_seconds"),
     ],
 )
 def test_invalid_frontier_configuration_is_refused(change):

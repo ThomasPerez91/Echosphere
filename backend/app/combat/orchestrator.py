@@ -264,6 +264,9 @@ def resolve_engagement(session, engagement, processed_at):
             due_at=mission.return_at,
             payload={"mission_id": str(mission.id)},
         )
+        # Reactions on the way back. A resolution so late that a watcher's stream already passed
+        # an entry raises TimelineError (retry, then blocked): never a silently skipped reaction.
+        frontier.plan_for_mission(session, rules, mission)
     session.flush()
     release_fences(session, engagement, processed_at)
     return outcome

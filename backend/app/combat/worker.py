@@ -1,4 +1,5 @@
-"""Run the shared monolith's Combat orchestrator; explicit operator commands. No payload logged."""
+"""Run the shared monolith's Combat orchestrator and, in v0.9 Universes, the frontier reactions
+(13B: interceptions, ambushes, friendly retreats); explicit operator commands. No payload logged."""
 
 import argparse
 import json
@@ -13,6 +14,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.combat.models import CombatEngagement
 from app.combat.orchestrator import CombatOrchestrator, retry_blocked
 from app.core.config import Settings
+from app.frontier.models import FrontierEncounter
+from app.frontier.orchestrator import FrontierOrchestrator
+from app.frontier.orchestrator import retry_blocked as retry_frontier
 from app.persistence.database import create_database_engine, create_session_factory
 from app.simulation.clock import SystemClock
 
@@ -25,6 +29,9 @@ def main() -> None:
     mode.add_argument("--once", action="store_true", help="Process one bounded batch then exit")
     mode.add_argument("--blocked", action="store_true", help="List blocked engagement IDs")
     mode.add_argument("--retry", type=UUID, help="Requeue one repaired blocked engagement")
+    mode.add_argument(
+        "--retry-frontier", type=UUID, help="Requeue one repaired blocked frontier reaction"
+    )
     parser.add_argument("--limit", type=int, default=20)
     parser.add_argument("--poll-interval", type=float, default=2.0)
     parser.add_argument("--max-attempts", type=int, default=3)
@@ -49,14 +56,34 @@ def main() -> None:
                     .order_by(CombatEngagement.battle_at, CombatEngagement.id)
                     .limit(args.limit)
                 ).all()
+                reactions = session.scalars(
+                    select(FrontierEncounter)
+                    .where(FrontierEncounter.state == "blocked")
+                    .order_by(FrontierEncounter.encounter_at, FrontierEncounter.id)
+                    .limit(args.limit)
+                ).all()
                 print(
                     json.dumps(
                         [
                             {"id": str(r.id), "attempts": r.attempts, "error_code": r.error_code}
                             for r in rows
                         ]
+                        + [
+                            {
+                                "id": str(r.id),
+                                "kind": "frontier",
+                                "attempts": r.attempts,
+                                "error_code": r.error_code,
+                            }
+                            for r in reactions
+                        ]
                     )
                 )
+            return
+        if args.retry_frontier:
+            with factory.begin() as session:
+                retry_frontier(session, args.retry_frontier, clock.now())
+            print(json.dumps({"requeued": str(args.retry_frontier)}))
             return
         if args.retry:
             with factory.begin() as session:
@@ -66,19 +93,34 @@ def main() -> None:
         runner = CombatOrchestrator(
             factory, clock, retry_seconds=args.retry_delay, max_attempts=args.max_attempts
         )
+        reactions = FrontierOrchestrator(
+            factory, clock, retry_seconds=args.retry_delay, max_attempts=args.max_attempts
+        )
         while not stop.is_set():
             processed = 0
             try:
                 for _ in range(args.limit):
                     if stop.is_set():
                         break
+                    # Each orchestrator waits on the other's earlier fences: both progress in
+                    # global logical order, whichever process picks them up first.
                     outcome = runner.process_next()
-                    if outcome is None:
+                    reaction = reactions.process_next()
+                    if outcome is None and reaction is None:
                         break
-                    processed += 1
-                    logger.info(
-                        "engagement=%s outcome=%s", outcome["engagement_id"], outcome["outcome"]
-                    )
+                    processed += (outcome is not None) + (reaction is not None)
+                    if outcome is not None:
+                        logger.info(
+                            "engagement=%s outcome=%s",
+                            outcome["engagement_id"],
+                            outcome["outcome"],
+                        )
+                    if reaction is not None:
+                        logger.info(
+                            "reaction=%s outcome=%s",
+                            reaction["encounter_id"],
+                            reaction["outcome"],
+                        )
             except SQLAlchemyError:
                 if args.once:
                     raise
