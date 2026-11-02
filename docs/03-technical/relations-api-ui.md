@@ -1,7 +1,7 @@
 # Relations — contrat technique (étape 13, ruleset v0.8)
 
-**Statut : implémenté sur la PR #16 (R02–R10), en attente de validation locale PostgreSQL/Compose
-et de revue ; non fusionné.** Décisions produit : [Q18](../01-game-design/relations.md#q18--validation-avec-amendements-02112026).
+**Statut : implémenté sur la PR #16 (R02–R10) ; PostgreSQL, Alembic, Chromium et recette Compose
+exécutés et réussis localement le 02/11/2026 ; revue indépendante R11 à venir ; non fusionné.** Décisions produit : [Q18](../01-game-design/relations.md#q18--validation-avec-amendements-02112026).
 Hors périmètre : [présence frontalière et premier contact (13B)](../01-game-design/first-contact.md).
 
 ## Données (migration 0013)
@@ -96,6 +96,6 @@ résultat inconnu). Flottes affiche le rapport `voided_by_pact` sans composition
 | Niveau | Contenu | État |
 | --- | --- | --- |
 | Pur (Fast CI) | `tests/test_relations_rules.py` (v0.8, poids, dates), contrats 17 droits Game/Portal | Exécuté |
-| Frontend (Fast CI) | `Relations.test.tsx` (7), `Fleet.test.tsx` (`voided_by_pact`), lint, build | Exécuté |
-| PostgreSQL | `tests/integration/test_relations.py` (contacts, négociation, dates logiques, concurrence, IA) | **À exécuter** (`RUN_DB_TESTS=1`, base `*_test`) |
-| Compose | `scripts/smoke_relations_compose.py` (combat-worker et ai-worker réels, Portal arrêté) | **À exécuter** (Full CI ou poste local) |
+| Frontend | `Relations.test.tsx` (7), `Fleet.test.tsx` (`voided_by_pact`), lint, build ; Chromium `e2e/relations.spec.ts` (4 largeurs) | Fast CI ; **localement le 02/11/2026** : Vitest 97/97, build, Chromium 39/39 |
+| PostgreSQL | `tests/integration/test_relations.py` (contacts, négociation, dates logiques, concurrence, IA) | **Exécuté localement le 02/11/2026** (PostgreSQL 17, `RUN_DB_TESTS=1`) ; suite Game complète 483/483, Portal 124/124 ; Alembic 0013 upgrade/check/downgrade 0012 sur base vide |
+| Compose | `scripts/smoke_relations_compose.py` (combat-worker et ai-worker réels, Portal arrêté) | **Exécuté localement le 02/11/2026, réussi** (images de cette branche ; aussi combat et ai) ; Full CI après merge seulement |
