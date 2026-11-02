@@ -338,4 +338,3 @@ def detections_for(session, universe_id, empire_id, names, system_ref, limit=DET
             }
         )
     return result
-

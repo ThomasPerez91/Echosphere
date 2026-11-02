@@ -9,7 +9,7 @@ from app.frontier.transit import OUTBOUND, RETURN, cancelled, offsets, outbound,
 
 T0 = datetime(2099, 1, 1, tzinfo=UTC)
 US = timedelta(microseconds=1)
-A, B, C, O = (UUID(int=i) for i in (1, 2, 3, 9))
+A, B, C, HOME = (UUID(int=i) for i in (1, 2, 3, 9))
 
 
 def test_offsets_are_integer_increasing_and_end_exactly_at_travel():
@@ -35,11 +35,11 @@ def test_outbound_enters_each_crossed_system_once_destination_included():
 def test_recall_in_transit_mirrors_the_way_out_and_cancels_unreached_entries():
     route = outbound(T0, 3_000_000, [A, B, C])
     recall = T0 + 2_500_000 * US  # past B, before C
-    back = way_back(route, O, T0, recall, recall)
+    back = way_back(route, HOME, T0, recall, recall)
     assert [(p.system_id, p.entered_at - recall) for p in back] == [
         (B, 500_000 * US),
         (A, 1_500_000 * US),
-        (O, 2_500_000 * US),  # == existing return_at = recall + (recall - started)
+        (HOME, 2_500_000 * US),  # == existing return_at = recall + (recall - started)
     ]
     assert [p.sequence for p in back] == [3, 4, 5] and {p.direction for p in back} == {RETURN}
     assert [p.system_id for p in cancelled(route, recall)] == [C]
@@ -48,8 +48,8 @@ def test_recall_in_transit_mirrors_the_way_out_and_cancels_unreached_entries():
 def test_recall_exactly_on_an_entry_leaves_that_system_without_reentering_it():
     route = outbound(T0, 3_000_000, [A, B, C])
     at_b = route[1].entered_at
-    back = way_back(route, O, T0, at_b, at_b)
-    assert [p.system_id for p in back] == [A, O]
+    back = way_back(route, HOME, T0, at_b, at_b)
+    assert [p.system_id for p in back] == [A, HOME]
     assert [p.system_id for p in cancelled(route, at_b)] == [C]
 
 
@@ -57,11 +57,11 @@ def test_full_return_after_arrival_or_battle_starts_from_the_destination():
     route = outbound(T0, 3_000_000, [A, B, C])
     arrival = route[-1].entered_at
     battle = T0 + timedelta(hours=24)
-    back = way_back(route, O, T0, battle, arrival)
+    back = way_back(route, HOME, T0, battle, arrival)
     assert [(p.system_id, p.entered_at - battle) for p in back] == [
         (B, 1_000_000 * US),
         (A, 2_000_000 * US),
-        (O, 3_000_000 * US),  # == battle_at + travel, the existing ATTACK return_at
+        (HOME, 3_000_000 * US),  # == battle_at + travel, the existing ATTACK return_at
     ]
     assert cancelled(route, arrival) == []
 
@@ -69,7 +69,7 @@ def test_full_return_after_arrival_or_battle_starts_from_the_destination():
 def test_way_back_refuses_incoherent_instants():
     route = outbound(T0, 3_000_000, [A])
     with pytest.raises(ValueError):
-        way_back(route, O, T0, T0, T0 + US)  # departs before reaching the turning point
+        way_back(route, HOME, T0, T0, T0 + US)  # departs before reaching the turning point
     with pytest.raises(ValueError):
-        way_back(route, O, T0, T0, T0 - US)
-    assert way_back(route, O, T0, T0, T0) == []  # recalled at launch: never left
+        way_back(route, HOME, T0, T0, T0 - US)
+    assert way_back(route, HOME, T0, T0, T0) == []  # recalled at launch: never left
