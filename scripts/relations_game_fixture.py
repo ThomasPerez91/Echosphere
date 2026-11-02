@@ -18,7 +18,12 @@ from app.core.config import Settings
 from app.fleet.models import FleetMission
 from app.persistence.database import create_database_engine, create_session_factory
 from app.relations import service as relations
-from app.relations.models import RelationContact, RelationEvent, RelationPact, RelationPair
+from app.relations.models import (
+    RelationContact,
+    RelationEvent,
+    RelationPact,
+    RelationPair,
+)
 from app.relations.rules import pair, recent
 from sqlalchemy import func, select
 
