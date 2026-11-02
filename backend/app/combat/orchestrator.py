@@ -27,6 +27,7 @@ from app.combat.resolver import allocate_losses, resolve, spec_from_rules
 from app.combat.service import release_fences
 from app.fleet import service as fleet_service
 from app.fleet.models import Fleet, FleetMission, FleetReport
+from app.frontier import service as frontier
 from app.galaxy import service as galaxy
 from app.relations import service as relations
 from app.simulation.clock import utc
@@ -175,7 +176,7 @@ def resolve_engagement(session, engagement, processed_at):
         left = {c: n - lost.get(c, 0) for c, n in stacks.items()}
         fleet_service.set_stacks(session, row.id, left)
         if row.kind == "TASK" and not any(left.values()):
-            row.status, row.system_id = "DESTROYED", None
+            row.status, row.system_id, row.protocol = "DESTROYED", None, None
     engagement.result = {"outcome": outcome, "combat": combat, "defender_losses": allocation}
     engagement.state, engagement.processed_at = "resolved", utc(processed_at)
     engagement.error_code = engagement.retry_at = None
@@ -248,6 +249,8 @@ def resolve_engagement(session, engagement, processed_at):
         mission.status = "returning"
         mission.return_at = at + (mission.travel_arrival_at - mission.started_at)
         session.flush()
+        # 13B (v0.9): the full way back from the target, entered system by system.
+        frontier.record_way_back(session, rules, mission, at, mission.travel_arrival_at)
         state = galaxy.state_for(session, mission.universe_id, mission.empire_id)
         schedule(
             session,

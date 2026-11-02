@@ -38,7 +38,7 @@ def main() -> None:
     parser.add_argument("--name")
     parser.add_argument("--seed")
     parser.add_argument("--profiles", default="economic_cautious,expansionist")
-    parser.add_argument("--ruleset", choices=["v0.6", "v0.7", "v0.8"], default="v0.6")
+    parser.add_argument("--ruleset", choices=["v0.6", "v0.7", "v0.8", "v0.9"], default="v0.6")
     parser.add_argument("--at", help="Explicit aware ISO start, bootstrap only")
     parser.add_argument("--limit", type=int, default=20)
     parser.add_argument("--poll-interval", type=float, default=5.0)

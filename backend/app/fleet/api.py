@@ -76,6 +76,10 @@ class Load(Keyed):
     cargo: Cargo = Field(min_length=1)
 
 
+class ProtocolChoice(Keyed):
+    protocol: Literal["SURVEILLANCE", "AMBUSH", "INTERCEPTION", "FRIENDLY_CONTACT"] | None
+
+
 class Unload(Keyed):
     colony_id: str = Field(pattern=UUID_PATTERN)
 
@@ -243,6 +247,8 @@ def project(session, universe_id, empire_id, permissions, at):
                 "cargo": amounts(carried),
                 "capacity": str(f.cargo_capacity(stacks)),
                 "mission_id": str(mission.id) if mission else None,
+                # 13B (v0.9): first-contact protocol of a stationed task Fleet, else null.
+                "protocol": fleet.protocol,
                 "colonies_here": [
                     {
                         "id": str(c.id),
@@ -326,6 +332,7 @@ def project(session, universe_id, empire_id, permissions, at):
         "fleets": fleet_views,
         "missions": [mission_view(session, m, permissions) for m in missions],
         "colonization": colonization,
+        "frontier": {"protocols": list(rules.frontier.protocols)} if rules.frontier else None,
         "combat": combat_view(session, rules, universe_id, empire_id, permissions),
         # Destinations come from Knowledge only; DETECTED signals need galaxy.read (SURVEY).
         "systems": systems_view,
@@ -541,6 +548,21 @@ class Fleets(Colonies):
 
         return self.act(raw, universe_id, empire_id, ("fleet.command",), run)
 
+    def protocol(self, raw, universe_id, empire_id, fleet_id, body: ProtocolChoice):
+        def run(session, at, ns):
+            return service.set_protocol(
+                session,
+                self.engine,
+                universe_id,
+                empire_id,
+                fleet_id,
+                body.protocol,
+                key=ns + body.idempotency_key,
+                at=at,
+            )
+
+        return self.act(raw, universe_id, empire_id, ("fleet.command",), run)
+
     def load(self, raw, universe_id, empire_id, fleet_id, body: Load):
         def run(session, at, ns):
             result = service.load(
@@ -650,3 +672,11 @@ async def load(universe_id: UUID, empire_id: UUID, fleet_id: UUID, request: Requ
 async def unload(universe_id: UUID, empire_id: UUID, fleet_id: UUID, request: Request):
     raw, body = await command(request, universe_id, Unload)
     return await call(Fleets(request.app.state).unload, raw, universe_id, empire_id, fleet_id, body)
+
+
+@router.post("/{empire_id}/{fleet_id}/protocol")
+async def protocol(universe_id: UUID, empire_id: UUID, fleet_id: UUID, request: Request):
+    raw, body = await command(request, universe_id, ProtocolChoice)
+    return await call(
+        Fleets(request.app.state).protocol, raw, universe_id, empire_id, fleet_id, body
+    )

@@ -119,7 +119,7 @@ def main():
     assert query("portal-postgres", "SELECT version_num FROM portal_alembic_version") == (
         "p0005_control"
     )
-    assert query("postgres", "SELECT version_num FROM alembic_version") == "0013_relations"
+    assert query("postgres", "SELECT version_num FROM alembic_version") == "0014_frontier"
     tables = "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"
     assert set(query("portal-postgres", tables).splitlines()) == {
         "universe_references", "universe_memberships", "control_outbox",

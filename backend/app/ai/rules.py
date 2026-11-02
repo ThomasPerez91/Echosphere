@@ -106,7 +106,8 @@ class DiplomacyPolicy(BaseModel):
 class AIRulesV3(AIRulesV2):
     """v0.8: separate model so v0.6/v0.7 dumps (and pinned policy digests) never change."""
 
-    version: Literal["v0.8"]
+    # v0.9 (13B) reuses policy v3 unchanged: no frontier capability is given to the AI yet.
+    version: Literal["v0.8", "v0.9"]
     policy_version: Literal["utility-goals-v3"]
     diplomacy: DiplomacyPolicy
 

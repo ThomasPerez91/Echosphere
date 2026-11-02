@@ -23,6 +23,7 @@ from app.fleet.models import (
     FleetStack,
     ShipOrder,
 )
+from app.frontier import service as frontier
 from app.galaxy import service as galaxy
 from app.galaxy.models import GalaxyRoute, PlanetKnowledge
 from app.persistence.models import Colony, Planet
@@ -546,11 +547,31 @@ def merge(session, engine, universe_id, empire_id, fleet_id, target_id, *, key, 
         set_cargo(session, target.id, total)
         set_stacks(session, source.id, {})
         set_cargo(session, source.id, {})
-        source.status, source.system_id = "MERGED", None
+        source.status, source.system_id, source.protocol = "MERGED", None, None
         session.flush()
         return record(
             session, universe_id, empire_id, key, "merge", request, {"fleet_id": str(target.id)}, at
         )
+
+
+def set_protocol(session, engine, universe_id, empire_id, fleet_id, protocol, *, key, at):
+    """13B FC1: set (or clear with None) the first-contact protocol of a stationed task Fleet.
+    It holds until the Fleet leaves, merges or is destroyed, or the protocol is changed."""
+    with session.begin_nested():
+        rules = rules_for(session, universe_id)
+        frontier.check_protocol(rules, protocol)
+        operations(session, engine, universe_id, empire_id, at)
+        request = {"fleet_id": str(fleet_id), "protocol": protocol}
+        done = ledger(session, empire_id, key, "protocol", request)
+        if done is not None:
+            return done.result
+        fleet = stationed(owned_fleet(session, universe_id, empire_id, fleet_id))
+        if fleet.kind != "TASK":
+            raise FleetError("Only an operational (task) fleet holds a protocol", "protocol_task")
+        fleet.protocol = protocol
+        session.flush()
+        result = {"fleet_id": str(fleet.id), "protocol": protocol}
+        return record(session, universe_id, empire_id, key, "protocol", request, result, at)
 
 
 def colony_here(session, universe_id, empire_id, fleet, colony_id):
@@ -894,8 +915,11 @@ def launch(
                     route_id=route_id,
                 )
             )
+        # A departing Fleet ends its stationing, hence any frontier protocol (13B).
         fleet.status, fleet.system_id, fleet.active_mission_id = "MOVING", None, mission.id
+        fleet.protocol = None
         session.flush()
+        frontier.record_outbound(session, rules, mission, path, quote[1])
         if kind == "ATTACK":
             # No arrival event: the Combat orchestrator resolves the engagement at battle_at.
             from app.combat.service import open_engagement
@@ -1265,7 +1289,7 @@ def report_for(mission, event, processed_at, result):
 
 def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
     with session.begin_nested():
-        rules_for(session, universe_id)
+        rules = rules_for(session, universe_id)
         state = operations(session, engine, universe_id, empire_id, at)
         request = {"mission_id": str(mission_id)}
         done = ledger(session, empire_id, key, "recall", request)
@@ -1302,6 +1326,7 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         mission.status, mission.recalled_at = "returning", utc(at)
         mission.return_at = utc(at) + (utc(at) - mission.started_at)
         session.flush()
+        frontier.record_way_back(session, rules, mission, utc(at), utc(at))
         schedule(
             session,
             state.stream_id,
@@ -1348,6 +1373,13 @@ def recall_attack(session, state, mission, key, request, at):
         mission.status, mission.recalled_at = "returning", now
         mission.return_at = now + travelled
         session.flush()
+        frontier.record_way_back(
+            session,
+            ruleset_for(session, mission.universe_id),
+            mission,
+            now,
+            min(now, mission.travel_arrival_at),
+        )
         schedule(
             session,
             state.stream_id,

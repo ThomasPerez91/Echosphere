@@ -83,6 +83,7 @@ def test_migrations_roundtrip_and_no_model_drift(database_engine, migration_conf
         "relation_pairs",
         "relation_pacts",
         "relation_events",
+        "fleet_mission_passages",
         "event_streams",
         "colony_timelines",
         "resource_balances",
