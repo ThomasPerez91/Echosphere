@@ -25,7 +25,13 @@ def choose(observation, memory, profile, rules):
     if profile not in rules.profiles or len(observation["candidates"]) > rules.candidate_limit:
         raise ValueError("Invalid profile or candidate budget")
     rows = []
-    urgent = any(c["bootstrap"] and c["reason"] is None for c in observation["candidates"])
+
+    # Bootstrap (Q11) or, in v0.7, an under-defended colony under an announced attack: an
+    # eligible priority candidate preempts the others. v0.6 candidates carry no `priority` key.
+    def first(c):
+        return c["bootstrap"] or c.get("priority", False)
+
+    urgent = any(first(c) and c["reason"] is None for c in observation["candidates"])
     for c in observation["candidates"]:
         utility = c["utility"]
         if type(utility) is not int or not 0 <= utility <= 1000 or c["goal"] not in rules.goals:
@@ -37,7 +43,7 @@ def choose(observation, memory, profile, rules):
             or c["duration_us"] < 0
         ):
             raise ValueError("Costs and durations must be nonnegative integers")
-        reason = c["reason"] or ("bootstrap_priority" if urgent and not c["bootstrap"] else None)
+        reason = c["reason"] or ("bootstrap_priority" if urgent and not first(c) else None)
         rows.append(
             {
                 "key": c["key"],

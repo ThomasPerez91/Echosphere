@@ -4,14 +4,17 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 02/11/2026 — étape 12 COM00 |
+| Champ | État au 02/11/2026 — étape 12 COM00–COM10 réalisés, COM11 en cours |
 | --- | --- |
-| Objectif | Étape 12 Combat MVP, COM00→COM11, Q02/Q10 closes pour v0.7 |
-| Branche / base / PR | work/step-12-combat depuis master f79d9f6 ; PR Draft unique « Étape 12 — Combat MVP » |
+| Objectif | Étape 12 Combat MVP, Q02/Q10 closes pour v0.7 seulement |
+| Branche / base / PR | work/step-12-combat depuis master f79d9f6 ; PR #15 Draft unique |
 | Tête / agent | Claude Code seul écrivain ; tête et CI exactes dans la PR |
-| Départ vérifié | PR #14 fusionnée (merge f79d9f6, parents a33a452 + 034438f), CI post-merge 41358533969 success 5/5, master local = GitHub, arbre propre, aucune PR Combat concurrente, branche étape 11 conservée |
-| Décisions | Q02/Q10 closes pour le Combat MVP v0.7 seulement, [transcription](docs/01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026) ; Q03/Q04 global/Q14/Q18/Q25 ouvertes |
-| Suite | COM01 audit et fence temporelle, puis COM02–COM11 ; aucun merge, étape 13 non commencée |
+| Départ vérifié | PR #14 fusionnée (f79d9f6), CI post-merge 41358533969 5/5, master synchronisée, aucune PR concurrente |
+| Réalisé | v0.7 (militaires, combat.json, ai v2), résolveur pur, migration 0012 (fences, engagements, rapports, ATTACK, DESTROYED, 15 droits), ATTACK/rappel, fence temporelle, orchestrateur `app.combat.worker` + service Compose `combat-worker`, pertes/rapports/retour, API/UI, IA défensive, recette `smoke_combat_compose.py` en CI. [Contrat](docs/03-technical/combat-api-ui.md) |
+| Fence | Prouvée : `stream_fences` inclusives, production/renfort à 10:05 exclus d'une bataille de 10:00 même avec un worker Combat tardif (test PostgreSQL dédié, commande refusée `combat_pending`, IA en attente) |
+| Validation locale | Game PostgreSQL complet, tests Combat (19), IA v0.7, résolveur et règles ; Ruff ; Vitest 89, lint, build, Chromium Flottes 4 largeurs ; recette Compose Combat réelle réussie ; check_docs, diff --check |
+| Limites | Balance provisoire ; engagement `blocked` = streams gelés jusqu'à l'opérateur ; pas de modules de défense, butin, conquête, relations ni offensive IA |
+| Suite | COM11 : suites complètes, CI du SHA final, revue indépendante depuis f79d9f6, Ready, revue Codex GitHub si disponible ; aucun merge, étape 13 non commencée |
 
 ## Ancienne reprise rapide étape 11 — historique avant fusion
 

@@ -193,6 +193,12 @@ Ne pas élargir le périmètre sur la seule base de la passation.
   colonies propres, catch-up complet), une commande max par tour via services communs, clé
   `ai:<controller>:<sequence>:<op>`, grille 600 s sans rattrapage. Collecteur borné aux possessions/
   Knowledge propres, curseurs circulaires, politique pure JSON ; aucune ressource/flotte offerte.
+- Étape 12 : Combat v0.7 = ATTACK (planète connue, militaires seuls, cargo nul, carburant
+  aller-retour, `battle_at = max(arrivée, départ + 24 h)`), défenseur lié au lancement sous verrou
+  Planet sans verrou de son stream ; `stream_fences` gèlent les streams d'opérations à battle_at
+  (inclusif, worker et rattrapage) ; résolution hors handler par `app.combat.worker` (streams triés
+  UUID → engagement, rang, rattrapage exact, une transaction). Pertes militaires seules, aucun
+  butin/occupation/écriture Colony ; rapports après bataille seulement ; IA sans offensive.
 - FK et scopes par univers, propriété/permissions et fog côté serveur. controller_type ne prouve
   pas une identité. Futures API : GameSession → accès Universe/Membership → permissions → Entity.
 - Défense : réseau limité de modules persistants futur, pas de piles de canons. Colony possède

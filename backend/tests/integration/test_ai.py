@@ -743,6 +743,15 @@ def test_v07_defensive_military_goal_alert_and_no_offensive_capability(ai_world_
     assert str(human) not in str(alerted["alerts"])  # never the attacker's identity
     urgent = [c for c in alerted["candidates"] if c["goal"] == "military"]
     assert {c["utility"] for c in urgent} == {1000}
+    assert all(c["priority"] for c in urgent) and "priority" not in str(calm["candidates"])
+    # An eligible under-defended colony under attack preempts every other goal this turn.
+    with factory() as s:
+        c = s.get(AIController, cid)
+        from app.ai.policy import choose
+
+        choice = choose(alerted, {}, c.profile, authorize(s, c).ai)
+    chosen = next(x for x in alerted["candidates"] if x["key"] == choice["choice"])
+    assert chosen["goal"] == "military" or all(x["reason"] for x in urgent)
     # Even a forged offensive candidate is refused by the dispatcher's fixed capabilities.
     with pytest.raises(AIDenied, match="ai_mission_denied"), factory.begin() as s:
         c = s.get(AIController, cid)

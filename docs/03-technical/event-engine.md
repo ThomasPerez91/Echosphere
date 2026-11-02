@@ -157,3 +157,18 @@ distinct (`python -m app.ai.worker`) hors de tout handler.
   ordinaires, et la pause IA ne les arrête jamais.
 
 [Contrat technique](first-ai.md).
+
+Étape 12 : la table générique `stream_fences` gèle un stream à `fence_at` tant que la fence n'est
+pas levée.
+- Le Scheduler n'applique aucun événement dû après la fence, ni par le worker ni par le
+  rattrapage.
+- Le curseur ne la dépasse jamais, et un rattrapage plus lointain est signalé `fenced`.
+- Les commandes Flottes sont refusées avec `combat_pending` ; l'IA attend.
+
+La bataille est résolue hors handler par `app.combat.worker`.
+- **Verrous :** streams d'opérations triés par UUID, puis l'engagement.
+- **Préalable :** rattrapage exact jusqu'à `battle_at`.
+- **Transaction unique :** résolution, pertes, rapports, retour et levée des fences.
+
+Aucun handler ne prend le stream d'un autre Empire, et il n'existe pas de `COMBAT_BARRIER`.
+[Contrat technique](combat-api-ui.md).

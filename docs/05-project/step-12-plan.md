@@ -1,6 +1,7 @@
 # Étape 12 — Combat MVP
 
-**État courant : COM00 checkpoint post-merge ; COM01 audit en cours.**
+**État courant : COM00–COM10 réalisés sur la PR #15 ; COM11 (revue, CI, Ready) en cours.**
+[Contrat technique réalisé](../03-technical/combat-api-ui.md).
 Base master `f79d9f6d0c3ebd9d230344b5a0c2aeaef9f4ce6b` : étape 11 Première IA intégrée via PR #14,
 CI post-merge 41358533969 success 5/5 vérifiée le 02/11/2026, Q11 close. Branche unique
 `work/step-12-combat`, une PR Draft vers master. Claude Code seul écrivain du lot. Aucun merge
@@ -11,7 +12,7 @@ des résultats. **Q02 et Q10 sont closes pour le Combat MVP v0.7 seulement** par
 utilisateur explicite du 02/11/2026 : [décisions transcrites](../01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026).
 COM01 n'est pas un gate produit : seule une contradiction structurelle arrêterait le lot.
 
-| Ticket | Travail et preuve attendue |
+| Ticket | Travail et preuve attendue (réalisés COM00–COM10) |
 | --- | --- |
 | COM00 | Synchro post-merge, branche, PR Draft, statuts canoniques, transcription Q02/Q10, ce plan |
 | COM01 | Audit du code intégré, réponse prouvée à la question de la fence temporelle |

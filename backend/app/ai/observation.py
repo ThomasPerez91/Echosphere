@@ -221,7 +221,17 @@ def collect(session, controller, rules, at):
         for cid in colonies
     }
 
-    def add(goal, operation, body, utility, *, bootstrap=False, project_after=None, reason=None):
+    def add(
+        goal,
+        operation,
+        body,
+        utility,
+        *,
+        bootstrap=False,
+        project_after=None,
+        reason=None,
+        priority=False,
+    ):
         if len(candidates) >= cfg.candidate_limit:
             raise ObservationLimit("candidate_budget")
         cost, duration = dict.fromkeys(sorted(RESOURCES), 0), 0
@@ -308,6 +318,7 @@ def collect(session, controller, rules, at):
                 "duration_us": duration,
                 "project_after": project_after,
                 "manages_project": project_after is not None or operation == "unload",
+                **({"priority": True} if priority else {}),
             }
         )
 
@@ -566,6 +577,7 @@ def collect(session, controller, rules, at):
                 "order",
                 {"colony_id": cid, "ship": ship},
                 military.alert_utility if urgent else military.baseline_utility,
+                priority=urgent,
             )
     # Reject rather than silently truncate oversized/unbounded entity state.
     routes = list(
