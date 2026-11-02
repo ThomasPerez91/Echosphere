@@ -118,7 +118,7 @@ def stage_pairs(s, u, homes, count):
     """Disjoint (watched system, neighbour) pairs away from every home system, stable order."""
     used, pairs = set(homes), []
     for route in s.scalars(
-        select(GalaxyRoute).where(GalaxyRoute.universe_id == u).order_by(GalaxyRoute.route_id)
+        select(GalaxyRoute).where(GalaxyRoute.universe_id == u).order_by(GalaxyRoute.id)
     ):
         a, b = route.a_id, route.b_id
         if a in used or b in used:
@@ -128,6 +128,13 @@ def stage_pairs(s, u, homes, count):
         if len(pairs) == count:
             return pairs
     raise RuntimeError("Galaxy too small for the frontier recipe")
+
+
+def neighbours(s, u, system):
+    routes = select(GalaxyRoute).where(
+        GalaxyRoute.universe_id == u, (GalaxyRoute.a_id == system) | (GalaxyRoute.b_id == system)
+    )
+    return [r.b_id if r.a_id == system else r.a_id for r in s.scalars(routes.order_by(GalaxyRoute.id))]
 
 
 def settle(sessions, clock, until, step=timedelta(minutes=5)):
@@ -164,7 +171,11 @@ def setup(universe_id):
         for actor in everyone:  # test-only funds; every spending still goes through services
             for r in ("alloys", "flux", "data"):
                 s.get(ResourceBalance, (UUID(actor["colony_id"]), r)).stock = 9_000 * M
-        pairs = stage_pairs(s, u, homes, len(SCENARIOS) + 1)
+        # The retreat scenario's "previous system": next to bold's home, outside every watched
+        # pair, so that neither the friendly Fleet's way home nor the human's 1-hop ATTACK from
+        # there ever crosses another scenario's protocol (a real encounter would change them).
+        spare = next(n for n in neighbours(s, u, homes[2]) if n not in homes)
+        pairs = stage_pairs(s, u, [*homes, spare], len(SCENARIOS))
     plan = {
         # name: (watcher, protocol, watcher units, mover, mover units)
         # cautious and bold never met: anonymous both ways, then a voluntary introduction.
@@ -231,7 +242,6 @@ def setup(universe_id):
     # home where it never moved from; a human Fleet already there attacks at 0 hop (the pact is
     # only checked at battle_at, Q18: the retreat at launch happens anyway).
     with sessions.begin() as s:
-        spare, _ = pairs[len(SCENARIOS)]
         friend = place(s, bold, spare, {"interceptor": 1})
         back = fleets.launch(
             s, timeline, u, UUID(bold["empire_id"]), friend, "DEPLOY", homes[2],
@@ -244,18 +254,21 @@ def setup(universe_id):
             s, timeline, u, UUID(bold["empire_id"]), friend, "FRIENDLY_CONTACT",
             key="recipe:13b:friend:protocol", at=clock.at,
         )
-        far = place(s, human, homes[0], {"frigate": 2})
+        stay = place(s, cautious, homes[1], {"interceptor": 1})
+        fleets.set_protocol(
+            s, timeline, u, UUID(cautious["empire_id"]), stay, "FRIENDLY_CONTACT",
+            key="recipe:13b:local:protocol", at=clock.at,
+        )
+    # C04: a protocol covers only what happens strictly after its start; attack a minute later.
+    settle(sessions, clock, clock.at + timedelta(minutes=1))
+    with sessions.begin() as s:
+        far = place(s, human, spare, {"frigate": 2})  # 1 hop from bold's home
         strike = fleets.launch(
             s, timeline, u, UUID(human["empire_id"]), far, "ATTACK", None, {"frigate": 2}, None,
             key="recipe:13b:friend:attack", at=clock.at,
             target_planet_id=s.get(Colony, UUID(bold["colony_id"])).planet_id,
         )
         staged["retreat"]["attack_id"] = str(strike.id)
-        stay = place(s, cautious, homes[1], {"interceptor": 1})
-        fleets.set_protocol(
-            s, timeline, u, UUID(cautious["empire_id"]), stay, "FRIENDLY_CONTACT",
-            key="recipe:13b:local:protocol", at=clock.at,
-        )
         local = place(s, human, homes[1], {"frigate": 1})
         hit = fleets.launch(
             s, timeline, u, UUID(human["empire_id"]), local, "ATTACK", None, {"frigate": 1},
@@ -379,10 +392,19 @@ def proof(universe_id):
             .select_from(RelationContact)
             .where(RelationContact.universe_id == u, RelationContact.first_source == "frontier")
         )
+        # Nothing due may be left open at the staged instant; later entries (ways back, the
+        # retreat still travelling) legitimately wait for their own instant.
+        at = datetime.fromisoformat(staged["clock"])
+        unresolved = FleetPassage.state.in_(["pending", "blocked"])
         result["open_entries"] = s.scalar(
             select(func.count())
             .select_from(FleetPassage)
-            .where(FleetPassage.universe_id == u, FleetPassage.state.in_(["pending", "blocked"]))
+            .where(FleetPassage.universe_id == u, unresolved, FleetPassage.entered_at <= at)
+        )
+        result["future_entries"] = s.scalar(
+            select(func.count())
+            .select_from(FleetPassage)
+            .where(FleetPassage.universe_id == u, unresolved, FleetPassage.entered_at > at)
         )
         result["open_fences"] = s.scalar(
             select(func.count())
@@ -391,6 +413,7 @@ def proof(universe_id):
                 StreamFence.universe_id == u,
                 StreamFence.released_at.is_(None),
                 StreamFence.owner.like("frontier%"),
+                StreamFence.fence_at < at,
             )
         )
     engine.dispose()

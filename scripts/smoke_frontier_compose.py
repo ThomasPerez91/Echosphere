@@ -8,7 +8,7 @@ on an injected clock (Fleet service, FrontierOrchestrator, CombatOrchestrator, A
 the last entry is resolved by the real `worker` and `combat-worker` processes on the system
 clock. The UI is covered by Vitest (Fleet.test.tsx) and Chromium (`npm run test:e2e`).
 
-Status (02/11/2026): written in the cloud session, **never executed** (no Docker there).
+Status (02/11/2026): executed locally (WSL2 + Docker) and passed; run by the Full CI on master.
 """
 
 import json
