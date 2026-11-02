@@ -19,11 +19,20 @@ def project(session, known, permissions, at):
         empire_id=str(known.empire_id),
         permissions=[
             p
-            for p in ("galaxy.read", "colony.read", "fleet.command", "colony.expand")
+            for p in (
+                "galaxy.read",
+                "colony.read",
+                "fleet.command",
+                "colony.expand",
+                "combat.read",
+                "combat.attack",
+            )
             if p in permissions
         ],
         # Pinned ruleset only says whether COLONIZE exists (v0.5+); never who occupies a world.
         colonization=rules_for(session, known.universe_id).colonization is not None,
+        # Pinned ruleset only says whether ATTACK exists (v0.7+); never occupation or defence.
+        combat=rules_for(session, known.universe_id).combat is not None,
         routes=[],
         presences=[],
         colony_links=[],

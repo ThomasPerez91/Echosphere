@@ -17,6 +17,7 @@ from app.access.service import AccessError
 from app.colony.api import Colonies, bootstrap, call, command
 from app.colony.projection import amounts
 from app.colony.service import rules_for
+from app.combat import service as combat
 from app.control.models import EmpireBinding
 from app.fleet import service
 from app.fleet.models import Fleet, FleetMission, FleetReport, ShipOrder
@@ -46,7 +47,7 @@ class Order(Body):
 
 class Plan(Body):
     fleet_id: str = Field(pattern=UUID_PATTERN)
-    kind: Literal["DEPLOY", "SURVEY", "RETURN", "COLONIZE"]
+    kind: Literal["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK"]
     destination_id: str | None = Field(default=None, pattern=UUID_PATTERN)
     target_planet_id: str | None = Field(default=None, pattern=UUID_PATTERN)
     units: Units = Field(min_length=1, max_length=16)
@@ -150,6 +151,8 @@ def mission_view(session, mission, permissions):
         }
         if mission.target_planet_id
         else None,
+        # Own engagement state and battle instant only; the defender is never projected.
+        "attack": combat.attack_of(session, mission) if mission.kind == "ATTACK" else None,
         "report": {
             "observed_at": report.observed_at.isoformat(),
             "processed_at": report.processed_at.isoformat(),
@@ -215,7 +218,10 @@ def project(session, universe_id, empire_id, permissions, at):
     fleet_views = []
     for fleet in session.scalars(
         select(Fleet)
-        .where(Fleet.empire_id == empire_id, Fleet.status.notin_(("MERGED", "SETTLED")))
+        .where(
+            Fleet.empire_id == empire_id,
+            Fleet.status.notin_(("MERGED", "SETTLED", "DESTROYED")),
+        )
         .order_by(Fleet.kind, Fleet.created_at, Fleet.id)
     ):
         stacks = service.stacks_of(session, fleet.id)
@@ -320,8 +326,23 @@ def project(session, universe_id, empire_id, permissions, at):
         "fleets": fleet_views,
         "missions": [mission_view(session, m, permissions) for m in missions],
         "colonization": colonization,
+        "combat": combat_view(session, rules, universe_id, empire_id, permissions),
         # Destinations come from Knowledge only; DETECTED signals need galaxy.read (SURVEY).
         "systems": systems_view,
+    }
+
+
+def combat_view(session, rules, universe_id, empire_id, permissions):
+    """Ruleset terms; incoming alerts and dated reports only with combat.read."""
+    k = rules.combat
+    if k is None:
+        return None
+    readable = "combat.read" in permissions
+    return {
+        "classes": list(k.classes),
+        "min_warning_seconds": k.min_warning_seconds,
+        "alerts": combat.alerts_for(session, universe_id, empire_id) if readable else None,
+        "reports": combat.reports_for(session, universe_id, empire_id) if readable else None,
     }
 
 
@@ -419,6 +440,9 @@ class Fleets(Colonies):
 
     @staticmethod
     def mission_rights(kind):
+        if kind == "ATTACK":
+            # A dedicated right, never implied by fleet.command; colony.read stays optional.
+            return ("fleet.command", "galaxy.read", "combat.read", "combat.attack")
         if kind == "COLONIZE":
             # Founding is irreversible in v0.5: a dedicated right, never colony.construct.
             return ("fleet.command", "galaxy.read", "colony.expand")

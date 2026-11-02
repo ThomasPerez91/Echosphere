@@ -1,0 +1,344 @@
+"""Durable Combat resolution outside TimeEngine handlers (same Game image, `app.combat.worker`).
+
+One engagement per transaction, in rank order (battle_at, started_at, id):
+1. lock the involved Operations streams sorted by UUID, then the engagement row;
+2. refuse while a better-ranked engagement on the same system or Empire is unresolved;
+3. catch every stream up exactly to its fence at battle_at (inclusive), nothing later;
+4. snapshot the military forces, resolve purely, apply losses, write reports, schedule the
+   attacker's return and release the fences — all atomically. A crash before commit changes
+   nothing; after commit the engagement is resolved and never fought again.
+"""
+
+from datetime import timedelta
+from uuid import UUID
+
+from sqlalchemy import literal, or_, select, text, tuple_
+
+from app.colony.service import rules_for
+from app.combat.models import CombatEngagement, CombatReport
+from app.combat.resolver import allocate_losses, resolve, spec_from_rules
+from app.combat.service import release_fences
+from app.fleet import service as fleet_service
+from app.fleet.models import Fleet, FleetMission, FleetReport
+from app.galaxy import service as galaxy
+from app.simulation.clock import utc
+from app.simulation.scheduler import TimelineError, lock_stream, schedule
+from app.simulation.service import TimeEngine
+
+
+def blocker(session, engagement):
+    """A better-ranked engagement still awaiting resolution on the same system or Empire."""
+    rank = tuple_(
+        literal(engagement.battle_at), literal(engagement.started_at), literal(engagement.id)
+    )
+    empires = [e for e in (engagement.attacker_empire_id, engagement.defender_empire_id) if e]
+    return session.scalar(
+        select(CombatEngagement.id)
+        .where(
+            CombatEngagement.universe_id == engagement.universe_id,
+            CombatEngagement.state.in_(["pending", "blocked"]),
+            CombatEngagement.id != engagement.id,
+            tuple_(CombatEngagement.battle_at, CombatEngagement.started_at, CombatEngagement.id)
+            < rank,
+            or_(
+                CombatEngagement.target_system_id == engagement.target_system_id,
+                CombatEngagement.attacker_empire_id.in_(empires),
+                CombatEngagement.defender_empire_id.in_(empires),
+            ),
+        )
+        .limit(1)
+    )
+
+
+def military(stacks, classes):
+    return {c: n for c, n in sorted(stacks.items()) if c in classes and n}
+
+
+def side(combat, role):
+    return {k: combat[k][role] for k in ("initial", "losses", "survivors")}
+
+
+def report(engagement, empire_id, role, processed_at, result):
+    return CombatReport(
+        engagement_id=engagement.id,
+        empire_id=empire_id,
+        universe_id=engagement.universe_id,
+        role=role,
+        battle_at=engagement.battle_at,
+        processed_at=processed_at,
+        result=result,
+    )
+
+
+def resolve_engagement(session, engagement, processed_at):
+    rules = rules_for(session, engagement.universe_id)
+    k = rules.combat
+    mission = session.get(FleetMission, engagement.mission_id, populate_existing=True)
+    fleet = session.get(Fleet, mission.fleet_id, populate_existing=True)
+    if (
+        k is None
+        or mission.kind != "ATTACK"
+        or mission.status != "active"
+        or mission.due_at != engagement.battle_at
+        or fleet.active_mission_id != mission.id
+        or fleet.status != "MOVING"
+    ):
+        raise TimelineError("Inconsistent engagement")
+    fleet_service.verify_mission_snapshot(session, mission)
+    at = engagement.battle_at
+    attacking = military(fleet_service.stacks_of(session, fleet.id), k.classes)
+    defenders = {}
+    if engagement.defender_empire_id is not None:
+        # Every military unit of every STATIONED Fleet of the bound defender in the system.
+        for row in session.scalars(
+            select(Fleet)
+            .where(
+                Fleet.universe_id == engagement.universe_id,
+                Fleet.empire_id == engagement.defender_empire_id,
+                Fleet.status == "STATIONED",
+                Fleet.system_id == engagement.target_system_id,
+            )
+            .order_by(Fleet.id)
+        ):
+            units = military(fleet_service.stacks_of(session, row.id), k.classes)
+            if units:
+                defenders[str(row.id)] = units
+    total = {c: sum(u.get(c, 0) for u in defenders.values()) for c in k.classes}
+    spec = combat = None
+    if engagement.defender_empire_id is None:
+        outcome = "target_unavailable"
+        attacker_left = attacking
+    else:
+        spec = spec_from_rules(k, attacking, total)
+        combat = resolve(spec)
+        outcome = combat["outcome"]
+        attacker_left = military(combat["survivors"]["attacker"], k.classes)
+    target = {
+        "planet_id": str(engagement.target_planet_id),
+        "system_id": str(engagement.target_system_id),
+    }
+    engagement.snapshot = {
+        "ruleset": rules.version,
+        "combat_version": k.combat_version,
+        "engagement_id": str(engagement.id),
+        "battle_at": at.isoformat(),
+        "target": target,
+        "attacker": {
+            "empire_id": str(engagement.attacker_empire_id),
+            "fleet_id": str(fleet.id),
+            "units": attacking,
+        },
+        "defender": {
+            "empire_id": str(engagement.defender_empire_id)
+            if engagement.defender_empire_id
+            else None,
+            "fleets": defenders,
+        },
+        "spec": spec,
+    }
+    allocation = allocate_losses(defenders, combat["losses"]["defender"]) if combat else {}
+    # Defender losses: military units only; civilians and cargo are never touched.
+    for fleet_id, lost in allocation.items():
+        row = session.get(Fleet, UUID(fleet_id), populate_existing=True)
+        stacks = fleet_service.stacks_of(session, row.id)
+        left = {c: n - lost.get(c, 0) for c, n in stacks.items()}
+        fleet_service.set_stacks(session, row.id, left)
+        if row.kind == "TASK" and not any(left.values()):
+            row.status, row.system_id = "DESTROYED", None
+    engagement.result = {"outcome": outcome, "combat": combat, "defender_losses": allocation}
+    engagement.state, engagement.processed_at = "resolved", utc(processed_at)
+    engagement.error_code = engagement.retry_at = None
+    base = {"outcome": outcome, "target": target}
+    if combat is None:
+        session.add(
+            report(engagement, engagement.attacker_empire_id, "attacker", processed_at, base)
+        )
+    else:
+        for role, empire, other, opponent in (
+            ("attacker", engagement.attacker_empire_id, "defender", engagement.defender_empire_id),
+            ("defender", engagement.defender_empire_id, "attacker", engagement.attacker_empire_id),
+        ):
+            session.add(
+                report(
+                    engagement,
+                    empire,
+                    role,
+                    processed_at,
+                    base
+                    | {
+                        "opponent_empire_id": str(opponent),
+                        "own": side(combat, role),
+                        "opponent": side(combat, other),
+                        "rounds": combat["rounds"],
+                    },
+                )
+            )
+    # Attacker: survivors return to the mission origin (already paid), never stay at the target.
+    origin = UUID(mission.snapshot["origin_id"])
+    fleet_service.set_stacks(session, fleet.id, attacker_left)
+    closing = {"kind": "ATTACK", "engagement_id": str(engagement.id), "outcome": outcome}
+    if not attacker_left:
+        fleet.status, fleet.system_id, fleet.active_mission_id = "DESTROYED", None, None
+        mission.status, mission.completed_at = "completed", at
+        session.add(fleet_report(mission, at, processed_at, closing | {"destroyed": True}))
+    elif mission.origin_id == mission.destination_id:
+        session.add(
+            fleet_report(mission, at, processed_at, closing | {"destination_id": str(origin)})
+        )
+        fleet_service.settle_fleet(session, mission, origin, at)
+    else:
+        mission.status = "returning"
+        mission.return_at = at + (mission.travel_arrival_at - mission.started_at)
+        session.flush()
+        state = galaxy.state_for(session, mission.universe_id, mission.empire_id)
+        schedule(
+            session,
+            state.stream_id,
+            mission.universe_id,
+            key=f"fleet-return:{mission.id}",
+            kind="FLEET_RETURN",
+            due_at=mission.return_at,
+            payload={"mission_id": str(mission.id)},
+        )
+    session.flush()
+    release_fences(session, engagement, processed_at)
+    return outcome
+
+
+def fleet_report(mission, observed_at, processed_at, result):
+    return FleetReport(
+        mission_id=mission.id,
+        empire_id=mission.empire_id,
+        universe_id=mission.universe_id,
+        observed_at=observed_at,
+        processed_at=utc(processed_at),
+        result=result,
+    )
+
+
+class CombatOrchestrator:
+    def __init__(
+        self,
+        factory,
+        clock,
+        *,
+        lock_ms=5000,
+        statement_ms=20000,
+        retry_seconds=30,
+        max_attempts=3,
+        scan=20,
+    ):
+        if not (
+            1 <= lock_ms <= 60000
+            and lock_ms <= statement_ms <= 120000
+            and 1 <= retry_seconds <= 3600
+            and 1 <= max_attempts <= 10
+            and 1 <= scan <= 200
+        ):
+            raise ValueError("Invalid technical Combat limits")
+        self.factory, self.clock = factory, clock
+        self.engine = TimeEngine(factory, clock)
+        self.lock_ms, self.statement_ms = lock_ms, statement_ms
+        self.retry_seconds, self.max_attempts, self.scan = retry_seconds, max_attempts, scan
+
+    def due(self, engagement_id=None):
+        now = utc(self.clock.now())
+        query = select(CombatEngagement.id).where(
+            CombatEngagement.state == "pending",
+            CombatEngagement.battle_at <= now,
+            or_(CombatEngagement.retry_at.is_(None), CombatEngagement.retry_at <= now),
+        )
+        if engagement_id is not None:
+            query = query.where(CombatEngagement.id == engagement_id)
+        query = query.order_by(
+            CombatEngagement.battle_at, CombatEngagement.started_at, CombatEngagement.id
+        ).limit(self.scan)
+        with self.factory() as session:
+            return list(session.scalars(query))
+
+    def process_next(self, *, engagement_id=None, after_resolve=None, raise_errors=False):
+        """after_resolve is an internal crash-injection test seam, never a policy callback."""
+        for candidate in self.due(engagement_id):
+            outcome = self.attempt(candidate, after_resolve, raise_errors)
+            if outcome is not None:
+                return outcome
+        return None
+
+    def streams(self, session, engagement):
+        empires = [engagement.attacker_empire_id, engagement.defender_empire_id]
+        ids = {galaxy.state_for(session, engagement.universe_id, e).stream_id for e in empires if e}
+        return sorted(ids, key=str)
+
+    def catch_up(self, session, stream_id, universe_id, until):
+        while True:
+            progress = self.engine.catch_up_stream(
+                session, stream_id, universe_id, until, limit=1000
+            )
+            if progress.complete:
+                return True
+            if progress.fenced or progress.processed < 1000:
+                return False
+
+    def attempt(self, engagement_id, after_resolve, raise_errors):
+        claimed = None
+        try:
+            with self.factory.begin() as session:
+                session.execute(text(f"SET LOCAL lock_timeout = '{self.lock_ms}ms'"))
+                session.execute(text(f"SET LOCAL statement_timeout = '{self.statement_ms}ms'"))
+                peek = session.get(CombatEngagement, engagement_id)
+                if peek is None or peek.state != "pending":
+                    return None
+                streams = self.streams(session, peek)
+                for stream_id in streams:
+                    lock_stream(session, stream_id, peek.universe_id)
+                engagement = session.scalar(
+                    select(CombatEngagement)
+                    .where(CombatEngagement.id == engagement_id)
+                    .with_for_update()
+                    .execution_options(populate_existing=True)
+                )
+                now = utc(self.clock.now())
+                if (
+                    engagement.state != "pending"
+                    or engagement.battle_at > now
+                    or (engagement.retry_at is not None and engagement.retry_at > now)
+                    or blocker(session, engagement) is not None
+                ):
+                    return None
+                for stream_id in streams:
+                    if not self.catch_up(
+                        session, stream_id, engagement.universe_id, engagement.battle_at
+                    ):
+                        # An earlier fence or a blocked event: never fight on a partial state.
+                        return None
+                claimed = engagement.id
+                outcome = resolve_engagement(session, engagement, now)
+                if after_resolve is not None:
+                    after_resolve(session)
+                return {"engagement_id": str(engagement.id), "outcome": outcome}
+        except Exception:
+            if raise_errors or claimed is None:
+                raise
+            # Every loss, report, return and fence change rolled back; no payload logged.
+            with self.factory.begin() as session:
+                row = session.get(CombatEngagement, claimed, with_for_update=True)
+                if row is None or row.state != "pending":
+                    return {"engagement_id": str(claimed), "outcome": "superseded"}
+                row.attempts += 1
+                row.error_code = "resolution_failed"
+                row.retry_at = utc(self.clock.now()) + timedelta(seconds=self.retry_seconds)
+                if row.attempts >= self.max_attempts:
+                    row.state = "blocked"
+                return {
+                    "engagement_id": str(claimed),
+                    "outcome": "blocked" if row.state == "blocked" else "retry",
+                }
+
+
+def retry_blocked(session, engagement_id, now):
+    """Operator: requeue a repaired blocked engagement; its fences never moved meanwhile."""
+    row = session.get(CombatEngagement, engagement_id, with_for_update=True)
+    if row is None or row.state != "blocked":
+        raise TimelineError("Only a blocked engagement can be retried")
+    row.state, row.attempts, row.error_code, row.retry_at = "pending", 0, None, utc(now)
+    session.flush()

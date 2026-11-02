@@ -38,9 +38,7 @@ class CombatEngagement(Record, Base):
         ),
         UniqueConstraint("mission_id", name="uq_combat_engagements_mission"),
         UniqueConstraint("id", "universe_id", name="uq_combat_engagements_scope"),
-        CheckConstraint(
-            "state IN ('pending','resolved','cancelled','blocked')", name="state"
-        ),
+        CheckConstraint("state IN ('pending','resolved','cancelled','blocked')", name="state"),
         CheckConstraint(
             "travel_arrival_at >= started_at AND battle_at >= travel_arrival_at "
             "AND battle_at > started_at",
