@@ -7,14 +7,14 @@ Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/R
 | Champ | État au 02/11/2026 — étape 13 R00/R01 documentaires réalisés, Q18 proposée, arrêt avant R02 |
 | --- | --- |
 | Objectif | Étape 13 Relations IA minimales : audit du code intégré et proposition Q18 uniquement |
-| Branche / base / PR | work/step-13-ai-relations depuis master 067a4e58863b910785764591d8bf3af4b0ec18e0 ; PR Draft unique vers master à ouvrir |
-| Tête / agent | Claude Code seul écrivain ; commits locaux R00/R01. **Non publiés** : push refusé (403, accès GitHub de Claude non lié à ce dépôt pour l'organisation), donc ni PR Draft ni CI à ce checkpoint |
+| Branche / base / PR | work/step-13-ai-relations depuis master 067a4e58863b910785764591d8bf3af4b0ec18e0 ; [PR #16](https://github.com/ThomasPerez91/Echosphere/pull/16) Draft, unique |
+| Tête / agent | Claude Code seul écrivain ; R00/R01 en 52767bc, publié après rétablissement de l'accès GitHub (push d'abord refusé 403). Tête et CI exactes dans la PR |
 | Départ vérifié | PR #15 fusionnée (merge 067a4e5, parents f79d9f6 / 589ce60) ; Full CI post-merge 41375165508 : 5 jobs success sur 067a4e5, `static-checks` sauté par conception (PR seulement) ; aucune PR ouverte ; clone neuf, arbre propre |
 | Réalisé | R00 statuts canoniques (étape 12 historique, étape 13 courante) ; R01 audit prouvé et proposition Q18 B1–B12. [Plan](docs/05-project/step-13-plan.md), [proposition Q18](docs/01-game-design/relations.md) |
 | Constats clés | Aucun contact/relation en base ; hostilité universelle implicite ; identité étrangère seulement par rapport de combat ; aucune présence étrangère projetée ; une relation ne peut filtrer ATTACK qu'à `battle_at` (non-fuite) |
 | Validation locale | python3 scripts/check_docs.py ; git diff --check. Aucun test runtime, Compose ou Alembic relancé (lot documentaire) |
 | Limites | Q18 ouverte ; aucun code, migration, ruleset ou UI relations. Valeurs 72 h/24 h provisoires non simulées |
-| Suite | Publier la branche et ouvrir la PR Draft dès que l'accès GitHub le permet, relire SHA/CI ; faire valider B1–B12 avant R02 ; aucun merge |
+| Suite | Faire valider Q18 B1–B12 (avec amendements éventuels) avant R02 ; aucun merge |
 
 ## Ancienne reprise rapide étape 12 — historique avant fusion
 
