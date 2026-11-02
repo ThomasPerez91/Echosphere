@@ -155,6 +155,22 @@ autorisés sans nouvelle validation produit intermédiaire, sauf contradiction r
   envoyées, expiration, rupture en préavis, historique, alertes, actions disponibles. Design dérivé
   du design system existant, responsive et clavier, sans esthétique nouvelle.
 
+### Amendement du 02/11/2026 (après R02–R10)
+
+Provenance : instruction utilisateur explicite, avant le contrôle runtime local.
+- **Réponse IA :** prioritaire sur les décisions stratégiques ordinaires, mais préemptable par le
+  bootstrap économique indispensable d'une Colony ou la défense urgente d'une Colony attaquée.
+  Cadence inchangée (un tour / 10 min, une commande au plus) ; une réponse peut arriver quelques
+  tours plus tard.
+- **Contact `diplomacy` :** une proposition valide présente volontairement son auteur. A connaît B
+  et propose à B → B acquiert un contact orienté durable vers A, à la date logique de la
+  proposition, révélant seulement l'identité, la date et la source `diplomacy` (aucune planète,
+  colonie, position, flotte, stock ni Research). Retrait, refus ou expiration ne l'effacent jamais ;
+  B peut ensuite proposer à A selon les règles et délais normaux. Sources de contact : `combat`,
+  `presence`, `diplomacy`. Correction portée directement par la migration 0013, jamais intégrée.
+- **Budget IA v0.8 :** pages Économie 28, Recherche 16, Exploration 20, Expansion 24, Logistique 16,
+  Militaire 16, Diplomatie 8 (total 128) ; curseurs persistants, parcours circulaire, anti-famine.
+
 ## Références
 
 - [Combat Q02/Q10](combat.md) · [Brouillard Q08](fog-of-war.md) · [Modes Q25/Q28](game-modes.md)

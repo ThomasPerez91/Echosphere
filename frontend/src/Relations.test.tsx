@@ -30,6 +30,9 @@ test("StrictMode mount reads only; contacts, states, dated facts and alerts from
   const allyCard = screen.getByRole("heading", { name: "Concorde" }).closest("li")!;
   expect(within(allyCard).getByText("Pacte actif")).toBeVisible();
   expect(within(allyCard).getByText("Rencontré au combat", { exact: false })).toBeVisible();
+  const partnerCard = screen.getByRole("heading", { name: "Ligue Aurorale" }).closest("li")!;
+  expect(within(partnerCard).getByText("Présenté par une proposition de pacte", { exact: false })).toBeVisible();
+  expect(within(partnerCard).queryByText("Présence observée")).toBeNull();
   // An incoming proposal is an alert of its own.
   const alerts = screen.getByRole("heading", { name: "Alertes diplomatiques" }).closest("section")!;
   expect(within(alerts).getByText("Ligue Aurorale")).toBeVisible();

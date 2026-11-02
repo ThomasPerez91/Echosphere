@@ -35,7 +35,8 @@ export function relations(list: Relation[] = [neutral()], canNegotiate = true): 
 
 export const received = neutral({
   empire: { id: partner, name: "Ligue Aurorale" },
-  contact: null,
+  // Introduced by its own proposal: identity and date only, never a place.
+  contact: { first_source: "diplomacy", first_seen_at: "2099-01-01T00:00:00Z", last_seen_at: "2099-01-01T00:00:00Z", presence: null },
   proposal: { direction: "received", proposed_at: "2099-01-01T00:00:00Z", expires_at: "2099-01-04T00:00:00Z" },
   actions: ["accept", "refuse"],
 });

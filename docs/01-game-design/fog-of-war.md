@@ -33,3 +33,5 @@ Q18 (étape 13) : une colonie étrangère observée dans un système réellement
 orienté limité à Empire, planète et `observed_at` ; perdre MONITORED n'efface pas le contact.
 [Relations](relations.md). Détection de flottes, niveaux comparés et observation de flotte datée :
 [présence frontalière et premier contact](first-contact.md) (Q57/Q58, lot 13B). Détection ≠ contact nommé.
+Une proposition de pacte valide présente aussi son auteur au destinataire (source `diplomacy` :
+identité et date seulement, aucune donnée spatiale).

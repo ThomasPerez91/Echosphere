@@ -484,3 +484,42 @@ def test_contacts_are_stored_once_per_observer_and_only_move_forward(fleets):
         assert count == 2
     contact = relation_of(a, b)["contact"]
     assert contact["first_seen_at"] == first and contact["last_seen_at"] > first
+
+
+def test_a_proposal_introduces_the_proposer_durably_without_any_place(fleets):
+    """Q18 amendment: A knows B, B does not know A; A's valid proposal gives B a durable
+    oriented contact (source diplomacy, identity and date only)."""
+    a, b = rivals(fleets)
+    meet(a, b, both=False)
+    assert relation_of(b, a) is None
+    sent = act(a, b, "propose")
+    assert sent.status_code == 200
+    introduced = relation_of(b, a)["contact"]
+    assert introduced == {
+        "first_source": "diplomacy",
+        "first_seen_at": sent.json()["result"]["at"],
+        "last_seen_at": sent.json()["result"]["at"],
+        "presence": None,
+    }
+    planet, system = planet_of(a)
+    leak = str(rel(b).json())
+    assert str(planet) not in leak and str(system) not in leak and str(a.colony) not in leak
+    # Refusal never makes B forget A; B may now propose itself (A's cooldown is A's only).
+    assert act(b, a, "refuse").status_code == 200
+    assert relation_of(b, a)["contact"]["first_source"] == "diplomacy"
+    assert relation_of(b, a)["actions"] == ["propose"]
+    assert act(b, a, "propose").status_code == 200
+    assert act(b, a, "withdraw").status_code == 200  # withdrawal: contact kept as well
+    assert relation_of(b, a)["contact"]["first_source"] == "diplomacy"
+    # After A's cooldown, A proposes again and lets it expire: B still knows A.
+    a.advance(hours=24)
+    reenter(a, b)
+    assert act(a, b, "propose").status_code == 200
+    a.advance(hours=72)
+    reenter(a, b)
+    assert relation_of(b, a)["proposal"] is None
+    assert relation_of(b, a)["contact"]["first_source"] == "diplomacy"
+    assert act(b, a, "propose").status_code == 200
+    with a.game.factory() as s:
+        row = s.get(RelationContact, (b.empire, a.empire))
+        assert row.presence_planet_id is None and row.presence_observed_at is None

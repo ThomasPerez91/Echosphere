@@ -5,7 +5,7 @@ export type Empire = { id: string; name: string };
 export type RelationAction = "propose" | "withdraw" | "accept" | "refuse" | "terminate";
 /** Oriented own contact: how and when this Empire learned of the other; presence is dated. */
 export type Contact = {
-  first_source: "combat" | "presence";
+  first_source: "combat" | "presence" | "diplomacy";
   first_seen_at: string;
   last_seen_at: string;
   presence: { planet_id: string; planet_name: string | null; system_id: string | null; system_name: string | null; observed_at: string } | null;
@@ -51,9 +51,11 @@ const presence = (v: unknown) =>
   v === null || (object(v) && exactKeys(v, ["planet_id", "planet_name", "system_id", "system_name", "observed_at"]) &&
     id(v.planet_id) && nullableText(v.planet_name) && (v.system_id === null || id(v.system_id)) &&
     nullableText(v.system_name) && date(v.observed_at));
+// A diplomatic introduction reveals identity and date only; a place only ever comes from a
+// later own presence observation of the same Empire.
 const contact = (v: unknown) =>
   v === null || (object(v) && exactKeys(v, ["first_source", "first_seen_at", "last_seen_at", "presence"]) &&
-    ["combat", "presence"].includes(String(v.first_source)) && date(v.first_seen_at) && date(v.last_seen_at) &&
+    ["combat", "presence", "diplomacy"].includes(String(v.first_source)) && date(v.first_seen_at) && date(v.last_seen_at) &&
     presence(v.presence));
 const pact = (v: unknown) =>
   v === null || (object(v) && date(v.accepted_at) &&

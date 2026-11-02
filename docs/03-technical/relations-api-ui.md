@@ -8,7 +8,7 @@ Hors périmètre : [présence frontalière et premier contact (13B)](../01-game-
 
 | Table | Rôle | Garanties |
 | --- | --- | --- |
-| `relation_contacts` | « observateur connaît observé », orienté, durable | PK (observateur, observé), FK Empires/planète par univers, `first_source` ∈ {combat, presence}, dates monotones |
+| `relation_contacts` | « observateur connaît observé », orienté, durable | PK (observateur, observé), FK Empires/planète par univers, `first_source` ∈ {combat, presence, diplomacy}, dates monotones |
 | `relation_pairs` | Une ligne par paire non ordonnée (low < high) : proposition ouverte, délais après refus, dernier acte hostile de chaque camp | CHECK ordre, cohérence et camp de la proposition |
 | `relation_pacts` | Acceptation immuable ; un seul préavis (`notice_at`, `ends_at`) | Signataires distincts, préavis cohérent, au plus un pacte sans préavis par paire (index unique partiel) |
 | `relation_events` | Journal immuable et registre d'idempotence des négociations | UNIQUE (acteur, clé), FK paire |
@@ -40,6 +40,12 @@ humain automatique.
   hostile de l'attaquant daté à `battle_at` et contacts orientés `combat` dans les deux sens.
 - ATTACK n'est jamais refusée au lancement pour une raison de relation (non-fuite inchangée).
 
+## Contact par proposition (`diplomacy`)
+
+`propose` valide crée (ou conserve) dans la même transaction le contact destinataire → auteur, à
+la date logique de la proposition, sans planète ni autre donnée. Il survit au retrait, au refus et
+à l'expiration ; le destinataire peut ensuite proposer à son tour (délais normaux).
+
 ## Contacts par présence
 
 `galaxy.refresh_monitoring` (GET Galaxie/System View, handlers, tour IA) : en v0.8 seulement, pour
@@ -65,7 +71,8 @@ contraire).
 ## IA (policy `utility-goals-v3`)
 
 Famille `diplomacy` (poids 5/100 pour les deux profils). Un emplacement répond à la plus ancienne
-proposition reçue (candidat prioritaire) ; les autres visitent circulairement les propres contacts
+proposition reçue (candidat prioritaire sur les familles ordinaires, préemptable par un bootstrap
+économique ou une défense urgente, qui pèsent plus lourd) ; les autres visitent circulairement les propres contacts
 pour une proposition spontanée selon la règle du profil. Le dispatcher n'autorise que `propose`,
 `accept`, `refuse` : jamais retrait, rupture ni ATTACK. Capabilities internes `relations.read` /
 `relations.negotiate` portées par le dispatcher seul, sans identité humaine.

@@ -34,7 +34,7 @@ CREATE TABLE relation_contacts (
 	CONSTRAINT fk_relation_contacts_observed FOREIGN KEY(observed_empire_id, universe_id) REFERENCES empires (id, universe_id),
 	CONSTRAINT fk_relation_contacts_presence_planet FOREIGN KEY(presence_planet_id, universe_id) REFERENCES planets (id, universe_id),
 	CONSTRAINT ck_relation_contacts_sides CHECK (observer_empire_id <> observed_empire_id),
-	CONSTRAINT ck_relation_contacts_source CHECK (first_source IN ('combat','presence')),
+	CONSTRAINT ck_relation_contacts_source CHECK (first_source IN ('combat','presence','diplomacy')),
 	CONSTRAINT ck_relation_contacts_seen CHECK (last_seen_at >= first_seen_at),
 	CONSTRAINT ck_relation_contacts_presence CHECK ((presence_planet_id IS NULL) = (presence_observed_at IS NULL))
 )

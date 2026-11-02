@@ -4,17 +4,18 @@ Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 02/11/2026 — étape 13 R02–R10 implémentés, validation locale PostgreSQL/Compose attendue |
+| Champ | État au 02/11/2026 — étape 13 R02–R10 + amendement Q18 (contact `diplomacy`) implémentés, validation locale attendue |
 | --- | --- |
 | Objectif | Étape 13 Relations IA minimales selon Q18 close (contacts, `NO_AGREEMENT`/`PACT`, pacte, IA diplomacy v3, UI Relations) |
 | Branche / base / PR | work/step-13-ai-relations depuis master 067a4e5 ; [PR #16](https://github.com/ThomasPerez91/Echosphere/pull/16) **Draft**, unique |
 | Tête / agent | Claude Code seul écrivain ; tête et CI exactes dans la PR |
 | Réalisé | v0.8 (relations.json, ai.json v3), domaine `app.relations`, migration 0013 (4 tables, 17 droits), contacts Combat/présence, pacte à `battle_at` (`voided_by_pact`), API et UI Relations, IA diplomacy, suite PostgreSQL et recette Compose écrites. [Contrat](docs/03-technical/relations-api-ui.md) |
+| Amendement | 02/11/2026 : contact `diplomacy` créé par une proposition valide (CHECK 0013 corrigé en place, ORM, projection, UI, docs, tests PostgreSQL) ; priorité de réponse IA préemptable par bootstrap/défense urgente prouvée par test pur ; pages IA v0.8 et borne anti-famine testées |
 | Validé ici | Fast CI de la PR (ruff backend/scripts, tests purs dont `test_relations_rules.py`, Vitest 8 fichiers dont `Relations.test.tsx` 7 tests et `Fleet.test.tsx` 33, lint et builds, docs, diff --check) ; check_docs local |
 | **Non exécuté** | Environnement de session sans registres pip/npm ni Docker : **aucune suite PostgreSQL** (`test_relations.py` et non-régression Combat/IA/Flottes), **aucun Alembic upgrade/check/downgrade**, **aucun Chromium**, **aucune recette Compose** (`smoke_relations_compose.py`) n'a tourné. Rien n'est déclaré réussi pour ces niveaux |
 | Contrôle local à faire | `cd backend && RUN_DB_TESTS=1 POSTGRES_DB=<base>_test .venv/bin/pytest -q` (suite complète, dont `tests/integration/test_relations.py`) ; `alembic upgrade head && alembic check` puis downgrade 0012 sur base vide ; `(cd frontend && npm ci && npm run lint && npm test && npm run build && npm run test:e2e)` ; `docker compose build && python3 scripts/smoke_relations_compose.py` (et `smoke_combat_compose.py`, `smoke_ai_compose.py` en non-régression) |
 | Risques | Code SQL des relations jamais exécuté contre PostgreSQL ; la recette attend jusqu'à 25 min la réponse IA (une priorité de survie ou de défense peut passer avant) ; balance 72 h/24 h non simulée |
-| Suite | Après contrôle local : corriger les écarts éventuels, revue finale R11, CI, puis Ready ; aucun merge sans autorisation. 13B non commencé |
+| Suite | Après contrôle local réussi : corrections éventuelles, R11 (revue indépendante complète depuis 067a4e5, Fast CI du nouveau HEAD, Ready, revue Codex GitHub, tous les fils traités) ; aucun merge. 13B non commencé |
 
 ## Ancienne reprise Q18 close étape 13 — historique
 

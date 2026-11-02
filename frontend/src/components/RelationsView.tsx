@@ -37,6 +37,10 @@ const historyLabels: Record<HistoryEntry["kind"], [string, string]> = {
   notice: ["Vous avez notifié la rupture du pacte", "L’autre Empire a notifié la rupture du pacte"],
 };
 
+const sourceLabels: Record<NonNullable<Relation["contact"]>["first_source"], string> = {
+  combat: "Rencontré au combat", presence: "Présence observée", diplomacy: "Présenté par une proposition de pacte",
+};
+
 function status(r: Relation) {
   if (r.pact?.notice) return { label: "Pacte en préavis", tone: "warning" as const };
   if (r.pact) return { label: "Pacte actif", tone: "accent" as const };
@@ -46,9 +50,9 @@ function status(r: Relation) {
 function Facts({ r }: { r: Relation }) {
   return <dl className="fleet-dates">
     {r.contact ? <>
-      <div><dt>Contact</dt><dd>{r.contact.first_source === "combat" ? "Rencontré au combat" : "Présence observée"} · {time(r.contact.first_seen_at)}</dd></div>
+      <div><dt>Contact</dt><dd>{sourceLabels[r.contact.first_source]} · {time(r.contact.first_seen_at)}</dd></div>
       {r.contact.presence && <div><dt>Présence observée</dt><dd>{r.contact.presence.planet_name ?? "Monde"}{r.contact.presence.system_name ? ` — ${r.contact.presence.system_name}` : ""} · {time(r.contact.presence.observed_at)}</dd></div>}
-    </> : <div><dt>Contact</dt><dd>Connu par sa proposition uniquement</dd></div>}
+    </> : <div><dt>Contact</dt><dd>Aucun contact propre</dd></div>}
     {r.pact && <div><dt>Pacte depuis</dt><dd>{time(r.pact.accepted_at)}</dd></div>}
     {r.pact?.notice && <div><dt>Fin du pacte</dt><dd>{time(r.pact.notice.ends_at)} ({r.pact.notice.by === "self" ? "rupture notifiée par vous" : "rupture notifiée par l’autre Empire"})</dd></div>}
     {r.proposal && <div><dt>{r.proposal.direction === "sent" ? "Proposition envoyée" : "Proposition reçue"}</dt><dd>Expire {time(r.proposal.expires_at)}</dd></div>}

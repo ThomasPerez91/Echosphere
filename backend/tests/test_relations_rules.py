@@ -131,3 +131,68 @@ def test_proposal_expiry_cooldown_and_grievance_are_pure_date_comparisons():
     assert not recent(None, T, window)
     assert recent(T - 71 * H, T, window)
     assert not recent(T - 72 * H, T, window)  # exactly 72 h old: no longer a recent grievance
+
+
+def candidate(key, goal, utility, *, bootstrap=False, priority=False):
+    return {
+        "key": key,
+        "goal": goal,
+        "utility": utility,
+        "bootstrap": bootstrap,
+        "reason": None,
+        "cost": {"alloys": 0, "flux": 0, "data": 0},
+        "duration_us": 0,
+        **({"priority": True} if priority else {}),
+    }
+
+
+@pytest.mark.parametrize("profile", ["economic_cautious", "expansionist"])
+def test_an_eligible_incoming_proposal_answer_precedes_every_ordinary_family(profile):
+    from app.ai.policy import choose
+
+    rules = load_ruleset("v0.8").ai
+    ordinary = [
+        candidate(f"{goal}-best", goal, 1000)
+        for goal in ("economy", "research", "exploration", "expansion", "logistics", "military")
+    ]
+    answer = candidate("answer", "diplomacy", rules.diplomacy.response_utility, priority=True)
+    proposal = candidate("propose", "diplomacy", rules.diplomacy.proposal_utility)
+    trace = choose({"candidates": [*ordinary, proposal, answer]}, {}, profile, rules)
+    # Ordinary families score up to 35 000 against 5 000, yet the answer is chosen.
+    assert trace["choice"] == "answer"
+    assert {r["reason"] for r in trace["evaluated"] if r["key"] != "answer"} == {
+        "bootstrap_priority"
+    }
+
+
+def test_bootstrap_or_urgent_defence_may_preempt_the_answer():
+    from app.ai.policy import choose
+
+    rules = load_ruleset("v0.8").ai
+    answer = candidate("answer", "diplomacy", rules.diplomacy.response_utility, priority=True)
+    survival = candidate("producer", "economy", 1000, bootstrap=True)
+    defence = candidate("interceptor", "military", rules.military.alert_utility, priority=True)
+    assert choose({"candidates": [answer, survival]}, {}, "economic_cautious", rules)[
+        "choice"
+    ] == "producer"
+    assert choose({"candidates": [answer, defence]}, {}, "economic_cautious", rules)[
+        "choice"
+    ] == "interceptor"
+
+
+@pytest.mark.parametrize("family", ["economy", "exploration", "diplomacy"])
+def test_new_v08_pages_keep_the_circular_anti_famine_bound(family):
+    from app.ai.policy import circular_page
+
+    rules = load_ruleset("v0.8").ai
+    assert sum(rules.family_pages.values()) == rules.candidate_limit == 128
+    size = rules.family_pages[family] - (1 if family == "diplomacy" else 0)
+    for count in (1, size - 1, size, size + 1, 3 * size + 5):
+        references = list(range(count))
+        bound = -(-count // size)  # ceil(M/P)
+        for target in references:
+            cursor, seen = 0, False
+            for _ in range(bound):
+                page, cursor = circular_page(references, cursor, size)
+                seen = seen or target in page
+            assert seen, (family, count, target)

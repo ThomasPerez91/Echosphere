@@ -7,8 +7,9 @@ compares server logical dates; nothing is scheduled and nothing depends on worke
 - a pact covers `at` while `accepted_at <= at < ends_at` (`ends_at` NULL = no notice yet).
 
 Fog: a contact is created only from a legitimate own observation (a Combat report naming the
-opponent, or a foreign Colony in a system MONITORED by an own Colony). It reveals the Empire,
-and for presence the planet and observation date only.
+opponent, or a foreign Colony in a system MONITORED by an own Colony) or from a deliberate
+introduction (a valid pact proposal: the recipient learns the proposer, source `diplomacy`). It
+reveals the Empire and its date; only a presence adds the observed planet.
 """
 
 from datetime import datetime
@@ -261,6 +262,9 @@ def propose(session, universe_id, empire_id, counterpart_id, *, key, at):
         raise RelationError("Recently refused proposal", "proposal_cooldown")
     expires = at + terms.proposal_ttl
     row.proposal_by_empire_id, row.proposed_at, row.proposal_expires_at = empire_id, at, expires
+    # A valid proposal introduces the proposer: the recipient keeps a durable oriented contact
+    # (identity and date only), never forgotten after withdrawal, refusal or expiry.
+    record_contact(session, universe_id, counterpart_id, empire_id, "diplomacy", at)
     return journal(
         session,
         row,
