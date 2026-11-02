@@ -4,19 +4,19 @@ Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide
 
-| Champ | État au 02/11/2026 — étape 12 COM00–COM10 réalisés, COM11 en cours |
+| Champ | État au 02/11/2026 — étape 12 COM00–COM11 réalisés, PR Ready, en attente d'autorisation de merge |
 | --- | --- |
 | Objectif | Étape 12 Combat MVP, Q02/Q10 closes pour v0.7 seulement |
-| Branche / base / PR | work/step-12-combat depuis master f79d9f6 ; PR #15 Draft unique |
+| Branche / base / PR | work/step-12-combat depuis master f79d9f6 ; PR #15 Ready, unique |
 | Tête / agent | Claude Code seul écrivain ; tête et CI exactes dans la PR |
 | Départ vérifié | PR #14 fusionnée (f79d9f6), CI post-merge 41358533969 5/5, master synchronisée, aucune PR concurrente |
 | Réalisé | v0.7 (militaires, combat.json, ai v2), résolveur pur, migration 0012 (fences, engagements, rapports, ATTACK, DESTROYED, 15 droits), ATTACK/rappel, fence temporelle, orchestrateur `app.combat.worker` + service Compose `combat-worker`, pertes/rapports/retour, API/UI, IA défensive, recette `smoke_combat_compose.py` en CI. [Contrat](docs/03-technical/combat-api-ui.md) |
 | Fence | Prouvée : `stream_fences` inclusives, production/renfort à 10:05 exclus d'une bataille de 10:00 même avec un worker Combat tardif (test PostgreSQL dédié, commande refusée `combat_pending`, IA en attente) |
-| Validation locale | Game PostgreSQL complet 439, dont Combat (19), IA v0.7, résolveur et règles ; Ruff (`ruff check backend scripts`) ; Vitest 89, lint, build, Chromium 35 ; recette Compose Combat réelle réussie ; check_docs, diff --check |
+| Validation locale | Game PostgreSQL complet 442 sur le code final, dont Combat (22), IA v0.7, résolveur et règles ; Ruff (`ruff check backend scripts`) ; Vitest 89, lint, build, Chromium 35 ; recette Compose Combat réelle réussie ; check_docs, diff --check |
 | Revue | Revue indépendante du diff depuis f79d9f6 : aucune fuite du défenseur avant bataille (devis/réponse identiques, état d'attaque et alerte à clés exactes), aucune double résolution (état sous verrou, fences levées dans la transaction), aucun état futur (fences inclusives), ordres de verrous stream→Planet et streams triés→engagement sans inversion, aucun handler multi-Empire, snapshots v0.4/v0.5 inchangés, civils/cargo/colonies jamais touchés, aucun butin, IA sans capability offensive. Écart corrigé en revue : lint CI des scripts |
-| CI | Tête finale et CI exactes dans la PR ; 5c9c398 push 41366168805 success 5/5 ; 682a283 : compose-smoke (recette Combat) vert, backend rouge sur un lint de script corrigé en 1fce306 |
+| CI / revue auto | 393572a push 41369226734 et PR 41369232244 success 5/5 (439 Game, 124 Portal, 89 Vitest + 35 Chromium, recettes IA et Combat). PR #15 Ready ; revue Codex GitHub : 2 constats (P1 famine de l'orchestrateur derrière des engagements bloqués, P2 alertes évincées par l'historique) corrigés en 7825d52, puis 1 constat (P2 timeout de verrou) corrigé en 6c83aa7 ; nouvelle revue sur 6c83aa7 sans constat (👍), 0 fil non résolu. Tête finale et sa CI exactes dans la PR |
 | Limites | Balance provisoire ; engagement `blocked` = streams gelés jusqu'à l'opérateur ; pas de modules de défense, butin, conquête, relations ni offensive IA |
-| Suite | COM11 : suites complètes, CI du SHA final, revue indépendante depuis f79d9f6, Ready, revue Codex GitHub si disponible ; aucun merge, étape 13 non commencée |
+| Suite | Attendre l'autorisation explicite de merge ; aucun merge, étape 13 non commencée |
 
 ## Ancienne reprise rapide étape 11 — historique avant fusion
 

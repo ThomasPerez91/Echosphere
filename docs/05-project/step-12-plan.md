@@ -1,6 +1,6 @@
 # Étape 12 — Combat MVP
 
-**État courant : COM00–COM10 réalisés sur la PR #15 ; COM11 (revue, CI, Ready) en cours.**
+**État courant : COM00–COM11 réalisés sur la PR #15, Ready ; aucun merge sans autorisation.**
 [Contrat technique réalisé](../03-technical/combat-api-ui.md).
 Base master `f79d9f6d0c3ebd9d230344b5a0c2aeaef9f4ce6b` : étape 11 Première IA intégrée via PR #14,
 CI post-merge 41358533969 success 5/5 vérifiée le 02/11/2026, Q11 close. Branche unique
