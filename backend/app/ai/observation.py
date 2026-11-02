@@ -535,6 +535,38 @@ def collect(session, controller, rules, at):
                 task,
                 supply={"colony_id": cid, "package": package},
             )
+    # v0.7 defensive goal: keep a few military units at each own colony; an own incoming alert
+    # (planet, battle_at, state: the defender's legitimate knowledge) raises its utility.
+    # Never an offensive candidate: the dispatcher has no combat capability at all.
+    alerts = []
+    military = getattr(cfg, "military", None)
+    if military is not None:
+        from app.combat.service import alerts_for
+
+        alerts = [a for a in alerts_for(session, u, e, limit=24) if a["state"] == "pending"]
+        threatened = {a["planet_id"] for a in alerts}
+        ship = military.ship_class
+        for cid in page("military", list(colonies)):
+            here = session.scalar(
+                select(func.coalesce(func.sum(FleetStack.count), 0))
+                .join(Fleet, Fleet.id == FleetStack.fleet_id)
+                .where(
+                    Fleet.universe_id == u,
+                    Fleet.empire_id == e,
+                    Fleet.status == "STATIONED",
+                    Fleet.system_id == UUID(colonies[cid]["system_id"]),
+                    FleetStack.ship_class == ship,
+                )
+            ) + sum(o.quantity for o in queued if o.ship_class == ship and str(o.colony_id) == cid)
+            if here >= military.target_per_colony:
+                continue
+            urgent = colonies[cid]["planet_id"] in threatened
+            add(
+                "military",
+                "order",
+                {"colony_id": cid, "ship": ship},
+                military.alert_utility if urgent else military.baseline_utility,
+            )
     # Reject rather than silently truncate oversized/unbounded entity state.
     routes = list(
         session.scalars(
@@ -558,5 +590,6 @@ def collect(session, controller, rules, at):
         ],
         "unit_counts": counts,
         "candidates": candidates,
+        **({"alerts": alerts} if military is not None else {}),
     }
     return observation, memory
