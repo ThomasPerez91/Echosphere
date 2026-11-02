@@ -23,6 +23,8 @@ export type Projection = {
     system: { name: string }; empire: { id: string; name: string }; universe: { id: string; name: string } };
   sectors: { capacity: number; built: number; reserved: number; free: number; free_indices: number[] };
   resources: Resource[]; infrastructures: Infrastructure[]; queue: Order[]; queue_limit: number; options: Option[];
+  /** Hostile force announced on this planet (combat.read): instant and state only. */
+  incoming?: { id: string; battle_at: string; state: 'pending' | 'cancelled' }[] | null;
 };
 export type ColonySummary = { id: string; name: string; empire: { id: string; name: string } };
 
@@ -52,7 +54,10 @@ export function validProjection(value: unknown, colony?: string): value is Proje
       && o.cancel.also_cancels.every(id => typeof id === 'string' && p.queue.some(row => row.id === id))
       && (o.due_at === null || date(o.due_at)) && (o.started_at === null || date(o.started_at)))
     && Array.isArray(p.options) && p.options.every(o => amounts(o.cost) && micro(o.base_duration_us))
-    && !!p.sectors && Array.isArray(p.sectors.free_indices) && Number.isInteger(p.queue_limit);
+    && !!p.sectors && Array.isArray(p.sectors.free_indices) && Number.isInteger(p.queue_limit)
+    && (p.incoming === undefined || p.incoming === null || (p.permissions.includes('combat.read') && Array.isArray(p.incoming)
+      && p.incoming.every(a => !!a && Object.keys(a).sort().join() === 'battle_at,id,state' && typeof a.id === 'string'
+        && date(a.battle_at) && ['pending', 'cancelled'].includes(a.state))));
 }
 
 function validList(value: unknown): value is { colonies: ColonySummary[] } {

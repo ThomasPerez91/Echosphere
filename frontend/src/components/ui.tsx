@@ -5,7 +5,7 @@ export function Button(props: ButtonHTMLAttributes<HTMLButtonElement>) {
 }
 
 export function Badge({ children, tone = 'neutral' }: {
-  children: ReactNode; tone?: 'neutral' | 'accent' | 'warning';
+  children: ReactNode; tone?: 'neutral' | 'accent' | 'warning' | 'danger';
 }) {
   return <span className={`badge badge--${tone}`}>{children}</span>;
 }
