@@ -102,9 +102,9 @@ Aucun choix de protocole IA pendant l'étape 13. Pour 13B : politique validée, 
   priorités bootstrap/défense urgente/réponses Q18 ; choix de protocole dans la famille militaire,
   sans page ni commande supplémentaire ; pas de changement répété sans évolution de l'état.
 
-Lecture retenue par l'implémentation (à confirmer en revue) : « pertinente » = flotte TASK stationnée
-dans un système portant une colonie de l'Empire, hors logistique pure (colonisateur seul ou cargo à
-bord) ; « intérêt » = détection anonyme propre dans ce système depuis moins de `sighting_seconds`
+Lecture des termes **validée par l'utilisateur le 02/11/2026** (ruleset v0.9 ; proposée d'abord par
+l'implémentation) : « pertinente » = flotte TASK stationnée dans un système portant une colonie de
+l'Empire, hors logistique pure (colonisateur seul ou cargo à bord) ; « intérêt » = détection anonyme propre dans ce système depuis moins de `sighting_seconds`
 (72 h) ; « risque acceptable » = aucune alerte d'attaque propre et aucun acte hostile subi depuis
 moins de la fenêtre de grief de la diplomatie (72 h) ; AMBUSH exige en plus une unité militaire.
 Priorité de posture : AMBUSH (si permis et justifié) → FRIENDLY_CONTACT → SURVEILLANCE.
@@ -150,9 +150,10 @@ Priorité de posture : AMBUSH (si permis et justifié) → FRIENDLY_CONTACT → 
 
 ### Arbitrages C01–C05 — 02/11/2026
 
-Exigences C01–C05 **demandées par l'utilisateur** ; les règles de départage ci-dessous sont
-**proposées par l'implémentation** (PR #17), sans règle de jeu nouvelle, et restent à confirmer en
-revue. Statut : code écrit, tests PostgreSQL écrits non exécutés.
+Exigences C01–C05 **demandées par l'utilisateur** ; les règles de départage ci-dessous, proposées
+d'abord par l'implémentation (PR #17) sans règle de jeu nouvelle, sont **validées définitivement par
+l'utilisateur le 02/11/2026** (couverture `started_at < t <= ended_at` et ordre entrée → repli →
+bataille). Statut : code et tests PostgreSQL exécutés localement le 02/11/2026 (voir progress).
 
 - **Couverture d'une entrée (C04).** Un protocole couvre une entrée à `t` s'il était actif
   *strictement avant* `t` et n'avait pas pris fin *avant* `t` (`started_at < t <= ended_at`). Un

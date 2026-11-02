@@ -1,7 +1,8 @@
 # Présence frontalière — contrat technique (13B, ruleset v0.9)
 
-**Statut : implémenté sur la PR #17 (B00–B07 + correctifs C01–C05, Draft), non validé à l'exécution (PostgreSQL,
-Compose, Chromium à faire sur poste local) ; non fusionné.** Règles : [premier contact](../01-game-design/first-contact.md),
+**Statut : implémenté sur la PR #17 (B00–B09 + correctifs C01–C05, Draft) ; PostgreSQL, Alembic,
+Chromium et recette Compose exécutés et réussis localement le 02/11/2026 ; Full CI et revue
+indépendante à venir ; non fusionné.** Règles : [premier contact](../01-game-design/first-contact.md),
 décisions [D1–D7](../01-game-design/first-contact.md#décisions-d1d7--02112026), plan et écarts :
 [étape 13B](../05-project/step-13b-plan.md). Dépend de la PR #16 (étape 13, non fusionnée).
 
@@ -123,7 +124,7 @@ seulement si elle diffère du protocole courant ; observation `frontier` (flotte
 voulu, base) pour l'explication. `app/ai/dispatcher.py` : opération `protocol` →
 `fleet.set_protocol` (même service que l'API), refus `ai_protocol_denied` hors liste du profil
 (jamais INTERCEPTION, jamais AMBUSH prudent). Tests : `tests/test_frontier_rules.py` (pur),
-`tests/integration/test_frontier_ai.py` (PostgreSQL, non exécuté).
+`tests/integration/test_frontier_ai.py` (PostgreSQL, exécuté localement le 02/11/2026).
 
 ## Opérateur
 
@@ -136,9 +137,9 @@ voulu, base) pour l'explication. `app/ai/dispatcher.py` : opération `protocol` 
 | Niveau | Contenu | État |
 | --- | --- | --- |
 | Pur (Fast CI) | `test_frontier_transit.py`, `test_frontier_rules.py`, `test_frontier_encounter.py` | Exécuté |
-| Frontend (Fast CI) | Vitest Flottes (protocole, panneau Frontière, validateur), lint, build | Exécuté en CI |
-| PostgreSQL | `tests/integration/test_frontier.py` (passages et fences, protocoles, détection, couverture à `t`, présentation, interceptions, embuscade, pacte, civils, rang, bataille après entrée, repli distant et local, ciblage ; concurrence C02 dans les deux ordres, rejeu, crash/redémarrage) | **À exécuter** |
-| Migration | Alembic 0014 upgrade/check/downgrade sur base jetable ; `test_frontier_migration_matches_metadata_and_populated_downgrade_is_refused` | **À exécuter** |
-| IA (B08) | `tests/integration/test_frontier_ai.py` (deux profils, AMBUSH D4, contact volontaire, commande commune, refus dispatcher, priorités, Fog) | **À exécuter** |
-| Compose | `scripts/smoke_frontier_compose.py` : 1 humain + 2 IA, détection anonyme, contact volontaire, embuscade, interception sans comparaison, pacte (réponse IA réelle), civil épargné, militaire détruit, mission avec pertes, repli réussi, ATTACK locale et repli impossible, postures IA, interruption/reprise des workers réels | **Écrit, non exécuté** ; à ajouter à la Full CI après succès local |
-| Chromium | `frontend/e2e/frontier.spec.ts` (4 largeurs, clavier/tactile, corps `ProtocolChoice`, panneau Frontière, cibles 44 px, débordement) | **Écrit, non exécuté** |
+| Frontend | Vitest Flottes (protocole, panneau Frontière, validateur), lint, build | Exécuté en Fast CI et localement le 02/11/2026 (Vitest 100/100) |
+| PostgreSQL | `tests/integration/test_frontier.py` (passages et fences, protocoles, détection, couverture à `t`, présentation, interceptions, embuscade, pacte, civils, rang, bataille après entrée, repli distant et local, ciblage ; concurrence C02 dans les deux ordres, rejeu, crash/redémarrage) | **Exécuté localement le 02/11/2026, 36/36** (PostgreSQL 17, après correction de défauts de tests seulement) ; suite Game complète 561/561 |
+| Migration | Alembic 0014 upgrade/check/downgrade sur base jetable ; `test_frontier_migration_matches_metadata_and_populated_downgrade_is_refused` | **Exécuté le 02/11/2026** : base vide → head, `alembic check`, cycles 0014→0013→0014 et 0013→0012→0014, schémas `pg_dump` identiques ; test dédié réussi |
+| IA (B08) | `tests/integration/test_frontier_ai.py` (deux profils, AMBUSH D4, contact volontaire, commande commune, refus dispatcher, priorités, Fog) | **Exécuté localement le 02/11/2026, 10/10** |
+| Compose | `scripts/smoke_frontier_compose.py` : 1 humain + 2 IA, détection anonyme, contact volontaire, embuscade, interception sans comparaison, pacte (réponse IA réelle), civil épargné, militaire détruit, mission avec pertes, repli réussi, ATTACK locale et repli impossible, postures IA, interruption/reprise des workers réels | **Exécuté localement le 02/11/2026, réussi** (après correction de la fixture) ; ajouté au job `compose-smoke` de la Full CI (push master seulement), pas encore exécuté en CI |
+| Chromium | `frontend/e2e/frontier.spec.ts` (4 largeurs, clavier/tactile, corps `ProtocolChoice`, panneau Frontière, cibles 44 px, débordement) | **Exécuté localement le 02/11/2026** (4/4 ; suite Chromium Game 43/43) |

@@ -4,6 +4,34 @@ Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide — branche 13B (work/step-13b-first-contact)
 
+| Champ | État au 02/11/2026 nuit — 13B validé localement (PostgreSQL, Alembic, Chromium, Compose), revue indépendante à faire |
+| --- | --- |
+| Branche / base / PR | `work/step-13b-first-contact`, [PR #17](https://github.com/ThomasPerez91/Echosphere/pull/17) **Draft** vers `work/step-13-ai-relations` (PR #16, Draft, non fusionnée). Aucun merge, aucun Ready |
+| Agent / environnement | Claude Code local (Windows 11 + Ubuntu WSL2, Docker 29.9.2, Compose v5.6.1), worktrees `../Echosphere-wt/step-13` et `../Echosphere-wt/step-13b` ; répertoire principal non touché (extension Codex ouverte, inactive sur ces branches). Hôte sans Node ni Python 3.12 : suites exécutées dans des conteneurs `python:3.12-slim` et Playwright 1.56.1, PostgreSQL 17.11 jetable (tmpfs) |
+| Décisions | **C04 validée par l'utilisateur** (entrée sur l'état antérieur → repli → bataille ; couverture `started_at < t <= ended_at`). **Lecture B08 validée** (flotte pertinente, contact intéressant < 72 h, risque acceptable). Transcrites dans [premier contact](docs/01-game-design/first-contact.md) |
+| Commits de la session | `110eb71` (tests PostgreSQL corrigés à leur première exécution), `c0fcb16` (fixture de recette corrigée, recette dans la Full CI) ; commit documentaire de passation ; synchronisation contrôlée avec #16 si elle change |
+| Anomalies trouvées | Toutes dans des tests ou la fixture jamais exécutés, aucun bug produit démontré : session expirée après saut d'horloge (8 h), garnison supposée existante, test C02 en pause sur la mauvaise entrée, protocole et ATTACK locale au même instant (C04 : non couvrant, conforme), FK Knowledge, inventaire `test_world` sans `frontier_encounters`, `GalaxyRoute.route_id` inexistant, scénarios de recette traversant d'autres protocoles selon la galaxie aléatoire, preuve comptant les entrées futures |
+| Exécuté et réussi (local) | Alembic : base vide → 0014, `alembic check`, cycles 0014→0013→0014 et 0013→0012→0014 (schémas `pg_dump` identiques), 0013 seule sur #16 ; Game PostgreSQL : `test_relations.py` 19, `test_frontier.py` 36, `test_frontier_ai.py` 10, suite complète 561/561 (13B) ; Portal PostgreSQL 124/124, Ruff ; Ruff `backend scripts` ; frontend Game lint (0 erreur, 1 avertissement préexistant `useGameSession.ts`), Vitest 100/100, build, Chromium 43/43 (dont `frontier.spec.ts` 4 et Relations 4) ; Portal frontend lint, Vitest 30/30, build, Chromium 14/14 ; recettes Compose isolées : **frontier** (13 situations + interruption/reprise des workers), relations, combat, ai, handoff, fleet, colonization, galaxy, colony, research |
+| Non exécuté localement | `smoke_compose.py`, `smoke_portal_compose.py`, `smoke_control_compose.py` : ils démarrent le projet par défaut `echosphere` (pile conservée de l'utilisateur, volume `echosphere_postgres_data`) et l'auraient migrée en 0014 non fusionnée — couverts par la Full CI sur runner neuf |
+| CI | Fast CI : `110eb71` run 41498170455 success, `c0fcb16` run 41512861119 success. Full CI (recette Frontier comprise) : seulement après merge sur master, **jamais exécutée pour 13B** |
+| Partie locale | Projet Compose séparé `echosphere-demo` (volumes propres, bases `*_test`), univers v0.9 « Démo v0.9 — Premier contact » : humain + `economic_cautious` + `expansionist`, scénarios de la recette 13B, tours IA réels sur horloge injectée puis workers réels (`worker`, `combat-worker`, `ai-worker`). Portal `https://portal.echosphere.localhost:8443`, Game `https://game.echosphere.localhost:8443`, Mailpit `http://127.0.0.1:8025`. Pile conservée `echosphere` intacte (non migrée) |
+| Limites | Gel de l'Empire en mouvement jusqu'à résolution de chaque entrée (≈ 2 s nominal, `--lag` alerte > 300 s) ; interblocage de deux ATTACK croisées (préexistant v0.7, rejouable) ; une entrée `blocked` retient les batailles de son système jusqu'à l'opérateur (`--blocked`, `--retry-passage`) ; balance 72 h non simulée |
+| Avant Ready (#17) | Revue indépendante B09 (Codex, worktree en lecture seule, SHA noté) ; traitement des constats ; décision utilisateur sur Ready ; #16 d'abord (R11) ; base de #17 à réévaluer après fusion de #16 |
+
+### Revue indépendante 13/13B — périmètre proposé (lecture seule)
+
+- #16 depuis `067a4e5` : migration 0013 (CHECK droits, contact `diplomacy`), ordre paire → contact,
+  pacte à `battle_at` (`voided_by_pact`), IA diplomacy v3, aucune fuite avant bataille.
+- #17 depuis la tête de #16 : 0014 (états de passage, `local`), `FrontierOrchestrator` (verrous UUID,
+  `lock_timeout`, réglage à `t − 1 µs`, une transaction), `frontier_blocker` Combat (C04), replis
+  (D7, carburant normal, idempotence), projections Fog (`detections_for`, `encounters_for`), policy
+  `utility-goals-v4` (informations propres, refus dispatcher), recette et fixture.
+- Commandes : section « Reprise locale » ci-dessous ; constats classés Bloquante/Majeure/Mineure/
+  Remarque avec fichier:ligne, publiés dans la PR. Cette revue Claude Code n'est pas indépendante.
+
+## Ancienne reprise 13B (avant validation locale) — historique
+
+
 | Champ | État au 02/11/2026 soir — 13B B00–B09 écrits + correctifs C01–C05, **rien de PostgreSQL/Compose/Chromium exécuté** |
 | --- | --- |
 | Branche / base / PR | `work/step-13b-first-contact` depuis a434e06 (tête de PR #16, **non fusionnée**) ; [PR #17](https://github.com/ThomasPerez91/Echosphere/pull/17) **Draft** vers `work/step-13-ai-relations` (pas master). PR #16 et master non touchées |

@@ -112,5 +112,6 @@ ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, 
 [proposition B1–B12](../01-game-design/relations.md), [plan R00–R11](../05-project/step-13-plan.md).
 R02–R11 autorisés. Lot 13B [premier contact](../01-game-design/first-contact.md) : démarrage anticipé
 autorisé le 02/11/2026 sur `work/step-13b-first-contact` (PR #17 Draft vers la branche de l'étape 13),
-B00–B09 et correctifs C01–C05 écrits, validations PostgreSQL/Compose/Chromium à faire en local —
-reprise : bloc 13B de [progress](../../progress.md). Aucun merge ni suppression de branche autorisé.
+B00–B09 et correctifs C01–C05 écrits ; C04 et lecture B08 validées par l'utilisateur ; PostgreSQL,
+Alembic, Chromium et recette Compose exécutés et réussis en local le 02/11/2026 (WSL2 + Docker) ;
+revue indépendante R11/B09 à faire — reprise : bloc 13B de [progress](../../progress.md). Aucun merge ni suppression de branche autorisé.

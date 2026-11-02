@@ -175,5 +175,6 @@ Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Les éta
 ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, branche
 `work/step-13-ai-relations`, PR Draft unique. Q18 close pour l'étape 13 le 02/11/2026 avec amendements,
 [proposition B1–B12](../01-game-design/relations.md), [plan R00–R11](step-13-plan.md).
-R02–R11 autorisés. Lot 13B pré-MVP [premier contact](../01-game-design/first-contact.md) (Q57/Q58) documenté,
-non implémenté avant fusion de l'étape 13. Aucun merge ni suppression de branche autorisé.
+R02–R11 autorisés. Lot 13B pré-MVP [premier contact](../01-game-design/first-contact.md) (Q57/Q58) :
+démarrage anticipé autorisé le 02/11/2026, implémenté sur la PR #17 (Draft, base PR #16), validé
+localement le 02/11/2026, revue indépendante à venir. Aucun merge ni suppression de branche autorisé.

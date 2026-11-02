@@ -1,8 +1,8 @@
 # Étape 13B — Présence frontalière & Premier contact
 
-**État courant : B00–B07 et correctifs C01–C05 implémentés sur `work/step-13b-first-contact`
-(PR #17, Draft), code et tests écrits, Fast CI seule ; validations PostgreSQL/Compose/Chromium à
-faire sur poste local.
+**État courant : B00–B09 et correctifs C01–C05 implémentés sur `work/step-13b-first-contact`
+(PR #17, Draft) ; PostgreSQL, Alembic 0014, Chromium et recette Compose exécutés et réussis sur
+poste local (WSL2 + Docker) le 02/11/2026 ; revue indépendante et Full CI à venir.
 Démarrage anticipé autorisé le 02/11/2026 ; aucune fusion, aucune validation de l'étape 13
 impliquée.** [Contrat technique](../03-technical/frontier-api-ui.md). Règles canoniques : [premier contact](../01-game-design/first-contact.md),
 Q57/Q58 au [registre](open-questions.md).
@@ -45,12 +45,12 @@ encore, 0014 se rebase sans transformation de données.
 | B05 | AMBUSH, INTERCEPTION : `frontier_encounters`, résolution hors handler par le worker Combat, résolveur Combat réutilisé | Code + tests |
 | B06 | Repli amical (D7), carburant normal débité à l'instant logique | Code + tests |
 | B07 | UI Flottes : protocole, quatre modes, détections, rapports d'interception et de repli | Code + tests Vitest |
-| B08 | IA : policy v4 (v0.9), protocoles dans la famille militaire, dispatcher borné par profil | Code + tests (PostgreSQL non exécutés) |
-| B09 | Recette Compose `smoke_frontier_compose.py` + `frontier_game_fixture.py`, Chromium `e2e/frontier.spec.ts`, test migration 0014 ; puis exécution locale, revue indépendante, Ready | Écrits, **non exécutés** ; exécution sur poste local |
+| B08 | IA : policy v4 (v0.9), protocoles dans la famille militaire, dispatcher borné par profil | Code + tests ; PostgreSQL 10/10 exécuté localement |
+| B09 | Recette Compose `smoke_frontier_compose.py` + `frontier_game_fixture.py`, Chromium `e2e/frontier.spec.ts`, test migration 0014 ; puis exécution locale, revue indépendante, Ready | **Exécutés localement et réussis** (02/11/2026, défauts de tests/fixture corrigés, aucun bug produit) ; recette dans la Full CI ; revue indépendante, Ready à venir |
 
-« Code + tests » : tests purs exécutés ici et en Fast CI ; scénarios PostgreSQL écrits
-(`tests/integration/test_frontier.py`) **non exécutés** (pas de PostgreSQL/Docker dans
-l'environnement cloud). Aucun lot n'est fonctionnellement validé.
+« Code + tests » : tests purs en Fast CI ; scénarios PostgreSQL (`test_frontier.py` 36,
+`test_frontier_ai.py` 10) exécutés localement le 02/11/2026. Validation fonctionnelle finale :
+revue indépendante (Codex) puis décision de l'utilisateur.
 
 ## Décisions D1–D7 — validées le 02/11/2026
 
@@ -88,7 +88,7 @@ Détail : [contrat technique](../03-technical/frontier-api-ui.md#chronologie-et-
 | Sujet | État |
 | --- | --- |
 | D2 — stream d'évaluation | Conservé côté mobile comme point d'arrêt, avec verrouillage des surveillants (C01, démonstration ci-dessus) ; à valider en revue |
-| Règles de départage C04 | Proposées par l'implémentation ([premier contact](../01-game-design/first-contact.md#arbitrages-c01c05--02112026)), à confirmer |
+| Règles de départage C04 | **Validées par l'utilisateur le 02/11/2026** ([premier contact](../01-game-design/first-contact.md#arbitrages-c01c05--02112026)) ; tests PostgreSQL exécutés |
 | Gel du mobile (C05) | Toute flotte d'un Empire en mouvement attend la résolution de chaque entrée (≈ intervalle du worker Combat) ; évolution par flotte hors 13B |
 | Interblocage de deux lancements ATTACK croisés | Préexistant v0.7, détecté par PostgreSQL ; commande rejouable |
-| B08 — lecture des termes | « Pertinente », « intérêt », « risque acceptable » interprétés ([B08](../01-game-design/first-contact.md#b08--politique-ia-validée-le-02112026)), à confirmer |
+| B08 — lecture des termes | « Pertinente », « intérêt », « risque acceptable » **validés par l'utilisateur le 02/11/2026** ([B08](../01-game-design/first-contact.md#b08--politique-ia-validée-le-02112026)) |
