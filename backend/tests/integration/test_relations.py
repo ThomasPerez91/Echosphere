@@ -117,9 +117,8 @@ def test_foreign_colony_in_a_monitored_system_creates_an_oriented_dated_contact_
             .limit(1)
         )
         s.add(Colony(universe_id=a.universe, empire_id=b.empire, planet_id=free))
-    assert rel(a).json()["relations"] == []  # nothing until A observes again
-    with a.game.factory.begin() as s:
-        g.refresh_monitoring(s, a.universe, a.empire, a.game.clock())
+    # Reading Relations refreshes A's own MONITORED observation (even if Galaxy is never
+    # opened): the foreign Colony now visible from A's own Colony is a dated presence contact.
     seen = relation_of(a, b)
     assert seen["contact"]["first_source"] == "presence"
     presence = seen["contact"]["presence"]
@@ -127,7 +126,7 @@ def test_foreign_colony_in_a_monitored_system_creates_an_oriented_dated_contact_
     # Empire, planet and date only: no stock, building, fleet, Research or other colony.
     assert set(presence) == {"planet_id", "planet_name", "system_id", "system_name", "observed_at"}
     assert str(b.colony) not in str(rel(a).json())
-    # Oriented: B has not observed A yet.
+    # Oriented: B does not know A's system, so its own refresh observes nothing of A.
     assert relation_of(b, a) is None
     # Losing MONITORED never forgets the contact.
     with a.game.factory.begin() as s:
@@ -523,3 +522,34 @@ def test_a_proposal_introduces_the_proposer_durably_without_any_place(fleets):
     with a.game.factory() as s:
         row = s.get(RelationContact, (b.empire, a.empire))
         assert row.presence_planet_id is None and row.presence_observed_at is None
+
+
+def test_ai_turn_records_presence_contacts_after_its_dispatch(ai_world_v08):
+    """Global lock order pair → contact: an AI turn defers presence contacts until after its
+    command, so the observation of that turn does not contain a contact first seen in it."""
+    from app.ai.models import AIDecision
+    from app.ai.orchestrator import Orchestrator
+
+    factory, clock, _, result = ai_world_v08
+    u = UUID(result["universe_id"])
+    human = UUID(result["actors"][0]["empire_id"])
+    cautious = result["actors"][1]
+    with factory.begin() as s:
+        home = s.get(Planet, s.get(Colony, UUID(cautious["colony_id"])).planet_id).system_id
+        free = s.scalar(
+            select(Planet.id)
+            .where(Planet.system_id == home, ~Planet.id.in_(select(Colony.planet_id)))
+            .order_by(Planet.id)
+            .limit(1)
+        )
+        # Test-only placement of a human colony in the AI's own (MONITORED) home system.
+        s.add(Colony(universe_id=u, empire_id=human, planet_id=free))
+    clock.at += timedelta(minutes=10)
+    cid = UUID(cautious["controller_id"])
+    Orchestrator(factory, clock).process_next(controller_id=cid, raise_errors=True)
+    with factory() as s:
+        contact = s.get(RelationContact, (UUID(cautious["empire_id"]), human))
+        assert contact.first_source == "presence" and contact.presence_planet_id == free
+        assert contact.first_seen_at == clock.at
+        trace = s.get(AIDecision, (cid, 1))
+        assert trace.observation["relations"] == []  # deferred: visible from the next turn

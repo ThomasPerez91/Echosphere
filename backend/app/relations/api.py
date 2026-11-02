@@ -17,8 +17,10 @@ from app.access.service import AccessError
 from app.colony.api import Colonies, bootstrap, call, command
 from app.colony.service import rules_for
 from app.control.models import EmpireBinding
+from app.galaxy import service as galaxy
 from app.persistence.models import Empire
 from app.relations import service
+from app.simulation.scheduler import lock_stream
 
 router = APIRouter(prefix="/game/{universe_id}/relations")
 
@@ -73,7 +75,15 @@ class Relations(Colonies):
     def read(self, raw, universe_id, empire_id):
         with self.factory.begin() as session:
             permissions, _ = self.authorize_empire(session, raw, universe_id, empire_id)
-            view = service.project(session, universe_id, empire_id, self.clock.now())
+            at = self.clock.now()
+            if rules_for(session, universe_id).relations is not None:
+                # Like Galaxy reads: lock (never catch up) the Operations stream, then refresh
+                # the own MONITORED observation, so a foreign Colony now visible from an own
+                # Colony appears as a dated presence contact even if Galaxy was never opened.
+                state = galaxy.state_for(session, universe_id, empire_id)
+                lock_stream(session, state.stream_id, universe_id)
+                galaxy.refresh_monitoring(session, universe_id, empire_id, at)
+            view = service.project(session, universe_id, empire_id, at)
             if "relations.negotiate" not in permissions:
                 for relation in view["relations"]:
                     relation["actions"] = []

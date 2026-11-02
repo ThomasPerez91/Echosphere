@@ -175,7 +175,13 @@ def initialize_empire(session, engine, universe_id, empire_id, colony_id, at):
         return state
 
 
-def refresh_monitoring(session, universe_id, empire_id, at):
+def refresh_monitoring(session, universe_id, empire_id, at, *, contacts=True):
+    """Own legitimate observation. Returns the systems MONITORED now.
+
+    `contacts=False` defers the v0.8 presence contacts: a transaction that may later lock a
+    relation pair (Combat catch-up handlers, AI turn) must write contacts only after that pair
+    (global order pair → contact), then call `relations.observe_presences` itself.
+    """
     # Only the Empire's OWN legitimate Colony presence grants observation; no remote sensors.
     owned = session.execute(
         select(Planet.system_id, Colony.id)
@@ -198,8 +204,9 @@ def refresh_monitoring(session, universe_id, empire_id, at):
             known.state = "MAPPED"  # preserve structure and the dated observation
     # v0.8 (Q18 B3): a foreign Colony seen in a system MONITORED by an own Colony is a dated,
     # oriented contact (Empire, planet, date only). Earlier rulesets observe nothing more.
-    if monitored and rules_for(session, universe_id).relations is not None:
+    if contacts and monitored and rules_for(session, universe_id).relations is not None:
         relations.observe_presences(session, universe_id, empire_id, monitored, utc(at))
+    return monitored
 
 
 def project_system(session, known, colony_read=True):

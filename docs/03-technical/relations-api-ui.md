@@ -31,8 +31,13 @@ humain automatique.
 
 - Une commande de relation verrouille **seulement** la ligne de paire, jamais un stream
   d'opérations, de Research ou de Colony.
-- `app.combat.orchestrator` : streams triés → engagement → **paire** (créée si absente). Ordre
-  jamais inversé, donc sans interblocage avec les commandes de relation ou l'IA.
+- `app.combat.orchestrator` : streams triés → engagement → **paire** (créée si absente) → contacts.
+- **Ordre global paire → contact.** Une transaction qui peut verrouiller une paire n'écrit aucun
+  contact avant : les handlers (fondation d'une colonie, éventuellement exécutés dans le
+  rattrapage Combat) rafraîchissent la surveillance sans contact (`contacts=False`), et le tour IA
+  n'enregistre ses contacts de présence qu'après sa commande. Les lectures (Galaxie, System View,
+  Relations) écrivent des contacts mais ne prennent jamais de paire. Aucun cycle d'attente
+  possible entre commandes de relation, IA, Combat et lectures.
 - Pacte couvrant `battle_at` : issue `voided_by_pact`, aucune perte, aucun tir, attaquant
   renvoyé (carburant non remboursé), alerte close, rapports datés des deux côtés avec
   `opponent_empire_id` et `pact_id`, **sans** `own`/`opponent`/`rounds`.
@@ -48,7 +53,8 @@ la date logique de la proposition, sans planète ni autre donnée. Il survit au 
 
 ## Contacts par présence
 
-`galaxy.refresh_monitoring` (GET Galaxie/System View, handlers, tour IA) : en v0.8 seulement, pour
+`galaxy.refresh_monitoring` (GET Galaxie/System View/**Relations**, puis tour IA après sa commande ;
+jamais dans un handler) : en v0.8 seulement, pour
 chaque système MONITORED par une colonie propre, toute colonie étrangère existant à la date
 d'observation (`founded_at` NULL ou ≤ date) crée ou date le contact (Empire, planète, date).
 Aucune autre information n'est lue ni projetée.
