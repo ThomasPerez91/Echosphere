@@ -1,7 +1,8 @@
 # Étape 13B — Présence frontalière & Premier contact
 
-**État courant : B00–B07 implémentés sur `work/step-13b-first-contact` (PR #17, Draft), code et
-tests écrits, Fast CI seule ; validations PostgreSQL/Compose/Chromium à faire sur poste local.
+**État courant : B00–B07 et correctifs C01–C05 implémentés sur `work/step-13b-first-contact`
+(PR #17, Draft), code et tests écrits, Fast CI seule ; validations PostgreSQL/Compose/Chromium à
+faire sur poste local.
 Démarrage anticipé autorisé le 02/11/2026 ; aucune fusion, aucune validation de l'étape 13
 impliquée.** [Contrat technique](../03-technical/frontier-api-ui.md). Règles canoniques : [premier contact](../01-game-design/first-contact.md),
 Q57/Q58 au [registre](open-questions.md).
@@ -56,33 +57,38 @@ l'environnement cloud). Aucun lot n'est fonctionnellement validé.
 Provenance : instruction utilisateur explicite (PR #17). Transcription canonique :
 [premier contact](../01-game-design/first-contact.md#décisions-d1d7--02112026).
 
-## Implémentation : verrous, fences et dates logiques
+## Implémentation : verrous, fences et dates logiques (révisée C01–C05)
 
-- **Planification** des réactions (B05/B06) au moment où les deux faits sont connus *avant*
-  l'instant d'entrée : décision de mouvement (lancement, rappel, retour après bataille) ou
-  commande de protocole. Une ligne `frontier_encounters` par (passage, flotte surveillante, type).
-- **Engagement** : streams d'opérations des deux Empires figés à `entered_at − 1 µs` (état
-  strictement antérieur à l'entrée ; une arrivée au même instant ne peut pas installer la flotte
-  avant la rencontre). **Repli** : stream du surveillant et Colony d'attache figés à `entered_at`
-  (inclus), pour débiter le carburant normal à cet instant exact quel que soit le retard du worker.
-- **Résolution** hors handler par `FrontierOrchestrator`, exécuté dans le processus
-  `combat-worker` : streams triés → ligne de rencontre → paire relationnelle → contacts ; rang
-  `(instant, type, mission, passage, flotte)`, engagements avant replis au même instant ;
-  rattrapage exact jusqu'aux fences ; une transaction ; retry puis `blocked` opérateur
-  (`python -m app.combat.worker --blocked`, `--retry-frontier <id>`).
-- **Fin anticipée** : changement de protocole, départ, fusion ou destruction annulent les réactions
-  futures de la période ; un rappel ou une destruction annulent celles des passages non atteints.
-- **Décision tardive d'un orchestrateur** (retour après bataille, trajet d'un repli) : si le stream
-  d'un tiers a déjà dépassé une entrée, la création lève `TimelineError` (retry puis `blocked`),
-  jamais une réaction silencieusement omise. Limite opérationnelle : retard du worker supérieur à
-  la durée d'un saut (≥ 10 min dans le catalogue actuel).
+Détail : [contrat technique](../03-technical/frontier-api-ui.md#chronologie-et-verrous-c01c02-02112026).
 
-## Écarts et points ouverts à arbitrer
+- **Entrées** : chaque passage fige le stream de l'Empire en mouvement à `entered_at − 1 µs` (fence
+  sur son propre stream). `FrontierOrchestrator` résout l'entrée hors handler : streams du mobile et
+  de tous les Empires pouvant tenir un protocole dans le système, triés et verrouillés, réglés à
+  `entered_at − 1 µs` ; détections puis engagements ; une transaction ; retry puis `blocked`.
+- **Engagements** décidés à la résolution de l'entrée (plus de planification ni de fence chez le
+  surveillant) ; flotte surveillante figée par `guard_fleet_change` et bloqueur Combat.
+- **Replis** seuls planifiés (ATTACK distante à l'arrivée, ATTACK locale au lancement), fences sur le
+  stream d'opérations et la Colony d'attache du surveillant, sérialisés avec la commande de protocole
+  par le verrou du stream du défenseur.
+- **Commandes datées derrière une entrée résolue** : refusées (`fleet_busy`), jamais réécrites.
+- **Ordre global** : entrées (état avant `t`) → replis à `t` → bataille planétaire à `t`.
+
+## Correctifs C01–C05 (02/11/2026)
+
+| Point | Défaut démontré (79d25c8) | Correction |
+| --- | --- | --- |
+| C01 | Détection par handler sur le stream du mobile : déterministe seulement si aucune période n'était en cours de validation ; une fin de période rétroactive (destruction en bataille) pouvait suivre une détection déjà écrite | Plus de handler : résolution sous verrous de tous les surveillants possibles, chaque stream réglé à `t − 1 µs` ; bataille avant une entrée postérieure du même défenseur garantie par ses fences |
+| C02 | (a) commande de protocole datée avant `t`, validée après le handler : détection perdue ; (b) lancement et commande concurrents : rencontre jamais planifiée ; (c) vérification du curseur avant pose de fence non protégée | (a) attente du verrou ou refus `check_not_behind` ; (b) engagements non planifiés, replis sérialisés ; (c) `FOR KEY SHARE` puis lecture du curseur |
+| C03 | ATTACK de 0 saut sans repli | Ligne `local` et repli à l'instant du lancement, Q02 intact |
+| C04 | Couverture `[début, fin)` côté détection, `]début, fin[` côté engagement ; bataille à `t` pouvant précéder une entrée à `t` | Couverture unique `]début, fin]` ; bloqueur Combat ; ordre documenté |
+| C05 | Décision tardive (retour après bataille, repli) posant des fences chez un tiers : `TimelineError` puis blocage dès un retard d'un saut | Plus aucune fence tierce tardive ; diagnostics `--lag`, `--retry-passage` ; limite restante : mobile figé jusqu'à résolution |
+
+## Écarts et points ouverts
 
 | Sujet | État |
 | --- | --- |
-| **D2 — stream d'évaluation** | Implémenté sur le stream de l'Empire **en mouvement** (le passage lui appartient ; la détection est mutuelle à niveaux égaux, chaque camp est détecteur ; le handler ne lit que des périodes datées et n'écrit que des faits). Résultat identique à une évaluation sur le stream du surveillant, sans écriture dans le stream d'un autre Empire. **À confirmer** |
-| Fenêtre de course D2 | Une commande de protocole lancée juste avant `entered_at` mais validée après le traitement du passage peut ne pas être vue (fenêtre = latence de la commande). À fermer si nécessaire par une fence courte à l'activation |
-| Déclencheur du repli (FC6) | « Action hostile » interprétée comme : une mission ATTACK entre dans son système cible contre l'Empire du surveillant amical. Une ATTACK locale (0 saut) n'a pas de passage et ne déclenche pas de repli. **À confirmer** |
-| Événements au même instant | Une rencontre voit l'état strictement avant l'entrée : une production terminée exactement à `entered_at` n'y participe pas (Combat ATTACK l'inclut) |
-| B08 — IA | Les IA subissent les mêmes détections/rencontres ; leur dispatcher n'a **aucune** capacité de protocole. Choisir une politique (FC13 non validée) est un arbitrage produit |
+| D2 — stream d'évaluation | Conservé côté mobile comme point d'arrêt, avec verrouillage des surveillants (C01, démonstration ci-dessus) ; à valider en revue |
+| Règles de départage C04 | Proposées par l'implémentation ([premier contact](../01-game-design/first-contact.md#arbitrages-c01c05--02112026)), à confirmer |
+| Gel du mobile (C05) | Toute flotte d'un Empire en mouvement attend la résolution de chaque entrée (≈ intervalle du worker Combat) ; évolution par flotte hors 13B |
+| Interblocage de deux lancements ATTACK croisés | Préexistant v0.7, détecté par PostgreSQL ; commande rejouable |
+| B08 — IA | Politique validée le 02/11/2026, voir B08 |

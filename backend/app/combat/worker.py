@@ -14,13 +14,45 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.combat.models import CombatEngagement
 from app.combat.orchestrator import CombatOrchestrator, retry_blocked
 from app.core.config import Settings
-from app.frontier.models import FrontierEncounter
-from app.frontier.orchestrator import FrontierOrchestrator
+from app.frontier.models import FleetPassage, FrontierEncounter
+from app.frontier.orchestrator import FrontierOrchestrator, retry_passage
 from app.frontier.orchestrator import retry_blocked as retry_frontier
 from app.persistence.database import create_database_engine, create_session_factory
 from app.simulation.clock import SystemClock
 
 logger = logging.getLogger(__name__)
+
+
+LAG_WARNING_SECONDS = 300
+
+
+def lag(factory, now):
+    """C05 operator diagnostic: how far behind the frontier work is. A due entry keeps its
+    mover's Operations stream frozen until resolved, so a growing lag is worth an alert."""
+    with factory() as session:
+        entry = session.scalar(
+            select(FleetPassage.entered_at)
+            .where(FleetPassage.state.in_(["pending", "blocked"]), FleetPassage.entered_at <= now)
+            .order_by(FleetPassage.entered_at)
+            .limit(1)
+        )
+        reaction = session.scalar(
+            select(FrontierEncounter.encounter_at)
+            .where(
+                FrontierEncounter.state.in_(["pending", "blocked"]),
+                FrontierEncounter.encounter_at <= now,
+            )
+            .order_by(FrontierEncounter.encounter_at)
+            .limit(1)
+        )
+    oldest = min((t for t in (entry, reaction) if t is not None), default=None)
+    seconds = (now - oldest).total_seconds() if oldest is not None else 0.0
+    return {
+        "oldest_entry_at": entry.isoformat() if entry else None,
+        "oldest_reaction_at": reaction.isoformat() if reaction else None,
+        "lag_seconds": seconds,
+        "alert": seconds > LAG_WARNING_SECONDS,
+    }
 
 
 def main() -> None:
@@ -31,6 +63,14 @@ def main() -> None:
     mode.add_argument("--retry", type=UUID, help="Requeue one repaired blocked engagement")
     mode.add_argument(
         "--retry-frontier", type=UUID, help="Requeue one repaired blocked frontier reaction"
+    )
+    mode.add_argument(
+        "--retry-passage",
+        metavar="MISSION:SEQUENCE",
+        help="Requeue one repaired blocked frontier entry",
+    )
+    mode.add_argument(
+        "--lag", action="store_true", help="Oldest due unresolved frontier entry and reaction"
     )
     parser.add_argument("--limit", type=int, default=20)
     parser.add_argument("--poll-interval", type=float, default=2.0)
@@ -62,6 +102,12 @@ def main() -> None:
                     .order_by(FrontierEncounter.encounter_at, FrontierEncounter.id)
                     .limit(args.limit)
                 ).all()
+                entries = session.scalars(
+                    select(FleetPassage)
+                    .where(FleetPassage.state == "blocked")
+                    .order_by(FleetPassage.entered_at, FleetPassage.mission_id)
+                    .limit(args.limit)
+                ).all()
                 print(
                     json.dumps(
                         [
@@ -77,8 +123,27 @@ def main() -> None:
                             }
                             for r in reactions
                         ]
+                        + [
+                            {
+                                "passage": f"{r.mission_id}:{r.sequence}",
+                                "kind": "frontier-entry",
+                                "entered_at": r.entered_at.isoformat(),
+                                "attempts": r.attempts,
+                                "error_code": r.error_code,
+                            }
+                            for r in entries
+                        ]
                     )
                 )
+            return
+        if args.lag:
+            print(json.dumps(lag(factory, clock.now())))
+            return
+        if args.retry_passage:
+            mission, _, sequence = args.retry_passage.partition(":")
+            with factory.begin() as session:
+                retry_passage(session, UUID(mission), int(sequence), clock.now())
+            print(json.dumps({"requeued": args.retry_passage}))
             return
         if args.retry_frontier:
             with factory.begin() as session:
@@ -118,7 +183,7 @@ def main() -> None:
                     if reaction is not None:
                         logger.info(
                             "reaction=%s outcome=%s",
-                            reaction["encounter_id"],
+                            reaction.get("encounter_id") or reaction.get("passage"),
                             reaction["outcome"],
                         )
             except SQLAlchemyError:
@@ -128,6 +193,12 @@ def main() -> None:
             if args.once:
                 print(json.dumps({"processed": processed}))
                 return
+            try:
+                behind = lag(factory, clock.now())
+                if behind["alert"]:
+                    logger.warning("frontier lag_seconds=%.0f", behind["lag_seconds"])
+            except SQLAlchemyError:
+                logger.warning("Database unavailable; retrying after poll interval")
             stop.wait(args.poll_interval)
     finally:
         database.dispose()

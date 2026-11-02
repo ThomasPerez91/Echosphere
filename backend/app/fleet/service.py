@@ -520,6 +520,7 @@ def split(session, engine, universe_id, empire_id, fleet_id, units, cargo, *, ke
         if done is not None:
             return done.result
         source = stationed(owned_fleet(session, universe_id, empire_id, fleet_id))
+        frontier.guard_fleet_change(session, source, at)
         new = detach(session, rules, source, parse_units(rules, units), parse_cargo(cargo))
         return record(
             session, universe_id, empire_id, key, "split", request, {"fleet_id": str(new.id)}, at
@@ -540,6 +541,8 @@ def merge(session, engine, universe_id, empire_id, fleet_id, target_id, *, key, 
             raise FleetError("Only a task fleet merges into another", "invalid_request")
         if source.system_id != target.system_id:
             raise FleetError("Fleets are not in the same system", "fleet_elsewhere")
+        frontier.guard_fleet_change(session, source, at)
+        frontier.guard_fleet_change(session, target, at)
         # Stacks and cargo add up; combined capacity always covers combined cargo.
         add_units(session, target.id, stacks_of(session, source.id))
         total = cargo_of(session, target.id)
@@ -838,6 +841,7 @@ def launch(
             return existing
         check_key(key)
         source = stationed(owned_fleet(session, universe_id, empire_id, fleet_id))
+        frontier.guard_fleet_change(session, source, at)
         wanted, moved_cargo = parse_units(rules, units), parse_cargo(cargo)
         have = stacks_of(session, source.id)
         # A whole task fleet moves itself with its cargo; otherwise a detachment leaves.
@@ -925,8 +929,11 @@ def launch(
             # No arrival event: the Combat orchestrator resolves the engagement at battle_at.
             from app.combat.service import open_engagement
 
+            if not path:
+                frontier.record_local(session, rules, mission)  # C03: 0-hop hostile act
             open_engagement(session, mission, state.stream_id, defender)
-            # After the engagement exists: a friendly watcher may react to this hostile entry.
+            # After the engagement exists (its battle fence already holds the defender's stream
+            # FOR KEY SHARE): a friendly watcher of the defender may retreat (D7).
             frontier.plan_for_mission(session, rules, mission)
             return mission
         schedule(
@@ -938,7 +945,6 @@ def launch(
             due_at=due,
             payload={"mission_id": str(mission.id)},
         )
-        frontier.plan_for_mission(session, rules, mission)
         return mission
 
 
@@ -1342,7 +1348,6 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
             due_at=mission.return_at,
             payload={"mission_id": str(mission.id)},
         )
-        frontier.plan_for_mission(session, rules, mission)
         record(session, universe_id, empire_id, key, "recall", request, request, at)
         return mission
 
@@ -1393,7 +1398,6 @@ def recall_attack(session, state, mission, key, request, at):
             due_at=mission.return_at,
             payload={"mission_id": str(mission.id)},
         )
-        frontier.plan_for_mission(session, rules, mission)
     record(session, mission.universe_id, mission.empire_id, key, "recall", request, request, at)
     return mission
 

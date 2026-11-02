@@ -2,7 +2,8 @@
 
 Revision ID: 0014_frontier
 Revises: 0013_relations
-Frozen DDL; independent of runtime ORM models. Additive: one new table, one nullable column and
+Frozen DDL; independent of runtime ORM models. Passages carry their resolution state (C02: each
+entry is resolved by the frontier orchestrator, the mover fenced just before it). Additive: one new table, one nullable column and
 its CHECK, the 'protocol' kind in the Fleet operation ledger, dated protocol periods,
 frontier detections, the 'frontier' contact source (extension of a CHECK) and automatic
 frontier encounters (B05 engagements, B06 retreats). No backfill: only missions launched in v0.9 Universes record passages, and no
@@ -149,17 +150,31 @@ CREATE TABLE fleet_mission_passages (
 	entered_at TIMESTAMP WITH TIME ZONE NOT NULL, 
 	direction VARCHAR(8) NOT NULL, 
 	cancelled_at TIMESTAMP WITH TIME ZONE, 
+	state VARCHAR(10) NOT NULL, 
+	resolved_at TIMESTAMP WITH TIME ZONE, 
+	attempts INTEGER NOT NULL, 
+	retry_at TIMESTAMP WITH TIME ZONE, 
+	error_code VARCHAR(32), 
 	CONSTRAINT pk_fleet_mission_passages PRIMARY KEY (mission_id, sequence), 
 	CONSTRAINT fk_fleet_mission_passages_mission FOREIGN KEY(mission_id, empire_id, universe_id) REFERENCES fleet_missions (id, empire_id, universe_id), 
 	CONSTRAINT fk_fleet_mission_passages_system FOREIGN KEY(system_id, universe_id) REFERENCES galaxy_systems (system_id, universe_id), 
 	CONSTRAINT ck_fleet_mission_passages_sequence CHECK (sequence >= 0), 
-	CONSTRAINT ck_fleet_mission_passages_direction CHECK (direction IN ('outbound','return')), 
-	CONSTRAINT ck_fleet_mission_passages_cancellation CHECK (cancelled_at IS NULL OR cancelled_at < entered_at)
+	CONSTRAINT ck_fleet_mission_passages_direction CHECK (direction IN ('outbound','return','local')), 
+	CONSTRAINT ck_fleet_mission_passages_cancellation CHECK (cancelled_at IS NULL OR cancelled_at < entered_at), 
+	CONSTRAINT ck_fleet_mission_passages_state CHECK (state IN ('pending','resolved','cancelled','blocked')), 
+	CONSTRAINT ck_fleet_mission_passages_resolution CHECK ((state = 'resolved') = (resolved_at IS NOT NULL)), 
+	CONSTRAINT ck_fleet_mission_passages_cancelled CHECK ((state = 'cancelled') = (cancelled_at IS NOT NULL)), 
+	CONSTRAINT ck_fleet_mission_passages_local CHECK (direction <> 'local' OR (sequence = 0 AND state = 'resolved')), 
+	CONSTRAINT ck_fleet_mission_passages_attempts CHECK (attempts >= 0)
 )
 """)
     op.execute(
         "CREATE INDEX ix_fleet_mission_passages_system ON fleet_mission_passages "
         "(universe_id, system_id, entered_at) WHERE cancelled_at IS NULL"
+    )
+    op.execute(
+        "CREATE INDEX ix_fleet_mission_passages_due ON fleet_mission_passages "
+        "(entered_at, mission_id, sequence) WHERE state = 'pending'"
     )
     op.add_column("fleets", sa.Column("protocol", sa.String(length=20), nullable=True))
     op.execute(f"ALTER TABLE fleets ADD CONSTRAINT ck_fleets_protocol CHECK ({PROTOCOL})")

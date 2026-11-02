@@ -1,15 +1,20 @@
 """Frontier services (13B, ruleset v0.9).
 
-Locks and streams:
+Locks and streams (C01/C02, 02/11/2026):
 - Passages are recorded inside the Fleet transaction that decides a movement (launch, recall,
-  return after battle), under the moving Empire's Operations stream lock, and each one schedules
-  a `FRONTIER_PASSAGE` event on that same stream at its `entered_at`. No other stream is locked.
-- The passage handler runs on the moving Empire's stream at the logical instant `entered_at`
-  (even if processed late). It only reads protocol periods (FOR SHARE, so a concurrent change
-  is seen once committed) and appends unique detection facts: replay never duplicates.
+  return after battle), under the moving Empire's Operations stream lock. Each one fences that
+  same stream at `entered_at - 1 µs` (own stream only, never another Empire's): the mover cannot
+  move past an entry before the entry is resolved.
+- An entry is resolved outside any handler by `app.frontier.orchestrator` once due: it locks the
+  mover's stream and the stream of every Empire that may hold a protocol in the system (sorted by
+  UUID, lock_timeout), settles each of them through `entered_at - 1 µs`, then evaluates detections
+  and engagements in one transaction. A protocol command holds its own Empire's stream lock, so a
+  command and an entry resolution are serialised whatever their commit order (no lost entry).
+- Covering rule: a period covers an entry at t when `started_at < t <= ended_at` (open end). Any
+  protocol change at an instant >= t therefore never alters what an entry at t saw.
 - Contacts introduced by FRIENDLY_CONTACT are materialised later, at the same points as presence
   contacts (reads, AI turn after its command), never inside a handler: global order pair →
-  contact preserved (a handler may run inside a Combat catch-up that locks a pair afterwards).
+  contact preserved.
 
 Detection (D1–D3): every Empire has detection level 0 until Q58 defines a technology, so every
 encounter between a real passage and a protocol-holding stationed Fleet is mutual. An observer
@@ -24,7 +29,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.colony.service import ColonyError
-from app.frontier.encounter import AGGRESSIVE, ENGAGEMENT, RETREAT, add, kind_for
+from app.frontier.encounter import AGGRESSIVE, ENGAGEMENT, RETREAT, add
 from app.frontier.encounter import FRIENDLY as FRIENDLY_PROTOCOL
 from app.frontier.models import (
     FleetPassage,
@@ -37,11 +42,13 @@ from app.galaxy.models import EmpireExploration, GalaxyRoute
 from app.relations import service as relations
 from app.relations.models import RelationContact
 from app.simulation.clock import utc
-from app.simulation.models import ColonyTimeline, EventStream, ScheduledEvent, StreamFence
-from app.simulation.scheduler import TimelineError, schedule
+from app.simulation.models import ColonyTimeline, EventStream, StreamFence
+from app.simulation.scheduler import TimelineError
 
 DETECTION_LIMIT = 50
 FRIENDLY = "FRIENDLY_CONTACT"
+LOCAL = "local"
+UNRESOLVED = ("pending", "blocked")
 
 
 class FrontierError(ColonyError):
@@ -74,24 +81,36 @@ def crossed_systems(session, universe_id, origin_id, path):
     return systems
 
 
-def passage_key(mission_id, sequence):
+def passage_owner(mission_id, sequence):
     return f"frontier-passage:{mission_id}:{sequence}"
 
 
 def persist(session, mission, stream_id, passages):
+    """Passage rows plus, for each, a fence on the mover's own stream just before the entry."""
     for p in passages:
         session.add(row(mission, p))
     session.flush()
     for p in passages:
-        schedule(
-            session,
-            stream_id,
-            mission.universe_id,
-            key=passage_key(mission.id, p.sequence),
-            kind="FRONTIER_PASSAGE",
-            due_at=p.entered_at,
-            payload={"mission_id": str(mission.id), "sequence": p.sequence},
+        session.add(
+            StreamFence(
+                stream_id=stream_id,
+                universe_id=mission.universe_id,
+                fence_at=p.entered_at - timedelta(microseconds=1),
+                owner=passage_owner(mission.id, p.sequence),
+            )
         )
+    session.flush()
+
+
+def release_passage(session, mission_id, sequence, at):
+    for fence in session.scalars(
+        select(StreamFence).where(
+            StreamFence.owner == passage_owner(mission_id, sequence),
+            StreamFence.released_at.is_(None),
+        )
+    ):
+        fence.released_at = utc(at)
+    session.flush()
 
 
 def record_outbound(session, rules, mission, stream_id, path, travel_us):
@@ -101,6 +120,29 @@ def record_outbound(session, rules, mission, stream_id, path, travel_us):
     passages = outbound(mission.started_at, travel_us, systems)
     persist(session, mission, stream_id, passages)
     return passages
+
+
+def record_local(session, rules, mission):
+    """C03: a 0-hop ATTACK enters no system, yet it is a hostile act inside the target system.
+    One `local` row (sequence 0, at launch) anchors the friendly retreat; it is not an entry: no
+    detection, no engagement, nothing to resolve."""
+    if not enabled(rules) or mission.kind != "ATTACK":
+        return None
+    passage = FleetPassage(
+        mission_id=mission.id,
+        sequence=0,
+        empire_id=mission.empire_id,
+        universe_id=mission.universe_id,
+        system_id=mission.destination_id,
+        entered_at=mission.started_at,
+        direction=LOCAL,
+        state="resolved",
+        attempts=0,
+        resolved_at=mission.started_at,
+    )
+    session.add(passage)
+    session.flush()
+    return passage
 
 
 def planned(session, mission):
@@ -118,7 +160,7 @@ def record_way_back(session, rules, mission, stream_id, depart_at, progress_at):
     """The mirrored way back; unreached outbound entries and their events are cancelled."""
     if not enabled(rules):
         return []
-    rows = planned(session, mission)
+    rows = [r for r in planned(session, mission) if r.direction != LOCAL]
     if not rows:
         return []
     if any(r.direction != OUTBOUND for r in rows):
@@ -127,23 +169,18 @@ def record_way_back(session, rules, mission, stream_id, depart_at, progress_at):
     unreached = {p.sequence for p in cancelled(passages, progress_at)}
     for r in rows:
         if r.sequence in unreached:
-            r.cancelled_at = progress_at
-            cancel_event(session, stream_id, mission, r.sequence, progress_at)
-            cancel_encounters(session, progress_at, passage=r)
+            cancel_passage(session, r, progress_at)
     back = way_back(passages, mission.origin_id, mission.started_at, depart_at, progress_at)
     persist(session, mission, stream_id, back)
     return back
 
 
-def cancel_event(session, stream_id, mission, sequence, at):
-    event = session.scalar(
-        select(ScheduledEvent).where(
-            ScheduledEvent.stream_id == stream_id,
-            ScheduledEvent.idempotency_key == passage_key(mission.id, sequence),
-        )
-    )
-    if event is not None and event.status == "pending":
-        event.status, event.completed_at, event.error_code = "completed", utc(at), "cancelled"
+def cancel_passage(session, passage, at):
+    """An entry that never happens: no resolution, its fence and its reactions go."""
+    passage.cancelled_at, passage.state = utc(at), "cancelled"
+    passage.retry_at = passage.error_code = None
+    release_passage(session, passage.mission_id, passage.sequence, at)
+    cancel_encounters(session, at, passage=passage)
 
 
 def row(mission, p):
@@ -155,6 +192,8 @@ def row(mission, p):
         system_id=p.system_id,
         entered_at=p.entered_at,
         direction=p.direction,
+        state="pending",
+        attempts=0,
     )
 
 
@@ -162,10 +201,8 @@ def cancel_unreached(session, mission, stream_id, at):
     """A mission ended for good at `at` (Fleet destroyed): later entries, outbound or on the
     way back, never happen; their detections and reactions are cancelled too."""
     for r in planned(session, mission):
-        if r.cancelled_at is None and r.entered_at > at:
-            r.cancelled_at = at
-            cancel_event(session, stream_id, mission, r.sequence, at)
-            cancel_encounters(session, at, passage=r)
+        if r.state in UNRESOLVED and r.entered_at > at:
+            cancel_passage(session, r, at)
 
 
 # --- B02 protocol periods ----------------------------------------------------------------------
@@ -179,6 +216,28 @@ def check_protocol(rules, protocol):
         raise FrontierError("Protocol not enabled by this ruleset", "protocol_unavailable")
 
 
+def check_not_behind(session, fleet, at):
+    """C02: a period change dated `at` is refused once a foreign entry of this system after `at`
+    is already resolved (a command dated before an entry that waited for the stream lock the
+    resolution held). Never rewrite what a resolved entry saw; a retry gets a fresh instant."""
+    if fleet.system_id is None:
+        return
+    later = session.scalar(
+        select(FleetPassage.mission_id)
+        .where(
+            FleetPassage.universe_id == fleet.universe_id,
+            FleetPassage.system_id == fleet.system_id,
+            FleetPassage.empire_id != fleet.empire_id,
+            FleetPassage.state == "resolved",
+            FleetPassage.direction != LOCAL,
+            FleetPassage.entered_at > utc(at),
+        )
+        .limit(1)
+    )
+    if later is not None:
+        raise FrontierError("A later frontier entry is already resolved; retry", "fleet_busy")
+
+
 def end_protocol(session, fleet, at):
     """Close the open period (if any) at the logical instant the stationing or protocol ends."""
     period = session.scalar(
@@ -187,6 +246,7 @@ def end_protocol(session, fleet, at):
         .with_for_update()
     )
     if period is not None:
+        check_not_behind(session, fleet, at)
         period.ended_at = max(utc(at), period.started_at)
         # The protocol no longer covers later entries: their reactions never happen.
         cancel_encounters(session, period.ended_at, period=period)
@@ -194,6 +254,7 @@ def end_protocol(session, fleet, at):
 
 
 def start_protocol(session, fleet, protocol, at):
+    check_not_behind(session, fleet, at)
     end_protocol(session, fleet, at)
     session.flush()
     if protocol is not None:
@@ -218,17 +279,18 @@ def start_protocol(session, fleet, protocol, at):
         plan_for_period(session, opened)
 
 
-# --- B05/B06 automatic reactions: planning, fences, cancellation ------------------------------
+# --- B05/B06 automatic reactions ----------------------------------------------------------------
+#
+# Engagements (AMBUSH, INTERCEPTION) are decided while an entry is resolved (orchestrator), never
+# planned in advance: the mover is already frozen by its own passage fence and the watcher's
+# Fleet cannot change while an entry it covers is unresolved (`guard_fleet_change`).
+# Friendly retreats (FRIENDLY_CONTACT) launch a movement for the watcher at the instant of the
+# hostile act, so they are planned when both facts are known and freeze the watcher's
+# Operations stream and the retreating Fleet's home Colony at that instant.
 
 
 def encounter_owner(encounter_id):
     return f"frontier:{encounter_id}"
-
-
-def fence_instant(kind, t):
-    """Engagements see the state strictly before the entry (an arrival at that instant cannot
-    settle the mover first); a retreat is paid at the entry instant itself (inclusive)."""
-    return t - timedelta(microseconds=1) if kind == ENGAGEMENT else t
 
 
 def operations_stream(session, universe_id, empire_id):
@@ -238,25 +300,33 @@ def operations_stream(session, universe_id, empire_id):
     return state.stream_id
 
 
+def covers(period, t):
+    """Open-ended covering rule (C04): active strictly before t, not ended before t."""
+    return period.started_at < t and (period.ended_at is None or period.ended_at >= t)
+
+
 def fenced_streams(session, encounter):
-    """Streams frozen by one reaction, in a stable sorted order (also the lock order)."""
-    watcher = operations_stream(session, encounter.universe_id, encounter.watcher_empire_id)
-    if encounter.kind == ENGAGEMENT:
-        mover = operations_stream(session, encounter.universe_id, encounter.mover_empire_id)
-        return sorted({watcher, mover}, key=str)
+    """Streams frozen by one retreat, in a stable sorted order (also the lock order)."""
     from app.fleet.models import Fleet
 
+    watcher = operations_stream(session, encounter.universe_id, encounter.watcher_empire_id)
     fleet = session.get(Fleet, encounter.watch_fleet_id)
     colony = session.get(ColonyTimeline, fleet.home_colony_id)
     return sorted({watcher, colony.stream_id}, key=str)
 
 
 def add_fences(session, encounter):
-    at = fence_instant(encounter.kind, encounter.encounter_at)
+    at = encounter.encounter_at
     for stream_id in fenced_streams(session, encounter):
-        cursor = session.scalar(select(EventStream.cursor_at).where(EventStream.id == stream_id))
+        # FOR KEY SHARE waits for a transaction holding that stream (its cursor may be moving),
+        # then reads the committed cursor; it is held to commit, so the stream cannot be locked
+        # for an advance before the fence exists.
+        cursor = session.scalar(
+            select(EventStream.cursor_at)
+            .where(EventStream.id == stream_id)
+            .with_for_update(read=True, key_share=True)
+        )
         if cursor is None or cursor > at:
-            # Only possible for a late orchestrator decision: never fight on a passed state.
             raise TimelineError("A fenced stream already passed the encounter instant")
         session.add(
             StreamFence(
@@ -280,10 +350,11 @@ def release(session, encounter, at):
 
 
 def cancel_encounters(session, at, *, period=None, passage=None):
-    query = select(FrontierEncounter).where(FrontierEncounter.state.in_(["pending", "blocked"]))
+    query = select(FrontierEncounter).where(FrontierEncounter.state.in_(UNRESOLVED))
     if period is not None:
+        # Open end (C04): an entry at exactly `at` still saw the period.
         query = query.where(
-            FrontierEncounter.period_id == period.id, FrontierEncounter.encounter_at >= at
+            FrontierEncounter.period_id == period.id, FrontierEncounter.encounter_at > at
         )
     if passage is not None:
         query = query.where(
@@ -296,19 +367,19 @@ def cancel_encounters(session, at, *, period=None, passage=None):
 
 
 def hostile_arrival(session, passage):
-    """Retreat trigger (FC6): the passage is an ATTACK force entering its target system, whose
-    bound defender is returned (internal truth, never projected). None otherwise."""
+    """Retreat trigger (FC6, C03): the passage is an ATTACK force entering its target system, or
+    a 0-hop ATTACK launched inside it (`local`); its bound defender is returned (internal truth,
+    never projected). None otherwise."""
     from app.combat.models import CombatEngagement
     from app.fleet.models import FleetMission
 
     mission = session.get(FleetMission, passage.mission_id)
-    if (
-        mission is None
-        or mission.kind != "ATTACK"
-        or passage.direction != OUTBOUND
-        or passage.system_id != mission.destination_id
-        or passage.entered_at != mission.travel_arrival_at
-    ):
+    if mission is None or mission.kind != "ATTACK" or passage.system_id != mission.destination_id:
+        return None
+    if passage.direction == LOCAL:
+        if passage.entered_at != mission.started_at:
+            return None
+    elif passage.direction != OUTBOUND or passage.entered_at != mission.travel_arrival_at:
         return None
     engagement = session.scalar(
         select(CombatEngagement).where(
@@ -318,25 +389,26 @@ def hostile_arrival(session, passage):
     return engagement.defender_empire_id if engagement is not None else None
 
 
-def create_encounter(session, passage, period):
-    kind = kind_for(period.protocol)
-    if kind is None or period.empire_id == passage.empire_id:
+def create_retreat(session, passage, period):
+    if period.protocol != FRIENDLY_PROTOCOL or period.empire_id == passage.empire_id:
         return None
-    if kind == RETREAT and hostile_arrival(session, passage) != period.empire_id:
+    if not covers(period, passage.entered_at):
+        return None
+    if hostile_arrival(session, passage) != period.empire_id:
         return None
     existing = session.scalar(
         select(FrontierEncounter).where(
             FrontierEncounter.mission_id == passage.mission_id,
             FrontierEncounter.sequence == passage.sequence,
             FrontierEncounter.watch_fleet_id == period.fleet_id,
-            FrontierEncounter.kind == kind,
+            FrontierEncounter.kind == RETREAT,
         )
     )
     if existing is not None:
         return existing
     row = FrontierEncounter(
         universe_id=passage.universe_id,
-        kind=kind,
+        kind=RETREAT,
         mission_id=passage.mission_id,
         sequence=passage.sequence,
         period_id=period.id,
@@ -355,13 +427,12 @@ def create_encounter(session, passage, period):
     return row
 
 
-REACTIVE = (*AGGRESSIVE, FRIENDLY_PROTOCOL)
-
-
 def plan_for_mission(session, rules, mission):
-    """After a movement decision: reactions of protocols open now on the future entries.
-    A protocol set later plans its own reactions (plan_for_period)."""
-    if not enabled(rules):
+    """After an ATTACK launch (the Combat engagement exists, the defender's Operations stream is
+    already held FOR KEY SHARE by its battle fence): friendly retreats of the defender's Fleets
+    whose FRIENDLY_CONTACT period is open in the target system. A protocol set later plans its
+    own retreats (plan_for_period); the shared stream lock serialises both, whatever the order."""
+    if not enabled(rules) or mission.kind != "ATTACK":
         return []
     created = []
     for passage in session.scalars(
@@ -369,9 +440,12 @@ def plan_for_mission(session, rules, mission):
         .where(
             FleetPassage.mission_id == mission.id,
             FleetPassage.cancelled_at.is_(None),
+            FleetPassage.system_id == mission.destination_id,
         )
         .order_by(FleetPassage.sequence)
     ):
+        if hostile_arrival(session, passage) is None:
+            continue
         for period in session.scalars(
             select(FleetProtocolPeriod)
             .where(
@@ -380,19 +454,25 @@ def plan_for_mission(session, rules, mission):
                 FleetProtocolPeriod.empire_id != passage.empire_id,
                 FleetProtocolPeriod.ended_at.is_(None),
                 FleetProtocolPeriod.started_at < passage.entered_at,
-                FleetProtocolPeriod.protocol.in_(REACTIVE),
+                FleetProtocolPeriod.protocol == FRIENDLY_PROTOCOL,
             )
             .order_by(FleetProtocolPeriod.fleet_id)
         ):
-            row = create_encounter(session, passage, period)
+            try:
+                row = create_retreat(session, passage, period)
+            except TimelineError:
+                # Only a 0-hop attack can meet this: the defender's stream moved past the launch
+                # instant while we waited for it. Refused as a whole; a retry gets a new instant.
+                raise FrontierError("Defender timeline moved; retry", "fleet_busy") from None
             if row is not None:
                 created.append(row)
     return created
 
 
 def plan_for_period(session, period):
-    """After a protocol command: reactions to entries already decided, strictly after it."""
-    if period is None or period.protocol not in REACTIVE:
+    """After a FRIENDLY_CONTACT command: retreats from hostile entries already decided, strictly
+    after it (own Empire's streams only)."""
+    if period is None or period.protocol != FRIENDLY_PROTOCOL:
         return []
     created = []
     for passage in session.scalars(
@@ -406,10 +486,73 @@ def plan_for_period(session, period):
         )
         .order_by(FleetPassage.entered_at, FleetPassage.mission_id, FleetPassage.sequence)
     ):
-        row = create_encounter(session, passage, period)
+        row = create_retreat(session, passage, period)
         if row is not None:
             created.append(row)
     return created
+
+
+def candidate_empires(session, passage):
+    """Every other Empire that may hold a protocol period covering this entry: owners of a Fleet
+    in the system, or of a mission still heading to it (active) or back to it (returning).
+
+    Complete from committed data once the entry is due: a period needs a Fleet stationed in the
+    system, and a Fleet only gets there by a mission committed when it was launched (hops last
+    at least one catalogue hop) or by a split/merge of a Fleet already there. Over-inclusion only
+    costs a lock."""
+    from app.fleet.models import Fleet, FleetMission
+
+    here = select(Fleet.empire_id).where(
+        Fleet.universe_id == passage.universe_id, Fleet.system_id == passage.system_id
+    )
+    coming = select(FleetMission.empire_id).where(
+        FleetMission.universe_id == passage.universe_id,
+        or_(
+            and_(
+                FleetMission.status == "active",
+                FleetMission.destination_id == passage.system_id,
+            ),
+            and_(
+                FleetMission.status == "returning",
+                FleetMission.origin_id == passage.system_id,
+            ),
+        ),
+    )
+    found = {*session.scalars(here), *session.scalars(coming)}
+    found.discard(passage.empire_id)
+    return sorted(found, key=str)
+
+
+def guard_fleet_change(session, fleet, at):
+    """A stationed Fleet whose AMBUSH/INTERCEPTION period covers an unresolved foreign entry keeps
+    its composition until that entry is resolved (the engagement sees the Fleet as it was at the
+    entry, whatever the worker delay). Raised as `combat_pending`, like any due Combat."""
+    if fleet.system_id is None:
+        return
+    p, period = FleetPassage, FleetProtocolPeriod
+    blocking = session.scalar(
+        select(p.mission_id)
+        .join(
+            period,
+            and_(
+                period.fleet_id == fleet.id,
+                period.system_id == p.system_id,
+                period.protocol.in_(AGGRESSIVE),
+                period.started_at < p.entered_at,
+                or_(period.ended_at.is_(None), period.ended_at >= p.entered_at),
+            ),
+        )
+        .where(
+            p.universe_id == fleet.universe_id,
+            p.system_id == fleet.system_id,
+            p.empire_id != fleet.empire_id,
+            p.state.in_(UNRESOLVED),
+            p.entered_at <= utc(at),
+        )
+        .limit(1)
+    )
+    if blocking is not None:
+        raise FrontierError("A frontier encounter must be resolved first", "combat_pending")
 
 
 def intercepted_losses(session, mission_id):
@@ -441,7 +584,8 @@ def knew(session, observer, observed, at):
 
 
 def watchers(session, passage):
-    """Protocol periods of other Empires covering the logical entry instant, in stable order."""
+    """Protocol periods of other Empires covering the logical entry instant, in stable order.
+    Called by the entry resolution, which holds every candidate watcher's stream lock."""
     t = passage.entered_at
     return list(
         session.scalars(
@@ -450,11 +594,10 @@ def watchers(session, passage):
                 FleetProtocolPeriod.universe_id == passage.universe_id,
                 FleetProtocolPeriod.system_id == passage.system_id,
                 FleetProtocolPeriod.empire_id != passage.empire_id,
-                FleetProtocolPeriod.started_at <= t,
-                or_(FleetProtocolPeriod.ended_at.is_(None), FleetProtocolPeriod.ended_at > t),
+                FleetProtocolPeriod.started_at < t,
+                or_(FleetProtocolPeriod.ended_at.is_(None), FleetProtocolPeriod.ended_at >= t),
             )
             .order_by(FleetProtocolPeriod.fleet_id)
-            .with_for_update(read=True)
         )
     )
 
@@ -485,33 +628,6 @@ def detect(session, passage, period):
             )
             .on_conflict_do_nothing(constraint="uq_frontier_detections")
         )
-
-
-def complete_passage(session, event, processed_at):
-    """FRONTIER_PASSAGE handler on the moving Empire's stream, evaluated at `entered_at`."""
-    if set(event.payload) != {"mission_id", "sequence"}:
-        raise TimelineError("Invalid passage payload")
-    try:
-        mission_id, sequence = UUID(event.payload["mission_id"]), int(event.payload["sequence"])
-    except (TypeError, ValueError):
-        raise TimelineError("Invalid passage payload") from None
-    passage = session.get(FleetPassage, (mission_id, sequence))
-    if (
-        passage is None
-        or passage.universe_id != event.universe_id
-        or event.idempotency_key != passage_key(mission_id, sequence)
-        or passage.entered_at != event.due_at
-    ):
-        raise TimelineError("Passage outside its event")
-    if passage.cancelled_at is not None:
-        return []  # never reached: no detection
-    if detection_level(session, passage.universe_id, passage.empire_id, passage.entered_at) != 0:
-        raise TimelineError("Only the provisional equal detection level is supported")
-    found = watchers(session, passage)
-    for period in found:
-        detect(session, passage, period)
-    session.flush()
-    return found
 
 
 def materialise_introductions(session, universe_id, empire_id, at):

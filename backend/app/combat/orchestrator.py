@@ -35,8 +35,43 @@ from app.simulation.scheduler import TimelineError, lock_stream, schedule
 from app.simulation.service import TimeEngine
 
 
+def frontier_blocker(session, engagement):
+    """C04 (13B): at equal or earlier instants, frontier first. An unresolved entry into the
+    target system at or before battle_at (it sees the state strictly before its own instant) and
+    an unresolved friendly retreat of the defender at or before battle_at (the watcher leaves at
+    the hostile act) are both resolved before the battle. No row exists before v0.9."""
+    from app.frontier.models import FleetPassage, FrontierEncounter
+
+    entry = session.scalar(
+        select(FleetPassage.mission_id)
+        .where(
+            FleetPassage.universe_id == engagement.universe_id,
+            FleetPassage.system_id == engagement.target_system_id,
+            FleetPassage.state.in_(["pending", "blocked"]),
+            FleetPassage.entered_at <= engagement.battle_at,
+        )
+        .limit(1)
+    )
+    if entry is not None or engagement.defender_empire_id is None:
+        return entry
+    return session.scalar(
+        select(FrontierEncounter.id)
+        .where(
+            FrontierEncounter.universe_id == engagement.universe_id,
+            FrontierEncounter.watcher_empire_id == engagement.defender_empire_id,
+            FrontierEncounter.state.in_(["pending", "blocked"]),
+            FrontierEncounter.encounter_at <= engagement.battle_at,
+        )
+        .limit(1)
+    )
+
+
 def blocker(session, engagement):
-    """A better-ranked engagement still awaiting resolution on the same system or Empire."""
+    """A better-ranked engagement still awaiting resolution on the same system or Empire, or an
+    earlier (or simultaneous) frontier entry/retreat that must come first."""
+    frontier_first = frontier_blocker(session, engagement)
+    if frontier_first is not None:
+        return frontier_first
     rank = tuple_(
         literal(engagement.battle_at), literal(engagement.started_at), literal(engagement.id)
     )
@@ -264,9 +299,8 @@ def resolve_engagement(session, engagement, processed_at):
             due_at=mission.return_at,
             payload={"mission_id": str(mission.id)},
         )
-        # Reactions on the way back. A resolution so late that a watcher's stream already passed
-        # an entry raises TimelineError (retry, then blocked): never a silently skipped reaction.
-        frontier.plan_for_mission(session, rules, mission)
+        # Entries on the way back fence only the attacker's own stream (at or after battle_at,
+        # where it stands): a late resolution never depends on another Empire's cursor.
     session.flush()
     release_fences(session, engagement, processed_at)
     return outcome

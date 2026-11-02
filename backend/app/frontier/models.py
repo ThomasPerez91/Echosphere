@@ -2,8 +2,10 @@
 
 `fleet_mission_passages`: every system a moving Fleet enters, at its logical instant, written
 when the movement is decided (launch, recall, return after battle) from the pure transit rules.
-Immutable facts, except that an entry the Fleet never reaches (recalled or destroyed before it)
-is marked `cancelled_at` instead of being deleted. Only non-cancelled rows ever happened or will.
+Immutable facts, except their resolution state: `pending` until the frontier orchestrator
+resolves the entry (`resolved`), `cancelled` if the Fleet never reaches it (recalled or destroyed
+before), `blocked` for the operator after repeated failures. A `local` row (sequence 0) anchors a
+0-hop ATTACK inside its target system (C03): resolved at once, never an entry.
 """
 
 from datetime import datetime
@@ -39,11 +41,20 @@ class FleetPassage(Base):
             name="fk_fleet_mission_passages_system",
         ),
         CheckConstraint("sequence >= 0", name="sequence"),
-        CheckConstraint("direction IN ('outbound','return')", name="direction"),
+        CheckConstraint("direction IN ('outbound','return','local')", name="direction"),
         CheckConstraint(
             "cancelled_at IS NULL OR cancelled_at < entered_at",
             name="cancellation",
         ),
+        CheckConstraint(
+            "state IN ('pending','resolved','cancelled','blocked')", name="state"
+        ),
+        CheckConstraint("(state = 'resolved') = (resolved_at IS NOT NULL)", name="resolution"),
+        CheckConstraint("(state = 'cancelled') = (cancelled_at IS NOT NULL)", name="cancelled"),
+        CheckConstraint(
+            "direction <> 'local' OR (sequence = 0 AND state = 'resolved')", name="local"
+        ),
+        CheckConstraint("attempts >= 0", name="attempts"),
         # Who entered a system and when: the future detection query (B03).
         Index(
             "ix_fleet_mission_passages_system",
@@ -51,6 +62,14 @@ class FleetPassage(Base):
             "system_id",
             "entered_at",
             postgresql_where=text("cancelled_at IS NULL"),
+        ),
+        # Due entries in rank order (frontier orchestrator).
+        Index(
+            "ix_fleet_mission_passages_due",
+            "entered_at",
+            "mission_id",
+            "sequence",
+            postgresql_where=text("state = 'pending'"),
         ),
     )
 
@@ -62,15 +81,20 @@ class FleetPassage(Base):
     entered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     direction: Mapped[str] = mapped_column(String(8))
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    state: Mapped[str] = mapped_column(String(10))
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    attempts: Mapped[int]
+    retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(32))
 
 
 class FleetProtocolPeriod(Record, Base):
     """Dated history of a stationed Fleet's protocol: what was active at any logical instant.
 
     Opened by the protocol command, closed (`ended_at`) by a change, a departure, a merge or a
-    destruction. A passage is evaluated against the period covering its `entered_at`
-    (started_at <= t < ended_at), so a protocol set after a passage, or a Fleet gone before it,
-    never detects retroactively."""
+    destruction. An entry at t is evaluated against the period covering it
+    (started_at < t <= ended_at, C04), so a protocol set at or after an entry, or a Fleet gone
+    before it, never detects retroactively, and a change at t never alters what t saw."""
 
     __tablename__ = "fleet_protocol_periods"
     __table_args__ = (

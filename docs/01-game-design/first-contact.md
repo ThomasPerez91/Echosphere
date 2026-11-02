@@ -127,6 +127,29 @@ Interception reste une posture volontaire très agressive.
   est signalé. Déclenchement idempotent (une agression, un repli, un débit) ; une flotte restée sur
   place peut être attaquée selon les règles Combat.
 
+### Arbitrages C01–C05 — 02/11/2026
+
+Exigences C01–C05 **demandées par l'utilisateur** ; les règles de départage ci-dessous sont
+**proposées par l'implémentation** (PR #17), sans règle de jeu nouvelle, et restent à confirmer en
+revue. Statut : code écrit, tests PostgreSQL écrits non exécutés.
+
+- **Couverture d'une entrée (C04).** Un protocole couvre une entrée à `t` s'il était actif
+  *strictement avant* `t` et n'avait pas pris fin *avant* `t` (`started_at < t <= ended_at`). Un
+  protocole activé exactement à `t` ne voit pas cette entrée ; un protocole arrêté exactement à `t`
+  la voit encore. Aucun changement daté de `t` ou après ne modifie donc ce que `t` a vu.
+- **Ordre au même instant (C04).** À un même instant `t` : 1) résolution des entrées (rang
+  `entered_at`, mission, ordre du passage ; surveillants par identifiant de flotte), sur l'état
+  strictement antérieur à `t` ; 2) replis amicaux à `t` ; 3) bataille planétaire à `t` (Q02
+  inchangé, état inclusif comme en v0.7). Une production terminée exactement à `t` n'est pas
+  engagée au passage (elle l'est dans la bataille planétaire), différence liée à la nature d'une
+  rencontre au franchissement, Q02/Q10 inchangés.
+- **Attaque locale (C03).** Une ATTACK de 0 saut lancée dans le système de la flotte amicale est
+  l'acte hostile : repli à l'instant du lancement, donc au moins 24 h avant la bataille (Q02
+  intact). Aucun repli si l'attaque ne vise pas une planète de l'Empire du surveillant.
+- **Retard du worker (C05).** Une entrée échue gèle seulement le stream d'opérations de l'Empire en
+  mouvement jusqu'à sa résolution (commandes de cet Empire : `combat_pending`) ; aucune entrée n'est
+  omise, résolue sur un état postérieur, ni recalculée après coup.
+
 ## Hors étape 13
 
 L'étape 13 ne crée ni champ de protocole, ni nouvelle mission, ni technologie d'espionnage, ni
