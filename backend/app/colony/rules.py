@@ -8,7 +8,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.ai.rules import AIRules, AIRulesV2, AIRulesV3
+from app.ai.rules import AIRules, AIRulesV2, AIRulesV3, AIRulesV4
 from app.colonization.rules import ColonizationRules
 from app.combat.rules import CombatRules
 from app.fleet.rules import FleetRules
@@ -182,7 +182,7 @@ class Ruleset(StrictModel):
     exploration: ExplorationRules | None = None
     fleets: FleetRules | None = None
     colonization: ColonizationRules | None = None
-    ai: AIRulesV3 | AIRulesV2 | AIRules | None = None
+    ai: AIRulesV4 | AIRulesV3 | AIRulesV2 | AIRules | None = None
     combat: CombatRules | None = None
     relations: RelationsRules | None = None
     frontier: FrontierRules | None = None
@@ -269,8 +269,9 @@ class Ruleset(StrictModel):
         if self.version in {"v0.8", "v0.9"}:
             if self.relations is None or self.relations.version != self.version:
                 raise ValueError("Missing or mixed Relations version")
-            if type(self.ai) is not AIRulesV3:
-                raise ValueError("Relations require the diplomacy AI policy")
+            expected = AIRulesV4 if self.version == "v0.9" else AIRulesV3
+            if type(self.ai) is not expected:
+                raise ValueError("Relations require the diplomacy AI policy of this version")
         elif self.relations is not None:
             raise ValueError("Relations unavailable in historical rulesets")
         # Frontier presence (13B) exists from v0.9 only; v0.1-v0.8 stay strictly unchanged.

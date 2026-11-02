@@ -112,6 +112,19 @@ Flottes : protocole courant et sélecteur des quatre modes (explication de chacu
 opérationnelles stationnées, section « Frontière » (détections, rencontres, replis), rapport de
 mission « détruite par une interception en route ». Mêmes règles de commande que les autres ordres.
 
+## IA (B08)
+
+Policy `utility-goals-v4` (v0.9 seulement, `AIRulesV4`, section `frontier` de `ai.json`).
+`app/ai/observation.py` : `protocol_fleets` (flottes TASK stationnées dans un système de colonie
+propre, hors logistique pure, bornées à 64) ajoutées après les colonies à la page circulaire
+`military` (même budget de 16) ; `protocol_posture` calcule la posture voulue (AMBUSH → FRIENDLY →
+SURVEILLANCE) depuis contacts, paires, alertes et détections propres ; candidat `protocol`
+seulement si elle diffère du protocole courant ; observation `frontier` (flotte, système, courant,
+voulu, base) pour l'explication. `app/ai/dispatcher.py` : opération `protocol` →
+`fleet.set_protocol` (même service que l'API), refus `ai_protocol_denied` hors liste du profil
+(jamais INTERCEPTION, jamais AMBUSH prudent). Tests : `tests/test_frontier_rules.py` (pur),
+`tests/integration/test_frontier_ai.py` (PostgreSQL, non exécuté).
+
 ## Opérateur
 
 `python -m app.combat.worker --blocked` liste aussi réactions et entrées bloquées ;

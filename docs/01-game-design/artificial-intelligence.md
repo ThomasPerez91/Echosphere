@@ -220,4 +220,5 @@ historique ; les précisions ci-dessous priment. Aucun merge ou Combat autorisé
 
 Policy v3 (Q18 close pour l'étape 13) : famille `diplomacy`, réponses prioritaires, aucune offensive
 ni rupture de pacte. [Décisions et poids](relations.md#q18--validation-avec-amendements-02112026).
-Choix de protocoles frontaliers par profil : orientation non validée, [présence frontalière et premier contact](first-contact.md).
+Protocoles frontaliers (13B, ruleset v0.9 seulement) : policy v4 validée le 02/11/2026, voir
+[B08](first-contact.md#b08--politique-ia-validée-le-02112026). v0.6–v0.8 inchangées.

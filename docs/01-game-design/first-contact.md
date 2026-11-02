@@ -84,9 +84,30 @@ carburant et la reprise après crash. Interdit : simuler une interception interm
 
 ## FC13 — IA future
 
-Aucun choix de protocole IA pendant l'étape 13. Orientation non validée pour 13B :
-`economic_cautious` favorise Surveillance / Friendly Contact, `expansionist` Surveillance / Ambush ;
-Interception reste une posture volontaire très agressive.
+Aucun choix de protocole IA pendant l'étape 13. Pour 13B : politique validée, voir B08 ci-dessous.
+
+### B08 — politique IA validée le 02/11/2026
+
+**Validée explicitement par l'utilisateur** (PR #17), ruleset v0.9 seulement (policy
+`utility-goals-v4`, v0.6–v0.8 et leurs empreintes inchangées) :
+
+- `economic_cautious` : SURVEILLANCE sur ses flottes opérationnelles stationnées pertinentes ;
+  FRIENDLY_CONTACT quand un contact volontaire a un intérêt et un risque acceptable selon des faits
+  réellement connus ; jamais d'AMBUSH ni d'INTERCEPTION automatiques.
+- `expansionist` : SURVEILLANCE pour protéger ses zones de présence ; AMBUSH seulement si D4 est
+  déjà réuni (Empire connu, acte hostile récent, aucun pacte) ; FRIENDLY_CONTACT possible quand une
+  posture hostile n'est pas justifiée ; INTERCEPTION reste un choix manuel.
+- Aucune offensive planétaire nouvelle ; mêmes services de commande que les humains ; informations
+  autorisées seulement ; tour de 600 s, une commande acceptée, 128 candidats, pages circulaires,
+  priorités bootstrap/défense urgente/réponses Q18 ; choix de protocole dans la famille militaire,
+  sans page ni commande supplémentaire ; pas de changement répété sans évolution de l'état.
+
+Lecture retenue par l'implémentation (à confirmer en revue) : « pertinente » = flotte TASK stationnée
+dans un système portant une colonie de l'Empire, hors logistique pure (colonisateur seul ou cargo à
+bord) ; « intérêt » = détection anonyme propre dans ce système depuis moins de `sighting_seconds`
+(72 h) ; « risque acceptable » = aucune alerte d'attaque propre et aucun acte hostile subi depuis
+moins de la fenêtre de grief de la diplomatie (72 h) ; AMBUSH exige en plus une unité militaire.
+Priorité de posture : AMBUSH (si permis et justifié) → FRIENDLY_CONTACT → SURVEILLANCE.
 
 ## Décisions D1–D7 — 02/11/2026
 

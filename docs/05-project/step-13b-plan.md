@@ -45,7 +45,7 @@ encore, 0014 se rebase sans transformation de données.
 | B05 | AMBUSH, INTERCEPTION : `frontier_encounters`, résolution hors handler par le worker Combat, résolveur Combat réutilisé | Code + tests |
 | B06 | Repli amical (D7), carburant normal débité à l'instant logique | Code + tests |
 | B07 | UI Flottes : protocole, quatre modes, détections, rapports d'interception et de repli | Code + tests Vitest |
-| B08 | IA : aucune capacité ajoutée ; points d'intégration documentés | Arbitrage requis (voir plus bas) |
+| B08 | IA : policy v4 (v0.9), protocoles dans la famille militaire, dispatcher borné par profil | Code + tests (PostgreSQL non exécutés) |
 | B09 | Recette runtime, revue indépendante, Ready | À faire sur poste local |
 
 « Code + tests » : tests purs exécutés ici et en Fast CI ; scénarios PostgreSQL écrits
@@ -91,4 +91,4 @@ Détail : [contrat technique](../03-technical/frontier-api-ui.md#chronologie-et-
 | Règles de départage C04 | Proposées par l'implémentation ([premier contact](../01-game-design/first-contact.md#arbitrages-c01c05--02112026)), à confirmer |
 | Gel du mobile (C05) | Toute flotte d'un Empire en mouvement attend la résolution de chaque entrée (≈ intervalle du worker Combat) ; évolution par flotte hors 13B |
 | Interblocage de deux lancements ATTACK croisés | Préexistant v0.7, détecté par PostgreSQL ; commande rejouable |
-| B08 — IA | Politique validée le 02/11/2026, voir B08 |
+| B08 — lecture des termes | « Pertinente », « intérêt », « risque acceptable » interprétés ([B08](../01-game-design/first-contact.md#b08--politique-ia-validée-le-02112026)), à confirmer |

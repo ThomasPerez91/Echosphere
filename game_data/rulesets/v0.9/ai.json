@@ -1,6 +1,6 @@
 {
   "version": "v0.9",
-  "policy_version": "utility-goals-v3",
+  "policy_version": "utility-goals-v4",
   "profiles": {
     "economic_cautious": {
       "economy": 35,
@@ -67,6 +67,23 @@
     "proposal_rules": {
       "economic_cautious": "no_recent_grievance",
       "expansionist": "past_grievance_only"
+    }
+  },
+  "frontier": {
+    "surveillance_utility": 300,
+    "friendly_utility": 300,
+    "ambush_utility": 800,
+    "sighting_seconds": 259200,
+    "protocols": {
+      "economic_cautious": [
+        "SURVEILLANCE",
+        "FRIENDLY_CONTACT"
+      ],
+      "expansionist": [
+        "SURVEILLANCE",
+        "AMBUSH",
+        "FRIENDLY_CONTACT"
+      ]
     }
   }
 }
