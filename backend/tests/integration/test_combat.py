@@ -754,3 +754,27 @@ def test_live_threats_come_before_any_cancellation_history(fleets):
         assert [x["state"] for x in alerts_for(s, b.universe, b.empire, history=False)] == [
             "pending"
         ]
+
+
+def test_lock_contention_on_one_engagement_never_starves_another_universe(fleets):
+    from app.simulation.scheduler import lock_stream
+
+    a, b = rivals(fleets)
+    planet, _ = planet_of(b)
+    m1, _ = launched(a, attack(a, arm(a, {"frigate": 1}), planet, {"frigate": 1}))
+    c, d = rivals(fleets)
+    target, _ = planet_of(d)
+    c.advance(minutes=1)
+    m2, _ = launched(c, attack(c, arm(c, {"frigate": 1}), target, {"frigate": 1}))
+    until_battle(c, m2)
+    runner = CombatOrchestrator(
+        a.game.factory, Clock(a.game), lock_ms=200, statement_ms=2000, scan=1
+    )
+    with a.game.factory.begin() as held:
+        # Another worker or command keeps B's Operations stream locked for the whole call.
+        lock_stream(held, g.state_for(held, b.universe, b.empire).stream_id, b.universe)
+        with ThreadPoolExecutor(1) as pool:
+            outcome = pool.submit(runner.process_next).result(timeout=30)
+        assert outcome["engagement_id"] == str(engagement_of(c, m2).id)
+        assert engagement_of(a, m1).state == "pending"
+    assert runner.process_next()["engagement_id"] == str(engagement_of(a, m1).id)

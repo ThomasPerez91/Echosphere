@@ -51,6 +51,15 @@ def blocker(session, engagement):
     )
 
 
+# lock_not_available (lock_timeout) and query_canceled (statement_timeout): contention on one
+# candidate's streams, never a database outage.
+CONTENTION = {"55P03", "57014"}
+
+
+def contention(error):
+    return getattr(getattr(error, "orig", None), "sqlstate", None) in CONTENTION
+
+
 def military(stacks, classes):
     return {c: n for c, n in sorted(stacks.items()) if c in classes and n}
 
@@ -355,7 +364,10 @@ class CombatOrchestrator:
                 if after_resolve is not None:
                     after_resolve(session)
                 return {"engagement_id": str(engagement.id), "outcome": outcome}
-        except Exception:
+        except Exception as error:
+            if claimed is None and contention(error):
+                # Rolled back; another worker or command holds these streams: try the next one.
+                return None
             if raise_errors or claimed is None:
                 raise
             # Every loss, report, return and fence change rolled back; no payload logged.
