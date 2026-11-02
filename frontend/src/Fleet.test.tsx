@@ -597,7 +597,7 @@ test("v0.9: the four protocols are distinct, explained, and one CSRF intention c
   vi.stubGlobal("fetch", fetcher);
   render(<StrictMode><FleetView universe={universe} enabled csrf={"a".repeat(64)} onSessionLost={vi.fn()} /></StrictMode>);
   const card = (await screen.findByRole("heading", { name: "Sentinelle" })).closest("li")!;
-  expect(within(card).getByText("Surveillance")).toBeVisible();
+  expect(within(card).getByText("Surveillance", { selector: ".badge" })).toBeVisible();
   const select = within(card).getByRole("combobox", { name: "Protocole de premier contact" });
   expect([...(select as HTMLSelectElement).options].map((o) => o.text)).toEqual(
     ["Aucun", "Surveillance", "Embuscade", "Interception", "Contact amical"]);

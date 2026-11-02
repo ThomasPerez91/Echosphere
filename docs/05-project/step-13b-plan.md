@@ -1,8 +1,9 @@
 # Étape 13B — Présence frontalière & Premier contact
 
-**État courant : B00 réalisé, B01–B02 implémentés sur `work/step-13b-first-contact` (code et tests
-écrits, Fast CI seule). Démarrage anticipé autorisé le 02/11/2026 ; aucune fusion, aucune
-validation de l'étape 13 impliquée.** Règles canoniques : [premier contact](../01-game-design/first-contact.md),
+**État courant : B00–B07 implémentés sur `work/step-13b-first-contact` (PR #17, Draft), code et
+tests écrits, Fast CI seule ; validations PostgreSQL/Compose/Chromium à faire sur poste local.
+Démarrage anticipé autorisé le 02/11/2026 ; aucune fusion, aucune validation de l'étape 13
+impliquée.** [Contrat technique](../03-technical/frontier-api-ui.md). Règles canoniques : [premier contact](../01-game-design/first-contact.md),
 Q57/Q58 au [registre](open-questions.md).
 
 ## Dépendance de branche (exception au workflow)
@@ -33,33 +34,55 @@ encore, 0014 se rebase sans transformation de données.
 
 ## Plan et état
 
-| Lot | Contenu | État |
+| Lot | Contenu | État (02/11/2026, fin d'après-midi) |
 | --- | --- | --- |
 | B00 | Audit ci-dessus, plan, arbitrages | Fait |
-| B01 | Ruleset v0.9 (= v0.8 + `frontier.json`), `fleet_mission_passages` (migration 0014), passages aller au lancement, retour miroir au rappel et après bataille, entrées non atteintes marquées `cancelled_at` ; v0.4–v0.8 n'en écrivent aucun | Code + tests (purs exécutés, PostgreSQL à exécuter) |
-| B02 | `fleets.protocol` (CHECK : flotte TASK stationnée seulement), commande `POST …/{fleet}/protocol` (droit `fleet.command`, idempotente), effacement au départ, à la fusion, à la destruction ; projection `protocol` et `frontier.protocols` | Code + tests (idem) |
-| B03 | Détection à l'entrée (passages × flottes stationnées en SURVEILLANCE/FRIENDLY_CONTACT), alertes « signature étrangère » | Après arbitrage D1–D3 |
-| B04 | FRIENDLY_CONTACT : contact réciproque (Empire, système, date) | Après D1–D3 |
-| B05 | AMBUSH, INTERCEPTION (engagements Combat) | Après D4–D6 |
-| B06 | Repli amical | Après D7 |
-| B07 | UI : choix du protocole, flottes stationnées, alertes de frontière | Après B03 |
-| B08 | IA | Après politique validée (FC13) |
-| B09 | Recette, revue, PR | — |
+| B01 | Ruleset v0.9, `fleet_mission_passages` (migration 0014), passages aller/retour miroir, entrées non atteintes annulées | Code + tests |
+| B02 | `fleets.protocol`, périodes de protocole datées, commande `POST …/{fleet}/protocol` (droit `fleet.command`), fin au départ/fusion/destruction | Code + tests |
+| B03 | Détection déterministe à `entered_at` (niveau 0 pour tous, mutuelle), faits uniques, signatures anonymes | Code + tests |
+| B04 | FRIENDLY_CONTACT : présentation volontaire, contacts réciproques source `frontier` | Code + tests |
+| B05 | AMBUSH, INTERCEPTION : `frontier_encounters`, résolution hors handler par le worker Combat, résolveur Combat réutilisé | Code + tests |
+| B06 | Repli amical (D7), carburant normal débité à l'instant logique | Code + tests |
+| B07 | UI Flottes : protocole, quatre modes, détections, rapports d'interception et de repli | Code + tests Vitest |
+| B08 | IA : aucune capacité ajoutée ; points d'intégration documentés | Arbitrage requis (voir plus bas) |
+| B09 | Recette runtime, revue indépendante, Ready | À faire sur poste local |
 
-`frontier.json` v0.9 n'active que `SURVEILLANCE` et `FRIENDLY_CONTACT` : AMBUSH/INTERCEPTION sont
-refusés (`protocol_unavailable`) tant que leur runtime n'existe pas. Aucun paramètre numérique.
+« Code + tests » : tests purs exécutés ici et en Fast CI ; scénarios PostgreSQL écrits
+(`tests/integration/test_frontier.py`) **non exécutés** (pas de PostgreSQL/Docker dans
+l'environnement cloud). Aucun lot n'est fonctionnellement validé.
 
-## Arbitrages demandés (propositions, non validées)
+## Décisions D1–D7 — validées le 02/11/2026
 
-| ID | Question | Proposition motivée |
-| --- | --- | --- |
-| D1 | Niveau de détection avant toute technologie (Q58 ouverte) | Niveau 0 pour tous : égalité → détection mutuelle, conforme à FC7, sans inventer de technologie |
-| D2 | Quand détecter | À chaque passage enregistré (entrée réelle, non annulée) dans un système où stationne une flotte en protocole, à l'instant `entered_at`, évalué par un événement planifié sur le stream du **détecteur** (pas de verrou étranger) |
-| D3 | Ce qu'une détection révèle | Signature datée (système, instant, sens aller/retour) ; identité seulement si l'Empire est déjà un contact du détecteur ; jamais composition, cargo, origine ni destination |
-| D4 | « Ennemi connu » pour AMBUSH | Contact existant, aucun pacte couvrant l'instant, et acte hostile de cet Empire contre le détecteur depuis 72 h (même fenêtre que le grief IA Q18) |
-| D5 | Engagement automatique | Un engagement Combat existant, `battle_at` = instant de passage (pas de délai de 24 h : la flotte adverse est présente) — **rouvre Q02** (24 h minimum avant toute bataille) : à trancher explicitement |
-| D6 | Effet sur la mission interceptée | Proposition : la mission continue si l'attaquant intercepté survit ; sinon flotte détruite. À confirmer |
-| D7 | Repli amical : destination et échec | Système précédent de la route du détecteur… or une flotte stationnée n'a pas de route : proposition = retour vers la colonie d'attache par chemin connu, carburant payé comme un RETURN ; échec (fonds insuffisants) = reste stationnée, rapport |
+Provenance : instruction utilisateur explicite (PR #17). Transcription canonique :
+[premier contact](../01-game-design/first-contact.md#décisions-d1d7--02112026).
 
-Le point D5 est bloquant pour B05 : Q02 impose 24 h minimum avant toute bataille, incompatible avec
-une interception instantanée au passage.
+## Implémentation : verrous, fences et dates logiques
+
+- **Planification** des réactions (B05/B06) au moment où les deux faits sont connus *avant*
+  l'instant d'entrée : décision de mouvement (lancement, rappel, retour après bataille) ou
+  commande de protocole. Une ligne `frontier_encounters` par (passage, flotte surveillante, type).
+- **Engagement** : streams d'opérations des deux Empires figés à `entered_at − 1 µs` (état
+  strictement antérieur à l'entrée ; une arrivée au même instant ne peut pas installer la flotte
+  avant la rencontre). **Repli** : stream du surveillant et Colony d'attache figés à `entered_at`
+  (inclus), pour débiter le carburant normal à cet instant exact quel que soit le retard du worker.
+- **Résolution** hors handler par `FrontierOrchestrator`, exécuté dans le processus
+  `combat-worker` : streams triés → ligne de rencontre → paire relationnelle → contacts ; rang
+  `(instant, type, mission, passage, flotte)`, engagements avant replis au même instant ;
+  rattrapage exact jusqu'aux fences ; une transaction ; retry puis `blocked` opérateur
+  (`python -m app.combat.worker --blocked`, `--retry-frontier <id>`).
+- **Fin anticipée** : changement de protocole, départ, fusion ou destruction annulent les réactions
+  futures de la période ; un rappel ou une destruction annulent celles des passages non atteints.
+- **Décision tardive d'un orchestrateur** (retour après bataille, trajet d'un repli) : si le stream
+  d'un tiers a déjà dépassé une entrée, la création lève `TimelineError` (retry puis `blocked`),
+  jamais une réaction silencieusement omise. Limite opérationnelle : retard du worker supérieur à
+  la durée d'un saut (≥ 10 min dans le catalogue actuel).
+
+## Écarts et points ouverts à arbitrer
+
+| Sujet | État |
+| --- | --- |
+| **D2 — stream d'évaluation** | Implémenté sur le stream de l'Empire **en mouvement** (le passage lui appartient ; la détection est mutuelle à niveaux égaux, chaque camp est détecteur ; le handler ne lit que des périodes datées et n'écrit que des faits). Résultat identique à une évaluation sur le stream du surveillant, sans écriture dans le stream d'un autre Empire. **À confirmer** |
+| Fenêtre de course D2 | Une commande de protocole lancée juste avant `entered_at` mais validée après le traitement du passage peut ne pas être vue (fenêtre = latence de la commande). À fermer si nécessaire par une fence courte à l'activation |
+| Déclencheur du repli (FC6) | « Action hostile » interprétée comme : une mission ATTACK entre dans son système cible contre l'Empire du surveillant amical. Une ATTACK locale (0 saut) n'a pas de passage et ne déclenche pas de repli. **À confirmer** |
+| Événements au même instant | Une rencontre voit l'état strictement avant l'entrée : une production terminée exactement à `entered_at` n'y participe pas (Combat ATTACK l'inclut) |
+| B08 — IA | Les IA subissent les mêmes détections/rencontres ; leur dispatcher n'a **aucune** capacité de protocole. Choisir une politique (FC13 non validée) est un arbitrage produit |

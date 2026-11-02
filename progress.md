@@ -4,14 +4,34 @@ Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide — branche 13B (work/step-13b-first-contact)
 
-| Champ | État au 02/11/2026 — 13B B00–B02 implémentés, non validés |
+| Champ | État au 02/11/2026 soir — 13B B00–B07 implémentés, **non validés à l'exécution** |
 | --- | --- |
-| Branche / base | work/step-13b-first-contact depuis a434e06 (tête de PR #16, **non fusionnée**) ; worktree séparé ; PR Draft vers `work/step-13-ai-relations`, pas master |
-| Réalisé | B00 audit/plan ; B01 ruleset v0.9, passages par saut (migration 0014) ; B02 protocole de flotte stationnée. [Plan](docs/05-project/step-13b-plan.md) |
-| Exécuté ici | Tests purs `test_frontier_transit.py`, `test_frontier_rules.py` et règles existantes |
-| Non exécuté | `tests/integration/test_frontier.py`, Alembic 0014, toutes suites PostgreSQL/Chromium/Compose (pas de Docker ni registres) |
-| Bloquant | Arbitrages D1–D7 (dont D5 qui rouvre Q02) avant B03–B06 |
-| Étape 13 | Inchangée : PR #16 Draft, ses validations runtime restent à faire |
+| Branche / base / PR | work/step-13b-first-contact depuis a434e06 (tête de PR #16, **non fusionnée**) ; [PR #17](https://github.com/ThomasPerez91/Echosphere/pull/17) **Draft** vers `work/step-13-ai-relations`, pas master. Fast CI déclenchée sur cette base (commit CI 0006e77, autorisé) |
+| Tête / agent | Claude Code (sessions cloud successives), seul écrivain ; tête et CI exactes dans la PR |
+| Décisions | D1–D7 validées le 02/11/2026 : [transcription](docs/01-game-design/first-contact.md#décisions-d1d7--02112026), exception D5 à Q02 dans le registre et `combat.md` |
+| Réalisé | B01 passages par saut ; B02 protocoles et périodes datées ; B03 détection déterministe ; B04 présentation amicale ; B05 interceptions/embuscades (`frontier_encounters`, orchestrateur dans `combat-worker`) ; B06 repli amical ; B07 UI Flottes. [Plan](docs/05-project/step-13b-plan.md), [contrat](docs/03-technical/frontier-api-ui.md) |
+| Exécuté ici | Tests purs : `test_frontier_transit.py` (6), `test_frontier_rules.py` (13), `test_frontier_encounter.py` (4) et suites de règles existantes |
+| Fast CI | Ruff + tests purs backend, Vitest/lint/build frontend : SHA et résultat exacts dans la PR |
+| **Non exécuté** | `tests/integration/test_frontier.py` (scénarios B01–B06), Alembic 0014, toutes suites PostgreSQL, Chromium, Compose ; aucune recette Compose 13B écrite (B09) |
+| À arbitrer | Écart D2 (évaluation sur le stream de l'Empire en mouvement), fenêtre de course à l'activation d'un protocole, déclencheur du repli (ATTACK entrant dans son système cible), politique IA B08 — détail dans le plan |
+| Étape 13 | Inchangée : PR #16 Draft, validations runtime et R11 à faire |
+
+### Vérifications à lancer sur le poste local (WSL2, Docker)
+
+```bash
+git fetch origin && git switch work/step-13b-first-contact     # ou un worktree dédié
+cd backend && python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.lock && .venv/bin/pip install --no-deps -e .
+.venv/bin/ruff check . ../scripts
+RUN_DB_TESTS=1 POSTGRES_DB=<base_jetable>_test .venv/bin/pytest -q                 # complet, dont test_frontier.py et test_relations.py
+RUN_DB_TESTS=1 POSTGRES_DB=<base_jetable>_test .venv/bin/pytest -q tests/integration/test_frontier.py
+.venv/bin/alembic upgrade head && .venv/bin/alembic check && .venv/bin/alembic downgrade 0013_relations && .venv/bin/alembic upgrade head   # base jetable seulement
+cd ../frontend && npm ci && npm run lint && npm test && npm run build && npx playwright install chromium && npm run test:e2e
+cd .. && docker compose build && python3 scripts/smoke_relations_compose.py && python3 scripts/smoke_combat_compose.py && python3 scripts/smoke_ai_compose.py
+```
+
+Recette manuelle suggérée (univers v0.9 via `python -m app.ai.worker --bootstrap … --ruleset v0.9`) :
+protocole Surveillance puis Interception sur une flotte opérationnelle stationnée, passage d'une
+flotte d'un autre Empire, `combat-worker` actif, section Flottes → Frontière.
 
 ## Reprise rapide
 

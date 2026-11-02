@@ -22,7 +22,7 @@ Le tableau Q40–Q56 distingue décisions closes, détails techniques délégué
 | ID | Question ouverte | À traiter avant | Référence |
 | --- | --- | --- | --- |
 | Q01 | **Clos construction** : 3 ordres actif inclus, 1 actif/colonie, 100 % queued / 80 % active théoriques, cascade des seuls upgrades dépendants validée ; colonies parallèles futures ; pacing onboarding secondes–5 min, début 5–30 min, intermédiaire 30 min–8 h, avancé 8–72 h, projets majeurs jours ; valeurs exactes game_data balançables. Recherche distincte Q05 | 3 puis 5 | [Sessions](../01-game-design/player-session.md) |
-| Q02 | **Close pour le Combat MVP v0.7 (02/11/2026)** : protection indépendante de la présence, 24 h minimum avant toute bataille, destruction limitée aux unités militaires engagées ; à rouvrir pour pillage/conquête/siège/bombardement | 12 | [Combat](../01-game-design/combat.md#q02--protection-hors-connexion) |
+| Q02 | **Close pour le Combat MVP v0.7 (02/11/2026)** : protection indépendante de la présence, 24 h minimum avant toute ATTACK planétaire, destruction limitée aux unités militaires engagées ; à rouvrir pour pillage/conquête/siège/bombardement. **Exception encadrée D5 (02/11/2026, 13B)** : rencontre automatique entre deux flottes présentes dans le même système (AMBUSH/INTERCEPTION) résolue à l'instant du passage, jamais une attaque planétaire | 12 | [Combat](../01-game-design/combat.md#q02--protection-hors-connexion) |
 | Q03 | Taux/coûts, stockage, entretien, précision et arrondis des trois ressources | 3/5 | [Calcul](../03-technical/resource-calculation.md) |
 | Q04 | Catalogue/niveaux, traits, capacités exactes, slots orbitaux et réaffectation — sous-décision v0.5 close (aucune habitabilité/trait, tout monde colonisable), reste ouvert | 2/5 | [Planètes](../01-game-design/planets-colonies.md) |
 | Q05 | **Clos produit — livré via PR #9 (`437844e4`)** : validation utilisateur explicite ; file Empire 1+1, financement Colony, annulation 100/80 plafonnée, 8 technologies et snapshots à l’acceptation | 6 avant code | [Recherche/Q05](../01-game-design/research.md), [plan R00–R09](step-6-plan.md) |
@@ -44,7 +44,7 @@ Le tableau Q40–Q56 distingue décisions closes, détails techniques délégué
 
 | ID | Question | À traiter avant | Référence |
 | --- | --- | --- | --- |
-| Q57 | **Orientation produit validée, détails runtime pré-MVP en 13B** : flotte stationnée, SURVEILLANCE, AMBUSH, INTERCEPTION, FRIENDLY_CONTACT, alertes, auto-engagement, repli, compatibilité pactes | 13B | [Premier contact](../01-game-design/first-contact.md) |
+| Q57 | **Orientation validée ; D1–D7 validées le 02/11/2026** (détection niveau 0 mutuelle, information D3, ennemi connu 72 h, exception D5 à Q02 pour les rencontres entre flottes, missions interceptées, repli amical) ; implémentation B00–B07 sur PR #17, non validée à l'exécution | 13B | [Premier contact](../01-game-design/first-contact.md) |
 | Q58 | **Principe de comparaison déterministe validé ; catalogue Research/balance/runtime ouverts pour 13B** : technologie, niveaux, détection, furtivité éventuelle, information obtenue, interaction Fog | 13B | [Premier contact](../01-game-design/first-contact.md#fc7fc8--détection-et-technologie-despionnage) |
 
 ## Modes futurs : décisions produit closes, réalisation future

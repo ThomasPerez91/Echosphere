@@ -1,7 +1,8 @@
 # Présence frontalière et premier contact
 
-**Statut : orientation produit pré-MVP validée le 02/11/2026 (Q57, Q58). Lot 13B démarré en
-avance sur une branche dédiée (B01–B02 implémentés, non validés) : [plan et arbitrages](../05-project/step-13b-plan.md).** Provenance : instruction utilisateur explicite accompagnant la validation de Q18.
+**Statut : orientation produit pré-MVP validée le 02/11/2026 (Q57, Q58), décisions D1–D7 validées
+le même jour. Lot 13B démarré en avance sur une branche dédiée (B00–B07 implémentés, non validés à
+l'exécution) : [plan](../05-project/step-13b-plan.md).** Provenance : instruction utilisateur explicite accompagnant la validation de Q18.
 Ce document est la référence canonique : Flottes, Fog, Combat, IA et Recherche y renvoient sans
 recopier de règles divergentes. Il n'autorise aucune implémentation pendant l'étape 13.
 
@@ -86,6 +87,45 @@ carburant et la reprise après crash. Interdit : simuler une interception interm
 Aucun choix de protocole IA pendant l'étape 13. Orientation non validée pour 13B :
 `economic_cautious` favorise Surveillance / Friendly Contact, `expansionist` Surveillance / Ambush ;
 Interception reste une posture volontaire très agressive.
+
+## Décisions D1–D7 — 02/11/2026
+
+**Validées explicitement par l'utilisateur** (PR #17). Elles précisent FC1–FC13 ; implémentation :
+[plan 13B](../05-project/step-13b-plan.md), [contrat technique](../03-technical/frontier-api-ui.md).
+
+- **D1 — Niveau initial.** Tous les Empires ont le niveau de détection 0, provisoire avant toute
+  technologie (Q58 reste ouverte : aucun catalogue Research). Niveaux égaux : détection mutuelle.
+- **D2 — Détection au passage.** À l'entrée réelle d'une flotte dans un système où stationne une
+  flotte dotée d'un protocole, évaluée à la date logique `entered_at`, indépendamment du moment de
+  traitement. Une entrée annulée ne détecte rien ; un rejeu ne crée aucun doublon ; un passage réel
+  est traité après redémarrage ; un protocole activé après le passage ou une flotte partie avant
+  ne détectent jamais rétroactivement ; protocoles et présences suivent leur chronologie datée.
+- **D3 — Information.** Système, date logique, signature anonyme. L'Empire n'est nommé que s'il
+  était déjà connu du détecteur à cet instant ou par divulgation volontaire autorisée
+  (FRIENDLY_CONTACT). Jamais composition, effectifs, cargo, origine, destination, itinéraire,
+  technologies, ressources, colonies ni indicateur aller/retour. Pas de contact nommé automatique.
+- **D4 — Ennemi connu (AMBUSH).** Empire déjà identifié par un contact, ayant commis un acte hostile
+  effectivement résolu contre l'Empire du surveillant dans les 72 dernières heures logiques
+  (`ambush_hostility_seconds`, ruleset v0.9), et aucun pacte couvrant l'instant de l'engagement.
+  Une proposition refusée ne suffit pas. Jamais d'état diplomatique permanent.
+- **D5 — Exception encadrée à Q02.** Le délai de 24 h s'applique toujours à ATTACK contre une
+  planète. Une rencontre militaire automatique entre deux flottes physiquement présentes dans le
+  même système (AMBUSH, INTERCEPTION) peut être résolue à l'instant logique du passage : jamais
+  d'attaque planétaire instantanée, jamais avant l'entrée réelle, flotte réellement stationnée avec
+  le protocole actif à cet instant, aucune interception à distance, pacte prioritaire, aucun
+  dommage aux colonies/bâtiments/ressources, pertes limitées aux unités militaires, flotte
+  exclusivement civile jamais détruite, résolution déterministe par le moteur Combat, rapport après
+  résolution, aucun avantage IA. Les protocoles agressifs ne sont activés qu'une fois complets.
+- **D6 — Missions.** Une flotte interceptée qui survit poursuit sa mission avec ses pertes ; détruite,
+  sa mission est interrompue et ses passages non atteints annulés. Les pertes du surveillant sont
+  conservées ; aucune unité ne réapparaît (retour, rappel, rejeu). Ni réparation, ni ravitaillement,
+  ni perte civile.
+- **D7 — Repli amical.** Destination : 1) système précédent du dernier itinéraire réel de la flotte,
+  s'il reste accessible ; 2) sinon système de sa colonie d'attache par un chemin connu ; 3) sinon
+  aucune destination inventée : la flotte reste et un repli impossible est enregistré. Moteur Flottes
+  habituel, coûts normaux, aucun carburant gratuit ; fonds insuffisants : la flotte reste et l'échec
+  est signalé. Déclenchement idempotent (une agression, un repli, un débit) ; une flotte restée sur
+  place peut être attaquée selon les règles Combat.
 
 ## Hors étape 13
 
