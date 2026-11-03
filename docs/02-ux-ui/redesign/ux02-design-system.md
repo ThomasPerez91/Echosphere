@@ -1,8 +1,9 @@
 # UX02 — Directions artistiques, tokens et architecture des composants
 
-**Statut : propositions de Claude du 03/11/2026. Aucune direction n’est déployée dans l’application :
-les trois existent seulement dans le prototype UX03 (sélecteur « Direction artistique »). Validation
-de l’utilisateur requise avant toute refonte graphique des écrans de production.**
+**Statut : direction A validée par l’utilisateur le 03/11/2026 (D-UX-1), avec la grille de carte de B et
+les chiffres tabulaires de C. Elle s’applique d’abord à la carte de commandement (UX04) ; les autres
+écrans de production gardent leur style actuel jusqu’à leur refonte. B et C restent des pistes
+d’habillage cosmétique, sans effet de jeu.**
 
 Contraintes respectées : la [référence visuelle validée le 30/10/2026](../../visual-reference/README.md)
 reste l’ancre (fond navy, cyan interactif, vert succès, ambre avertissement, rouge danger, violet
@@ -39,8 +40,8 @@ la plus sûre en accessibilité (contrastes déjà vérifiés par les tests Chro
 laisse les illustrations des collections A/B/C porter l’identité d’Empire. B et C restent
 d’excellents candidats d’**habillages d’interface** cosmétiques (voir §4).
 
-**Décision attendue de l’utilisateur** : choisir A, B, C ou un mélange, avant d’étendre la refonte
-graphique au-delà du prototype.
+**Décision du 03/11/2026 (D-UX-1)** : A est retenue avec ces deux emprunts ; c’est la base graphique
+de l’interface gratuite standard, compatible avec les collections d’illustrations de la PR #18.
 
 ## 3. Tokens sémantiques
 

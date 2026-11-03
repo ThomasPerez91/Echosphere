@@ -1,6 +1,8 @@
 # Design system
 
-**Statut : première version implémentée à l’étape 4 ; choix visuels ajustables (Q15).**
+**Statut : première version implémentée à l’étape 4. Direction cible validée le 03/11/2026 (D-UX-1) :
+« Console orbitale » + grille de carte + chiffres tabulaires, tokens sémantiques
+[UX02](redesign/ux02-design-system.md) ; appliquée d’abord à la carte de commandement.**
 
 Dark sci-fi sobre, panneaux bleu nuit, cyan pour sélection et action primaire, or pour avertissement
 et focus. Typographie système locale, sans chargement externe. Illustration orbitale purement

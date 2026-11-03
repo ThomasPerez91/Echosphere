@@ -1,6 +1,7 @@
 # Refonte UX/UI — plan de travail
 
-**Statut : chantier ouvert le 03/11/2026 sur demande de l’utilisateur. Premier intervenant : Claude
+**Statut : chantier ouvert le 03/11/2026 sur demande de l’utilisateur ; décisions D-UX-1 à D-UX-7
+validées le même jour (ci-dessous). Premier intervenant : Claude
 (session cloud) ; reprise prévue : ChatGPT Work. Branche `work/ux-redesign` (depuis `b97bd0e`,
 tête de la PR #17) ; [PR #19](https://github.com/ThomasPerez91/Echosphere/pull/19) Draft vers
 `work/step-13b-first-contact`. Aucune modification des règles, du backend ni des migrations.
@@ -15,8 +16,9 @@ galactique, sans documentation.**
 | Lot | Contenu | État |
 | --- | --- | --- |
 | [UX00 — Audit](ux00-audit.md) | Inventaire, causes du parcours Flottes, défauts par gravité, écarts backend, priorités | Fait |
-| [UX01 — Navigation](ux01-navigation.md) | Architecture, parcours cibles, 8 wireframes SVG, besoins de données | Proposé |
-| [UX02 — Design system](ux02-design-system.md) | 3 directions, recommandation A, tokens sémantiques, composants, cosmétiques | Proposé, **validation requise** |
+| [UX01 — Navigation](ux01-navigation.md) | Architecture, parcours cibles, 8 wireframes SVG, besoins de données | Ordre validé (D-UX-3) |
+| [UX02 — Design system](ux02-design-system.md) | 3 directions, A retenue (D-UX-1), tokens sémantiques, composants, cosmétiques | Validé (D-UX-1) |
+| [UX04 — Carte de commandement réelle](ux04-live-command-map.md) | Intégration dans la Galaxie réelle derrière un interrupteur | En cours (PR #19) |
 | [UX03 — Prototype](ux03-prototype.md) | Prototype React isolé Galaxie → Flotte → Mission, tests | Publié |
 | [Passation](../../06-handoff/ux-redesign-handoff.md) | Reprise par un autre agent | Fait |
 
@@ -29,17 +31,17 @@ galactique, sans documentation.**
 - Fast CI ajoutée temporairement pour les PR ciblant `work/step-13b-first-contact` (même principe
   que l’exception déjà autorisée pour #17), à retirer après la fusion de #17.
 
-## Choix ouverts (arbitrage utilisateur)
+## Décisions validées par l’utilisateur — 03/11/2026
 
-| Id | Question | Proposition |
-| --- | --- | --- |
-| D-UX-1 | Direction artistique de l’interface | A — Console orbitale, avec grille de carte (B) et chiffres tabulaires (C) |
-| D-UX-2 | **UX-API-01** : exposer le chemin (`path`) dans l’aperçu et dans les missions | Oui : seule façon d’afficher les étapes sans recalculer le trajet côté client |
-| D-UX-3 | Ordre et noms des domaines (Q15) | Empire, Galaxie, Colonies, Recherche, Flottes, Rapports, Diplomatie |
-| D-UX-4 | Unités engagées par défaut | Toutes les unités adaptées à l’action (ajustables) |
-| D-UX-5 | Garnison proposée comme expéditrice (détachement) | Oui, signalée « garnison » |
-| D-UX-6 | Écran Rapports unique et cloche d’alertes | Oui, composés côté client d’abord |
-| D-UX-7 | Refonte du Portal/lobby | Hors de ce premier lot ; audit léger seulement |
+| Id | Décision |
+| --- | --- |
+| D-UX-1 | **Direction A « Console orbitale »**, avec la grille cartographique discrète de B et les chiffres tabulaires de C, sur les tokens sémantiques UX02. Base graphique de l’interface gratuite standard, compatible avec les collections d’illustrations standard et premium (PR #18) |
+| D-UX-2 | **UX-API-01 validé dans son principe** : le serveur exposera le trajet réel (systèmes traversés, départ → étapes → destination). Changement backend **séparé de la PR #19** : [contrat et plan](../../03-technical/ux-api-01-mission-path.md). En attendant, l’interface n’affiche ni étape inventée ni ligne présentée comme trajet réel |
+| D-UX-3 | Navigation : **Empire → Galaxie → Colonies → Recherche → Flottes → Rapports → Diplomatie** |
+| D-UX-4 | Unités par défaut : Cartographie = **une sonde** ; Colonisation = **exactement un colonisateur** ; Déplacement = présélection adaptée, affichée et modifiable ; Attaque = unités militaires seulement, **composition choisie explicitement** ; une garnison n’est **jamais** engagée automatiquement. Aucun choix automatique ne doit dégarnir une colonie |
+| D-UX-5 | Garnisons proposées quand un détachement est possible, **identifiées comme telles** ; le joueur choisit explicitement les unités détachées |
+| D-UX-6 | Écran Rapports centralisé et cloche d’alertes **validés**, après le parcours Galaxie/Flottes |
+| D-UX-7 | Refonte du Portal/lobby **reportée** ; priorité à Game |
 
 ## Composants : conserver, extraire, remplacer, supprimer
 

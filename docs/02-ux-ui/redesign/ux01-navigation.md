@@ -1,8 +1,8 @@
 # UX01 — Nouvelle architecture de navigation et parcours joueur
 
-**Statut : proposition de Claude du 03/11/2026, à valider par l’utilisateur.** Aucune route de
-production n’est modifiée par ce lot. Elle conserve les sept domaines Game existants (Q15 reste
-ouverte pour l’ordre définitif) et la sous-navigation canonique Colonie (Vue d’ensemble /
+**Statut : proposition de Claude du 03/11/2026 ; ordre des domaines validé par l’utilisateur le même
+jour (D-UX-3 : Empire → Galaxie → Colonies → Recherche → Flottes → Rapports → Diplomatie).** Les
+routes de production ne changent qu’au fil des incréments. Elle conserve les sept domaines Game existants et la sous-navigation canonique Colonie (Vue d’ensemble /
 Infrastructures / Orbite / Défense). Audit : [UX00](ux00-audit.md) ; plan : [README](README.md).
 
 ## 1. Principes
