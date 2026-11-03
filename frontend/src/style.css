@@ -262,6 +262,8 @@ html { scroll-padding-bottom: 24px; }
 
 /* Étape 7 Galaxy — server knowledge only; state by shape and text, never colour alone. */
 .galaxy-screen { display: grid; gap: 20px; }
+.galaxy-mode { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 16px; }
+.galaxy-mode .button { min-height: 44px; }
 .galaxy-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 20px; align-items: start; }
 .galaxy-field { display: grid; gap: 4px; font-size: .75rem; color: var(--muted); }
 .galaxy-field select { min-height: 44px; max-width: 100%; border-radius: 7px; border: 1px solid var(--border); background: #0b1726; color: #e6f2ff; padding: 0 10px; font: inherit; }

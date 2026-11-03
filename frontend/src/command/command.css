@@ -191,6 +191,8 @@
 .cmd-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .cmd-block h3:focus { outline: none; }
 .cmd-block h3:focus-visible { outline: 3px solid var(--ui-warning); outline-offset: 3px; }
+.cmd-live { display: grid; gap: var(--ui-gap); background: transparent; min-width: 0; }
+.cmd-live > .cmd-toolbar { justify-content: flex-start; }
 .cmd-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
 @media (max-width: 960px) {
