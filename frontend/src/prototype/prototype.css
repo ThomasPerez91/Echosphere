@@ -1,0 +1,146 @@
+/* UX03 prototype styles. Semantic tokens (UX02) with three art directions on the same markup.
+   Scoped under .proto-root: nothing here changes the production shell. */
+.proto-root {
+  /* A — Console orbitale (recommended): evolution of docs/visual-reference/design-system.png */
+  --ui-bg: #050d16; --ui-surface: #0e1b2a; --ui-raised: #132436; --ui-border: #223a52;
+  --ui-text: #e6f2ff; --ui-muted: #9fb3c8; --ui-primary: #23c2ff; --ui-on-primary: #04121c;
+  --ui-success: #2ecf88; --ui-warning: #ffb347; --ui-danger: #ff6b6b; --ui-accent: #a78bfa;
+  --ui-radius: 12px; --ui-gap: 16px; --ui-font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ui-display: var(--ui-font); --ui-numeric: var(--ui-font); --ui-label-transform: none; --ui-label-spacing: .02em;
+  --map-bg: radial-gradient(ellipse at 40% 40%, #12324a 0%, #081422 55%, #050d16 100%);
+  --map-route: #2f5574; --map-star: #9ee9ec; --map-signal: #6f8aa3; --map-own: #ffb347;
+  --map-fleet: #23c2ff; --map-mission: #2ecf88; --map-plan: #ffe08a; --map-label: #d7e8f7;
+  min-height: 100svh; background: var(--ui-bg); color: var(--ui-text); font-family: var(--ui-font);
+}
+.proto-root[data-direction="atlas"] {
+  /* B — Atlas stellaire: cartographic, airy, serif headings, low density */
+  --ui-bg: #0b1020; --ui-surface: #11182c; --ui-raised: #172038; --ui-border: #2c3758;
+  --ui-text: #efe8da; --ui-muted: #b5ae9f; --ui-primary: #7fd1c7; --ui-on-primary: #0b1a1a;
+  --ui-success: #8fd18a; --ui-warning: #e8b86b; --ui-danger: #f08a7a; --ui-accent: #c9a7ff;
+  --ui-radius: 18px; --ui-gap: 22px; --ui-display: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  --map-bg: repeating-linear-gradient(0deg, transparent 0 39px, #ffffff08 39px 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, #ffffff08 39px 40px), radial-gradient(circle at 50% 45%, #1b2442, #0b1020 70%);
+  --map-route: #5d6a92; --map-star: #f3e7c9; --map-signal: #8f8a7f; --map-own: #e8b86b;
+  --map-fleet: #7fd1c7; --map-mission: #8fd18a; --map-plan: #f3e7c9; --map-label: #efe8da;
+}
+.proto-root[data-direction="tactical"] {
+  /* C — Pont tactique: angular HUD, amber command colour, monospace figures, dense */
+  --ui-bg: #06090b; --ui-surface: #0d1316; --ui-raised: #131b1f; --ui-border: #263840;
+  --ui-text: #d9e7e4; --ui-muted: #8aa39f; --ui-primary: #ffb000; --ui-on-primary: #1a1100;
+  --ui-success: #3cd6a0; --ui-warning: #ffd166; --ui-danger: #ff5a5f; --ui-accent: #5ad1ff;
+  --ui-radius: 3px; --ui-gap: 12px; --ui-numeric: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --ui-label-transform: uppercase; --ui-label-spacing: .12em;
+  --map-bg: radial-gradient(circle at 50% 50%, #0f1c1f, #06090b 75%);
+  --map-route: #2c4a4f; --map-star: #c9f5ec; --map-signal: #5f7a76; --map-own: #ffb000;
+  --map-fleet: #5ad1ff; --map-mission: #3cd6a0; --map-plan: #ffb000; --map-label: #c9dcd8;
+}
+
+.proto-root .button { border-radius: calc(var(--ui-radius) * .6); min-height: 44px; }
+.proto-root .button--primary { background: var(--ui-primary); border-color: var(--ui-primary); color: var(--ui-on-primary); }
+.proto-root :focus-visible { outline: 3px solid var(--ui-warning); outline-offset: 3px; }
+.proto-root h1, .proto-root h2 { font-family: var(--ui-display); }
+.proto-root p { color: var(--ui-muted); }
+.proto-bar { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--ui-border); background: var(--ui-surface); }
+.proto-bar h1 { font-size: clamp(1.25rem, 2.4vw, 1.7rem); margin: 0; letter-spacing: -.02em; }
+.proto-kicker { margin: 0 0 4px; font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ui-primary) !important; }
+.proto-banner { margin: 0; font-size: .78rem; padding: 6px 10px; border: 1px dashed var(--ui-warning); border-radius: var(--ui-radius); color: var(--ui-warning) !important; }
+.proto-controls { display: flex; flex-wrap: wrap; gap: 12px; }
+.proto-controls label { display: grid; gap: 4px; font-size: .72rem; color: var(--ui-muted); }
+.proto-controls select { min-height: 44px; background: var(--ui-raised); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .6); padding: 0 10px; max-width: 100%; }
+.proto-main { padding: var(--ui-gap); max-width: 1600px; margin: 0 auto; }
+
+.proto-command { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); grid-template-areas: "map side" "dock side"; gap: var(--ui-gap); align-items: start; }
+.proto-map-panel { grid-area: map; }
+.proto-side { grid-area: side; }
+.proto-dock { grid-area: dock; }
+.proto-list { margin-top: 10px; font-size: .8rem; }
+.proto-list summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--ui-muted); }
+.proto-list ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.proto-map-panel, .proto-card, .proto-planner { background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); padding: var(--ui-gap); min-width: 0; }
+.proto-map-head { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; justify-content: space-between; }
+.proto-map-head h2 { margin: 0; font-size: 1.05rem; }
+.proto-map-head p { margin: 0; font-size: .8rem; }
+.proto-map { display: block; width: 100%; height: clamp(320px, 62vh, 720px); margin-top: 12px; border-radius: calc(var(--ui-radius) * .8); background: var(--map-bg); touch-action: manipulation; }
+.proto-route { stroke: var(--map-route); stroke-width: 1.6; }
+.proto-route--partial { stroke-dasharray: 6 5; }
+.proto-plan { fill: none; stroke: var(--map-plan); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.proto-plan--estimate { stroke-dasharray: 8 6; }
+.proto-arrow { fill: var(--map-plan); }
+.proto-mission-path { fill: none; stroke: var(--map-mission); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
+.proto-mission-halo { fill: color-mix(in srgb, var(--map-mission) 25%, transparent); stroke: var(--map-mission); }
+.proto-mission-ship { fill: var(--map-mission); }
+.proto-system { cursor: pointer; outline: none; }
+.proto-hit { fill: transparent; }
+.proto-star { fill: var(--map-star); }
+.proto-system--detected .proto-star { fill: none; stroke: var(--map-signal); stroke-width: 1.6; stroke-dasharray: 3 2; }
+.proto-own { fill: none; stroke: var(--map-own); stroke-width: 1.8; }
+.proto-selection { fill: none; stroke: var(--ui-primary); stroke-width: 2.4; }
+.proto-system:focus-visible .proto-hit { stroke: var(--ui-warning); stroke-width: 3; }
+.proto-label { fill: var(--map-label); font-size: 13px; font-family: var(--ui-font); paint-order: stroke; stroke: #000a; stroke-width: 3px; }
+.proto-system--detected .proto-label { fill: var(--map-signal); font-style: italic; }
+.proto-fleet-pin rect { fill: var(--map-fleet); }
+.proto-fleet-pin text { fill: var(--ui-on-primary); font-size: 10px; font-weight: 700; font-family: var(--ui-numeric); }
+.proto-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; padding: 0; margin: 12px 0 0; font-size: .75rem; color: var(--ui-muted); }
+.proto-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.proto-dot--known { background: var(--map-star); }
+.proto-dot--signal { border: 1.5px dashed var(--map-signal); }
+.proto-dot--own { border: 2px solid var(--map-own); }
+.proto-dot--fleet { background: var(--map-fleet); border-radius: 3px; }
+.proto-dot--mission { background: var(--map-mission); }
+
+.proto-side { display: grid; gap: var(--ui-gap); min-width: 0; }
+.proto-card h2, .proto-planner h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.proto-card h3, .proto-planner h3 { font-size: .85rem; margin: 16px 0 8px; text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
+.proto-help { font-size: .8rem; margin: 4px 0 0; }
+.proto-planets, .proto-actions, .proto-dock ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.proto-planets li { font-size: .85rem; color: var(--ui-muted); }
+.proto-planets strong { color: var(--ui-text); }
+.proto-action { width: 100%; justify-content: flex-start; }
+.proto-notice { margin: 0; padding: 12px 14px; border-radius: var(--ui-radius); border: 1px solid var(--ui-success); background: color-mix(in srgb, var(--ui-success) 12%, var(--ui-surface)); color: var(--ui-text) !important; }
+.proto-chip { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--ui-border); color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
+.proto-dock h2 { margin: 0 0 10px; font-size: 1.05rem; }
+.proto-dock ul { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.proto-dock li { background: var(--ui-raised); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .7); padding: 10px 12px; display: grid; gap: 4px; }
+.proto-dock li p { margin: 0; }
+.proto-locate { justify-self: start; padding: 6px 12px; font-size: .75rem; }
+.proto-root .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.proto-ghost { background: transparent; }
+.proto-planner-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.proto-target { margin: 0 0 12px; font-size: .85rem; }
+.proto-steps { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 12px; }
+.proto-step { display: flex; align-items: center; gap: 6px; font-size: .72rem; color: var(--ui-muted); padding: 4px 10px 4px 4px; border: 1px solid var(--ui-border); border-radius: 999px; }
+.proto-step span { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ui-raised); font-family: var(--ui-numeric); }
+.proto-step.is-done span { background: var(--ui-success); color: var(--ui-on-primary); }
+.proto-step.is-current { color: var(--ui-text); border-color: var(--ui-primary); }
+.proto-block { border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .8); padding: 12px; margin: 0 0 12px; min-width: 0; }
+.proto-block legend { padding: 0 6px; font-size: .8rem; font-weight: 600; text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
+.proto-choices { display: grid; gap: 8px; }
+.proto-choice { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; padding: 10px; min-height: 44px; border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .6); cursor: pointer; }
+.proto-choice input { grid-row: span 2; width: 20px; height: 20px; accent-color: var(--ui-primary); }
+.proto-choice.is-chosen { border-color: var(--ui-primary); background: color-mix(in srgb, var(--ui-primary) 10%, transparent); }
+.proto-choice-title { font-weight: 600; }
+.proto-choice-meta { font-size: .78rem; color: var(--ui-muted); }
+.proto-stepper { display: grid; grid-template-columns: 1fr 44px auto 44px; gap: 8px; align-items: center; margin-top: 8px; }
+.proto-stepper output { min-width: 4.5ch; text-align: center; font-family: var(--ui-numeric); }
+.proto-stepper .button { padding: 0; }
+.proto-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 0 0 8px; }
+.proto-facts div { background: var(--ui-raised); border-radius: calc(var(--ui-radius) * .6); padding: 8px 10px; }
+.proto-facts dt { font-size: .68rem; color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
+.proto-facts dd { margin: 2px 0 0; font-family: var(--ui-numeric); font-weight: 600; }
+.proto-route-steps { margin: 0 0 8px; padding-left: 20px; font-size: .82rem; color: var(--ui-muted); }
+.proto-risk { font-size: .8rem; }
+.proto-loading { animation: proto-pulse 1.2s ease-in-out infinite; }
+.proto-confirm { width: 100%; margin-top: 8px; }
+@keyframes proto-pulse { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .proto-loading { animation: none; } }
+
+@media (max-width: 960px) {
+  .proto-command { grid-template-columns: minmax(0, 1fr); grid-template-areas: "map" "side" "dock"; }
+  .proto-map { height: auto; aspect-ratio: 4 / 3; }
+}
+@media (max-width: 520px) {
+  .proto-main { padding: 10px; }
+  .proto-bar { padding: 12px; }
+  .proto-controls { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .proto-map-panel, .proto-card, .proto-planner { padding: 12px; }
+}
