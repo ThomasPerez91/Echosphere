@@ -11,6 +11,7 @@ Mise à jour : 2026-11-03. [Contexte](context.md), [passation](docs/06-handoff/R
 | Livré | [Plan](docs/02-ux-ui/redesign/README.md), [UX00 audit](docs/02-ux-ui/redesign/ux00-audit.md), [UX01 navigation + 8 wireframes](docs/02-ux-ui/redesign/ux01-navigation.md), [UX02 trois directions + tokens](docs/02-ux-ui/redesign/ux02-design-system.md), [UX03 prototype React isolé](docs/02-ux-ui/redesign/ux03-prototype.md) (`npm run prototype`) |
 | Exécuté | Fast CI PR #19 : `80544a1` run 41608760401 et `6ba6d89` run 41609707229 success (lint sans avertissement, 114 tests Vitest dont 14 du prototype, build, docs) ; en session : `model.test.ts` via esbuild, parcours prototype joué dans Chromium (Playwright Python) sans erreur ni débordement à 390/768/1440 px ; `check_docs.py` |
 | Non exécuté | `e2e/prototype.spec.ts` avec Vite ; aucune validation sur un vrai univers (prototype non branché sur l’API) |
+| 03/11 fin de matinée | Carte et panneau du prototype rapprochés de `galaxy-map.png` (`f9abf3d`, Fast CI 41615642760 success, 115 tests Vitest) ; régions, influence et distances non reproduites (aucune donnée de jeu) |
 | Décisions attendues | D-UX-1 direction artistique (recommandée : A), D-UX-2 UX-API-01 chemin de mission (backend, hors de cette PR), D-UX-3 à D-UX-7 dans le plan |
 | CI | Entrée temporaire `work/step-13b-first-contact` dans les cibles `pull_request` de la Fast CI (à retirer au rebase sur master) |
 | Suite | Incrément réel 1 : carte de commandement branchée sur l’API dans Galaxie, derrière un interrupteur, ancien parcours conservé |
