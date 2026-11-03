@@ -202,6 +202,12 @@
   .cmd-overlay--legend { position: static; margin-top: 8px; backdrop-filter: none; }
   .cmd-overlay--legend ul { display: flex; flex-wrap: wrap; gap: 4px 14px; }
   .cmd-zoom { position: static; justify-content: flex-end; margin-top: 8px; backdrop-filter: none; }
+  /* Bottom contextual sheet: the map stays the context above, one decision step at a time below. */
+  .cmd-side.has-selection { position: sticky; bottom: 0; z-index: 4; max-height: 52svh; overflow-y: auto; overscroll-behavior: contain;
+    padding-top: 6px; background: var(--ui-bg); border-top: 1px solid var(--ui-border); border-radius: var(--ui-radius) var(--ui-radius) 0 0;
+    box-shadow: 0 -14px 32px #000b; }
+  .cmd-side.has-selection::before { content: ""; display: block; width: 44px; height: 4px; margin: 0 auto 6px; border-radius: 4px; background: var(--ui-border); }
+  .cmd-nav { position: sticky; bottom: 0; background: var(--ui-surface); padding: 8px 0 2px; }
 }
 @media (max-width: 520px) {
   .cmd-map-panel, .cmd-card, .cmd-planner { padding: 12px; }

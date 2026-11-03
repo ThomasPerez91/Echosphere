@@ -77,7 +77,12 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, planKey, api]);
 
-  const select = (id: string) => { setSelected(id); setIntent(null); setNotice(null); setTab("overview"); setFailed(false); };
+  const select = (id: string) => {
+    setSelected(id); setIntent(null); setNotice(null); setTab("overview"); setFailed(false);
+    // Narrow screens: keep the map in view above the bottom sheet that now holds the system.
+    if (window.matchMedia?.("(max-width: 960px)").matches)
+      window.setTimeout(() => mapPanel.current?.querySelector(".cmd-map")?.scrollIntoView?.({ block: "start" }), 0);
+  };
   const close = () => { setSelected(null); setIntent(null); window.setTimeout(() => mapPanel.current?.querySelector<SVGElement>(".cmd-map")?.focus(), 0); };
   const start = (offer: ActionOffer) => {
     if (!selected) return;
