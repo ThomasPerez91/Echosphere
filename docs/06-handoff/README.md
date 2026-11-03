@@ -115,3 +115,7 @@ autorisé le 02/11/2026 sur `work/step-13b-first-contact` (PR #17 Draft vers la 
 B00–B09 et correctifs C01–C05 écrits ; C04 et lecture B08 validées par l'utilisateur ; PostgreSQL,
 Alembic, Chromium et recette Compose exécutés et réussis en local le 02/11/2026 (WSL2 + Docker) ;
 revue indépendante R11/B09 à faire — reprise : bloc 13B de [progress](../../progress.md). Aucun merge ni suppression de branche autorisé.
+
+## Refonte UX/UI — 03/11/2026
+
+Chantier ouvert sur `work/ux-redesign` (PR #19 Draft, dépendante de #17) : [passation dédiée](ux-redesign-handoff.md).

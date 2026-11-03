@@ -3,7 +3,7 @@ import type { MissionView } from "../fleet/api";
 import { MissionRefused } from "./api";
 import type { MissionApi } from "./api";
 import { MissionPlanner } from "./MissionPlanner";
-import type { QuoteState } from "./MissionPlanner";
+import type { QuoteState } from "./copy";
 import { StarMap } from "./StarMap";
 import { actionLabels, eligibleFleets, engageable, fleetLines, offers, stationed, systemName } from "./model";
 import type { ActionOffer, World } from "./model";

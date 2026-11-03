@@ -1,6 +1,19 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-11-03. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+
+## Reprise rapide — refonte UX (work/ux-redesign)
+
+| Champ | État au 03/11/2026 — UX00–UX03 publiés, validation utilisateur attendue |
+| --- | --- |
+| Branche / base / PR | `work/ux-redesign` depuis `b97bd0e` (tête de PR #17) ; [PR #19](https://github.com/ThomasPerez91/Echosphere/pull/19) **Draft** vers `work/step-13b-first-contact`. master, #16, #17, #18 non touchées |
+| Agent | Claude (session cloud, sans registre npm ni Docker) ; reprise prévue par ChatGPT Work — [passation](docs/06-handoff/ux-redesign-handoff.md) |
+| Livré | [Plan](docs/02-ux-ui/redesign/README.md), [UX00 audit](docs/02-ux-ui/redesign/ux00-audit.md), [UX01 navigation + 8 wireframes](docs/02-ux-ui/redesign/ux01-navigation.md), [UX02 trois directions + tokens](docs/02-ux-ui/redesign/ux02-design-system.md), [UX03 prototype React isolé](docs/02-ux-ui/redesign/ux03-prototype.md) (`npm run prototype`) |
+| Exécuté | Fast CI PR #19 sur `80544a1` : success (lint, Vitest dont 14 tests prototype, build) ; en session : `model.test.ts` via esbuild, parcours prototype joué dans Chromium (Playwright Python) sans erreur ni débordement à 390/768/1440 px ; `check_docs.py` |
+| Non exécuté | `e2e/prototype.spec.ts` avec Vite ; aucune validation sur un vrai univers (prototype non branché sur l’API) |
+| Décisions attendues | D-UX-1 direction artistique (recommandée : A), D-UX-2 UX-API-01 chemin de mission (backend, hors de cette PR), D-UX-3 à D-UX-7 dans le plan |
+| CI | Entrée temporaire `work/step-13b-first-contact` dans les cibles `pull_request` de la Fast CI (à retirer au rebase sur master) |
+| Suite | Incrément réel 1 : carte de commandement branchée sur l’API dans Galaxie, derrière un interrupteur, ancien parcours conservé |
 
 ## Reprise rapide — branche 13B (work/step-13b-first-contact)
 

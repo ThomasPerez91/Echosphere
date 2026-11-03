@@ -2,14 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { fixtureApi } from "./api";
 import { CommandMap } from "./CommandMap";
 import { fleetFixture, galaxyFixture, SERVER_TIME } from "./fixtures";
+import { directions } from "./directions";
+import type { Direction } from "./directions";
 import type { World } from "./model";
-
-export const directions = [
-  { id: "orbital", label: "A — Console orbitale (recommandée)" },
-  { id: "atlas", label: "B — Atlas stellaire" },
-  { id: "tactical", label: "C — Pont tactique" },
-] as const;
-export type Direction = (typeof directions)[number]["id"];
 
 /**
  * Prototype chrome only: explicit fixture banner, art-direction switch, route-contract switch and

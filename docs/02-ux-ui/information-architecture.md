@@ -1,6 +1,7 @@
 # Architecture de l’information
 
-**Statut : responsive validé ; détails UI orientatifs.**
+**Statut : responsive validé ; détails UI orientatifs.** Refonte proposée le 03/11/2026, non validée :
+[UX01 — navigation](redesign/ux01-navigation.md).
 
 
 Le produit possède deux présentations, desktop et mobile, fondées sur les mêmes objets et actions.
