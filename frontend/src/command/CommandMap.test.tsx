@@ -123,7 +123,7 @@ test("changing units after the quote asks the server again; a refusal is explain
   fireEvent.click(screen.getByRole("radio", { name: /Escadre Héliade/ }));
   next("Déplacer une flotte");
   next("Déplacer une flotte");
-  await screen.findByText("Vérifier et confirmer");
+  await screen.findByRole("heading", { name: "Vérifier et confirmer" });
   await waitFor(() => expect(screen.getByRole("button", { name: /Confirmer : déplacer/ })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: "Retour" }));
   fireEvent.click(screen.getByRole("button", { name: "Une Frégate de moins" }));
