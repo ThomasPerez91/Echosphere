@@ -1,6 +1,6 @@
 # Passation — refonte UX/UI (pour ChatGPT Work ou tout autre agent)
 
-**Statut : passation écrite par Claude le 03/11/2026 en fin de première session. Règles communes :
+**Statut : passation écrite par Claude le 03/11/2026, mise à jour après UX04 (carte de commandement réelle). Règles communes :
 [AGENTS.md](../../AGENTS.md). Plan et décisions : [refonte UX/UI](../02-ux-ui/redesign/README.md).**
 
 ## Où en est le chantier
@@ -15,47 +15,53 @@
 
 ## Ce qui est livré
 
-- UX00 audit, UX01 navigation et 8 wireframes, UX02 trois directions + tokens + architecture des
-  composants et cosmétiques, UX03 prototype React isolé et testé.
-- Le prototype n’appelle aucune API : adaptateur `MissionApi` alimenté par `src/prototype/fixtures.ts`.
+- UX00 audit, UX01 navigation et 8 wireframes, UX02 directions et tokens, UX03 prototype.
+- Décisions utilisateur D-UX-1 à D-UX-7 transcrites ([plan](../02-ux-ui/redesign/README.md)).
+- [UX04](../02-ux-ui/redesign/ux04-live-command-map.md) : carte de commandement branchée sur les vraies
+  projections dans Galaxie, derrière l’interrupteur « Nouvelle carte de commandement » / « Carte classique »
+  (défaut : classique). Composants dans `frontend/src/command/`, prototype conservé.
+- Contrat [UX-API-01](../03-technical/ux-api-01-mission-path.md) (chemin de mission) et plan
+  d’implémentation backend ; **non implémenté**, aucune PR ouverte.
 
 ## Ce qui attend l’utilisateur
 
-1. Choisir la direction artistique (D-UX-1) **avant** toute refonte graphique des écrans réels.
-2. Décider UX-API-01 (D-UX-2) : chemin de mission exposé par l’API (changement backend, à faire dans
-   un lot autorisé, pas dans cette PR).
-3. Valider le parcours du prototype (critère : un nouveau joueur envoie une flotte sans aide).
+1. Recette en univers réel de la nouvelle carte (procédure dans UX04) ; tant qu’elle n’est pas faite,
+   le parcours n’est pas « validé en univers réel ».
+2. Autoriser (ou non) une PR backend séparée pour UX-API-01, branche suggérée `work/ux-api-01-mission-path`.
+3. Décider quand la nouvelle carte devient l’affichage par défaut et quand retirer le raccourci
+   « Envoyer une flotte ici » de la carte classique.
 
 ## Comment reprendre
 
 ```bash
 git fetch origin && git switch work/ux-redesign   # vérifier d'abord : git status propre, SHA = PR #19
-cd frontend && npm ci && npm run prototype         # http://localhost:5173/prototype/
-npm run lint && npm test && npm run build
+cd frontend && npm ci && npm run lint && npm test && npm run build
+npx playwright install chromium && npx playwright test e2e/live-command.spec.ts e2e/prototype.spec.ts
+npm run prototype                                  # comparaison : http://localhost:5173/prototype/
 ```
 
 Règles à garder :
 
-- Ne pas importer `src/prototype/` depuis `src/main.tsx` ni le pousser en production sans décision.
-- Aucune règle métier côté client : trajets, coûts, durées, refus = réponses serveur.
-- Fog of War : n’afficher que les projections de l’Empire ; aucune donnée inventée dans l’application.
-- Garder la parité clavier/mobile (cibles 44 px, pas de survol seul) et les tests Chromium multi-largeurs.
+- `src/command/` ne doit jamais importer `src/prototype/` (seuls les tests utilisent ses fixtures).
+- Aucune règle métier côté client : trajets, coûts, durées, refus = réponses serveur ; après une
+  commande acceptée, relire les projections, ne jamais fabriquer de mission.
+- Fog of War : n’afficher que les projections de l’Empire ; positions interpolées libellées « estimée ».
+- D-UX-4/5 : aucune unité de garnison engagée sans choix explicite ; attaque sans unité par défaut.
+- Parité clavier/mobile (cibles 44 px, feuille du bas ≤ 960 px, pas de survol seul).
 - Ne jamais présenter un test comme exécuté sans run réel ou CI vérifiée sur le SHA.
 
 ## Prochaine tâche recommandée
 
-« Incrément réel 1 » du plan : dans la route Galaxie, derrière un interrupteur explicite, composer
-`CommandMap` avec `readGalaxy` + `readFleets`, `previewMission`, `fleetCommand(…"/missions"…)`,
-relecture de la projection après commande ; tests Vitest (mocks `fetch` comme `Galaxy.test.tsx` /
-`Fleet.test.tsx`) et Chromium ; l’ancien parcours reste disponible jusqu’à validation. Extraire au
-passage le moteur de zoom/déplacement de `GalaxyView.tsx` pour `StarMap`.
+Recette locale UX04 (Compose + navigateur), puis, sur autorisation, UX-API-01 dans une PR backend
+séparée ; ensuite écran Rapports centralisé + cloche (D-UX-6).
 
 ## Pièges connus
 
 - Les projections Galaxie (coordonnées, routes) et Flottes (systèmes, flottes, missions) sont
   séparées : joindre par identifiant de système, même Empire.
-- `MissionView` et `Quote` n’ont pas de chemin : sans UX-API-01, afficher le nombre de sauts et une
-  ligne indicative (mode « contrat actuel » du prototype).
+- `MissionView` et `Quote` n’ont pas de chemin : sans UX-API-01, nombre de sauts et ligne indicative ;
+  `Quote.path` est optionnel côté client et supprimé s’il est mal formé.
+- La colonisation depuis une garnison ne règle pas le cargo sur la carte (écran Flottes pour cela).
 - La Fast CI ne se déclenche pour cette PR que grâce à l’entrée temporaire `work/step-13b-first-contact`
   dans `.github/workflows/ci.yml` ; la retirer au rebase sur master.
 - Fast CI sur `6ba6d89` : lint sans avertissement, 114 tests Vitest (dont 14 du prototype), build.

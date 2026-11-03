@@ -18,7 +18,7 @@ galactique, sans documentation.**
 | [UX00 — Audit](ux00-audit.md) | Inventaire, causes du parcours Flottes, défauts par gravité, écarts backend, priorités | Fait |
 | [UX01 — Navigation](ux01-navigation.md) | Architecture, parcours cibles, 8 wireframes SVG, besoins de données | Ordre validé (D-UX-3) |
 | [UX02 — Design system](ux02-design-system.md) | 3 directions, A retenue (D-UX-1), tokens sémantiques, composants, cosmétiques | Validé (D-UX-1) |
-| [UX04 — Carte de commandement réelle](ux04-live-command-map.md) | Intégration dans la Galaxie réelle derrière un interrupteur | En cours (PR #19) |
+| [UX04 — Carte de commandement réelle](ux04-live-command-map.md) | Intégration dans la Galaxie réelle derrière un interrupteur | Implémenté (PR #19), testé sur API interceptée, recette en univers réel à faire |
 | [UX03 — Prototype](ux03-prototype.md) | Prototype React isolé Galaxie → Flotte → Mission, tests | Publié |
 | [Passation](../../06-handoff/ux-redesign-handoff.md) | Reprise par un autre agent | Fait |
 

@@ -2,7 +2,9 @@
 
 **Statut : prototype React publié sur `work/ux-redesign` (PR #19, Draft). Données fictives
 explicites, isolé du gameplay de production. Tests Vitest exécutés en Fast CI ; parcours vérifié
-dans Chromium sur un bundle local (voir §5). Non branché sur l’API Game.**
+dans Chromium sur un bundle local (voir §5). Non branché sur l’API Game. Depuis UX04 (03/11/2026),
+le prototype réutilise les composants de production de `src/command/` et ne garde que ses fixtures,
+son écho local de démonstration et son bandeau : il reste disponible pour comparaison.**
 
 ## 1. Lancer
 
@@ -77,15 +79,11 @@ Contrôles de démonstration (menu « Réglages du prototype ») : direction art
 | Fichier | Rôle |
 | --- | --- |
 | `frontend/prototype/index.html`, `src/prototype/main.tsx` | Entrée isolée |
-| `src/prototype/PrototypeApp.tsx`, `directions.ts` | Bandeau de démonstration, directions |
-| `src/prototype/CommandMap.tsx` | Conteneur carte + panneau + dock, machine d’états du parcours |
-| `src/prototype/StarMap.tsx` | Carte SVG (systèmes, routes, flottes, missions, trajet) |
-| `src/prototype/MissionPlanner.tsx`, `copy.ts` | Étapes flotte → unités → résumé → confirmation |
-| `src/prototype/model.ts` | Fonctions pures de présentation (offres, éligibilité, positions, lignes) |
-| `src/prototype/api.ts` | Adaptateur `MissionApi` (fixtures ; à remplacer par l’API réelle) |
-| `src/prototype/fixtures.ts` | Données fictives typées |
-| `src/prototype/prototype.css` | Tokens UX02 et styles, portée `.proto-root` |
-| `src/prototype/*.test.ts(x)`, `e2e/prototype.spec.ts` | Tests Vitest, spec Playwright préparée |
+| `src/prototype/PrototypeApp.tsx`, `directions.ts`, `prototype.css` | Bandeau de démonstration, directions B et C conservées pour comparaison |
+| `src/prototype/api.ts` | `MissionApi` sur fixtures avec écho local de démonstration (jamais en production) |
+| `src/prototype/fixtures.ts` | Données fictives typées (aussi utilisées par les tests) |
+| `src/command/*` | Composants de production partagés ([UX04](ux04-live-command-map.md)) |
+| `e2e/prototype.spec.ts` | Spec Playwright préparée |
 
 ## 5. Vérifications réellement effectuées
 
@@ -97,10 +95,7 @@ Contrôles de démonstration (menu « Réglages du prototype ») : direction art
   768 et 1440 px ; toutes les commandes ≥ 44 px.
 - **Non exécuté** : `e2e/prototype.spec.ts` avec le serveur Vite (pas de registre npm dans la session).
 
-## 6. Prochain incrément proposé (non fait)
+## 6. Incrément suivant — fait dans UX04
 
-Brancher `CommandMap` sur les vraies projections dans la route Galaxie existante derrière un
-interrupteur explicite : `readGalaxy` + `readFleets` (même Empire), `previewMission`,
-`fleetCommand(…"/missions"…)`, relecture de la projection après commande ; puis remplacer le
-raccourci « Envoyer une flotte ici ». Prérequis : validation de l’utilisateur sur le parcours et
-décision sur UX-API-01.
+Le branchement sur les vraies projections derrière un interrupteur est décrit dans
+[UX04](ux04-live-command-map.md).

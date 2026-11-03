@@ -4,17 +4,18 @@ Mise à jour : 2026-11-03. [Contexte](context.md), [passation](docs/06-handoff/R
 
 ## Reprise rapide — refonte UX (work/ux-redesign)
 
-| Champ | État au 03/11/2026 — UX00–UX03 publiés, validation utilisateur attendue |
+| Champ | État au 03/11/2026 midi — UX04 publié (carte de commandement réelle derrière interrupteur), recette en univers réel à faire |
 | --- | --- |
-| Branche / base / PR | `work/ux-redesign` depuis `b97bd0e` (tête de PR #17) ; [PR #19](https://github.com/ThomasPerez91/Echosphere/pull/19) **Draft** vers `work/step-13b-first-contact`. master, #16, #17, #18 non touchées |
-| Agent | Claude (session cloud, sans registre npm ni Docker) ; reprise prévue par ChatGPT Work — [passation](docs/06-handoff/ux-redesign-handoff.md) |
-| Livré | [Plan](docs/02-ux-ui/redesign/README.md), [UX00 audit](docs/02-ux-ui/redesign/ux00-audit.md), [UX01 navigation + 8 wireframes](docs/02-ux-ui/redesign/ux01-navigation.md), [UX02 trois directions + tokens](docs/02-ux-ui/redesign/ux02-design-system.md), [UX03 prototype React isolé](docs/02-ux-ui/redesign/ux03-prototype.md) (`npm run prototype`) |
-| Exécuté | Fast CI PR #19 : `80544a1` run 41608760401 et `6ba6d89` run 41609707229 success (lint sans avertissement, 114 tests Vitest dont 14 du prototype, build, docs) ; en session : `model.test.ts` via esbuild, parcours prototype joué dans Chromium (Playwright Python) sans erreur ni débordement à 390/768/1440 px ; `check_docs.py` |
-| Non exécuté | `e2e/prototype.spec.ts` avec Vite ; aucune validation sur un vrai univers (prototype non branché sur l’API) |
-| 03/11 fin de matinée | Carte et panneau du prototype rapprochés de `galaxy-map.png` (`f9abf3d`, Fast CI 41615642760 success, 115 tests Vitest) ; régions, influence et distances non reproduites (aucune donnée de jeu) |
-| Décisions attendues | D-UX-1 direction artistique (recommandée : A), D-UX-2 UX-API-01 chemin de mission (backend, hors de cette PR), D-UX-3 à D-UX-7 dans le plan |
+| Branche / base / PR | `work/ux-redesign` depuis `b97bd0e` (tête de PR #17) ; [PR #19](https://github.com/ThomasPerez91/Echosphere/pull/19) **Draft** vers `work/step-13b-first-contact`. master, #16, #17, #18 non touchées ; aucun merge, rebase ni force-push |
+| Agent | Claude (session cloud, sans registre npm ni Docker), seul écrivain de la PR #19 pendant le lot — [passation](docs/06-handoff/ux-redesign-handoff.md) |
+| Décisions | D-UX-1 à D-UX-7 validées par l’utilisateur et transcrites dans le [plan](docs/02-ux-ui/redesign/README.md) ; contrat [UX-API-01](docs/03-technical/ux-api-01-mission-path.md) rédigé, backend non modifié |
+| Livré (lot UX04) | `f2dc13b` décisions + contrat, `0eaf8a3` extraction `frontend/src/command/`, `1a3ad13` adaptateur API réel (`LiveCommandMap`), `2f6d2dc` interrupteur Galaxie, `f5ad8af` feuille mobile, `e7bef09` tests Vitest live, `9299b8c` spec Playwright + correctif de débordement, puis docs ([UX04](docs/02-ux-ui/redesign/ux04-live-command-map.md)) |
+| Exécuté | Fast CI `9299b8c` run 41619226514 success (lint : 1 avertissement préexistant `useGameSession.ts` ; Vitest 130/130 ; build ; docs). En session : `model.test.ts` 11/11 (esbuild + Node) ; vérification de types partielle (tsc strict avec déclarations React minimales) ; parcours Chromium (Playwright Python) sur le bundle de **l’application de production** avec API Game interceptée à 390/768/1440 px (interrupteur, plan, résumé serveur, confirmation, CSRF, clé d’idempotence, suivi, cibles ≥ 44 px, sans débordement) et sur le prototype ; `check_docs.py` |
+| Anomalies | `e7bef09` : Fast CI rouge (test `CommandMap` ambigu, corrigé dans `9299b8c`) et un échec de `Research.test.tsx` « unknown response retries exact same intent key » (test non modifié, vert au run suivant : instabilité de délai à surveiller) |
+| Non exécuté | `e2e/live-command.spec.ts` et `e2e/prototype.spec.ts` avec Vite ; Full CI (master seulement) ; **aucune recette en univers réel** (procédure dans UX04) |
+| Limites | Pas de réglage du cargo pour coloniser depuis une garnison ; sans UX-API-01, ligne indicative et nombre de sauts seulement ; Rapports/cloche (D-UX-6) non commencés |
 | CI | Entrée temporaire `work/step-13b-first-contact` dans les cibles `pull_request` de la Fast CI (à retirer au rebase sur master) |
-| Suite | Incrément réel 1 : carte de commandement branchée sur l’API dans Galaxie, derrière un interrupteur, ancien parcours conservé |
+| Suite | Recette locale UX04 ; décision utilisateur sur une PR backend UX-API-01 séparée ; nouvelle carte par défaut après validation |
 
 ## Reprise rapide — branche 13B (work/step-13b-first-contact)
 
