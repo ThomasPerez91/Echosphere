@@ -67,6 +67,9 @@ explicite, aucun appel Portal. Droits : lecture `fleet.read` ; production + `fle
 `colony.read` ; commandes + `fleet.command` (SURVEY + `galaxy.read`, cargo + `colony.read`).
 Sans `colony.read` : aucune colonie, attache, payeuse (devis compris, `payer_colony_id` nul) ni preview de cargo transmise. Flottes
 étrangères/inconnues/autre univers : même 404 ; systèmes DETECTED listés seulement avec `galaxy.read`.
+Depuis [UX-API-01](ux-api-01-mission-path.md) : `path` additif (identifiants de systèmes, départ →
+destination, `hops + 1` éléments) dans le devis et dans `missions[]` (aller lancé, depuis les legs
+persistés) ; absent quand il ne peut être établi exactement ou sortirait de la Knowledge.
 
 ## UI
 
