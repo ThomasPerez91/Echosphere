@@ -1,21 +1,6 @@
-/* UX03 prototype styles. Semantic tokens (UX02) with three art directions on the same markup.
-   Scoped under .proto-root: nothing here changes the production shell. */
-.proto-root {
-  /* A — Console orbitale (recommended): evolution of docs/visual-reference/design-system.png */
-  --ui-bg: #050d16; --ui-surface: #0e1b2a; --ui-raised: #132436; --ui-border: #223a52;
-  --ui-text: #e6f2ff; --ui-muted: #9fb3c8; --ui-primary: #23c2ff; --ui-on-primary: #04121c;
-  --ui-success: #2ecf88; --ui-warning: #ffb347; --ui-danger: #ff6b6b; --ui-accent: #a78bfa;
-  --ui-radius: 12px; --ui-gap: 16px; --ui-font: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --ui-display: var(--ui-font); --ui-numeric: var(--ui-font); --ui-label-transform: none; --ui-label-spacing: .02em;
-  --map-bg: radial-gradient(ellipse at 45% 45%, #0f2440 0%, #070f1d 60%, #03070e 100%);
-  --map-route: #3d7fc4; --map-star: #9ee9ec; --map-signal: #6f8aa3; --map-own: #ffb347;
-  --map-fleet: #23c2ff; --map-mission: #2ecf88; --map-plan: #ffe08a; --map-label: #e6f2ff;
-  /* Knowledge colours of docs/visual-reference/galaxy-map.png */
-  --map-detected: #4a9bff; --map-mapped: #ffb347; --map-monitored: #2ecf88; --map-home: #23c2ff;
-  --map-nebula-a: #7b4fd6; --map-nebula-b: #1f6fd1; --map-dust: #cfe6ff;
-  min-height: 100svh; background: var(--ui-bg); color: var(--ui-text); font-family: var(--ui-font);
-}
-.proto-root[data-direction="atlas"] {
+/* UX03 prototype only: demo shell and the two non-retained directions (B, C) kept for comparison. */
+.cmd-root.proto-root { min-height: 100svh; }
+.cmd-root[data-direction="atlas"] {
   /* B — Atlas stellaire: cartographic, airy, serif headings, low density */
   --ui-bg: #0b1020; --ui-surface: #11182c; --ui-raised: #172038; --ui-border: #2c3758;
   --ui-text: #efe8da; --ui-muted: #b5ae9f; --ui-primary: #7fd1c7; --ui-on-primary: #0b1a1a;
@@ -28,7 +13,7 @@
   --map-detected: #9db7e8; --map-mapped: #f3e7c9; --map-monitored: #8fd18a; --map-home: #7fd1c7;
   --map-nebula-a: #8a6fb8; --map-nebula-b: #3d5a8a; --map-dust: #f3e7c9;
 }
-.proto-root[data-direction="tactical"] {
+.cmd-root[data-direction="tactical"] {
   /* C — Pont tactique: angular HUD, amber command colour, monospace figures, dense */
   --ui-bg: #06090b; --ui-surface: #0d1316; --ui-raised: #131b1f; --ui-border: #263840;
   --ui-text: #d9e7e4; --ui-muted: #8aa39f; --ui-primary: #ffb000; --ui-on-primary: #1a1100;
@@ -42,11 +27,7 @@
   --map-nebula-a: #0f3b3a; --map-nebula-b: #13303f; --map-dust: #9fd8cf;
 }
 
-.proto-root .button { border-radius: calc(var(--ui-radius) * .6); min-height: 44px; }
-.proto-root .button--primary { background: var(--ui-primary); border-color: var(--ui-primary); color: var(--ui-on-primary); }
-.proto-root :focus-visible { outline: 3px solid var(--ui-warning); outline-offset: 3px; }
-.proto-root h1, .proto-root h2 { font-family: var(--ui-display); }
-.proto-root p { color: var(--ui-muted); }
+
 .proto-shell { display: grid; grid-template-columns: 210px minmax(0, 1fr); min-height: 100svh; }
 .proto-sidebar { background: color-mix(in srgb, var(--ui-surface) 70%, var(--ui-bg)); border-right: 1px solid var(--ui-border); padding: 22px 14px; }
 .proto-brand { margin: 0; font-family: var(--ui-display); font-weight: 700; letter-spacing: .28em; color: var(--ui-text) !important; font-size: .95rem; }
@@ -63,179 +44,19 @@
 .proto-settings summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: .8rem; color: var(--ui-muted); padding: 0 8px; }
 .proto-settings[open] .proto-controls { position: absolute; right: 0; top: 48px; z-index: 5; padding: 14px; background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); width: min(360px, 90vw); display: grid; }
 .proto-bar h1 { font-size: clamp(1.25rem, 2.4vw, 1.7rem); margin: 0; letter-spacing: -.02em; }
-.proto-kicker { margin: 0 0 4px; font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ui-primary) !important; }
 .proto-banner { margin: 0; font-size: .78rem; padding: 6px 10px; border: 1px dashed var(--ui-warning); border-radius: var(--ui-radius); color: var(--ui-warning) !important; }
 .proto-controls { display: flex; flex-wrap: wrap; gap: 12px; }
 .proto-controls label { display: grid; gap: 4px; font-size: .72rem; color: var(--ui-muted); }
 .proto-controls select { min-height: 44px; background: var(--ui-raised); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .6); padding: 0 10px; max-width: 100%; }
 .proto-main { padding: var(--ui-gap); max-width: 1600px; margin: 0 auto; }
 
-.proto-command { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(330px, 1fr); grid-template-areas: "head head" "map side" "dock side"; gap: var(--ui-gap); align-items: start; }
-.proto-page-head { grid-area: head; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
-.proto-page-title { font-size: clamp(1.8rem, 3vw, 2.4rem) !important; font-weight: 550; letter-spacing: -.03em; margin: 0 0 4px !important; }
-.proto-page-head p { margin: 0; max-width: 62ch; }
-.proto-page-head p strong { color: var(--ui-primary); font-weight: 600; }
-.proto-search { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 0 1 480px; }
-.proto-search input { min-height: 44px; min-width: 0; flex: 1 1 200px; background: var(--ui-surface); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .7); padding: 0 14px; font: inherit; }
-.proto-search .proto-help { flex-basis: 100%; }
-.proto-map-tools { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.proto-filters, .proto-switches { display: flex; flex-wrap: wrap; gap: 8px; }
-.proto-filter { min-height: 44px; padding: 0 14px; border-radius: calc(var(--ui-radius) * .6); border: 1px solid var(--ui-border); background: var(--ui-raised); color: var(--ui-muted); font: inherit; font-size: .8rem; cursor: pointer; }
-.proto-filter.is-active { color: var(--ui-text); border-color: var(--ui-primary); background: color-mix(in srgb, var(--ui-primary) 16%, var(--ui-raised)); }
-.proto-switch { min-height: 44px; display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; color: var(--ui-text); font: inherit; font-size: .8rem; cursor: pointer; padding: 0 4px; }
-.proto-switch-track { width: 38px; height: 22px; border-radius: 999px; background: var(--ui-border); position: relative; transition: background .15s; }
-.proto-switch-track span { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--ui-muted); transition: transform .15s; }
-.proto-switch[aria-checked="true"] .proto-switch-track { background: var(--ui-primary); }
-.proto-switch[aria-checked="true"] .proto-switch-track span { transform: translateX(16px); background: var(--ui-on-primary); }
-.proto-map-panel { grid-area: map; }
-.proto-side { grid-area: side; }
-.proto-dock { grid-area: dock; }
-.proto-list { margin-top: 10px; font-size: .8rem; }
-.proto-list summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--ui-muted); }
-.proto-list ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.proto-map-panel, .proto-card, .proto-planner { background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); padding: var(--ui-gap); min-width: 0; }
-.proto-map-head { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; justify-content: space-between; }
-.proto-map-head h2 { margin: 0; font-size: 1.05rem; }
-.proto-map-head p { margin: 0; font-size: .8rem; }
-.proto-map-frame { position: relative; }
-.proto-map { display: block; width: 100%; height: clamp(360px, 64vh, 760px); border-radius: calc(var(--ui-radius) * .8); background: var(--map-bg); touch-action: none; cursor: grab; border: 1px solid var(--ui-border); }
-.proto-map:active { cursor: grabbing; }
-.proto-dust { fill: var(--map-dust); }
-.proto-overlay { position: absolute; background: color-mix(in srgb, var(--ui-surface) 88%, transparent); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .7); backdrop-filter: blur(4px); }
-.proto-overlay--legend { top: 12px; left: 12px; padding: 10px 14px; font-size: .74rem; }
-.proto-overlay--legend p { margin: 0 0 6px; color: var(--ui-text) !important; font-weight: 600; }
-.proto-overlay--legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; color: var(--ui-muted); }
-.proto-swatch { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
-.proto-swatch--detected { background: var(--map-detected); box-shadow: 0 0 6px var(--map-detected); }
-.proto-swatch--mapped { background: var(--map-mapped); box-shadow: 0 0 6px var(--map-mapped); }
-.proto-swatch--monitored { background: var(--map-monitored); box-shadow: 0 0 6px var(--map-monitored); }
-.proto-swatch--own { border: 2px solid var(--map-home); box-shadow: 0 0 6px var(--map-home); }
-.proto-swatch--fleet { background: var(--map-fleet); border-radius: 3px; }
-.proto-swatch--mission { background: var(--map-mission); clip-path: polygon(50% 0, 100% 100%, 0 100%); border-radius: 0; }
-.proto-swatch--route { width: 20px; height: 0; border-top: 2px dashed var(--map-route); border-radius: 0; vertical-align: 3px; }
-.proto-minimap { left: 12px; bottom: 12px; width: 170px; height: 100px; padding: 4px; }
-.proto-mini-route { stroke: var(--map-route); stroke-width: 4; }
-.proto-mini-star { fill: var(--map-mapped); }
-.proto-mini-star.proto-system--detected { fill: var(--map-detected); }
-.proto-mini-star.proto-system--monitored { fill: var(--map-monitored); }
-.proto-mini-star.proto-system--own { fill: var(--map-home); }
-.proto-mini-view { fill: none; stroke: var(--ui-text); stroke-width: 6; }
-.proto-zoom { right: 12px; bottom: 12px; display: flex; gap: 6px; padding: 6px; }
-.proto-zoom .button { width: 44px; padding: 0; font-size: 1.1rem; }
-.proto-system.is-dimmed, .proto-route.is-dimmed { opacity: .28; }
-.proto-route { stroke: var(--map-route); stroke-width: 1.6; stroke-opacity: .75; }
-.proto-route--partial { stroke-dasharray: 6 5; }
-.proto-plan { fill: none; stroke: var(--map-plan); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.proto-plan--estimate { stroke-dasharray: 8 6; }
-.proto-arrow { fill: var(--map-plan); }
-.proto-mission-path { fill: none; stroke: var(--map-mission); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
-.proto-mission-halo { fill: color-mix(in srgb, var(--map-mission) 25%, transparent); stroke: var(--map-mission); }
-.proto-mission-ship { fill: var(--map-mission); }
-.proto-system { cursor: pointer; outline: none; }
-.proto-hit { fill: transparent; }
-.proto-system { color: var(--map-mapped); }
-.proto-system--detected { color: var(--map-detected); }
-.proto-system--monitored { color: var(--map-monitored); }
-.proto-system--own { color: var(--map-home); }
-.proto-star { fill: currentColor; stroke: #fff; stroke-width: 1.2; stroke-opacity: .7; }
-.proto-system--detected .proto-star { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-dasharray: 3 2; stroke-opacity: 1; }
-.proto-halo { pointer-events: none; }
-.proto-own { fill: none; stroke: currentColor; stroke-width: 1.8; }
-.proto-own--inner { stroke-width: 1; stroke-opacity: .7; }
-.proto-selection { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-dasharray: 4 3; }
-.proto-system:focus-visible .proto-hit { stroke: var(--ui-warning); stroke-width: 3; }
-.proto-label { fill: var(--map-label); font-size: 13px; font-weight: 500; font-family: var(--ui-font); paint-order: stroke; stroke: #000c; stroke-width: 3px; }
-.proto-label--strong { font-size: 15px; font-weight: 700; }
-.proto-system--detected .proto-label { fill: var(--map-signal); font-style: italic; font-weight: 400; }
-.proto-fleet-pin rect { fill: var(--map-fleet); }
-.proto-fleet-pin text { fill: var(--ui-on-primary); font-size: 10px; font-weight: 700; font-family: var(--ui-numeric); }
-
-.proto-side { display: grid; gap: var(--ui-gap); min-width: 0; }
-.proto-system-card { padding: 0; overflow: hidden; }
-.proto-system-card > [role="tabpanel"] { padding: 4px var(--ui-gap) var(--ui-gap); }
-.proto-hero { display: flex; gap: 14px; align-items: center; padding: var(--ui-gap); color: var(--map-mapped);
-  background: radial-gradient(ellipse at 85% 0%, color-mix(in srgb, currentColor 22%, transparent), transparent 65%), var(--ui-raised); border-bottom: 1px solid var(--ui-border); }
-.proto-hero--detected { color: var(--map-detected); }
-.proto-hero--monitored { color: var(--map-monitored); }
-.proto-hero--own { color: var(--map-home); }
-.proto-hero-star { font-size: 2.6rem; line-height: 1; text-shadow: 0 0 18px currentColor; }
-.proto-hero h2 { color: var(--ui-text); font-size: 1.5rem !important; margin: 0 !important; }
-.proto-hero .proto-kicker { color: var(--ui-muted) !important; margin: 2px 0 6px; }
-.proto-chip--own { color: var(--map-home); border-color: color-mix(in srgb, var(--map-home) 60%, transparent); }
-.proto-tabs { display: flex; border-bottom: 1px solid var(--ui-border); padding: 0 calc(var(--ui-gap) - 6px); overflow-x: auto; }
-.proto-tab { min-height: 44px; padding: 0 12px; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--ui-muted); font: inherit; font-size: .85rem; cursor: pointer; white-space: nowrap; }
-.proto-tab[aria-selected="true"] { color: var(--ui-text); border-bottom-color: var(--ui-primary); }
-.proto-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
-.proto-tiles div { background: var(--ui-raised); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .7); padding: 10px 12px; display: grid; }
-.proto-tiles span { font-size: .72rem; color: var(--ui-muted); }
-.proto-tiles strong { font-size: 1.15rem; font-family: var(--ui-numeric); }
-.proto-planets li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--ui-border); }
-.proto-planets li div { display: grid; }
-.proto-planets li div span { font-size: .75rem; }
-.proto-planet-orb { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 32% 30%, #b9d3e0, #4e7f95 45%, #142b3d 75%); box-shadow: -2px -1px 6px #8fe3e633; }
-.proto-routes { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 6px; }
-.proto-routes .button { width: 100%; justify-content: flex-start; }
-.proto-card h2, .proto-planner h2 { margin: 0 0 8px; font-size: 1.1rem; }
-.proto-card h3, .proto-planner h3 { font-size: .85rem; margin: 16px 0 8px; text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
-.proto-help { font-size: .8rem; margin: 4px 0 0; }
-.proto-planets, .proto-actions, .proto-dock ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-.proto-planets li { font-size: .85rem; color: var(--ui-muted); }
-.proto-planets strong { color: var(--ui-text); }
-.proto-action { width: 100%; justify-content: flex-start; }
-.proto-notice { margin: 0; padding: 12px 14px; border-radius: var(--ui-radius); border: 1px solid var(--ui-success); background: color-mix(in srgb, var(--ui-success) 12%, var(--ui-surface)); color: var(--ui-text) !important; }
-.proto-chip { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--ui-border); color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
-.proto-dock h2 { margin: 0 0 10px; font-size: 1.05rem; }
-.proto-dock ul { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
-.proto-dock li { background: var(--ui-raised); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .7); padding: 10px 12px; display: grid; gap: 4px; }
-.proto-dock li p { margin: 0; }
-.proto-locate { justify-self: start; padding: 6px 12px; font-size: .75rem; }
-.proto-root .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.proto-ghost { background: transparent; }
-.proto-planner-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
-.proto-target { margin: 0 0 12px; font-size: .85rem; }
-.proto-steps { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 12px; }
-.proto-step { display: flex; align-items: center; gap: 6px; font-size: .72rem; color: var(--ui-muted); padding: 4px 10px 4px 4px; border: 1px solid var(--ui-border); border-radius: 999px; }
-.proto-step span { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ui-raised); font-family: var(--ui-numeric); }
-.proto-step.is-done span { background: var(--ui-success); color: var(--ui-on-primary); }
-.proto-step.is-current { color: var(--ui-text); border-color: var(--ui-primary); }
-.proto-block { border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .8); padding: 12px; margin: 0 0 12px; min-width: 0; }
-.proto-block legend { padding: 0 6px; font-size: .8rem; font-weight: 600; text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
-.proto-choices { display: grid; gap: 8px; }
-.proto-choice { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; padding: 10px; min-height: 44px; border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .6); cursor: pointer; }
-.proto-choice input { grid-row: span 2; width: 20px; height: 20px; accent-color: var(--ui-primary); }
-.proto-choice.is-chosen { border-color: var(--ui-primary); background: color-mix(in srgb, var(--ui-primary) 10%, transparent); }
-.proto-choice-title { font-weight: 600; }
-.proto-choice-meta { font-size: .78rem; color: var(--ui-muted); }
-.proto-stepper { display: grid; grid-template-columns: 1fr 44px auto 44px; gap: 8px; align-items: center; margin-top: 8px; }
-.proto-stepper output { min-width: 4.5ch; text-align: center; font-family: var(--ui-numeric); }
-.proto-stepper .button { padding: 0; }
-.proto-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 0 0 8px; }
-.proto-facts div { background: var(--ui-raised); border-radius: calc(var(--ui-radius) * .6); padding: 8px 10px; }
-.proto-facts dt { font-size: .68rem; color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
-.proto-facts dd { margin: 2px 0 0; font-family: var(--ui-numeric); font-weight: 600; }
-.proto-route-steps { margin: 0 0 8px; padding-left: 20px; font-size: .82rem; color: var(--ui-muted); }
-.proto-risk { font-size: .8rem; }
-.proto-loading { animation: proto-pulse 1.2s ease-in-out infinite; }
-.proto-confirm { width: 100%; margin-top: 8px; }
-@keyframes proto-pulse { 50% { opacity: .45; } }
-@media (prefers-reduced-motion: reduce) { .proto-loading { animation: none; } }
-
 @media (max-width: 1100px) {
   .proto-shell { grid-template-columns: minmax(0, 1fr); }
   .proto-sidebar { display: none; }
-}
-@media (max-width: 960px) {
-  .proto-command { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "map" "side" "dock"; }
-  .proto-map { height: auto; aspect-ratio: 4 / 3; }
-  .proto-minimap { display: none; }
-  .proto-overlay--legend { position: static; margin-top: 8px; backdrop-filter: none; }
-  .proto-overlay--legend ul { display: flex; flex-wrap: wrap; gap: 4px 14px; }
-  .proto-zoom { position: static; justify-content: flex-end; margin-top: 8px; backdrop-filter: none; }
 }
 @media (max-width: 520px) {
   .proto-main { padding: 10px; }
   .proto-bar { padding: 12px; }
   .proto-settings[open] .proto-controls { position: static; width: 100%; }
   .proto-controls { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
-  .proto-map-panel, .proto-card, .proto-planner { padding: 12px; }
 }

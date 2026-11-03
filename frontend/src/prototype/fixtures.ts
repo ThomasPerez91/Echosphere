@@ -8,7 +8,8 @@
  * name nor structure, no foreign fleet is listed, no hidden route is present).
  */
 import type { Projection as GalaxyProjection } from "../galaxy/api";
-import type { FleetProjection, MissionKind, Quote } from "../fleet/api";
+import type { FleetProjection, MissionKind } from "../fleet/api";
+import type { CommandQuote } from "../command/types";
 
 export const SERVER_TIME = "2099-01-01T12:00:00Z";
 const EMPIRE = { id: "10000000-0000-4000-8000-000000000001", name: "Concorde d’Aube" };
@@ -162,7 +163,7 @@ const fromVesta: typeof table = {
   [ids.signalC]: { hops: 4, travel_min: 40, flux: 8, path: [ids.vesta, ids.lyra, ids.cygne, ids.signalC] },
 };
 
-export type FixtureQuote = Quote & { path?: string[] };
+export type FixtureQuote = CommandQuote;
 
 export function quoteFixture(from: string, kind: MissionKind, destination: string, units: Record<string, number>,
   planet: string | null, at: string): FixtureQuote | { error: string } {

@@ -13,14 +13,15 @@ for (const width of [390, 768, 1440]) {
     await map.getByRole('button', { name: 'Cygne', exact: true }).tap();
     await page.getByRole('button', { name: 'Déplacer une flotte' }).tap();
     await page.getByRole('radio', { name: /Escadre Héliade/ }).check();
-    await expect(page.getByText('2 sauts')).toBeVisible();
+    await page.getByRole('button', { name: 'Continuer' }).tap();
+    await page.getByRole('button', { name: 'Continuer' }).tap();
     await expect(page.getByRole('list', { name: 'Étapes du trajet' })).toContainText('Orion');
-    for (const control of await page.locator('.proto-root button, .proto-root select').all()) {
+    for (const control of await page.locator('.cmd-root button, .cmd-root select').all()) {
       const box = await control.boundingBox();
       if (box) expect(box.height, await control.innerText().catch(() => '')).toBeGreaterThanOrEqual(44);
     }
     await page.getByRole('button', { name: /Confirmer/ }).tap();
-    await expect(page.getByRole('status')).toContainText('Escadre Héliade arrive à Cygne');
+    await expect(page.getByRole('status')).toContainText('Escadre Héliade part vers Cygne (2 sauts)');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
     expect(api).toEqual([]);
@@ -37,7 +38,7 @@ test('prototype keyboard: Tab to a system, Enter, actions reachable, Escape canc
   await expect(page.getByRole('heading', { name: 'Lyra', level: 2 })).toBeVisible();
   await page.getByRole('button', { name: 'Déplacer une flotte' }).focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('heading', { name: 'Déplacer une flotte', level: 2 })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Quelle flotte envoyer ?' })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('heading', { name: 'Actions possibles' })).toBeVisible();
 });
