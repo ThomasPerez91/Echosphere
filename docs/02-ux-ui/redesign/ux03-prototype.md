@@ -35,7 +35,25 @@ n’importe rien de `src/prototype/`.
    estimée entre les dates du serveur), dock « Vos flottes » (où, quoi, vers où, Localiser). Après
    l’heure d’arrivée : « Arrivée — confirmation du serveur attendue », jamais un résultat inventé.
 
-Contrôles de démonstration (bandeau) : direction artistique A/B/C, mode du trajet, horloge ×60/×600.
+### Alignement sur la référence `galaxy-map.png` (03/11/2026, demande de l’utilisateur)
+
+![Carte proche de la référence](img/ux03-carte-reference.jpg)
+
+Repris de la référence : cadre d’application (barre latérale, barre haute), titre « Galaxie » et
+sous-titre « Carte stratégique », recherche, puces de filtre, interrupteurs Routes/Noms, carte sur
+fond étoilé et nébuleuses, systèmes lumineux colorés selon la connaissance (Détecté bleu,
+Cartographié ambre, Surveillé vert, votre colonie cerclée cyan), routes hyperespace, légende en
+surimpression, mini-carte, commandes Recentrer/−/+, panneau de système avec en-tête lumineux,
+onglets Aperçu / Planètes / Routes, tuiles d’information et action principale mise en avant.
+
+Volontairement **non repris**, faute de donnée ou de règle de jeu : régions et noms de factions
+(« Voile d’Élyndra »…), vue « Influence », filtres Alliés/Neutres/Hostiles par système, distances
+en années-lumière, pourcentage d’exploration, statuts de planète comme « Ressources » ou « Habitée »,
+boutons Observer/Explorer sans commande correspondante, ressources « totales » de l’Empire. Les
+nébuleuses et étoiles de fond sont décoratives (`aria-hidden`), sans signification de jeu. La
+recherche ne trouve que les systèmes nommés de l’Empire : un signal n’a pas de nom.
+
+Contrôles de démonstration (menu « Réglages du prototype ») : direction artistique A/B/C, mode du trajet, horloge ×60/×600.
 
 | Bureau (A) | Tablette | Mobile | Suivi |
 | --- | --- | --- | --- |
@@ -71,7 +89,7 @@ Contrôles de démonstration (bandeau) : direction artistique A/B/C, mode du tra
 
 ## 5. Vérifications réellement effectuées
 
-- Fast CI de la PR #19 : lint, Vitest (dont `model.test.ts` 8 tests, `CommandMap.test.tsx` 6 tests),
+- Fast CI de la PR #19 : lint, Vitest (dont `model.test.ts` 8 tests, `CommandMap.test.tsx` 7 tests),
   `tsc -b` + build — voir les runs sur la PR.
 - Session cloud : `model.test.ts` exécuté localement via esbuild ; parcours complet joué dans Chromium
   (Playwright Python) sur un bundle esbuild du prototype : clavier, présélection, recalcul, refus,

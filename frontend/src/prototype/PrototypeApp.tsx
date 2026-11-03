@@ -35,29 +35,44 @@ export function PrototypeApp({ startDirection = "orbital", speed: initialSpeed =
     setSpeed(value);
   };
 
+  const nav = ["Empire", "Galaxie", "Colonies", "Recherche", "Flottes", "Rapports", "Diplomatie"];
   return <div className="proto-root" data-direction={direction}>
-    <header className="proto-bar">
-      <div><p className="proto-kicker">Echosphere · prototype UX03</p>
-        <h1>Envoyer une flotte depuis la carte</h1></div>
-      <p className="proto-banner" role="note">Données fictives explicites, aucune commande envoyée au serveur.</p>
-      <div className="proto-controls">
-        <label>Direction artistique
-          <select value={direction} onChange={(e) => setDirection(e.target.value as Direction)}>
-            {directions.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-          </select></label>
-        <label>Trajet affiché
-          <select value={routeMode} onChange={(e) => setRouteMode(e.target.value as "contract" | "extension")}>
-            <option value="extension">Étapes (extension API proposée UX-API-01)</option>
-            <option value="contract">Contrat actuel (nombre de sauts seulement)</option>
-          </select></label>
-        <label>Horloge de démonstration
-          <select value={speed} onChange={(e) => changeSpeed(Number(e.target.value))}>
-            <option value={1}>Temps réel</option>
-            <option value={60}>× 60</option>
-            <option value={600}>× 600</option>
-          </select></label>
+    <div className="proto-shell">
+      <aside className="proto-sidebar" aria-label="Navigation (aperçu)">
+        <p className="proto-brand"><span aria-hidden="true">◈</span> ECHOSPHERE</p>
+        <p className="proto-sidebar-caption">CENTRE DE COMMANDEMENT</p>
+        <ul>{nav.map((item) => <li key={item}><span className={`proto-nav${item === "Galaxie" ? " is-current" : ""}`}
+          aria-current={item === "Galaxie" ? "page" : undefined}>{item}</span></li>)}</ul>
+        <p className="proto-help">Navigation d’aperçu (UX01) : seule Galaxie est jouable dans ce prototype.</p>
+      </aside>
+      <div className="proto-workspace">
+        <header className="proto-bar">
+          <div className="proto-context"><span className="proto-pill">Univers de démonstration</span>
+            <span className="proto-pill">Aube Prime · système Aube</span></div>
+          <p className="proto-banner" role="note">Prototype UX03 — données fictives, aucune commande envoyée au serveur.</p>
+          <details className="proto-settings">
+            <summary>Réglages du prototype</summary>
+            <div className="proto-controls">
+              <label>Direction artistique
+                <select value={direction} onChange={(e) => setDirection(e.target.value as Direction)}>
+                  {directions.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+                </select></label>
+              <label>Trajet affiché
+                <select value={routeMode} onChange={(e) => setRouteMode(e.target.value as "contract" | "extension")}>
+                  <option value="extension">Étapes (extension API proposée UX-API-01)</option>
+                  <option value="contract">Contrat actuel (nombre de sauts seulement)</option>
+                </select></label>
+              <label>Horloge de démonstration
+                <select value={speed} onChange={(e) => changeSpeed(Number(e.target.value))}>
+                  <option value={1}>Temps réel</option>
+                  <option value={60}>× 60</option>
+                  <option value={600}>× 600</option>
+                </select></label>
+            </div>
+          </details>
+        </header>
+        <main className="proto-main"><CommandMap initial={world.current} api={api} now={now} routeMode={routeMode} /></main>
       </div>
-    </header>
-    <main className="proto-main"><CommandMap initial={world.current} api={api} now={now} routeMode={routeMode} /></main>
+    </div>
   </div>;
 }

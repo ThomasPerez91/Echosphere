@@ -101,3 +101,24 @@ test("every system is a keyboard button and the fleet list locates a fleet on th
   fireEvent.click(within(screen.getByRole("region", { name: "Vos flottes" })).getByRole("button", { name: "Localiser Pionnier" }));
   expect(screen.getByRole("heading", { name: "Aube", level: 2 })).toBeVisible();
 });
+
+test("search finds a named known system, tabs show planets and known routes, filters only dim", () => {
+  mount();
+  fireEvent.change(screen.getByRole("searchbox", { name: "Rechercher un système connu" }), { target: { value: "lyr" } });
+  fireEvent.submit(screen.getByRole("search"));
+  expect(screen.getByRole("heading", { name: "Lyra", level: 2 })).toBeVisible();
+  fireEvent.click(screen.getByRole("tab", { name: /Planètes/ }));
+  expect(screen.getByRole("list", { name: "Planètes connues" })).toHaveTextContent("Occupation inconnue");
+  fireEvent.click(screen.getByRole("tab", { name: /Routes/ }));
+  expect(screen.getByRole("list", { name: "Routes connues" })).toHaveTextContent("Lyra ↔ Vesta");
+  // A signal has no name: searching for it finds nothing (Fog of War).
+  fireEvent.change(screen.getByRole("searchbox", { name: "Rechercher un système connu" }), { target: { value: "signal" } });
+  fireEvent.submit(screen.getByRole("search"));
+  expect(screen.getByText("Aucun système connu de ce nom.")).toBeVisible();
+  const signals = screen.getByRole("button", { name: "Signaux" });
+  fireEvent.click(signals);
+  expect(signals).toHaveAttribute("aria-pressed", "true");
+  expect(map().getAllByRole("button")).toHaveLength(9); // dimmed, never removed
+  fireEvent.click(screen.getByRole("switch", { name: "Noms" }));
+  expect(screen.getByRole("switch", { name: "Noms" })).toHaveAttribute("aria-checked", "false");
+});

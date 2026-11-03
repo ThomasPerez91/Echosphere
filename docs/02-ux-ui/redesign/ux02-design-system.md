@@ -13,7 +13,8 @@ elles doivent accueillir les trois collections d’illustrations sans les contre
 
 ## 1. Trois directions d’interface
 
-Captures : même écran, même données fictives, seul le jeu de tokens change.
+Captures : même écran, même données fictives, seul le jeu de tokens change. La direction A suit
+désormais la composition et les couleurs de connaissance de `galaxy-map.png` (voir [UX03](ux03-prototype.md#alignement-sur-la-référence-galaxy-mappng-03112026-demande-de-lutilisateur)).
 
 | | A — Console orbitale | B — Atlas stellaire | C — Pont tactique |
 | --- | --- | --- | --- |
@@ -53,7 +54,7 @@ Implémentés dans `frontend/src/prototype/prototype.css` (portée `.proto-root`
 | Intention | `--ui-primary`, `--ui-on-primary`, `--ui-success`, `--ui-warning`, `--ui-danger`, `--ui-accent` |
 | Forme et rythme | `--ui-radius`, `--ui-gap` |
 | Typographie | `--ui-font`, `--ui-display`, `--ui-numeric`, `--ui-label-transform`, `--ui-label-spacing` |
-| Carte | `--map-bg`, `--map-route`, `--map-star`, `--map-signal`, `--map-own`, `--map-fleet`, `--map-mission`, `--map-plan`, `--map-label` |
+| Carte | `--map-bg`, `--map-route`, `--map-star`, `--map-signal`, `--map-own`, `--map-fleet`, `--map-mission`, `--map-plan`, `--map-label`, `--map-detected`, `--map-mapped`, `--map-monitored`, `--map-home`, `--map-nebula-a/b`, `--map-dust` |
 
 Règles : un composant n’utilise que des tokens sémantiques (jamais une couleur brute) ; une
 information n’est jamais portée par la seule couleur (forme, texte ou motif : signal en pointillés,
