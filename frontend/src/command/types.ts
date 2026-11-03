@@ -1,7 +1,7 @@
 import type { MissionView, Plan, Quote } from "../fleet/api";
 
-/** Server quote; `path` exists only once UX-API-01 ships (optional, validated before use). */
-export type CommandQuote = Quote & { path?: string[] };
+/** Server quote; `path` exists only once UX-API-01 ships (optional, validated twice before use). */
+export type CommandQuote = Quote; // `path` is optional on Quote until UX-API-01 ships
 export type LaunchResult = { missionId: string | null };
 export type CommandFeedback = { tone: "success" | "error" | "unknown"; code: string } | null;
 
