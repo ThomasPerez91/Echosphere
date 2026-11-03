@@ -58,5 +58,4 @@ passage le moteur de zoom/déplacement de `GalaxyView.tsx` pour `StarMap`.
   ligne indicative (mode « contrat actuel » du prototype).
 - La Fast CI ne se déclenche pour cette PR que grâce à l’entrée temporaire `work/step-13b-first-contact`
   dans `.github/workflows/ci.yml` ; la retirer au rebase sur master.
-- Un avertissement ESLint préexistant hors prototype (`react-hooks/exhaustive-deps`, déjà présent
-  avant ce lot) : ne pas le confondre avec une régression.
+- Fast CI sur `6ba6d89` : lint sans avertissement, 114 tests Vitest (dont 14 du prototype), build.
