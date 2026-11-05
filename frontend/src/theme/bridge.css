@@ -1,0 +1,61 @@
+/* Glue between the ported mockup styles and the React app: real controls, honest placeholders,
+   legacy views inside the new shell. */
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.d-app { font-family: var(--d-font); }
+.d-main { margin-inline: 0; max-width: none; min-width: 0; }
+@media (min-width: 1200px) { .d-main { margin-left: var(--d-sidebar-w); } }
+.d-main:focus { outline: none; }
+.d-scope p { color: inherit; }
+.d-muted { color: var(--d-muted); font-size: 13px; }
+.d-note { margin-top: 10px; color: var(--d-dim); font-size: 11.5px; }
+.d-empty { color: var(--d-muted); font-size: 13px; padding: 8px 0; }
+.d-more-line { color: var(--d-muted); font-size: 12px; padding: 6px 0 0; }
+.d-session { max-width: 760px; }
+.d-server-time { color: var(--d-dim); font-size: 11.5px; }
+.d-span-8 { grid-column: 1 / -1; }
+@media (min-width: 1200px) { .d-span-8 { grid-column: span 8; } }
+
+/* Implementation pending on the Game backend: keeps the layout, shows no invented figure. */
+.d-pending { display: grid; gap: 4px; padding: 12px 14px; border: 1px dashed rgba(255, 181, 71, .45); border-radius: 10px;
+  background: repeating-linear-gradient(135deg, rgba(255, 181, 71, .05) 0 10px, transparent 10px 20px); }
+.d-pending strong { color: var(--d-amber); font-weight: 600; font-size: 12.5px; letter-spacing: .02em; }
+.d-pending span { color: var(--d-muted); font-size: 12.5px; }
+.d-pending--small { padding: 8px 10px; }
+
+/* Top bar: real controls in place of the mockup's static blocks. */
+.d-topbar .d-selector { color: var(--d-text); text-decoration: none; }
+.d-profile { font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.d-colony-pick select { font: inherit; font-weight: 500; color: var(--d-text); background: transparent; border: 0; padding: 0 18px 0 0;
+  max-width: 180px; cursor: pointer; appearance: none; }
+.d-colony-pick select option { background: #0b1729; }
+.d-network { display: flex; align-items: center; gap: 6px; padding: 0 8px; color: var(--d-muted); font-size: 11.5px; white-space: nowrap; }
+.d-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--d-amber); box-shadow: 0 0 8px var(--d-amber); }
+.d-network--connected .d-status-dot { background: var(--d-green); box-shadow: 0 0 8px var(--d-green); }
+.d-network--unavailable .d-status-dot { background: var(--d-red); box-shadow: 0 0 8px var(--d-red); }
+.d-network-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (min-width: 1500px) { .d-network-text { position: static; width: auto; height: auto; clip: auto; } }
+.d-top-actions { position: relative; align-items: center; }
+.d-popover { position: absolute; z-index: 70; top: calc(100% + 8px); right: 0; width: min(320px, 86vw); display: grid; gap: 8px; padding: 14px;
+  border: 1px solid var(--d-line-2); border-radius: 12px; background: #0b1729; box-shadow: 0 18px 40px rgba(0, 0, 0, .55); }
+.d-popover strong { color: var(--d-amber); font-size: 13px; }
+.d-popover p { color: var(--d-muted); font-size: 12.5px; margin: 0; }
+.d-popover--profile { right: var(--d-gutter); top: calc(var(--d-topbar-h) - 4px); }
+.d-popover--profile strong { color: var(--d-text); }
+.d-topbar { position: sticky; }
+.d-popover .d-btn { justify-self: start; }
+
+/* Legacy views (Research, Fleets, Relations, System, classic map) inside the new shell. */
+.d-main > .page-heading { padding-top: 6px; margin-bottom: 4px; }
+.d-main > .page-heading h1:focus { outline: none; }
+.d-main > .page-footer { margin-top: 18px; }
+.d-tabbar a, .d-tabbar button { min-height: 44px; }
+.d-sidebar[inert] { visibility: hidden; }
+.d-sidebar.d-open { visibility: visible; }
+@media (min-width: 1200px) { .d-sidebar[inert] { visibility: visible; } }
+.d-page { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.d-sys-list li.d-more-line { display: block; }
+.d-faction .d-faction-note { margin-top: 8px; max-width: 160px; color: var(--d-muted); font: 500 11px/1.4 var(--d-font); letter-spacing: 0; text-transform: none; }
+.d-galaxy-view { min-height: 240px; }
+@media (min-width: 768px) { .d-galaxy-view { max-height: 360px; } }
+.d-popover .d-btn, .d-pending .d-btn { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px; border-radius: 8px;
+  border: 1px solid rgba(59, 227, 255, .45); background: rgba(10, 30, 52, .7); color: #dff7ff; font-weight: 500; font-size: 13px; cursor: pointer; }
