@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 import { Icon } from '../theme/Icon';
 import type { IconName } from '../theme/Icon';
 
@@ -135,7 +135,7 @@ const features: [string, IconName, string, string][] = [
 export function HomeSections() {
   const [tab, setTab] = useState<'modes' | 'univers'>('modes');
   const tabs: ['modes' | 'univers', IconName, string][] = [['modes', 'planet', 'Modes de jeu'], ['univers', 'chart', 'Univers disponibles']];
-  const move = (event: KeyboardEvent) => {
+  const move = (event: ReactKeyboardEvent) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     const next = tab === 'modes' ? 'univers' : 'modes';
     setTab(next); document.getElementById(`tab-${next}`)?.focus();

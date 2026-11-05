@@ -1,8 +1,20 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-11-03. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-11-05. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
 ## Reprise rapide — refonte UX (work/ux-redesign)
+
+| Champ | État au 05/11/2026 soir — UX05 publié (maquette intégrée : Portal, Empire, Colonie, Galaxie), recette en univers réel à faire |
+| --- | --- |
+| Branche / base / PR | `work/ux-redesign`, [PR #19](https://github.com/ThomasPerez91/Echosphere/pull/19) **Draft** vers `work/step-13b-first-contact`. master, #16, #17, #18, #20 non touchées ; aucun merge, rebase ni force-push |
+| Agent | Claude (session cloud, sans registre npm ni Docker), seul écrivain de la PR #19 |
+| Livré (UX05) | `8922b7a` assets + styles portés, `73e8409` coquille + Empire, `2c409e2` Colonie, `5c4f2df` Galaxie (carte de commandement **par défaut**, carte classique à un clic), `b8e1a43` Portal ; [UX05](docs/02-ux-ui/redesign/ux05-mockup-integration.md) avec le backlog « Implémentation backend nécessaire » |
+| Exécuté | Fast CI `2c409e2` run 42096869835 success, `5c4f2df` run 42097919962 success ; en session : bundles esbuild jeu/Portal, parcours Chromium (Playwright Python, API interceptées) 390/1440 px sans débordement ni erreur console, tsc strict partiel |
+| Non exécuté | specs `e2e/` avec Vite (Full CI master), recette en univers réel, lecteurs d’écran réels |
+| Limites | Fond animé non mesuré sur mobile réel ; `missions[].path` (PR #20) non consommé ; specs e2e classiques forcées sur la carte classique |
+| Suite | Recette locale (Compose) des écrans UX05 ; choix utilisateur des fonctionnalités backend à implémenter (backlog UX05) ; consommation de `path` après PR #20 |
+
+## Reprise rapide — UX04 (historique)
 
 | Champ | État au 03/11/2026 midi — UX04 publié (carte de commandement réelle derrière interrupteur), recette en univers réel à faire |
 | --- | --- |
