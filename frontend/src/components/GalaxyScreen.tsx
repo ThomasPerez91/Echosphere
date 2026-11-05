@@ -16,7 +16,7 @@ const stored = (): GalaxyMode => {
  * functional; the new command map is opt-in. The choice is a per-browser convenience only.
  */
 export function GalaxyScreen({ universe, enabled, csrf, onSessionLost, onEconomyChanged, initialContext, onContextChange }: {
-  universe: string; enabled: boolean; csrf: string | undefined; onSessionLost: () => void; onEconomyChanged?: () => void;
+  universe: string; universeName?: string; enabled: boolean; csrf: string | undefined; onSessionLost: () => void; onEconomyChanged?: () => void;
   initialContext?: GalaxyContext; onContextChange: (context: GalaxyContext) => void;
 }) {
   const [mode, setMode] = useState<GalaxyMode>(stored);

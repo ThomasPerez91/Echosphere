@@ -201,9 +201,6 @@ export function ColonyScreen({ colony, view, link, onNavigate }: { colony: Colon
             <span style={{ width: `${used / data.sectors.capacity * 100}%` }} /></div></div>
         <div className="stat"><strong>{data.colony.planet.orbital_capacity}</strong><span>Emplacements orbitaux · à venir</span></div>
       </div>
-      {colony.colonies.length > 1 && <label className="sector-select">Colonie
-        <select value={data.colony.id} onChange={event => colony.select(event.target.value)}>
-          {colony.colonies.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
     </header>
     <Resources projection={data} />
     <nav aria-label="Sections de la colonie" className="colony-navigation">
