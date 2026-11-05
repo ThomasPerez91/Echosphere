@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent, PointerEvent } from "react";
+import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
+import { GalaxyCanvas } from "../galaxy/GalaxyCanvas";
+import type { Scene } from "../galaxy/render";
 import type { MissionView } from "../fleet/api";
 import { missionPosition, point, stationed, systemName } from "./model";
 import type { Point, World } from "./model";
@@ -26,12 +28,16 @@ const stateLabel = { DETECTED: "Détecté", MAPPED: "Cartographié", MONITORED: 
  * the mockup's regions, influence and distances have no game data and are not reproduced.
  * Every system is a real button (Tab, Enter/Space); nothing depends on hover.
  */
-export function StarMap({ world, selected, onSelect, preview, missions, now, paths, filter = "all", showRoutes = true, showNames = true, focus }: {
+export function StarMap({ world, selected, onSelect, preview, missions, now, paths, filter = "all", showRoutes = true, showNames = true, focus, backdrop = true, menu }: {
   world: World; selected: string | null; onSelect: (id: string) => void; preview: RoutePreview | null;
   missions: MissionView[]; now: number; paths: Record<string, string[] | undefined>;
   filter?: MapFilter; showRoutes?: boolean; showNames?: boolean;
   /** "Localiser": centre the view on this point (keeps the zoom); `key` makes a repeat request count. */
   focus?: { x: number; y: number; key: number } | null;
+  /** Animated canvas of the visual pack behind the interactive SVG (nebula, territory, fog, radar). */
+  backdrop?: boolean;
+  /** Context menu anchored next to the selected system (desktop); null keeps it closed. */
+  menu?: ReactNode;
 }) {
   const systems = world.galaxy.systems;
   const xs = systems.map((s) => s.x), ys = systems.map((s) => s.y);
@@ -48,6 +54,11 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, pat
   const stars = useMemo(() => starfield({ x: full.x - full.w, y: full.y - full.h, w: full.w * 3, h: full.h * 3 }, 900),
     [full.x, full.y, full.w, full.h]);
 
+  const capital = systems.find((s) => s.observation?.own_colony_ids.length)?.id;
+  const scene: Scene = useMemo(() => ({
+    systems: systems.map((s) => ({ id: s.id, x: s.x, y: s.y, state: s.state, own: !!s.observation?.own_colony_ids.length, capital: s.id === capital })),
+    routes: world.galaxy.routes.map((r) => ({ a: r.a_id, b: r.b_id })),
+  }), [systems, world.galaxy.routes, capital]);
   const here = new Map<string, number>();
   for (const f of stationed(world)) if (f.system) here.set(f.system.id, (here.get(f.system.id) ?? 0) + 1);
   const own = new Set(systems.filter((s) => s.observation?.own_colony_ids.length).map((s) => s.id));
@@ -96,7 +107,16 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, pat
     else if (e.key === "0") setView(full);
   };
 
-  return <div className="cmd-map-frame">
+  const target = selected ? systems.find((s) => s.id === selected) : undefined;
+  const anchor = target && rendered?.width ? (() => {
+    const k = Math.min(rendered.width / view.w, rendered.height / view.h);
+    const ox = (rendered.width - view.w * k) / 2, oy = (rendered.height - view.h * k) / 2;
+    const left = ox + (target.x - view.x) * k, top = oy + (target.y - view.y) * k;
+    return { left, top, flip: left > rendered.width * 0.6, up: top > rendered.height * 0.5 };
+  })() : null;
+
+  return <div className={`cmd-map-frame${backdrop ? " has-backdrop" : ""}`}>
+    {backdrop && <GalaxyCanvas className="cmd-backdrop" scene={scene} view={view} labels={false} routes={false} selected={selected} />}
     <svg ref={svg} className="cmd-map" viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} role="group" tabIndex={0}
       aria-label="Carte de commandement : systèmes connus, vos flottes et vos missions. Flèches pour déplacer, plus et moins pour zoomer, zéro pour recentrer."
       preserveAspectRatio="xMidYMid meet" onPointerDown={down} onPointerMove={move}
@@ -109,11 +129,11 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, pat
           <path d="M 0 0 L 10 5 L 0 10 z" className="cmd-arrow" />
         </marker>
       </defs>
-      <g aria-hidden="true" className="cmd-decor">
+      {!backdrop && <g aria-hidden="true" className="cmd-decor">
         <ellipse cx={full.x + full.w * .3} cy={full.y + full.h * .35} rx={full.w * .45} ry={full.h * .5} fill="url(#cmd-nebula-a)" />
         <ellipse cx={full.x + full.w * .75} cy={full.y + full.h * .7} rx={full.w * .4} ry={full.h * .45} fill="url(#cmd-nebula-b)" />
         {stars.map((s, i) => <circle key={i} cx={s.x} cy={s.y} r={s.r * scale} opacity={s.o} className="cmd-dust" />)}
-      </g>
+      </g>}
       {showRoutes && world.galaxy.routes.map((r) => {
         const a = point(world, r.a_id)!, b = point(world, r.b_id)!;
         const partial = [r.a_id, r.b_id].some((id) => systems.find((s) => s.id === id)?.state === "DETECTED");
@@ -164,6 +184,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, pat
     <div className="cmd-overlay cmd-overlay--legend" aria-label="Légende des systèmes" role="group">
       <p>Légende des systèmes</p>
       <ul>
+        <li><span className="cmd-swatch cmd-swatch--unknown" />Inconnu (brouillard)</li>
         <li><span className="cmd-swatch cmd-swatch--detected" />{stateLabel.DETECTED}</li>
         <li><span className="cmd-swatch cmd-swatch--mapped" />{stateLabel.MAPPED}</li>
         <li><span className="cmd-swatch cmd-swatch--monitored" />{stateLabel.MONITORED}</li>
@@ -171,6 +192,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, pat
         <li><span className="cmd-swatch cmd-swatch--fleet" />Vos flottes</li>
         <li><span className="cmd-swatch cmd-swatch--mission" />Mission en cours</li>
         <li><span className="cmd-swatch cmd-swatch--route" />Route hyperespace</li>
+        <li className="cmd-legend-pending" title="Implémentation backend nécessaire"><span className="cmd-swatch cmd-swatch--hostile" />Système hostile <small>(à venir)</small></li>
       </ul>
     </div>
 
@@ -180,6 +202,9 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, pat
       {systems.map((s) => <circle key={s.id} cx={s.x} cy={s.y} r={8} className={`cmd-mini-star cmd-system--${own.has(s.id) ? "own" : s.state.toLowerCase()}`} />)}
       <rect x={view.x} y={view.y} width={view.w} height={view.h} className="cmd-mini-view" />
     </svg>
+
+    {menu && (anchor ? <div className={`cmd-ctx${anchor.flip ? " is-flipped" : ""}${anchor.up ? " is-up" : ""}`} style={{ left: anchor.left, top: anchor.top }}>{menu}</div>
+      : <div className="cmd-ctx is-docked">{menu}</div>)}
 
     <div className="cmd-overlay cmd-zoom" role="group" aria-label="Commandes de la carte">
       <button type="button" className="button" aria-label="Recentrer la carte" onClick={() => setView(full)}>⌖</button>

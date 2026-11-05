@@ -212,3 +212,94 @@
 @media (max-width: 520px) {
   .cmd-map-panel, .cmd-card, .cmd-planner { padding: 12px; }
 }
+
+/* ---------------------------------------------------------------------------------------------
+   UX05 — Galaxy redrawn after the dashboard mockup: same tokens as the shell (Inter, cyan accent,
+   deep navy glass panels), animated canvas backdrop under the interactive SVG, and a context
+   menu anchored on the selected system. The SVG keeps every interaction and accessible name. */
+.cmd-root {
+  --ui-bg: #040912; --ui-surface: rgba(10, 22, 40, .78); --ui-raised: rgba(16, 32, 56, .72); --ui-border: rgba(110, 170, 230, .16);
+  --ui-text: #e8f1fb; --ui-muted: #8fa4bd; --ui-primary: #3be3ff; --ui-on-primary: #02121c;
+  --ui-success: #3ee08f; --ui-warning: #ffb547; --ui-danger: #ff4d5e; --ui-accent: #a78bfa;
+  --ui-radius: 14px; --ui-font: var(--d-font, Inter, system-ui, sans-serif); --ui-display: var(--ui-font); --ui-numeric: var(--ui-font);
+  --map-detected: #6aa8ff; --map-mapped: #ffc65c; --map-monitored: #3ee08f; --map-home: #3be3ff; --map-hostile: #ff4d5e;
+  --map-route: #4f9be8; --map-label: #e8f1fb;
+  font-family: var(--ui-font);
+}
+.cmd-root .cmd-map-panel, .cmd-root .cmd-card, .cmd-root .cmd-planner, .cmd-root .cmd-dock {
+  background: linear-gradient(180deg, rgba(14, 28, 50, .82), rgba(6, 14, 28, .86)); border: 1px solid var(--ui-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 18px 40px rgba(0, 0, 0, .35); backdrop-filter: blur(6px); }
+.cmd-root .button { background: rgba(10, 30, 52, .7); border: 1px solid rgba(59, 227, 255, .32); color: #dff7ff; font-weight: 500; }
+.cmd-root .button:hover:not(:disabled) { border-color: rgba(59, 227, 255, .7); box-shadow: 0 0 14px rgba(59, 227, 255, .18); }
+.cmd-root .button--primary { background: linear-gradient(180deg, rgba(59, 227, 255, .32), rgba(59, 227, 255, .12)); border-color: rgba(59, 227, 255, .75); color: #fff; }
+.cmd-root .button:disabled { opacity: .45; cursor: not-allowed; }
+.cmd-page-title { font-weight: 600 !important; letter-spacing: -.02em; }
+.cmd-page-head .galaxy-mode { margin: 0; }
+.cmd-view-select { display: grid; gap: 4px; font-size: .72rem; color: var(--ui-muted); text-transform: uppercase; letter-spacing: .08em; }
+.cmd-view-select select { min-height: 44px; min-width: 170px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ui-border);
+  background: rgba(10, 22, 40, .9); color: var(--ui-text); font: inherit; font-size: .85rem; text-transform: none; letter-spacing: 0; }
+.cmd-filter { border-radius: 999px; background: rgba(10, 22, 40, .7); }
+.cmd-filter.is-active { border-color: rgba(59, 227, 255, .7); color: #fff; background: linear-gradient(180deg, rgba(59, 227, 255, .24), rgba(59, 227, 255, .08)); box-shadow: 0 0 14px rgba(59, 227, 255, .15); }
+.cmd-filter.is-pending, .cmd-switch.is-pending { opacity: .45; cursor: not-allowed; border-style: dashed; }
+
+/* Backdrop canvas: nebula, territory and fog from the Knowledge only; the SVG above stays the
+   interactive layer (transparent background, no duplicated glow). */
+.cmd-map-frame.has-backdrop { border-radius: 12px; overflow: hidden; isolation: isolate; background: #02050d; }
+.cmd-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; z-index: 0; }
+.has-backdrop .cmd-map { position: relative; z-index: 1; background: transparent; border-color: rgba(110, 170, 230, .14); }
+.has-backdrop .cmd-halo { display: none; }
+.has-backdrop .cmd-overlay { z-index: 2; background: rgba(6, 14, 28, .78); border-color: rgba(110, 170, 230, .2); }
+.cmd-swatch--unknown { background: #0b1220; border: 1px solid #263852; }
+.cmd-swatch--hostile { background: var(--map-hostile); box-shadow: 0 0 6px var(--map-hostile); }
+.cmd-legend-pending { opacity: .55; }
+.cmd-legend-pending small { font-size: .9em; }
+
+/* Context menu anchored on the selected system (desktop); docked when no geometry is known. */
+.cmd-ctx { position: absolute; z-index: 3; width: 290px; transform: translate(22px, -24px); }
+.cmd-ctx.is-flipped { transform: translate(calc(-100% - 22px), -24px); }
+.cmd-ctx.is-docked { top: 12px; right: 12px; transform: none; }
+.cmd-ctx-card { display: grid; gap: 8px; padding: 14px; border-radius: 12px; border: 1px solid rgba(59, 227, 255, .45);
+  background: linear-gradient(180deg, rgba(12, 28, 50, .96), rgba(5, 12, 24, .96)); box-shadow: 0 0 24px rgba(59, 227, 255, .15), 0 18px 40px rgba(0, 0, 0, .6); }
+.cmd-ctx-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+.cmd-ctx-head div { display: grid; }
+.cmd-ctx-head strong { font-size: 1.05rem; color: #fff; }
+.cmd-ctx-head small { font-size: .75rem; color: var(--ui-muted); }
+.cmd-ctx-close { min-width: 44px; min-height: 44px; margin: -10px -10px 0 0; border: 0; background: none; color: var(--ui-muted); font-size: 1.4rem; cursor: pointer; }
+.cmd-ctx-close:hover { color: #fff; }
+.cmd-ctx-card h3 { margin: 4px 0 0; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ui-primary); }
+.cmd-ctx-card .cmd-actions { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.cmd-ctx-card .cmd-actions li { display: grid; gap: 2px; }
+.cmd-ctx-card .cmd-action { width: 100%; justify-content: flex-start; text-align: left; }
+.cmd-ctx-card .cmd-help { margin: 0; font-size: .72rem; }
+.cmd-ctx-link { display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 0 4px; border-top: 1px solid var(--ui-border);
+  color: var(--ui-primary); text-decoration: none; font-size: .85rem; font-weight: 500; }
+
+/* Side panel after the mockup: hero, tabs, tiles and the three bottom actions. */
+.cmd-planet-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+.cmd-na { color: var(--ui-muted); font-weight: 500 !important; }
+.cmd-system-card > .d-pending, .cmd-system-card [role="tabpanel"] .d-pending { margin: 12px 0; }
+.cmd-system-actions { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; padding: 0 var(--ui-gap) var(--ui-gap); }
+.cmd-system-actions .button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0 10px; font-size: .85rem; }
+.cmd-hero .cmd-close { margin-left: auto; align-self: start; }
+.cmd-toolbar--solo { justify-content: flex-start; }
+@media (max-width: 960px) {
+  .cmd-ctx { display: none; }
+  .cmd-view-select { flex: 1 1 160px; }
+}
+@media (max-width: 420px) {
+  .cmd-system-actions { grid-template-columns: 1fr 1fr; }
+  .cmd-system-actions > :last-child { grid-column: 1 / -1; }
+}
+.cmd-ctx-card { max-height: min(380px, 60vh); overflow-y: auto; overscroll-behavior: contain; }
+.cmd-ctx.is-up { transform: translate(22px, calc(-100% + 24px)); }
+.cmd-ctx.is-flipped.is-up { transform: translate(calc(-100% - 22px), calc(-100% + 24px)); }
+@media (max-width: 960px) {
+  /* The legend and zoom flow below the map here: the backdrop covers the map only. */
+  .has-backdrop .cmd-backdrop { bottom: auto; height: auto; aspect-ratio: 4 / 3; }
+  .cmd-map-frame.has-backdrop { overflow: visible; background: transparent; }
+  .has-backdrop .cmd-map { background: #02050d; }
+  .has-backdrop .cmd-backdrop { z-index: 1; }
+  .has-backdrop .cmd-map { z-index: 2; background: transparent; }
+}
+/* Keep the selected system's map under the sticky top bar (and resource strip) when scrolled into view. */
+.cmd-map, .cmd-map-panel { scroll-margin-top: 120px; }

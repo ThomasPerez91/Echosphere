@@ -178,15 +178,15 @@ test("a malformed server path is dropped: nothing is drawn as the real route", a
 test("fleets unavailable for the Empire: explained, with the classic map still one click away", async () => {
   serve((url) => (url.endsWith(`/fleets/${first.id}`) ? json({ error: { code: "permission_denied" } }, 403) : undefined));
   render(<GalaxyScreen universe={universe} enabled csrf={csrf} onSessionLost={() => undefined} onContextChange={() => undefined} />);
-  const command = screen.getByRole("button", { name: "Nouvelle carte de commandement" });
-  expect(screen.getByRole("button", { name: "Carte classique" })).toHaveAttribute("aria-pressed", "true");
-  fireEvent.click(command);
-  expect(command).toHaveAttribute("aria-pressed", "true");
+  // UX05: the command map is the default view; the classic map stays one click away.
+  expect(screen.getByRole("button", { name: "Nouvelle carte de commandement" })).toHaveAttribute("aria-pressed", "true");
   expect(await screen.findByRole("heading", { name: "Flottes indisponibles" })).toBeVisible();
-  expect(window.localStorage.getItem("echosphere.galaxy.mode")).toBe("command");
+  expect(screen.getByRole("heading", { name: "Galaxie", level: 1 })).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Carte classique" }));
   await waitFor(() => expect(screen.queryByRole("heading", { name: "Flottes indisponibles" })).toBeNull());
   expect(window.localStorage.getItem("echosphere.galaxy.mode")).toBe("classic");
+  fireEvent.click(screen.getByRole("button", { name: "Nouvelle carte de commandement" }));
+  expect(window.localStorage.getItem("echosphere.galaxy.mode")).toBe("command");
 });
 
 test("an expired session during the server summary hands back to the session flow", async () => {

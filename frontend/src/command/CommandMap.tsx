@@ -11,6 +11,8 @@ import type { MapFilter } from "./StarMap";
 import { actionLabels, defaultUnits, eligibleFleets, isGarrison, missionPosition, offers, point, serverPath, stationed, systemName } from "./model";
 import type { ActionOffer, FleetLine, World } from "./model";
 import type { CommandFeedback, MissionApi } from "./types";
+import { useMedia } from "../shell/useNow";
+import { planetImage } from "../shell/assets";
 
 type Intent = { offer: ActionOffer; fleet: string | null; units: Record<string, number> };
 
@@ -19,9 +21,12 @@ type Intent = { offer: ActionOffer; fleet: string | null; units: Record<string, 
  * projections (or the prototype fixtures); after an accepted command the container re-reads them,
  * this component never invents a mission. Nothing is sent before the explicit confirmation.
  */
-export function CommandMap({ world, now, api, pending = false, feedback = null, toolbar, title = "Galaxie" }: {
+export function CommandMap({ world, now, api, pending = false, feedback = null, toolbar, title = "Galaxie", subtitle, systemHref, backdrop = true }: {
   world: World; now: number; api: MissionApi; pending?: boolean; feedback?: CommandFeedback;
-  toolbar?: ReactNode; title?: string;
+  toolbar?: ReactNode; title?: string; subtitle?: string;
+  /** Link to the System View of a known system (Observer / Ouvrir le système). */
+  systemHref?: (id: string) => string;
+  backdrop?: boolean;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [intent, setIntent] = useState<Intent | null>(null);
@@ -34,10 +39,13 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   const [showNames, setShowNames] = useState(true);
   const [search, setSearch] = useState("");
   const [searchMiss, setSearchMiss] = useState(false);
-  const [tab, setTab] = useState<"overview" | "planets" | "routes">("overview");
+  const [tab, setTab] = useState<"overview" | "planets" | "routes" | "data">("overview");
   const [focus, setFocus] = useState<{ x: number; y: number; key: number } | null>(null);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false); // local guard until the container reports `pending`
+  const [menuHidden, setMenuHidden] = useState(false);
+  // Desktop: actions in a context menu next to the system; narrow screens: in the bottom sheet.
+  const desktop = useMedia("(min-width: 961px)");
   const panel = useRef<HTMLDivElement>(null);
   const mapPanel = useRef<HTMLElement>(null);
 
@@ -78,7 +86,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   }, [step, planKey, api]);
 
   const select = (id: string) => {
-    setSelected(id); setIntent(null); setNotice(null); setTab("overview"); setFailed(false);
+    setSelected(id); setMenuHidden(false); setIntent(null); setNotice(null); setTab("overview"); setFailed(false);
     // Narrow screens: keep the map in view above the bottom sheet that now holds the system.
     if (window.matchMedia?.("(max-width: 960px)").matches)
       window.setTimeout(() => mapPanel.current?.querySelector(".cmd-map")?.scrollIntoView?.({ block: "start" }), 0);
@@ -95,7 +103,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
     setNotice(null);
     setFailed(false);
   };
-  const cancel = () => { setIntent(null); window.setTimeout(() => panel.current?.querySelector<HTMLElement>(".cmd-action")?.focus(), 0); };
+  const cancel = () => { setIntent(null); window.setTimeout(() => document.querySelector<HTMLElement>(".cmd-action")?.focus(), 0); };
   const chooseFleet = (id: string) => {
     const f = stationed(world).find((x) => x.id === id)!;
     setIntent((p) => p && { ...p, fleet: id, units: defaultUnits(world, f, p.offer.kind) });
@@ -144,10 +152,27 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
     .map((r) => (r.a_id === selected ? r.b_id : r.a_id)) : [];
   const filters: [MapFilter, string][] = [["all", "Tous"], ["known", "Systèmes connus"], ["own", "Mes colonies"], ["fleets", "Mes flottes"], ["signals", "Signaux"]];
 
+  const stateName = (state: string) => state === "DETECTED" ? "Signal détecté" : state === "MONITORED" ? "Système surveillé" : "Système cartographié";
+  const actions = <>{!canCommand ? <p>Votre accès ne permet pas de commander les flottes de cet Empire.</p>
+    : available.length === 0 ? <p>Aucune action de flotte possible ici.</p> : <ul className="cmd-actions">{available.map((o, i) =>
+      <li key={`${o.kind}-${o.planet ?? ""}`}>
+        <button type="button" className={`button cmd-action${i === available.findIndex((x) => !x.reason) ? " button--primary" : ""}`} disabled={!!o.reason}
+          aria-describedby={`hint-${o.kind}-${o.planet ?? "s"}`} onClick={() => start(o)}>{o.label}</button>
+        <p id={`hint-${o.kind}-${o.planet ?? "s"}`} className="cmd-help">{o.reason ?? o.hint}</p>
+      </li>)}</ul>}</>;
+  const survey = available.find((o) => o.kind === "SURVEY" && !o.reason);
+  const menu = desktop && target && !intent && !menuHidden ? <section className="cmd-ctx-card" aria-labelledby="cmd-ctx-title">
+    <div className="cmd-ctx-head"><div><strong id="cmd-ctx-title">{systemName(world, target.id)}</strong><small>{own(target.id) ? "Votre colonie" : stateName(target.state)}</small></div>
+      <button type="button" className="cmd-ctx-close" aria-label="Fermer le menu du système" onClick={() => setMenuHidden(true)}>×</button></div>
+    <h3>Actions possibles</h3>
+    {actions}
+    {systemHref && target.state !== "DETECTED" && <a className="cmd-ctx-link" href={systemHref(target.id)}>Ouvrir le système <span aria-hidden="true">→</span></a>}
+  </section> : null;
+
   return <div className="cmd-command">
     <header className="cmd-page-head">
-      <div><h1 id="cmd-map-title" className="cmd-page-title">{title}</h1>
-        <p><strong>Carte de commandement</strong> : touchez un système pour voir ce que vous en savez et ce que vos flottes peuvent y faire.</p></div>
+      <div><h1 id="cmd-map-title" className="cmd-page-title" tabIndex={-1}>{title}</h1>
+        <p><strong>Carte stratégique</strong> {subtitle ?? "des systèmes connus de votre Empire"}. Touchez un système pour voir ce que vous en savez et ce que vos flottes peuvent y faire.</p></div>
       <form className="cmd-search" role="search" onSubmit={(e) => { e.preventDefault(); find(search); }}>
         <label className="visually-hidden" htmlFor="cmd-search-input">Rechercher un système connu</label>
         <input id="cmd-search-input" type="search" placeholder="Rechercher un système…" value={search}
@@ -155,6 +180,11 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
         <button type="submit" className="button">Chercher</button>
         <span id="cmd-search-help" className="cmd-help" aria-live="polite">{searchMiss ? "Aucun système connu de ce nom." : ""}</span>
       </form>
+      <label className="cmd-view-select">Vue
+        <select value="knowledge" onChange={() => undefined}>
+          <option value="knowledge">Connaissance</option>
+          <option value="influence" disabled>Influence (implémentation backend nécessaire)</option>
+        </select></label>
       {toolbar}
     </header>
     <section className="cmd-map-panel" aria-labelledby="cmd-map-title" ref={mapPanel}>
@@ -163,15 +193,19 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
         <div className="cmd-filters" role="group" aria-label="Filtrer la carte">
           {filters.map(([id, label]) => <button key={id} type="button" className={`cmd-filter${filter === id ? " is-active" : ""}`}
             aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>)}
+          {["Alliés", "Neutres", "Hostiles"].map((label) => <button key={label} type="button" className="cmd-filter is-pending" disabled
+            title="Implémentation backend nécessaire : la Knowledge ne qualifie pas encore les systèmes d’autres Empires">{label}</button>)}
         </div>
         <div className="cmd-switches">
           {([["Routes", showRoutes, setShowRoutes], ["Noms", showNames, setShowNames]] as const).map(([label, on, set]) =>
             <button key={label} type="button" role="switch" aria-checked={on} className="cmd-switch" onClick={() => set(!on)}>
               {label}<span className="cmd-switch-track" aria-hidden="true"><span /></span></button>)}
+          <button type="button" role="switch" aria-checked={false} className="cmd-switch is-pending" disabled title="Régions : implémentation backend nécessaire">
+            Régions<span className="cmd-switch-track" aria-hidden="true"><span /></span></button>
         </div>
       </div>
       <StarMap world={world} selected={selected} onSelect={select} missions={missions} now={now} paths={paths}
-        filter={filter} showRoutes={showRoutes} showNames={showNames} focus={focus}
+        filter={filter} showRoutes={showRoutes} showNames={showNames} focus={focus} backdrop={backdrop} menu={menu}
         preview={intent && fleet?.system && selected && step === "summary" ? { from: fleet.system.id, to: ready?.destination_id ?? selected, path } : null} />
       <details className="cmd-list">
         <summary>Liste des systèmes connus</summary>
@@ -197,12 +231,12 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
           <div className={`cmd-hero cmd-hero--${own(target.id) ? "own" : target.state.toLowerCase()}`}>
             <span className="cmd-hero-star" aria-hidden="true">✦</span>
             <div><h2 id="cmd-system-title">{systemName(world, target.id)}</h2>
-              <p className="cmd-kicker">{target.state === "DETECTED" ? "Signal détecté" : target.state === "MONITORED" ? "Système surveillé" : "Système cartographié"}</p>
+              <p className="cmd-kicker">{stateName(target.state)}</p>
               {own(target.id) && <span className="cmd-chip cmd-chip--own">★ Votre colonie</span>}</div>
             <button type="button" className="button cmd-ghost cmd-close" onClick={close}>Retour à la carte</button>
           </div>
           <div className="cmd-tabs" role="tablist" aria-label="Informations du système">
-            {([["overview", "Aperçu"], ["planets", `Planètes (${target.state === "DETECTED" ? "?" : (ref?.planets ?? []).length})`], ["routes", `Routes (${neighbours.length})`]] as const).map(([id, label]) =>
+            {([["overview", "Aperçu"], ["planets", `Planètes (${target.state === "DETECTED" ? "?" : (ref?.planets ?? []).length})`], ["routes", `Routes (${neighbours.length})`], ["data", "Données"]] as const).map(([id, label]) =>
               <button key={id} type="button" role="tab" id={`cmd-tab-${id}`} aria-selected={tab === id} aria-controls={`cmd-tabpanel-${id}`}
                 className="cmd-tab" onClick={() => setTab(id)}>{label}</button>)}
           </div>
@@ -210,22 +244,18 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
             <div className="cmd-tiles">
               <div><span>Connaissance</span><strong>{target.state === "DETECTED" ? "Détecté" : target.state === "MONITORED" ? "Surveillé" : "Cartographié"}</strong></div>
               <div><span>Vos flottes ici</span><strong>{fleetsHere.length}</strong></div>
+              <div><span>Distance</span><strong className="cmd-na" title="Implémentation backend nécessaire">N/D</strong></div>
+              <div><span>Planètes connues</span><strong>{target.state === "DETECTED" ? "?" : (ref?.planets ?? []).length}</strong></div>
             </div>
             {target.state === "DETECTED" ? <p>Existence et position approximative seulement. Nom, planètes et occupants restent inconnus tant qu’une sonde ne l’a pas cartographié.</p>
               : <p className="cmd-help">{(ref?.planets ?? []).length} planète(s) connue(s){fleetsHere.length ? ` · ${fleetsHere.map((f) => f.name).join(", ")}` : ""}.</p>}
-            <h3>Actions possibles</h3>
-            {!canCommand ? <p>Votre accès ne permet pas de commander les flottes de cet Empire.</p>
-              : available.length === 0 ? <p>Aucune action de flotte possible ici.</p> : <ul className="cmd-actions">{available.map((o, i) =>
-                <li key={`${o.kind}-${o.planet ?? ""}`}>
-                  <button type="button" className={`button cmd-action${i === available.findIndex((x) => !x.reason) ? " button--primary" : ""}`} disabled={!!o.reason}
-                    aria-describedby={`hint-${o.kind}-${o.planet ?? "s"}`} onClick={() => start(o)}>{o.label}</button>
-                  <p id={`hint-${o.kind}-${o.planet ?? "s"}`} className="cmd-help">{o.reason ?? o.hint}</p>
-                </li>)}</ul>}
+            {!desktop && <><h3>Actions possibles</h3>{actions}</>}
+            {desktop && menuHidden && <button type="button" className="button cmd-ghost" onClick={() => setMenuHidden(false)}>Afficher les actions sur la carte</button>}
           </div>}
           {tab === "planets" && <div role="tabpanel" id="cmd-tabpanel-planets" aria-labelledby="cmd-tab-planets">
             {target.state === "DETECTED" ? <p>Structure inconnue : cartographiez ce signal.</p>
               : <ul className="cmd-planets" aria-label="Planètes connues">{(ref?.planets ?? []).map((p) =>
-                <li key={p.id}><span className="cmd-planet-orb" aria-hidden="true" /><div><strong>{p.name}</strong>
+                <li key={p.id}><img className="cmd-planet-img" src={planetImage(p.id)} alt="" width="36" height="36" /><div><strong>{p.name}</strong>
                   <span>{p.sector_capacity} secteurs · {p.orbital_capacity} orbitaux</span></div>
                   <span className={`cmd-chip${p.colony_id ? " cmd-chip--own" : ""}`}>{p.colony_id ? "Votre colonie" : "Occupation inconnue"}</span></li>)}
                 {(ref?.planets ?? []).length === 0 && <li>Aucune planète connue.</li>}</ul>}
@@ -236,6 +266,16 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
                 {systemName(world, target.id)} ↔ {systemName(world, id)}</button></li>)}</ul>
             <p className="cmd-help">Seules vos routes connues sont listées ; les distances ne sont pas transmises par le serveur.</p>
           </div>}
+          {tab === "data" && <div role="tabpanel" id="cmd-tabpanel-data" aria-labelledby="cmd-tab-data">
+            <div className="d-pending"><strong>Implémentation backend nécessaire</strong><span>Ressources, anomalies et historique d’observation du système.</span></div>
+          </div>}
+          <div className="cmd-system-actions">
+            {systemHref && target.state !== "DETECTED" ? <a className="button cmd-ghost" href={systemHref(target.id)}>Observer</a>
+              : <button type="button" className="button cmd-ghost" disabled title="Un signal doit d’abord être cartographié">Observer</button>}
+            <button type="button" className="button cmd-ghost" disabled={!survey || !canCommand} onClick={() => survey && start(survey)}>Explorer</button>
+            {systemHref && target.state !== "DETECTED" ? <a className="button button--primary" href={systemHref(target.id)}>Ouvrir le système</a>
+              : <button type="button" className="button button--primary" disabled>Ouvrir le système</button>}
+          </div>
         </section>}
     </div>
   </div>;

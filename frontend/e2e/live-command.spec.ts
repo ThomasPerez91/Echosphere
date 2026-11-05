@@ -49,8 +49,8 @@ for (const width of [390, 768, 1440]) {
     const posts: { url: string; body: Record<string, unknown>; csrf?: string }[] = [];
     await serve(page, posts);
     await page.goto(`/#universe/${universe}/galaxy`);
-    await expect(page.getByRole('button', { name: 'Carte classique' })).toHaveAttribute('aria-pressed', 'true');
-    await page.getByRole('button', { name: 'Nouvelle carte de commandement' }).tap();
+    // UX05: the command map is the default view; the classic map stays one click away.
+    await expect(page.getByRole('button', { name: 'Nouvelle carte de commandement' })).toHaveAttribute('aria-pressed', 'true');
     const map = page.getByRole('group', { name: /Carte de commandement/ });
     await map.getByRole('button', { name: 'Lyra', exact: true }).tap();
     expect(posts).toEqual([]); // selecting a destination sends nothing
