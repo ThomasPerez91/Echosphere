@@ -32,8 +32,8 @@
 .d-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--d-amber); box-shadow: 0 0 8px var(--d-amber); }
 .d-network--connected .d-status-dot { background: var(--d-green); box-shadow: 0 0 8px var(--d-green); }
 .d-network--unavailable .d-status-dot { background: var(--d-red); box-shadow: 0 0 8px var(--d-red); }
-.d-network-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-@media (min-width: 1500px) { .d-network-text { position: static; width: auto; height: auto; clip: auto; } }
+.d-network { font-size: 0; }
+@media (min-width: 1600px) { .d-network { font-size: 11.5px; } }
 .d-top-actions { position: relative; align-items: center; }
 .d-popover { position: absolute; z-index: 70; top: calc(100% + 8px); right: 0; width: min(320px, 86vw); display: grid; gap: 8px; padding: 14px;
   border: 1px solid var(--d-line-2); border-radius: 12px; background: #0b1729; box-shadow: 0 18px 40px rgba(0, 0, 0, .55); }
@@ -59,3 +59,38 @@
 @media (min-width: 768px) { .d-galaxy-view { max-height: 360px; } }
 .d-popover .d-btn, .d-pending .d-btn { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px; border-radius: 8px;
   border: 1px solid rgba(59, 227, 255, .45); background: rgba(10, 30, 52, .7); color: #dff7ff; font-weight: 500; font-size: 13px; cursor: pointer; }
+
+/* Colony: tabs are real links (one URL per view), styled like the mockup's tablist. */
+.d-colony .d-col-tabs a { position: relative; z-index: 1; flex: 1 0 auto; display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 44px; padding: 0 14px; border-radius: 9px; color: #9fb3ca; font-weight: 500; font-size: 13.5px; white-space: nowrap; transition: color .25s; }
+.d-colony .d-col-tabs a .d-ico { width: 22px; height: 22px; }
+.d-colony .d-col-tabs a:hover { color: #e6f4ff; }
+.d-colony .d-col-tabs a[aria-current=page] { color: #fff; background: linear-gradient(180deg, rgba(59,227,255,.22), rgba(59,227,255,.06));
+  border: 1px solid rgba(59,227,255,.45); box-shadow: inset 0 -2px 0 var(--d-cyan), 0 0 18px rgba(59,227,255,.18); }
+.d-colony .d-col-tabs a[aria-current=page] .d-ico { color: var(--d-cyan); filter: drop-shadow(0 0 6px rgba(59,227,255,.8)); }
+.d-colony .d-btn.d-primary:not(:disabled) { background: linear-gradient(180deg, rgba(59,227,255,.24), rgba(59,227,255,.08)); }
+.d-colony .d-btn:disabled { opacity: .45; cursor: not-allowed; }
+.d-colony .d-na { color: var(--d-dim); font-weight: 500; }
+.d-colony .d-subtitle { margin: 16px 0 10px; font: 500 14px var(--d-font); color: #c9d6e5; }
+.d-colony .d-sync { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.d-colony .effect { margin: 0 0 6px; color: var(--d-green); font-size: 12px; }
+.d-colony .reason { display: block; margin-top: 6px; color: var(--d-amber); font-size: 12px; }
+.d-colony .sector-select { display: grid; gap: 4px; margin-bottom: 8px; font-size: 12px; color: var(--d-muted); }
+.d-colony .sector-select select { min-height: 36px; background: #0b1729; color: var(--d-text); border: 1px solid var(--d-line-2); border-radius: 8px; padding: 0 8px; }
+.d-colony .d-job .confirm { grid-column: 1 / -1; display: grid; gap: 6px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,77,94,.35);
+  background: rgba(255,77,94,.06); font-size: 12.5px; }
+.d-colony .d-job .confirm p { margin: 0; }
+.d-colony .d-job .confirm .button { justify-self: start; }
+.d-colony .d-job-state { color: var(--d-dim) !important; }
+.d-colony .d-job .reason { grid-column: 1 / -1; }
+.d-colony .combat-alert { border-color: rgba(255,77,94,.5); }
+.d-colony .combat-alert h2 { color: var(--d-red); font: 600 16px var(--d-font); margin-bottom: 6px; }
+.d-colony .feedback-zone:empty { display: none; }
+.d-colony .d-build-grid { list-style: none; padding: 0; }
+.d-colony .d-job .d-btn span { display: none; }
+.d-colony .d-bcard .d-btn span { display: inline; overflow: hidden; text-overflow: ellipsis; }
+.d-colony .d-pending { margin-top: 2px; }
+.d-colony .d-window .d-pending { align-self: center; }
+@media (max-width: 559px) {
+  .d-colony .d-col-tabs a { flex: 1 1 0; flex-direction: column; gap: 4px; height: 60px; padding: 0 2px; font-size: 11.5px; min-width: 0; }
+}
