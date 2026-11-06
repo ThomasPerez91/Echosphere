@@ -57,7 +57,9 @@ export function useConstructionHistory(universe: string | null, colonies: { id: 
 
   useEffect(() => {
     if (enabled && universe && ids) refresh();
-    return () => { generation.current++; controller.current?.abort(); };
+    // Counter and controller refs, not DOM nodes: invalidating the latest read on cleanup is intended.
+    const counter = generation, reads = controller;
+    return () => { counter.current++; reads.current?.abort(); };
   }, [enabled, universe, ids, refresh]);
 
   const values = Object.values(history);
