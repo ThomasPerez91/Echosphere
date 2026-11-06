@@ -13,6 +13,7 @@ Mise à jour : 2026-11-05. [Contexte](context.md), [passation](docs/06-handoff/R
 | Non exécuté | specs `e2e/` avec Vite (Full CI master), recette en univers réel, lecteurs d’écran réels |
 | Limites | Fond animé non mesuré sur mobile réel ; `missions[].path` (PR #20) non consommé ; specs e2e classiques forcées sur la carte classique |
 | 06/11/2026 | Logo officiel (`0c968d0`, Fast CI run 42189121572 success) dans le Portal et le jeu, favicon. Seul agent sur les PR #19/#20/#21 (l’agent de #21 est arrêté, confirmé par l’utilisateur) ; #21 (historique des constructions, backend) n’est **pas** encore consommée par le frontend de #19 malgré sa description |
+| Rapports | Écran Rapports (D-UX-6) branché sur l’historique des constructions de la PR #21 (route optionnelle : indisponibilité partielle si absente), missions, combats, frontière, recherche, diplomatie ; tests `Reports.test.tsx` |
 | Suite | Recette locale (Compose) des écrans UX05 ; choix utilisateur des fonctionnalités backend à implémenter (backlog UX05) ; consommation de `path` après PR #20 |
 
 ## Reprise rapide — UX04 (historique)

@@ -41,12 +41,25 @@ envoyée avec une sonde, jamais par le clic. La carte de commandement devient la
 carte classique reste disponible en un clic (choix mémorisé par navigateur). Les specs Playwright qui
 pilotent la carte classique la sélectionnent explicitement.
 
+## Rapports (D-UX-6) et historique des constructions (PR #21)
+
+L’écran Rapports compose côté client un fil daté, filtrable par catégorie (Constructions, Missions,
+Combats, Frontière, Recherche, Diplomatie) et groupé par jour, à partir de ce que le serveur conserve :
+historique paginé des constructions terminées de chaque colonie (`GET …/colonies/{id}/construction-history`,
+contrat de la PR #21, curseur exclusif `before_sequence`, séquences en texte décimal validées), missions
+terminées, rapports de bataille et faits de frontière de la projection Flottes, recherches acquises,
+historique diplomatique. Aucune entrée n’est prédite côté client. Un serveur Game sans la route (PR #21
+non déployée) répond 404 : l’historique des constructions est signalé indisponible, le reste du fil
+fonctionne. « Actualiser » repart de la première page ; les pages suivantes s’ajoutent sans doublon.
+Le tableau de bord Empire réutilise les mêmes fonctions d’événements et renvoie vers Rapports.
+
 ## Implémentation backend nécessaire (backlog)
 
 | Écran | Fonctionnalité affichée en attente |
 | --- | --- |
 | Coquille | Messages, notifications, emblème et devise d’Empire, profil |
-| Empire | Classement / puissance, objectifs, rapports détaillés, diplomatie hors pactes |
+| Empire | Classement / puissance, objectifs, diplomatie hors pactes |
+| Rapports | Cloche d’alertes, rapports non lus, recherche et export du fil ; historique au-delà de ce que conserve la projection Flottes |
 | Colonie | Accélération de construction, Orbite (emplacements orbitaux, routes), Défense (modules), objectifs, population/moral si décidés |
 | Galaxie | Distance entre systèmes, onglet « Données » (ressources, anomalies, historique d’observation), filtres Alliés/Neutres/Hostiles, systèmes hostiles dans la légende, régions, vue « Influence » |
 | Portal | Invitations, actualités, statistiques publiques, catalogue d’univers ouverts, création de partie, Empire / mode / tour par partie, journal d’activité des parties, notifications |

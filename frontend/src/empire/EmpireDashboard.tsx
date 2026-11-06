@@ -14,6 +14,7 @@ import { missionPosition } from '../command/model';
 import { Bar, PanelHead, Pending, Pic } from '../shell/visual';
 import { ago, asset, buildingImage, compact, estimate, integer, planetImage, resourceIcon } from '../shell/assets';
 import { useNow } from '../shell/useNow';
+import { combatEvents, missionEvents, newestFirst, relationEvents, researchEvents } from '../reports/events';
 
 function Hero({ universeName }: { universeName?: string }) {
   return <section className="d-hero d-scope">
@@ -74,7 +75,6 @@ function Countdown({ order, offset, now }: { order: Order; offset: number; now: 
 }
 
 type Alert = { key: string; tone: 'danger' | 'warn' | 'info'; icon: string; title: string; text: ReactNode; at?: string };
-type Event = { key: string; tone: 'green' | 'amber' | 'blue' | 'red'; icon: string; title: string; text: string; at: string };
 
 export function EmpireDashboard({ universe, access, colony, href }: {
   universe: string; access: ReturnType<typeof useGameSession>; colony: ReturnType<typeof useColony>;
@@ -133,23 +133,7 @@ export function EmpireDashboard({ universe, access, colony, href }: {
     alerts.push({ key: `pact-${x.empire.id}`, tone: 'info', icon: 'icons/alertes/alerte-proposition-diplomatique.svg', title: 'Proposition diplomatique', text: `Pacte proposé par ${x.empire.name}`, at: x.proposal.proposed_at });
   if (fleets.awaiting) alerts.push({ key: 'fleets', tone: 'info', icon: 'icons/alertes/alerte-defense.svg', title: 'Échéance de flotte passée', text: 'En attente de la confirmation du serveur' });
 
-  const fleetName = (id: string) => f?.fleets?.find(x => x.id === id)?.name ?? 'Flotte';
-  const missionEvents = (f?.missions ?? []).filter(m => m.status === 'completed' && m.completed_at).map((m): Event => {
-    const kind = m.report?.result.kind ?? m.kind;
-    const where = m.destination?.name ?? 'système inconnu';
-    if (kind === 'INTERCEPTED') return { key: m.id, tone: 'red', icon: 'icons/evenements/evt-combat.svg', title: 'Flotte interceptée', text: `${fleetName(m.fleet_id)} — ${where}`, at: m.completed_at! };
-    if (m.kind === 'ATTACK') return { key: m.id, tone: 'red', icon: 'icons/evenements/evt-combat.svg', title: 'Attaque terminée', text: `${fleetName(m.fleet_id)} — ${where}`, at: m.completed_at! };
-    if (m.kind === 'COLONIZE' && m.report?.result.colony_id) return { key: m.id, tone: 'green', icon: 'icons/evenements/evt-nouvelle-colonie.svg', title: 'Nouvelle colonie établie', text: where, at: m.completed_at! };
-    if (m.kind === 'SURVEY') return { key: m.id, tone: 'blue', icon: 'icons/evenements/evt-decouverte.svg', title: 'Système cartographié', text: where, at: m.completed_at! };
-    return { key: m.id, tone: 'green', icon: 'icons/evenements/evt-flotte-revenue.svg', title: m.recalled_at ? 'Flotte revenue' : 'Flotte arrivée', text: `${fleetName(m.fleet_id)} — ${where}`, at: m.completed_at! };
-  });
-  const techName = (id: string) => r?.technologies.find(t => t.id === id)?.name ?? id;
-  const researchEvents = (r?.acquired ?? []).map((a): Event => ({ key: a.technology_id, tone: 'blue', icon: 'icons/evenements/evt-recherche-terminee.svg', title: 'Recherche terminée', text: techName(a.technology_id), at: a.acquired_at }));
-  const counterpart = (id: string) => rel?.relations.find(x => x.empire.id === id)?.empire.name ?? 'un Empire';
-  const relationEvents = (rel?.history ?? []).map((h): Event => ({ key: h.id, tone: 'amber', icon: 'icons/evenements/evt-contact-diplomatique.svg',
-    title: h.kind === 'accepted' ? 'Pacte conclu' : h.kind === 'proposed' ? 'Proposition de pacte' : h.kind === 'refused' ? 'Pacte refusé' : h.kind === 'notice' ? 'Préavis de fin de pacte' : 'Proposition retirée',
-    text: counterpart(h.counterpart_id), at: h.at }));
-  const events = [...missionEvents, ...researchEvents, ...relationEvents].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 5);
+  const events = [...missionEvents(f), ...combatEvents(f), ...researchEvents(r), ...relationEvents(rel)].sort(newestFirst).slice(0, 5);
 
   const pacts = rel?.relations.filter(x => x.state === 'PACT').length ?? 0;
   const proposals = rel?.relations.filter(x => x.proposal?.direction === 'received').length ?? 0;
@@ -237,11 +221,11 @@ export function EmpireDashboard({ universe, access, colony, href }: {
       </section>
 
       <section className="d-card d-panel d-events" aria-labelledby="empire-events">
-        <PanelHead id="empire-events" icon="icons/sidebar/nav-rapports.svg" title="Événements récents" more={link('fleets', 'Voir les flottes')} />
+        <PanelHead id="empire-events" icon="icons/sidebar/nav-rapports.svg" title="Événements récents" more={link('reports', 'Voir les rapports')} />
         <ol className="d-timeline">{events.map(e => <li key={e.key} className={`d-${e.tone}`}><Pic src={e.icon} size={30} />
           <div><strong>{e.title}</strong><span>{e.text}</span></div><time dateTime={e.at}>{ago(e.at, serverNow)}</time></li>)}</ol>
         {!events.length && <p className="d-muted">Aucun événement daté par le serveur pour le moment.</p>}
-        <p className="d-note">Fin de construction et rapports centralisés : implémentation backend nécessaire.</p>
+        <p className="d-note">Constructions terminées et fil complet dans Rapports.</p>
       </section>
 
       <section className="d-card d-panel d-summary" aria-labelledby="empire-summary">

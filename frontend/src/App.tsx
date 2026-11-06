@@ -13,6 +13,7 @@ import { Badge, Button, EmptyState, Panel } from './components/ui';
 import { useReadiness } from './hooks/useReadiness';
 import { GameShell } from './shell/GameShell';
 import { EmpireDashboard, EmpireWelcome } from './empire/EmpireDashboard';
+import { ReportsScreen } from './reports/ReportsScreen';
 import './theme/fonts.css';
 import './theme/icons.css';
 import './theme/dashboard.css';
@@ -25,7 +26,7 @@ const sections = [
   { id: 'research', label: 'Recherche', title: 'La connaissance ouvre la voie.', description: 'Technologies acquises, recherche active et suivante programmée à l’échelle de votre Empire.' },
   { id: 'galaxy', label: 'Galaxie', title: 'Galaxie', description: 'Carte stratégique des systèmes connus de votre Empire, routes découvertes et missions de flotte, selon le serveur.' },
   { id: 'fleets', label: 'Flottes', title: 'Vos flottes', description: 'Production de vaisseaux, flottes stationnées et missions asynchrones de vos Empires.' },
-  { id: 'reports', label: 'Rapports', title: 'La mémoire de votre empire.', description: 'Les résultats des missions et les événements importants prendront place ici.' },
+  { id: 'reports', label: 'Rapports', title: 'La mémoire de votre empire.', description: 'Constructions terminées, missions, batailles, recherches et diplomatie datées par le serveur.' },
   { id: 'relations', label: 'Relations', title: 'D’autres horizons.', description: 'Civilisations rencontrées, pactes de non-agression et faits hostiles datés de vos Empires.' },
 ] as const;
 
@@ -80,7 +81,7 @@ export default function App() {
 
   // Pages redrawn after the mockup carry their own hero/header; the others keep the classic heading.
   const ownHeader = !!section && (destination === 'empire' || (destination === 'colony' && active)
-    || (destination === 'galaxy' && active && !systemMatch));
+    || (destination === 'galaxy' && active && !systemMatch) || (destination === 'reports' && active));
   const statusText = { checking: 'Vérification en cours', connected: 'Services disponibles', unavailable: 'Connexion indisponible' }[status];
   const choose = (what: string) => <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter {what} de vos Empires.</p></Panel>;
 
@@ -113,6 +114,8 @@ export default function App() {
       : destination === 'fleets' ? choose('les flottes')
       : destination === 'relations' && universe ? <RelationsView universe={universe} enabled={active} csrf={access.session?.csrf_token} onSessionLost={access.retry} />
       : destination === 'relations' ? choose('les relations')
+      : destination === 'reports' && universe ? <ReportsScreen universe={universe} access={access} colony={colony} />
+      : destination === 'reports' ? choose('les rapports')
       : <section className="panel destination-panel"><Badge>À venir</Badge>
         <EmptyState title={`${section.label} : implémentation backend nécessaire`}>{section.description} Aucun ordre de jeu n’est disponible à cette étape.</EmptyState>
         <a className="text-link" href={href('empire')}>← Retour à l’Empire</a>
