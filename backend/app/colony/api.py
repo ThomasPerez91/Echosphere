@@ -7,7 +7,7 @@ accepts them and count as explicit activity. No Portal call, no rule computed he
 
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
@@ -15,6 +15,7 @@ from starlette.responses import JSONResponse
 
 from app.access.http import HEADERS, cookie_name, origin
 from app.access.service import AccessError, GameSessions, check_csrf
+from app.colony.models import ConstructionOrder
 from app.colony.projection import amounts, project
 from app.colony.service import ColonyError, cancel, catch_up_owned, enqueue
 from app.control.models import EmpireBinding
@@ -132,6 +133,39 @@ class Colonies:
             )
             return project(session, rules, colony, permissions, now)
 
+    def history(self, raw, universe_id, colony_id, before_sequence=None):
+        """Completed persistent facts only; no catch-up, activity, world lookup or snapshot leak."""
+        with self.factory.begin() as session:
+            colony, _, _ = self.authorize(session, raw, universe_id, colony_id, "colony.read")
+            query = select(ConstructionOrder).where(
+                ConstructionOrder.universe_id == universe_id,
+                ConstructionOrder.colony_id == colony.id,
+                ConstructionOrder.status == "completed",
+            )
+            if before_sequence is not None:
+                query = query.where(ConstructionOrder.sequence < before_sequence)
+            orders = session.scalars(
+                query.order_by(ConstructionOrder.sequence.desc()).limit(51)
+            ).all()
+            page = orders[:50]
+            return {
+                "server_time": self.clock.now().isoformat(),
+                "colony_id": str(colony.id),
+                "empire_id": str(colony.empire_id),
+                "entries": [
+                    {
+                        "id": str(o.id),
+                        "sequence": str(o.sequence),
+                        "infrastructure_type": o.infrastructure_type,
+                        "sector_index": o.sector_index,
+                        "target_level": o.target_level,
+                        "completed_at": o.completed_at.isoformat(),
+                    }
+                    for o in page
+                ],
+                "next_before_sequence": str(page[-1].sequence) if len(orders) > 50 else None,
+            }
+
     def construct(self, raw, universe_id, colony_id, command: Construction):
         with self.factory.begin() as session:
             colony, permissions, access = self.authorize(
@@ -196,12 +230,15 @@ async def call(function, *args):
         raise failure("colony_busy", 503) from None
 
 
-def bootstrap(request):
+def bootstrap(request, *, allowed_query=()):
     if request.headers.get("x-game-request") != "bootstrap" or (
         request.headers.get("origin") not in (None, request.app.state.settings.game_public_origin)
     ):
         raise AccessError("origin_denied")
-    if request.url.query:
+    if request.url.query and (
+        any(key not in allowed_query for key in request.query_params)
+        or any(len(request.query_params.getlist(key)) != 1 for key in request.query_params)
+    ):
         raise AccessError("invalid_request", 422)
 
 
@@ -236,6 +273,20 @@ async def colony(universe_id: UUID, colony_id: UUID, request: Request):
 async def construct(universe_id: UUID, colony_id: UUID, request: Request):
     raw, body = await command(request, universe_id, Construction)
     return await call(Colonies(request.app.state).construct, raw, universe_id, colony_id, body)
+
+
+@router.get("/{colony_id}/construction-history")
+async def construction_history(
+    universe_id: UUID,
+    colony_id: UUID,
+    request: Request,
+    before_sequence: int | None = Query(default=None, ge=1, le=9_223_372_036_854_775_807),
+):
+    bootstrap(request, allowed_query=("before_sequence",))
+    raw = request.cookies.get(cookie_name(universe_id))
+    return await call(
+        Colonies(request.app.state).history, raw, universe_id, colony_id, before_sequence
+    )
 
 
 @router.post("/{colony_id}/construction-orders/{order_id}/cancel")

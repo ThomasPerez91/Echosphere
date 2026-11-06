@@ -2,6 +2,19 @@
 
 Mise à jour : 2026-11-02. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
+## Reprise rapide — W-UX-05 historique des constructions
+
+- Demande utilisateur du 05/11/2026 : extensions techniques additives déjà définies, PR séparées.
+- Branche `work/ux-construction-history`, base `b97bd0e` (#17), PR dédiée prévue en Draft vers cette branche (non créée : publication bloquée).
+- Projection paginée `construction-history`, `colony.read`, 404 sans existence révélée ; dates
+  logiques persistées, aucun catch-up/activité/session prolongée. Aucun changement de schéma/règles.
+- Tests exécutés : Ruff backend/scripts ; 41 tests PostgreSQL (7 nouveaux et 34 Colony API),
+  PostgreSQL **16.2** temporaire local, bases dédiées ; documentation vérifiée.
+- Limites : PostgreSQL 17 et Compose non exécutés ici ; Docker absent. Intégration UI dans #19,
+  chemin de mission dans #20 : ces branches restent séparées. Aucun merge autorisé.
+- Contrat/recette : [construction-history](docs/03-technical/construction-history.md).
+- Agent : ChatGPT Work, seul écrivain sur cette branche pendant ce lot. Publication bloquée par la revue d’approbation automatique ; aucun push effectué, aucune PR créée et aucune CI de ces commits déclenchée. Dernier commit de code local : `ea40c9b`. Revalider HEAD distant avant toute publication autorisée.
+
 ## Reprise rapide — branche 13B (work/step-13b-first-contact)
 
 | Champ | État au 02/11/2026 nuit — 13B validé localement (PostgreSQL, Alembic, Chromium, Compose), revue indépendante à faire |
