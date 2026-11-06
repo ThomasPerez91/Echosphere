@@ -12,6 +12,7 @@ Mise à jour : 2026-11-05. [Contexte](context.md), [passation](docs/06-handoff/R
 | Exécuté | Fast CI `2c409e2` run 42096869835 success, `5c4f2df` run 42097919962 success ; en session : bundles esbuild jeu/Portal, parcours Chromium (Playwright Python, API interceptées) 390/1440 px sans débordement ni erreur console, tsc strict partiel |
 | Non exécuté | specs `e2e/` avec Vite (Full CI master), recette en univers réel, lecteurs d’écran réels |
 | Limites | Fond animé non mesuré sur mobile réel ; `missions[].path` (PR #20) non consommé ; specs e2e classiques forcées sur la carte classique |
+| 06/11/2026 | Logo officiel (`0c968d0`, Fast CI run 42189121572 success) dans le Portal et le jeu, favicon. Seul agent sur les PR #19/#20/#21 (l’agent de #21 est arrêté, confirmé par l’utilisateur) ; #21 (historique des constructions, backend) n’est **pas** encore consommée par le frontend de #19 malgré sa description |
 | Suite | Recette locale (Compose) des écrans UX05 ; choix utilisateur des fonctionnalités backend à implémenter (backlog UX05) ; consommation de `path` après PR #20 |
 
 ## Reprise rapide — UX04 (historique)
