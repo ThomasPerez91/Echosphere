@@ -1,7 +1,7 @@
 # Historique des constructions terminées — W-UX-05
 
-**Statut : extension technique additive autorisée par la demande UX du 05/11/2026 ; PR dédiée,
-Draft, depuis `b97bd0e` (PR #17). Aucun changement de gameplay ou de migration.**
+**Statut : extension technique additive autorisée par la demande UX du 05/11/2026 ; branche dédiée ; PR prévue en
+Draft après autorisation de publication, depuis `b97bd0e` (PR #17). Aucun changement de gameplay ou de migration.**
 
 L’écran Rapports doit pouvoir consulter les achèvements déjà persistés. `ConstructionOrder`
 conserve `completed_at` à la date logique de l’événement, le secteur, le type et le niveau atteint.
