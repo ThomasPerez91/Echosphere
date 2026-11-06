@@ -116,3 +116,5 @@ ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, 
 [proposition B1–B12](01-game-design/relations.md), [plan R00–R11](05-project/step-13-plan.md).
 R02–R11 autorisés. Lot 13B pré-MVP [premier contact](01-game-design/first-contact.md) (Q57/Q58) documenté,
 non implémenté avant fusion de l'étape 13. Aucun merge ni suppression de branche autorisé.
+
+- [Historique des constructions terminées — W-UX-05](03-technical/construction-history.md).
