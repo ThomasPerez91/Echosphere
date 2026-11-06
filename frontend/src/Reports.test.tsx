@@ -22,7 +22,8 @@ const json = (body: unknown, status = 200) => Promise.resolve(new Response(JSON.
 const missing = () => json({ error: { code: 'not_found' } }, 404);
 
 function setup(history: (url: string) => Promise<Response>) {
-  const fetch = vi.fn((url: string) => url.includes('/construction-history') ? history(url) : missing());
+  // Typed with the RequestInit argument so the assertions can read headers and methods.
+  const fetch = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>((url) => url.includes('/construction-history') ? history(url) : missing());
   vi.stubGlobal('fetch', fetch);
   const access = { phase: 'active', session: { csrf_token: 'csrf' }, retry: vi.fn() } as unknown as ReturnType<typeof useGameSession>;
   const colony = { colonies: [{ id: colonyId, name: 'Aube Prime', empire: { id: empireId, name: 'Concorde' } }], projection: null, refresh: vi.fn() } as unknown as ReturnType<typeof useColony>;
@@ -38,14 +39,14 @@ test('completed constructions are listed from the server, older pages follow the
   expect(screen.getByRole('heading', { level: 1, name: 'La mémoire de votre empire.' })).toBeVisible();
   const reads = fetch.mock.calls.filter(([url]) => String(url).includes('/construction-history'));
   expect(reads[0][0]).toBe(`/api/game/${universe}/colonies/${colonyId}/construction-history`);
-  expect((reads[0][1] as RequestInit).headers).toEqual({ 'X-Game-Request': 'bootstrap' });
+  expect(reads[0][1]?.headers).toEqual({ 'X-Game-Request': 'bootstrap' });
   fireEvent.click(screen.getByRole('button', { name: 'Afficher des constructions plus anciennes' }));
   expect(await screen.findByText('Nœud de données — niveau 2')).toBeVisible();
   expect(fetch.mock.calls.some(([url]) => String(url).endsWith('construction-history?before_sequence=3'))).toBe(true);
   expect(screen.getAllByText('Complexe d’extraction construit')).toHaveLength(2); // orders 3 and 4, no duplicate of 3
   expect(screen.queryByRole('button', { name: 'Afficher des constructions plus anciennes' })).toBeNull();
   // Reading never sends a command.
-  expect(fetch.mock.calls.every(([, init]) => !(init as RequestInit | undefined)?.method || (init as RequestInit).method === 'GET')).toBe(true);
+  expect(fetch.mock.calls.every(([, init]) => !init?.method || init.method === 'GET')).toBe(true);
 });
 
 test('filters keep one category; an older Game server without the route shows a partial unavailability', async () => {
