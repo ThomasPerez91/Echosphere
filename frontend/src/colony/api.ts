@@ -108,3 +108,28 @@ export async function sendCommand(universe: string, colony: string, csrf: string
   if (!validProjection(colonyBody, colony)) throw new ApiError('invalid_response', 0);
   return colonyBody;
 }
+
+/** W-UX-05 (PR #21): completed construction orders, newest first, 50 per page, exclusive cursor. */
+export type HistoryEntry = { id: string; sequence: string; infrastructure_type: string; sector_index: number; target_level: number; completed_at: string };
+export type HistoryPage = { server_time: string; colony_id: string; empire_id: string; entries: HistoryEntry[]; next_before_sequence: string | null };
+
+const decimal = (value: unknown) => typeof value === 'string' && /^[1-9]\d{0,18}$/.test(value);
+const instant = (value: unknown) => typeof value === 'string' && !Number.isNaN(Date.parse(value));
+
+export function validHistory(value: unknown, colony: string): value is HistoryPage {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Partial<HistoryPage>;
+  return v.colony_id === colony && typeof v.empire_id === 'string' && instant(v.server_time) && Array.isArray(v.entries) && v.entries.length <= 50
+    && (v.next_before_sequence === null || decimal(v.next_before_sequence))
+    && v.entries.every(e => !!e && typeof e.id === 'string' && decimal(e.sequence) && typeof e.infrastructure_type === 'string'
+      && Number.isInteger(e.sector_index) && e.sector_index >= 0 && Number.isInteger(e.target_level) && e.target_level >= 1 && instant(e.completed_at));
+}
+
+/** Read only: no activity, no catch-up. An older Game server answers 404 (route absent). */
+export async function readConstructionHistory(universe: string, colony: string, before: string | null, signal: AbortSignal) {
+  if (before !== null && !decimal(before)) throw new ApiError('invalid_request', 0);
+  const query = before ? `?before_sequence=${before}` : '';
+  const body = await request(`/api/game/${universe}/colonies/${colony}/construction-history${query}`, { headers: read }, signal);
+  if (!validHistory(body, colony)) throw new ApiError('invalid_response', 0);
+  return body;
+}

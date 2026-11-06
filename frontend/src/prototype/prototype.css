@@ -1,0 +1,62 @@
+/* UX03 prototype only: demo shell and the two non-retained directions (B, C) kept for comparison. */
+.cmd-root.proto-root { min-height: 100svh; }
+.cmd-root[data-direction="atlas"] {
+  /* B — Atlas stellaire: cartographic, airy, serif headings, low density */
+  --ui-bg: #0b1020; --ui-surface: #11182c; --ui-raised: #172038; --ui-border: #2c3758;
+  --ui-text: #efe8da; --ui-muted: #b5ae9f; --ui-primary: #7fd1c7; --ui-on-primary: #0b1a1a;
+  --ui-success: #8fd18a; --ui-warning: #e8b86b; --ui-danger: #f08a7a; --ui-accent: #c9a7ff;
+  --ui-radius: 18px; --ui-gap: 22px; --ui-display: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  --map-bg: repeating-linear-gradient(0deg, transparent 0 39px, #ffffff08 39px 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, #ffffff08 39px 40px), radial-gradient(circle at 50% 45%, #1b2442, #0b1020 70%);
+  --map-route: #5d6a92; --map-star: #f3e7c9; --map-signal: #8f8a7f; --map-own: #e8b86b;
+  --map-fleet: #7fd1c7; --map-mission: #8fd18a; --map-plan: #f3e7c9; --map-label: #efe8da;
+  --map-detected: #9db7e8; --map-mapped: #f3e7c9; --map-monitored: #8fd18a; --map-home: #7fd1c7;
+  --map-nebula-a: #8a6fb8; --map-nebula-b: #3d5a8a; --map-dust: #f3e7c9;
+}
+.cmd-root[data-direction="tactical"] {
+  /* C — Pont tactique: angular HUD, amber command colour, monospace figures, dense */
+  --ui-bg: #06090b; --ui-surface: #0d1316; --ui-raised: #131b1f; --ui-border: #263840;
+  --ui-text: #d9e7e4; --ui-muted: #8aa39f; --ui-primary: #ffb000; --ui-on-primary: #1a1100;
+  --ui-success: #3cd6a0; --ui-warning: #ffd166; --ui-danger: #ff5a5f; --ui-accent: #5ad1ff;
+  --ui-radius: 3px; --ui-gap: 12px; --ui-numeric: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --ui-label-transform: uppercase; --ui-label-spacing: .12em;
+  --map-bg: radial-gradient(circle at 50% 50%, #0f1c1f, #06090b 75%);
+  --map-route: #2c4a4f; --map-star: #c9f5ec; --map-signal: #5f7a76; --map-own: #ffb000;
+  --map-fleet: #5ad1ff; --map-mission: #3cd6a0; --map-plan: #ffb000; --map-label: #c9dcd8;
+  --map-detected: #5ad1ff; --map-mapped: #ffd166; --map-monitored: #3cd6a0; --map-home: #ffb000;
+  --map-nebula-a: #0f3b3a; --map-nebula-b: #13303f; --map-dust: #9fd8cf;
+}
+
+
+.proto-shell { display: grid; grid-template-columns: 210px minmax(0, 1fr); min-height: 100svh; }
+.proto-sidebar { background: color-mix(in srgb, var(--ui-surface) 70%, var(--ui-bg)); border-right: 1px solid var(--ui-border); padding: 22px 14px; }
+.proto-brand { margin: 0; font-family: var(--ui-display); font-weight: 700; letter-spacing: .28em; color: var(--ui-text) !important; font-size: .95rem; }
+.proto-brand span { color: var(--ui-primary); letter-spacing: 0; margin-right: 4px; }
+.proto-sidebar-caption { font-size: .58rem; letter-spacing: .16em; margin: 28px 8px 12px; }
+.proto-sidebar ul { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 6px; }
+.proto-nav { display: flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: calc(var(--ui-radius) * .6); color: var(--ui-muted); border: 1px solid transparent; font-size: .9rem; }
+.proto-nav.is-current { color: var(--ui-text); background: color-mix(in srgb, var(--ui-primary) 16%, transparent); border-color: color-mix(in srgb, var(--ui-primary) 45%, transparent); box-shadow: inset 3px 0 0 var(--ui-primary); }
+.proto-workspace { min-width: 0; }
+.proto-bar { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid var(--ui-border); background: var(--ui-surface); }
+.proto-context { display: flex; flex-wrap: wrap; gap: 8px; }
+.proto-pill { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .6); background: var(--ui-raised); font-size: .8rem; }
+.proto-settings { position: relative; }
+.proto-settings summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: .8rem; color: var(--ui-muted); padding: 0 8px; }
+.proto-settings[open] .proto-controls { position: absolute; right: 0; top: 48px; z-index: 5; padding: 14px; background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); width: min(360px, 90vw); display: grid; }
+.proto-bar h1 { font-size: clamp(1.25rem, 2.4vw, 1.7rem); margin: 0; letter-spacing: -.02em; }
+.proto-banner { margin: 0; font-size: .78rem; padding: 6px 10px; border: 1px dashed var(--ui-warning); border-radius: var(--ui-radius); color: var(--ui-warning) !important; }
+.proto-controls { display: flex; flex-wrap: wrap; gap: 12px; }
+.proto-controls label { display: grid; gap: 4px; font-size: .72rem; color: var(--ui-muted); }
+.proto-controls select { min-height: 44px; background: var(--ui-raised); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .6); padding: 0 10px; max-width: 100%; }
+.proto-main { padding: var(--ui-gap); max-width: 1600px; margin: 0 auto; }
+
+@media (max-width: 1100px) {
+  .proto-shell { grid-template-columns: minmax(0, 1fr); }
+  .proto-sidebar { display: none; }
+}
+@media (max-width: 520px) {
+  .proto-main { padding: 10px; }
+  .proto-bar { padding: 12px; }
+  .proto-settings[open] .proto-controls { position: static; width: 100%; }
+  .proto-controls { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+}

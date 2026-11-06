@@ -6,6 +6,7 @@ for (const width of [320, 390, 768, 1440]) {
   test(`fleets ${width}px: shortcut, keyboard/touch dialogs, targets and no overflow`, async ({ browser }, testInfo) => {
     const context = await browser.newContext({ viewport: { width, height: 850 }, hasTouch: true });
     const page = await context.newPage();
+    await page.addInitScript(() => { try { localStorage.setItem('echosphere.galaxy.mode', 'classic'); } catch { /* none */ } }); // UX05: these steps drive the classic map
     const writes: string[] = [];
     page.on('request', r => { if (r.url().includes('/api/game/') && r.method() !== 'GET') writes.push(r.url()); });
     await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));
@@ -88,6 +89,7 @@ test('cancel production from the UI: Keyed body as validated by the Game API, th
 });
 
 test('shortcut from Galaxy on the second Empire opens that Empire prefilled, never the first one', async ({ page }) => {
+  await page.addInitScript(() => { try { localStorage.setItem('echosphere.galaxy.mode', 'classic'); } catch { /* none */ } }); // UX05: classic map
   const both = { empires: [{ id: empire, name: 'Empire A' }, { id: otherEmpire, name: 'Empire B' }] };
   const firstReads: string[] = [];
   await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));
@@ -123,6 +125,7 @@ for (const width of [320, 390, 768, 1440]) {
   test(`colonize ${width}px: System View shortcut, COLONIZE dialog, targets and no overflow`, async ({ browser }, testInfo) => {
     const context = await browser.newContext({ viewport: { width, height: 850 }, hasTouch: true });
     const page = await context.newPage();
+    await page.addInitScript(() => { try { localStorage.setItem('echosphere.galaxy.mode', 'classic'); } catch { /* none */ } }); // UX05: these steps drive the classic map
     const writes: string[] = [];
     page.on('request', r => { if (r.url().includes('/api/game/') && r.method() !== 'GET') writes.push(r.url()); });
     await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));
@@ -161,6 +164,7 @@ for (const width of [320, 390, 768, 1440]) {
   test(`combat ${width}px: ATTACK dialog, threat, report, recall, targets and no overflow`, async ({ browser }, testInfo) => {
     const context = await browser.newContext({ viewport: { width, height: 850 }, hasTouch: true });
     const page = await context.newPage();
+    await page.addInitScript(() => { try { localStorage.setItem('echosphere.galaxy.mode', 'classic'); } catch { /* none */ } }); // UX05: these steps drive the classic map
     const writes: string[] = [];
     page.on('request', r => { if (r.url().includes('/api/game/') && r.method() !== 'GET') writes.push(r.url()); });
     await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));

@@ -41,3 +41,17 @@ test('aborts an outstanding request on unmount', () => {
   unmount();
   expect(signal?.aborted).toBe(true);
 });
+
+test('public home: the header asks for the login form, the pending sections show no invented figure', async () => {
+  vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/api/ready'
+    ? { ok: true, json: async () => ({ status: 'ready', service: 'portal' }) }
+    : { ok: false, status: 401, json: async () => ({ error: { code: 'authentication_required' } }) })));
+  render(<App />);
+  expect(screen.getByRole('heading', { level: 1, name: /Conquérez les étoiles/ })).toBeVisible();
+  expect(await screen.findByRole('heading', { name: 'Créer votre compte' })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Connexion' }));
+  expect(await screen.findByRole('button', { name: 'Ouvrir ma session' })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Inscription' }));
+  expect(await screen.findByRole('button', { name: 'Créer le compte' })).toBeVisible();
+  expect(screen.getAllByText('Implémentation backend nécessaire').length).toBeGreaterThan(0);
+});

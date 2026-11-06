@@ -1,6 +1,9 @@
 # Architecture de l’information
 
-**Statut : responsive validé ; détails UI orientatifs.**
+**Statut : responsive validé ; détails UI orientatifs.** Refonte 03/11/2026 :
+ordre validé **Empire → Galaxie → Colonies → Recherche → Flottes → Rapports → Diplomatie** (D-UX-3),
+envoi de flottes depuis la carte de commandement, Rapports centralisés et cloche d’alertes à venir
+(D-UX-6) ; [UX01](redesign/ux01-navigation.md), [décisions](redesign/README.md#décisions-validées-par-lutilisateur--03112026).
 
 
 Le produit possède deux présentations, desktop et mobile, fondées sur les mêmes objets et actions.

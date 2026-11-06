@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { RevocationStatus } from './RevocationStatus';
 import { Lobby } from './Lobby';
+import type { LobbySnapshot } from './Lobby';
+import { Icon } from '../theme/Icon';
+import { Pending } from '../site/Site';
+import type { AuthKind, SignedIn } from '../site/Site';
 import { AccountForms } from './AccountForms';
 import { ResetRequestForm, SensitiveSettings } from './SecurityForms';
 import { FactorFields, MfaRecovery, MfaSettings } from './MfaForms';
@@ -26,7 +30,13 @@ function validState(body: unknown): body is SessionState {
 
 const bootstrap = { 'X-Portal-Request': 'bootstrap' };
 
-export function AccountAccess({ verificationToken }: { verificationToken: string | null }) {
+export function AccountAccess({ verificationToken, onSession, request = null }: {
+  verificationToken: string | null;
+  /** Lets the page switch between the public home and the player's space; never carries the CSRF token. */
+  onSession?: (account: SignedIn | null) => void;
+  /** Header and hero buttons asking for the login or the registration form. */
+  request?: { kind: AuthKind; seq: number } | null;
+}) {
   const [bootstrapError, setBootstrapError] = useState(false);
   const [booting, setBooting] = useState(true);
   const [reload, setReload] = useState(0);
@@ -43,6 +53,15 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
   const transition = useRef(0);
   const bootstrapFlight = useRef<AbortController | null>(null);
   const currentState = useRef(state); currentState.current = state;
+  const [lobby, setLobby] = useState<LobbySnapshot | null>(null);
+  const email = state?.user.email ?? null, verified = state?.user.email_verified ?? false;
+  useEffect(() => { onSession?.(email ? { email, verified } : null); }, [email, verified, onSession]);
+  useEffect(() => { if (!state) setLobby(null); }, [state]);
+  const seq = request?.seq ?? 0, kind = request?.kind;
+  useEffect(() => {
+    if (!seq) return;
+    setRecovering(false); setMfaRecovering(false); setLoginMode(kind === 'login');
+  }, [seq, kind]);
 
   useEffect(() => {
     active.current = true; setBooting(true); setBootstrapError(false);
@@ -139,24 +158,38 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
     {notice && <p role="alert">{notice}</p>}
     {!mfaRecovering && !recovering && <RevocationStatus key={receiptVersion} />}
     {codes.length > 0 && <section className="panel"><h2>Vos dix codes de secours</h2><p>Conservez ces codes en lieu sûr. Ils ne seront plus consultables après fermeture de cet écran ; chaque code sert une seule fois.</p><pre className="recovery-codes">{codes.join('\n')}</pre><button type="button" onClick={() => setCodes([])}>Masquer les codes</button></section>}
-    {state ? <section className="panel" aria-labelledby="sessions-title">
-      <h2 id="sessions-title">Vos connexions</h2>
-      <p>{state.user.email}</p>
-      {!state.user.email_verified && <p>Confirmez votre adresse email avant de pouvoir accéder aux parties.</p>}
-      <Lobby csrf={state.csrf_token} onExpired={() => { transition.current++; setState(null); setLoginMode(true);
-        setNotice('Votre session n’est plus valide. Connectez-vous à nouveau.'); }} />
-      <button type="button" disabled={pending} onClick={() => { void action(); }}>Actualiser mes connexions</button>
-      <ul className="sessions-list">{(state.sessions ?? [{ id: state.session_id, current: true }]).map((item, index) => <li key={item.id}>
-        <span>{item.current ? 'Cet appareil' : `Autre connexion ${index + 1}`}</span>
-        <button type="button" disabled={pending} onClick={() => { void action(item.id); }}>{item.current ? 'Se déconnecter' : `Fermer la connexion ${index + 1}`}</button>
-      </li>)}</ul>
-      <MfaSettings csrf={state.csrf_token} onOutcome={mfaOutcome} />
-      <SensitiveSettings csrf={state.csrf_token} onSignedOut={() => {
-        transition.current++; setState(null); setLoginMode(true);
-        setReceiptVersion(value => value + 1);
-        setNotice('Compte déconnecté de tous les appareils sur le Portal. Déconnexion des parties en attente.');
-      }} />
-    </section> : <>
+    {state ? <>
+      <Stats snapshot={lobby} />
+      <div className="p-dash-grid">
+        <Lobby csrf={state.csrf_token} onSnapshot={setLobby} onExpired={() => { transition.current++; setState(null); setLoginMode(true);
+          setNotice('Votre session n’est plus valide. Connectez-vous à nouveau.'); }} />
+        <div className="p-side">
+          <section className="p-panel" aria-labelledby="invitations-title">
+            <div className="p-p-head"><h2 id="invitations-title"><Icon name="mail" />Invitations</h2></div>
+            <div className="p-tab-pad"><Pending what="Invitations à rejoindre une partie (accepter / refuser)." /></div>
+          </section>
+          <Activity snapshot={lobby} />
+        </div>
+      </div>
+      <section className="p-panel p-account" id="securite" aria-labelledby="sessions-title">
+        <div className="p-p-head"><h2 id="sessions-title"><Icon name="lock" />Vos connexions</h2></div>
+        <div className="p-account-body">
+          <p className="p-account-mail"><Icon name="user" />{state.user.email}</p>
+          {!state.user.email_verified && <p>Confirmez votre adresse email avant de pouvoir accéder aux parties.</p>}
+          <button type="button" disabled={pending} onClick={() => { void action(); }}>Actualiser mes connexions</button>
+          <ul className="sessions-list">{(state.sessions ?? [{ id: state.session_id, current: true }]).map((item, index) => <li key={item.id}>
+            <span>{item.current ? 'Cet appareil' : `Autre connexion ${index + 1}`}</span>
+            <button type="button" disabled={pending} onClick={() => { void action(item.id); }}>{item.current ? 'Se déconnecter' : `Fermer la connexion ${index + 1}`}</button>
+          </li>)}</ul>
+          <MfaSettings csrf={state.csrf_token} onOutcome={mfaOutcome} />
+          <SensitiveSettings csrf={state.csrf_token} onSignedOut={() => {
+            transition.current++; setState(null); setLoginMode(true);
+            setReceiptVersion(value => value + 1);
+            setNotice('Compte déconnecté de tous les appareils sur le Portal. Déconnexion des parties en attente.');
+          }} />
+        </div>
+      </section>
+    </> : <>
       {mfaRecovering ? <MfaRecovery onBack={() => setMfaRecovering(false)} onOutcome={mfaOutcome} /> : recovering ? <ResetRequestForm onBack={() => { setRecovering(false); setLoginMode(true); }} /> : loginMode ? <LoginForm onLogin={value => {
         // Login deleted the previous receipt server-side; never keep showing its stale status.
         transition.current++; setState(value); setNotice(''); setReceiptVersion(version => version + 1);
@@ -217,5 +250,42 @@ function LoginForm({ onLogin }: { onLogin: (value: SessionState) => void }) {
       <button type="submit" disabled={pending}>{pending ? 'Connexion en cours…' : 'Ouvrir ma session'}</button>
     </form>
     {error && <p role="alert" className="form-error">{error}</p>}
+  </section>;
+}
+
+/** Mockup stat strip: counts come from the lobby projection, the rest is not provided by the server yet. */
+function Stats({ snapshot }: { snapshot: LobbySnapshot | null }) {
+  const live = snapshot?.memberships.filter(item => item.desired_status === 'active' && item.delivery_state === 'applied' && !item.expired).length;
+  const tile = (icon: 'gamepad' | 'planet', value: number | undefined, label: string) => <div><Icon name={icon} />
+    <p><b>{value ?? '…'}</b><span>{label}</span></p></div>;
+  return <div className="p-stats" aria-label="Vos parties en chiffres">
+    {tile('gamepad', live, 'Parties actives')}
+    {tile('planet', snapshot?.memberships.length, 'Univers rejoints')}
+    <div className="p-stat-pending"><Icon name="layers" /><div className="p-stat-body"><span>Tours récents</span><Pending compact /></div></div>
+    <div className="p-stat-pending"><Icon name="users" /><div className="p-stat-body"><span>Alliés et partenaires</span><Pending compact /></div></div>
+  </div>;
+}
+
+function since(date: string) {
+  const ms = Date.now() - Date.parse(date);
+  if (!Number.isFinite(ms)) return '';
+  const minutes = Math.max(0, Math.round(ms / 60000));
+  return minutes < 60 ? `Il y a ${minutes} min` : minutes < 1440 ? `Il y a ${Math.round(minutes / 60)} h` : `Il y a ${Math.round(minutes / 1440)} j`;
+}
+
+/** Recent activity made only of dated facts the Portal holds: Game confirmations and logout receipts. */
+function Activity({ snapshot }: { snapshot: LobbySnapshot | null }) {
+  const items = [
+    ...(snapshot?.memberships ?? []).filter(item => item.last_checked_at).map(item => ({ at: item.last_checked_at!, icon: 'play' as const,
+      text: <><b>{item.name}</b> — accès vérifié auprès de Game</> })),
+    ...(snapshot?.revocations ?? []).map(item => ({ at: item.created_at, icon: 'logout' as const,
+      text: <>Déconnexion des parties ({item.scope === 'account' ? 'tous les appareils' : 'un appareil'}) — {item.state === 'acknowledged' ? 'terminée' : 'en cours'}</> })),
+  ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 6);
+  return <section className="p-panel" aria-labelledby="activity-title">
+    <div className="p-p-head"><h2 id="activity-title"><Icon name="news" />Activité récente</h2></div>
+    {items.length ? <ul className="p-activity">{items.map((item, index) => <li key={index}><Icon name={item.icon} /><span>{item.text}</span>
+      <time dateTime={item.at}>{since(item.at)}</time></li>)}</ul>
+      : <p className="p-empty">Aucune activité datée pour l’instant.</p>}
+    <div className="p-tab-pad"><Pending compact what="Journal des parties (tours, recherches, messages)." /></div>
   </section>;
 }

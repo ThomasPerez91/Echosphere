@@ -133,6 +133,8 @@ export type Quote = {
   package_minimum: Amounts | null;
   battle_at?: string;
   units?: Record<string, number>;
+  /** UX-API-01 (proposed, not served yet): ordered known systems from departure to destination. */
+  path?: string[];
 };
 
 type Value = Record<string, unknown>;
@@ -321,5 +323,9 @@ export async function previewMission(universe: string, empire: string, csrf: str
     typeof body.affordable !== "boolean" ||
     !(body.payer_colony_id === null || (colonyRead && id(body.payer_colony_id))))
     throw new ApiError("invalid_response", 0);
+  // Optional UX-API-01 field: kept only when well-formed (the map re-checks it against the
+  // known systems and the hop count); a malformed path is dropped, never repaired.
+  if ("path" in body && !(Array.isArray(body.path) && body.path.length === Number(body.hops) + 1 && body.path.every(id)))
+    delete body.path;
   return body as Quote;
 }

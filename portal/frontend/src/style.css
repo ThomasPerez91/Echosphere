@@ -1,23 +1,150 @@
-:root{font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#e7eef7;background:#08121f;font-synthesis:none;line-height:1.6;color-scheme:dark}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 90% 0%,#14323f 0,transparent 52%);min-height:100vh}
-a{color:inherit}button,a{touch-action:manipulation}:focus-visible{outline:3px solid #77f0ce;outline-offset:5px}
-.portal-shell{max-width:1100px;margin:auto;padding:32px clamp(20px,5vw,64px)}header{display:flex;align-items:center;justify-content:space-between;gap:20px}
-.brand{font-weight:750;font-size:24px;letter-spacing:-.7px;text-decoration:none}.brand span{color:#77f0ce}.portal-label,.eyebrow{font-size:11px;letter-spacing:.16em;color:#96b0c3}
-main{padding:72px 0 36px;max-width:780px}h1{font-size:clamp(36px,6vw,66px);line-height:1.12;letter-spacing:-.04em;margin:20px 0 24px}h2{font-size:18px;margin:0 0 8px}
-p{margin:0 0 12px}.intro{color:#acc0d1;max-width:590px;margin-bottom:40px}.panel{background:#102131aa;border:1px solid #2a3e50;border-radius:18px;padding:26px;margin:18px 0}
-.panel p:last-child{margin-bottom:0;color:#acc0d1}.panel .eyebrow{margin-bottom:10px}.connection{display:flex;align-items:center;justify-content:space-between;gap:24px}
-button{font:inherit;font-size:14px;font-weight:650;border:1px solid #77f0ce;background:#77f0ce;color:#081c20;border-radius:10px;padding:11px 18px;min-height:44px;cursor:pointer}
-button:disabled{opacity:.6;cursor:wait}footer{font-size:12px;color:#96b0c3;border-top:1px solid #23394a;padding-top:22px}.skip-link{position:absolute;left:20px;top:-100px;padding:10px;background:#102131;z-index:1}.skip-link:focus{top:10px}
-@media(max-width:520px){.portal-shell{padding-top:22px}.portal-label{font-size:9px;letter-spacing:.08em}.brand{font-size:21px}main{padding-top:50px}.panel{padding:20px}.connection{align-items:stretch;flex-direction:column;gap:15px}button{width:100%}}
+/* Portal base: the ported mockup (theme/portail.css) draws the page; these rules style the account
+   forms (raw elements) in the same language and glue real controls into the mockup layout. */
+:root { color-scheme: dark; font-synthesis: none; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; overflow-x: clip; }
+body { margin: 0; background: #030812; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+.p-app { --p-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; --p-font-d: var(--p-font); }
+:where(.p-app) :where(input, select) { font: inherit; color: inherit; }
+.p-app button { touch-action: manipulation; }
+.p-skip-link { position: absolute; left: 16px; top: -100px; z-index: 100; padding: 10px 14px; border-radius: 8px; background: #081426; border: 1px solid var(--p-cyan); }
+.p-skip-link:focus { top: 10px; }
+#main-content:focus { outline: none; }
+.p-app h1:focus { outline: none; }
+.p-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.p-i { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.p-home-link { display: flex; }
 
-form{display:grid;gap:18px;margin-top:24px}label{display:grid;gap:7px;font-weight:600;font-size:14px}input{width:100%;min-height:46px;padding:10px 12px;font:inherit;color:#e7eef7;background:#08121f;border:1px solid #536b80;border-radius:8px}#password-help{font-size:12px;font-weight:400;color:#acc0d1}.text-button{background:transparent;color:#77f0ce;border-color:transparent;margin-top:18px;padding-left:0;text-align:left}.panel .form-error{color:#ffb8b8;margin-top:18px}.panel .form-success{color:#77f0ce;margin-top:18px}
+/* Header: real buttons in place of the mockup's anchors. */
+.p-site-nav .p-navbtn { width: 100%; text-align: left; cursor: pointer; background: none; border: 0; }
+.p-site-nav .p-navbtn[aria-current=page] { color: #fff; background: linear-gradient(180deg, rgba(59,227,255,.2), rgba(59,227,255,.06)); box-shadow: inset 0 0 0 1px rgba(59,227,255,.45); }
+.p-site-nav .p-navbtn[aria-current=page] .p-i { color: var(--p-cyan); }
+.p-site-nav .p-navbtn.is-pending { opacity: .5; cursor: default; }
+.p-site-nav .p-navbtn small { white-space: nowrap; margin-left: 6px; font-size: 10.5px; color: var(--p-amber); text-transform: uppercase; letter-spacing: .08em; }
+@media (min-width: 1100px) { .p-site-nav .p-navbtn { width: auto; } }
+.p-bell:disabled { opacity: .55; cursor: not-allowed; }
+.p-pop-note { display: block; padding: 8px 12px; font-size: 12px; color: var(--p-muted); }
+.p-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+.p-btn small { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--p-amber); }
+.p-btn-primary:disabled small { color: #03202c; }
+.p-btn-primary:disabled { filter: saturate(.4); }
 
-.sessions-list{list-style:none;padding:0;display:grid;gap:14px;margin-top:20px}.sessions-list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
+/* Implementation pending on the backend: keeps the layout, shows no invented figure. */
+.p-pending { display: grid; gap: 4px; padding: 12px 14px; border: 1px dashed rgba(255,181,71,.45); border-radius: 10px;
+  background: repeating-linear-gradient(135deg, rgba(255,181,71,.05) 0 10px, transparent 10px 20px); }
+.p-pending strong { color: var(--p-amber); font-weight: 600; font-size: 12.5px; letter-spacing: .02em; }
+.p-pending span { color: var(--p-muted); font-size: 12.5px; }
+.p-pending--small { padding: 6px 10px; }
+.p-pending--small strong { font-size: 11.5px; }
+.p-tab-pad { padding: 14px 18px; }
+.p-empty { padding: 18px; color: var(--p-muted); }
+.p-na { color: var(--p-muted) !important; font-weight: 500; }
+.p-mode .p-pending { margin-top: 4px; }
 
-select{font:inherit;max-width:100%;min-height:46px;padding:10px;color:#e7eef7;background:#08121f;border:1px solid #536b80;border-radius:8px}.security-settings{border-top:1px solid #2a3e50;margin-top:28px;padding-top:18px}
+/* Public home: the account card sits on the illustration, right after the hero. */
+.p-auth-zone { position: relative; display: grid; gap: 18px; margin-top: 22px; padding: 18px 0; scroll-margin-top: 80px; }
+.p-auth-zone::before { content: ""; position: absolute; inset: 0 calc(-1 * var(--p-gutter)); z-index: -1; border-radius: 0;
+  background: linear-gradient(90deg, rgba(3,8,18,0) 35%, rgba(3,8,18,.7) 70%), url(/assets/img/connexion-illustration.webp) 20% center / cover no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent); }
+.p-auth-side { display: none; }
+.p-auth-card { width: 100%; max-width: 600px; margin: 0 auto; padding: 24px 20px; }
+.p-forms .p-auth-title { margin: 0; color: #fff; display: flex; align-items: center; gap: 12px; font: 700 28px/1.1 var(--p-font); }
+.p-auth-title img { width: 40px; height: 40px; filter: drop-shadow(0 0 10px rgba(59,227,255,.45)); }
+.p-auth-card .p-rule { display: block; width: 96px; height: 3px; border-radius: 3px; margin: 12px 0 14px; background: var(--p-cyan); box-shadow: 0 0 12px var(--p-cyan); }
+.p-auth-card .p-lead { color: #d0deeb; font-size: 15px; margin-bottom: 8px; }
+@media (min-width: 560px) { .p-auth-card { padding: 32px; } }
+@media (min-width: 1100px) {
+  .p-auth-zone { grid-template-columns: 1fr minmax(460px, 600px); align-items: center; min-height: 640px; padding: 40px 0; }
+  .p-auth-side { display: flex; align-items: flex-start; align-self: start; padding-top: 10px; }
+  .p-auth-card { grid-column: 2; margin: 0; }
+}
+.p-features-zone { margin-top: 6px; }
 
-.security-settings form,.security-settings label{min-width:0}.security-settings select{width:100%;min-width:0}
+/* Account forms (registration, login, MFA, security): raw elements in the mockup's language. */
+.p-forms .panel { padding: 0; margin: 18px 0 0; }
+.p-forms .panel:first-child, .p-auth-intro + .panel { margin-top: 10px; }
+.p-forms h2 { font: 600 20px/1.25 var(--p-font); margin: 0 0 8px; }
+.p-forms h3 { font: 600 16px/1.3 var(--p-font); margin: 0 0 8px; }
+.p-forms h4 { font: 600 14px/1.3 var(--p-font); margin: 10px 0 4px; }
+.p-forms p { color: #c9d7e5; font-size: 14px; margin: 0 0 10px; }
+.p-forms form { display: grid; gap: 14px; margin-top: 16px; min-width: 0; }
+.p-forms label { display: grid; gap: 7px; font-weight: 600; font-size: 14px; min-width: 0; }
+.p-forms input, .p-forms select { width: 100%; min-width: 0; min-height: 50px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--p-line-2);
+  background: rgba(4,12,26,.7); font-size: 15px; font-weight: 400; transition: border-color .2s, box-shadow .2s; }
+.p-forms select option { background: #081426; }
+.p-forms input:focus, .p-forms select:focus { outline: 0; border-color: var(--p-cyan); box-shadow: 0 0 0 3px rgba(59,227,255,.15), 0 0 18px rgba(59,227,255,.2); }
+.p-forms #password-help { font-size: 12.5px; color: var(--p-muted); font-weight: 400; margin: -4px 0 0; }
+.p-forms button:not(.p-btn):not(.text-button) { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 22px;
+  border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; border: 1px solid var(--p-line-2); background: rgba(6,16,32,.6); color: #eaf6ff;
+  transition: box-shadow .2s, border-color .2s; }
+.p-forms button:not(.p-btn):not(.text-button):hover:not(:disabled) { border-color: var(--p-cyan); box-shadow: 0 0 18px rgba(59,227,255,.22); }
+.p-forms form button[type=submit]:not(.p-btn) { border-color: #7cf0ff; color: #03202c; background: linear-gradient(180deg, #7ff1ff, #22c8ef);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15) inset, 0 0 26px rgba(59,227,255,.45); }
+.p-forms button:disabled { opacity: .6; cursor: wait; }
+.p-forms .text-button { display: block; min-height: 44px; margin-top: 6px; padding: 0; border: 0; background: none; color: var(--p-cyan); cursor: pointer;
+  font-size: 14px; text-decoration: underline; text-underline-offset: 4px; text-align: left; }
+.p-forms .form-error, .p-forms [role=alert] { color: #ff9aa4; }
+.p-forms .form-success { color: var(--p-green); }
+.p-forms .recovery-codes { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; font-size: 13px; padding: 12px; border-radius: 10px; border: 1px solid var(--p-line-2); background: rgba(4,12,26,.7); }
+.p-forms .security-settings { border-top: 1px solid var(--p-line); margin-top: 22px; padding-top: 18px; min-width: 0; }
+.p-forms .sessions-list { list-style: none; padding: 0; display: grid; gap: 10px; margin: 16px 0; }
+.p-forms .sessions-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px;
+  border-radius: 10px; border: 1px solid var(--p-line); background: rgba(6,16,32,.6); }
+.p-forms fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 
-.recovery-codes{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;font-size:13px}form,label{min-width:0}select{width:100%;min-width:0}
+/* Player space. */
+.p-dash { padding: 0 0 30px; }
+.p-dash > [role=alert], .p-dash > .panel { margin: 14px 0; padding: 16px 18px; border-radius: var(--p-r); border: 1px solid var(--p-line); background: var(--p-panel); }
+.p-account-zone { scroll-margin-top: 80px; }
+.p-stats { margin-top: -26px; position: relative; z-index: 1; }
+.p-stats p { display: grid; gap: 4px; }
+.p-stat-pending .p-pending { padding: 4px 8px; }
+.p-dash-grid { padding-top: 18px; }
+.p-games-panel { scroll-margin-top: 80px; }
+.p-g-status { margin: 0 0 8px !important; text-align: center; font-size: 13px !important; color: var(--p-green) !important; }
+.p-g-info { display: grid; gap: 0; }
+.p-g-info > div { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 5px 0; font-size: 13.5px; color: #c8d6e4; }
+.p-g-info dt { display: flex; align-items: center; gap: 10px; color: #b3c4d6; }
+.p-g-info dt .p-i { width: 18px; height: 18px; }
+.p-g-info dd { color: #fff; font-weight: 500; margin: 0; }
+.p-g-note { margin: 8px 0 0 !important; font-size: 12px !important; color: var(--p-muted) !important; }
+.p-g-act { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+.p-g-act .p-btn-sm { white-space: normal; height: auto; min-height: 40px; padding: 6px 12px; }
+.p-revocations { border-top: 1px solid var(--p-line); }
+.p-revocations h3 { font-size: 14px; margin-bottom: 6px; }
+.p-activity li { display: grid; grid-template-columns: 24px 1fr auto; gap: 12px; align-items: center; padding: 11px 18px; border-bottom: 1px solid var(--p-line); font-size: 14px; color: #d6e3ef; }
+.p-activity b { color: #fff; font-weight: 600; }
+.p-activity time { color: var(--p-dim); font-size: 12.5px; white-space: nowrap; }
+.p-account { margin-top: 16px; scroll-margin-top: 80px; }
+.p-account-body { padding: 16px 18px 20px; }
+.p-account-mail { display: flex; align-items: center; gap: 10px; color: #fff !important; font-weight: 600; font-size: 15px !important; }
+.p-account-body .panel { margin-top: 18px; }
 
-.membership { min-width: 0; overflow-wrap: anywhere; }
+/* Footer: the readiness check lives here, as in the former page. */
+.p-connection { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 12px 16px; border-radius: 12px;
+  border: 1px solid var(--p-line); background: rgba(6,16,32,.6); }
+.p-connection h2 { font: 600 14px var(--p-font); margin: 0 0 2px; }
+.p-ready { display: flex; align-items: center; gap: 8px; color: var(--p-muted); font-size: 13px; }
+.p-ready-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--p-amber); box-shadow: 0 0 8px var(--p-amber); }
+.p-ready--connected .p-ready-dot { background: var(--p-green); box-shadow: 0 0 8px var(--p-green); }
+.p-ready--unavailable .p-ready-dot { background: var(--p-red); box-shadow: 0 0 8px var(--p-red); }
+.p-foot-links li { color: #b8c8d8; cursor: default; }
+.p-foot-version { color: var(--p-dim); font-size: 12px; margin-top: 10px; }
+.p-join-stats { display: block; }
+.p-stat-body { display: grid; gap: 4px; }
+.p-games .p-g-info { grid-template-columns: 1fr; }
+.p-site-nav .p-navbtn { white-space: nowrap; }
+@media (min-width: 1100px) and (max-width: 1399px) { .p-site-nav .p-navbtn { padding: 9px 10px; font-size: 14.5px; } .p-site-nav .p-navbtn small { display: none; } }
+
+/* Official logo: horizontal image (emblem + wordmark) in place of the mockup's icon + text. */
+.p-logo { flex-direction: column; align-items: flex-start; gap: 2px; }
+.p-app .p-logo img.p-logo-img { width: auto; height: 40px; filter: drop-shadow(0 0 8px rgba(59,227,255,.25)); }
+.p-logo small { margin: 0 0 0 30%; font-size: 7px; white-space: nowrap; }
+.p-site-head .p-logo small { display: none; }
+.p-app .p-logo.p-big img.p-logo-img { height: 92px; }
+.p-logo.p-big small { font-size: 9.5px; margin-left: 31%; }
+@media (min-width: 1100px) { .p-app .p-site-head .p-logo img.p-logo-img { height: 52px; } .p-app .p-logo.p-big img.p-logo-img { height: 120px; } .p-logo.p-big small { font-size: 11px; } }
+.p-app .p-site-foot .p-logo img.p-logo-img { height: 44px; }
+.p-forms .p-auth-title img { width: 48px; height: 48px; object-fit: contain; }
+.p-auth-side .p-logo small { display: none; }
+.p-auth-side .p-logo-img { filter: drop-shadow(0 0 14px rgba(59,227,255,.35)) drop-shadow(0 2px 6px rgba(0,0,0,.8)); }
