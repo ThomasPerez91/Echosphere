@@ -15,8 +15,8 @@ on:
       # Temporary (02/11/2026): 13B (PR #17) depends on the unmerged step 13 branch (PR #16).
       # Fast CI only; Full CI stays reserved to pushes on master. Remove once #16 is merged.
       - work/step-13-ai-relations
-      # Temporary (03/11/2026): the UX redesign PR targets the unmerged 13B branch (PR #17).
-      # Fast CI only, same jobs. Remove once #17 is merged and the UX PR is rebased on master.
+      # Temporary (03/11/2026): UX and additive UX backend PRs target the unmerged 13B branch (PR #17).
+      # Fast CI only, same jobs. Remove once #17 is merged and these PRs are rebased on master.
       - work/step-13b-first-contact
     types:
       - opened
