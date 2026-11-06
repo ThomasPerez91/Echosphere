@@ -34,3 +34,13 @@ Toute nouvelle fonctionnalité doit préciser objectif, portée, statuts et test
 | B17 | 5D | API Colony sécurisée et UI branchée aux données réelles | Même domaine 5A, autorisation/session/fog et résilience testées |
 
 Cette liste n’autorise pas à développer ces lots au titre d’une mission documentaire.
+
+## Suivis de la refonte UX hors UX-API-01 (03/11/2026)
+
+Constatés pendant UX04/UX-API-01, volontairement **non traités** dans la PR UX-API-01.
+
+| ID | Sujet | Constat | Sortie attendue |
+| --- | --- | --- | --- |
+| B18 | Carte de commandement (PR #19) | Coloniser depuis une garnison ne permet pas de régler le cargo initial sur la carte ; l’écran Flottes reste nécessaire | Choix du paquet initial dans le planificateur, refus `package_insufficient` évité avant envoi |
+| B19 | Rapports et alertes (D-UX-6) | Écran Rapports centralisé et cloche d’alertes non implémentés | Écran unique des rapports Flottes/Combat/Frontière et alertes non lues, sans donnée inventée |
+| B20 | Qualité frontend | `Research.test.tsx` « unknown response retries exact same intent key » a échoué une fois en Fast CI (run 41618860946, `e7bef09`) puis réussi au run suivant sans modification | Cause identifiée (délai, minuterie, ordre des requêtes) et test stabilisé |

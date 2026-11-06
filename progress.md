@@ -47,6 +47,18 @@ Mise à jour : 2026-11-05. [Contexte](context.md), [passation](docs/06-handoff/R
 | Limites | Gel de l'Empire en mouvement jusqu'à résolution de chaque entrée (≈ 2 s nominal, `--lag` alerte > 300 s) ; interblocage de deux ATTACK croisées (préexistant v0.7, rejouable) ; une entrée `blocked` retient les batailles de son système jusqu'à l'opérateur (`--blocked`, `--retry-passage`) ; balance 72 h non simulée |
 | Avant Ready (#17) | Revue indépendante B09 (Codex, worktree en lecture seule, SHA noté) ; traitement des constats ; décision utilisateur sur Ready ; #16 d'abord (R11) ; base de #17 à réévaluer après fusion de #16 |
 
+### Reprise rapide — UX-API-01 (work/ux-api-01-mission-path)
+
+| Champ | État au 03/11/2026 après-midi — `path` exposé (devis + missions), recette PostgreSQL à faire |
+| --- | --- |
+| Branche / base / PR | `work/ux-api-01-mission-path` depuis `b97bd0e` (tête de #17) ; PR Draft vers `work/step-13b-first-contact`. Lien : la PR #19 (`work/ux-redesign`) consommera le champ dans un lot frontend séparé. master, #16–#19 non touchées |
+| Agent | Claude (session cloud, sans PostgreSQL, Docker ni PyPI) |
+| Décision | Principe UX-API-01 validé par l’utilisateur (D-UX-2) et PR technique autorisée le 03/11/2026 |
+| Livré | [Contrat et implémentation](docs/03-technical/ux-api-01-mission-path.md) : `path` additif, legs persistés pour les missions, Fog of War, aucun changement de gameplay ni migration |
+| Exécuté | Ruff (tout le backend), `tests/test_fleet_path.py` 6/6, compilation des modules, `check_docs.py` ; Fast CI : voir la PR |
+| Non exécuté | `tests/integration/test_mission_path.py` (9 tests PostgreSQL) et la suite complète : à lancer en local avec `RUN_DB_TESTS=1` |
+| Suite | Recette locale, puis lot frontend sur `work/ux-redesign` (liste dans le document UX-API-01) |
+
 ### Revue indépendante 13/13B — périmètre proposé (lecture seule)
 
 - #16 depuis `067a4e5` : migration 0013 (CHECK droits, contact `diplomacy`), ordre paire → contact,

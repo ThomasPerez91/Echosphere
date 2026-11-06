@@ -126,10 +126,12 @@ def known_planets(session, empire_id, system_id, owned):
     ]
 
 
-def mission_view(session, mission, permissions):
+def mission_view(session, mission, permissions, known):
     report = session.get(FleetReport, mission.id)
     snap = mission.snapshot
-    return {
+    # UX-API-01: the route as launched (persisted legs), only through systems the Empire knows.
+    path = service.mission_path(session, mission, known)
+    return ({"path": path} if path is not None else {}) | {
         "id": str(mission.id),
         "fleet_id": str(mission.fleet_id),
         "kind": mission.kind,
@@ -287,6 +289,7 @@ def project(session, universe_id, empire_id, permissions, at):
         .order_by(SystemKnowledge.system_id)
     )
     galaxy_read = "galaxy.read" in permissions
+    known_ids = service.known_systems(session, universe_id, empire_id)
     owned = {c.planet_id: str(c.id) for c in colonies} if colony_read else {}
     x = rules.colonization
     colonization = None
@@ -331,7 +334,7 @@ def project(session, universe_id, empire_id, permissions, at):
         "max_quantity": f.max_quantity,
         "colonies": colony_views,
         "fleets": fleet_views,
-        "missions": [mission_view(session, m, permissions) for m in missions],
+        "missions": [mission_view(session, m, permissions, known_ids) for m in missions],
         "colonization": colonization,
         "frontier": frontier_view(session, rules, universe_id, empire_id),
         "combat": combat_view(session, rules, universe_id, empire_id, permissions),

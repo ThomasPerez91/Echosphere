@@ -23,10 +23,11 @@ from app.fleet.models import (
     FleetStack,
     ShipOrder,
 )
+from app.fleet.path import public_path, systems_along
 from app.frontier import service as frontier
 from app.frontier.encounter import add as frontier_add
 from app.galaxy import service as galaxy
-from app.galaxy.models import GalaxyRoute, PlanetKnowledge
+from app.galaxy.models import GalaxyRoute, PlanetKnowledge, RouteKnowledge, SystemKnowledge
 from app.persistence.models import Colony, Planet
 from app.simulation.clock import utc
 from app.simulation.models import ColonyTimeline, ResourceBalance, ScheduledEvent
@@ -1027,7 +1028,78 @@ def preview(
         quote["due_at"] = battle_time(rules, at, travel_arrival).isoformat()
         quote["battle_at"] = quote["due_at"]
         quote["units"] = wanted
+    # UX-API-01: the systems of the very routes this quote is computed on (absent if unsure).
+    route = quote_path(session, universe_id, empire_id, source.system_id, destination, path)
+    if route is not None:
+        quote["path"] = route
     return quote
+
+
+# --- UX-API-01: mission path (read-only) --------------------------------------------------------
+
+
+def known_systems(session, universe_id, empire_id):
+    """Systems the Empire knows (any state): the only ids a `path` may contain."""
+    return set(
+        session.scalars(
+            select(SystemKnowledge.system_id).where(
+                SystemKnowledge.universe_id == universe_id, SystemKnowledge.empire_id == empire_id
+            )
+        )
+    )
+
+
+def route_endpoints(session, universe_id, empire_id, route_ids):
+    """Endpoints of each route from the Empire's own RouteKnowledge, in order (None if unknown)."""
+    if not route_ids:
+        return []
+    rows = {
+        r.route_id: (r.a_id, r.b_id)
+        for r in session.scalars(
+            select(RouteKnowledge).where(
+                RouteKnowledge.universe_id == universe_id,
+                RouteKnowledge.empire_id == empire_id,
+                RouteKnowledge.route_id.in_(route_ids),
+            )
+        )
+    }
+    return [rows.get(route_id) for route_id in route_ids]
+
+
+def quote_path(session, universe_id, empire_id, origin, destination, route_ids, known=None):
+    """`path` of a quote: exactly the routes the quote was computed on (plan_mission)."""
+    if known is None:
+        known = known_systems(session, universe_id, empire_id)
+    systems = systems_along(origin, route_endpoints(session, universe_id, empire_id, route_ids))
+    return public_path(systems, destination, len(route_ids), known)
+
+
+def mission_path(session, mission, known):
+    """`path` of a mission as launched: its persisted legs, which must equal the accepted
+    snapshot. Never recomputed from today's Knowledge; any doubt withholds the field."""
+    route_ids = list(
+        session.scalars(
+            select(FleetMissionLeg.route_id)
+            .where(
+                FleetMissionLeg.mission_id == mission.id,
+                FleetMissionLeg.empire_id == mission.empire_id,
+                FleetMissionLeg.universe_id == mission.universe_id,
+            )
+            .order_by(FleetMissionLeg.ordinal)
+        )
+    )
+    accepted = mission.snapshot.get("path") if isinstance(mission.snapshot, dict) else None
+    if accepted != [str(route_id) for route_id in route_ids]:
+        return None
+    return quote_path(
+        session,
+        mission.universe_id,
+        mission.empire_id,
+        mission.origin_id,
+        mission.destination_id,
+        route_ids,
+        known,
+    )
 
 
 def check_mission_event(session, event, prefix):
