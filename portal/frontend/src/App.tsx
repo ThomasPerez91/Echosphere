@@ -53,7 +53,7 @@ export default function App({ verificationToken = null, securityLink = null }: {
         <section id="compte" className={signedIn ? 'p-account-zone' : 'p-auth-zone'} aria-label={signedIn ? undefined : 'Votre compte'}>
           {!signedIn && <aside className="p-auth-side" aria-hidden="true"><Logo big /></aside>}
           <div className={signedIn ? 'p-forms p-dash' : 'p-panel p-glow p-auth-card p-forms'}>
-            {!signedIn && <div className="p-auth-intro"><p className="p-auth-title"><img src="/assets/img/logo-echosphere-icone.svg" alt="" width="40" height="40" />Espace compte</p>
+            {!signedIn && <div className="p-auth-intro"><p className="p-auth-title"><img src="/assets/img/logo-echosphere-embleme.webp" alt="" width="48" height="48" />Espace compte</p>
               <span className="p-rule" aria-hidden="true" />
               <p className="p-lead">Un compte <span className="p-accent">Echosphere</span>, plusieurs univers. Le jeu continue de progresser à son propre rythme.</p></div>}
             {security ? <RecoveryForm key={security.kind === 'alert' ? 'alert' : security.token} link={security} onBack={() => setSecurity(null)} />

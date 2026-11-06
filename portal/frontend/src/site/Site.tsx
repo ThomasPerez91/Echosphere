@@ -11,9 +11,10 @@ export function Pending({ what, compact = false }: { what?: string; compact?: bo
 }
 
 export function Logo({ big = false }: { big?: boolean }) {
+  // Official horizontal logo (emblem + wordmark); the surrounding link or heading carries the name.
   return <span className={`p-logo${big ? ' p-big' : ''}`}>
-    <img src="/assets/img/logo-echosphere-icone.svg" alt="" width={big ? 64 : 40} height={big ? 64 : 40} />
-    <span><b>ECHOSPHERE</b><small>Civilisations au-delà du silence</small></span>
+    <img className="p-logo-img" src="/assets/img/logo-echosphere-horizontal.webp" alt="Echosphere" width="1200" height="360" />
+    <small>Civilisations au-delà du silence</small>
   </span>;
 }
 

@@ -135,3 +135,16 @@ body { margin: 0; background: #030812; }
 .p-games .p-g-info { grid-template-columns: 1fr; }
 .p-site-nav .p-navbtn { white-space: nowrap; }
 @media (min-width: 1100px) and (max-width: 1399px) { .p-site-nav .p-navbtn { padding: 9px 10px; font-size: 14.5px; } .p-site-nav .p-navbtn small { display: none; } }
+
+/* Official logo: horizontal image (emblem + wordmark) in place of the mockup's icon + text. */
+.p-logo { flex-direction: column; align-items: flex-start; gap: 2px; }
+.p-app .p-logo img.p-logo-img { width: auto; height: 40px; filter: drop-shadow(0 0 8px rgba(59,227,255,.25)); }
+.p-logo small { margin: 0 0 0 30%; font-size: 7px; white-space: nowrap; }
+.p-site-head .p-logo small { display: none; }
+.p-app .p-logo.p-big img.p-logo-img { height: 92px; }
+.p-logo.p-big small { font-size: 9.5px; margin-left: 31%; }
+@media (min-width: 1100px) { .p-app .p-site-head .p-logo img.p-logo-img { height: 52px; } .p-app .p-logo.p-big img.p-logo-img { height: 120px; } .p-logo.p-big small { font-size: 11px; } }
+.p-app .p-site-foot .p-logo img.p-logo-img { height: 44px; }
+.p-forms .p-auth-title img { width: 48px; height: 48px; object-fit: contain; }
+.p-auth-side .p-logo small { display: none; }
+.p-auth-side .p-logo-img { filter: drop-shadow(0 0 14px rgba(59,227,255,.35)) drop-shadow(0 2px 6px rgba(0,0,0,.8)); }

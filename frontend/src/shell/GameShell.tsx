@@ -67,7 +67,7 @@ export function GameShell({ universe, access, colony, status, destination, href,
       <button ref={openButton} type="button" className="d-icon-btn d-burger" aria-label="Ouvrir le menu" aria-controls="game-sidebar"
         aria-expanded={drawer} onClick={() => open(openButton.current)}><span /><span /><span /></button>
       <a className="d-brand" href={href('empire')} onClick={onNavigate} aria-label="Echosphere — Empire">
-        <img className="d-brand-logo" src={asset('img/logo-echosphere-horizontal.webp')} alt="Echosphere" width="900" height="270" />
+        <img className="d-brand-logo" src={asset('img/logo-echosphere-horizontal.webp')} alt="Echosphere" width="1200" height="360" />
         <span className="d-brand-tagline">Civilisations au-delà du silence</span>
       </a>
       {session?.portal_url
@@ -126,7 +126,7 @@ export function GameShell({ universe, access, colony, status, destination, href,
     <aside className={`d-sidebar d-scope${drawer ? ' d-open' : ''}`} id="game-sidebar" aria-label="Navigation principale"
       inert={!desktop && !drawer ? true : undefined}>
       <div className="d-drawer-head">
-        <img src={asset('img/logo-echosphere-horizontal.webp')} alt="Echosphere" width="900" height="270" />
+        <img src={asset('img/logo-echosphere-horizontal.webp')} alt="Echosphere" width="1200" height="360" />
         <button type="button" className="d-icon-btn d-close" aria-label="Fermer le menu" onClick={() => { setDrawer(false); opener.current?.focus(); }}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
       </div>
