@@ -76,6 +76,10 @@ Ces éléments ne reçoivent aucune valeur inventée : bloc pointillé ambre, «
 - **Non exécuté** : specs Playwright `e2e/` avec Vite (Full CI sur master uniquement), recette en
   univers réel (Compose), lecteurs d’écran réels.
 
+## Recette locale
+
+Procédure pas à pas : [recette locale UX05](ux05-recette-locale.md) (branche `recette/ux-weekend`).
+
 ## Limites connues
 
 - Le fond animé de la galaxie suit la vue de la carte mais ne remplace pas la recette visuelle sur
