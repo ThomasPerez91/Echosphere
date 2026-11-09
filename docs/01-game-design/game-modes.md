@@ -64,6 +64,21 @@ Provenance : réponses explicites de l’utilisateur le 09/11/2026 (questions à
 - **Nom d’Empire** : choisi par le joueur à la création et en rejoignant une partie, visible dans
   « Mes parties ».
 
+## Décisions utilisateur du 09/11/2026 — génération de carte (Q61)
+
+Provenance : réponses explicites de l’utilisateur le 09/11/2026 (atelier génération de carte).
+
+- **Départ** : chaque Empire (joueur ou IA) commence avec **un système de départ** et sa colonie de
+  base dedans.
+- **Plafond d’Empires par taille** (« Équilibré ») : 100 systèmes → 4 Empires ; 300 → 12 ; 500 →
+  20 ; 1 000 → 40 ; 2 000 → 40 ; toujours au plus 10 joueurs humains et 30 IA.
+- **Placement** : premier mode proposé = **Équitable** (distances et ressources de départ
+  équilibrées pour tous) ; *Dispersé* et *Regroupé* plus tard.
+- **Garde-fous anti « Stellaris-like »** retenus : **plafond de colonies** par Empire et **zones
+  d’influence**. Les zones d’influence sont **en attente** : l’utilisateur fournira sa propre
+  description ; aucun effet n’est décidé.
+- **Priorité** : ce lot passe en premier après la recette (avant Orbite et Défense).
+
 ## Compte global, Empire partagé et départ (Q21/Q23)
 
 Un compte global peut participer simultanément à plusieurs univers : User → UniverseMembership →
