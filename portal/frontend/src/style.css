@@ -148,3 +148,45 @@ body { margin: 0; background: #030812; }
 .p-forms .p-auth-title img { width: 48px; height: 48px; object-fit: contain; }
 .p-auth-side .p-logo small { display: none; }
 .p-auth-side .p-logo-img { filter: drop-shadow(0 0 14px rgba(59,227,255,.35)) drop-shadow(0 2px 6px rgba(0,0,0,.8)); }
+
+/* Separate pages (09/11/2026): login and registration each get their own page; the account
+   page keeps advanced security out of the way. */
+.p-account-zone.is-idle { display: none; }
+.p-auth-zone { margin-top: 0; min-height: calc(100vh - 220px); }
+.p-forms h1.p-auth-title { font: 700 30px/1.1 var(--p-font); }
+.p-auth-links { display: grid; gap: 0; margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--p-line); }
+.p-forms .text-button.p-quiet { color: var(--p-muted); font-size: 13px; }
+.p-auth-note { color: var(--p-amber) !important; font-weight: 500; }
+.p-pop a { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 8px; color: #dbe7f3; font-size: 14px; }
+.p-pop a:hover { background: rgba(59,227,255,.08); color: #fff; }
+.p-account-help { color: var(--p-muted) !important; font-size: 13px !important; }
+.p-account-help b { color: #dbe7f3; }
+.p-advanced { margin-top: 22px; border: 1px solid var(--p-line); border-radius: 12px; background: rgba(6,16,32,.45); }
+.p-advanced > summary { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; cursor: pointer; font-weight: 600; list-style: none; }
+.p-advanced > summary::-webkit-details-marker { display: none; }
+.p-advanced > summary::before { content: '▸'; color: var(--p-cyan); transition: transform .2s; }
+.p-advanced[open] > summary::before { transform: rotate(90deg); }
+.p-advanced > summary small { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--p-muted); }
+.p-advanced > :not(summary) { margin-left: 16px; margin-right: 16px; }
+.p-advanced > :last-child { margin-bottom: 16px; }
+.p-first-game { margin-top: 16px; }
+.p-first-game h2 { font: 600 18px var(--p-font); margin-bottom: 6px; }
+.p-first-game .p-btn { margin-top: 10px; }
+.p-games-col { display: grid; gap: 0; min-width: 0; align-content: start; }
+.p-new-game { margin: 18px 0 30px; max-width: 860px; }
+.p-new-game-form { display: grid; gap: 14px; margin: 0; }
+.p-new-game-form fieldset { display: grid; gap: 10px; }
+.p-new-game-form legend { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.p-choice-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.p-choice { display: inline-flex !important; align-items: center; justify-content: center; min-width: 64px; min-height: 44px; padding: 0 14px;
+  border-radius: 10px; border: 1px solid var(--p-line-2); background: rgba(6,16,32,.6); cursor: pointer; font-weight: 600; }
+.p-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; min-height: 0 !important; }
+.p-choice.is-on { border-color: var(--p-cyan); background: linear-gradient(180deg, rgba(59,227,255,.22), rgba(59,227,255,.06)); box-shadow: 0 0 14px rgba(59,227,255,.18); }
+.p-choice:focus-within { outline: 2px solid var(--p-cyan); outline-offset: 2px; }
+.p-opponent small { font-weight: 400; color: var(--p-muted); font-size: 12.5px; }
+.p-new-game-facts { display: grid; gap: 8px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--p-line); background: rgba(6,16,32,.45); }
+.p-new-game-facts p { display: flex; gap: 10px; align-items: flex-start; margin: 0 !important; font-size: 13.5px !important; }
+.p-new-game-facts .p-i { color: var(--p-cyan); margin-top: 1px; }
+.p-new-game-form > .p-btn { justify-self: start; }
+.p-missing { padding: 80px 0; display: grid; gap: 14px; justify-items: start; }
+.p-missing h1 { font: 700 34px var(--p-font); }
