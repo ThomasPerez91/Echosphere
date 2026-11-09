@@ -131,3 +131,15 @@ Décisions : [Q60](../01-game-design/game-modes.md#décisions-utilisateur-du-091
 - Portal : la place quittée est mémorisée (`left_seats`) et jamais reproposée ; la participation
   quittée apparaît sous « Parties quittées ». Migration Accounts `p0008_game_life`.
 - Reçus vérifiés par le worker : univers, Empire et valeur appliquée (nom ou profil) en écho.
+
+## Bascule v0.10, galaxie v2 et tailles de carte (A5 et Q61, 09/11/2026)
+
+Décision utilisateur A5 : **toute nouvelle partie est en v0.10** (aucune partie existante à
+préserver). `start_universe` exige `ruleset: "v0.10"` et accepte `size` ∈ {100, 300, 500, 1 000,
+2 000} (100 par défaut), `humans` 1–10 et jusqu’à 30 profils IA ; Game vérifie le plafond
+d’Empires de la taille contre le ruleset épinglé (`invalid_bootstrap_configuration` sinon) et
+génère exactement un départ par Empire (galaxy-v2, placement Équitable). Portal : `size` facultatif
+dans `POST /api/lobby/universes`, conservé dans la demande (idempotence), pré-contrôle des plafonds
+(`too_many_empires`) ; « Nouvelle partie » propose la taille, 2–10 joueurs et deux compteurs d’IA
+(prudentes, expansionnistes) bornés par le plafond. Les rulesets v0.6–v0.9 gardent leurs limites
+(4 Empires, galaxy-v1) pour les tests et l’opérateur.

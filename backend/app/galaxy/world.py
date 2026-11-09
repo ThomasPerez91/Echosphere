@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from app.colony.service import ColonyError, rules_for
 from app.galaxy.generator import canonical, generate
+from app.galaxy.generator_v2 import GalaxyRulesV2, generate_v2
 from app.galaxy.models import GalaxyPlanet, GalaxyRoute, GalaxySystem, StartingSite, UniverseGalaxy
 from app.persistence.models import Planet, StellarSystem, Universe
 from app.simulation.scheduler import IdempotencyConflict
@@ -21,10 +22,19 @@ def generate_world(session, universe_id, *, system_count=None, starting_site_cou
         rules = rules_for(session, universe_id)
         if rules.galaxy is None:
             raise ColonyError("Pinned ruleset has no galaxy", "galaxy_unavailable")
-        count = rules.galaxy.system_count if system_count is None else system_count
-        sites = (
-            rules.galaxy.starting_site_count if starting_site_count is None else starting_site_count
-        )
+        v2 = isinstance(rules.galaxy, GalaxyRulesV2)
+        if v2:
+            count = rules.galaxy.default_size if system_count is None else system_count
+            sites = (
+                rules.galaxy.empire_cap(count) if starting_site_count is None
+                else starting_site_count
+            )
+        else:
+            count = rules.galaxy.system_count if system_count is None else system_count
+            sites = (
+                rules.galaxy.starting_site_count if starting_site_count is None
+                else starting_site_count
+            )
         existing = session.get(UniverseGalaxy, universe_id)
         if existing is not None:
             if (
@@ -42,9 +52,12 @@ def generate_world(session, universe_id, *, system_count=None, starting_site_cou
             is not None
         ):
             raise ColonyError("Existing worlds require explicit adoption", "galaxy_unavailable")
-        result = generate(
-            universe.seed, rules.galaxy, system_count=count, starting_site_count=sites
-        )
+        if v2:
+            result = generate_v2(universe.seed, rules.galaxy, size=count, empires=sites)
+        else:
+            result = generate(
+                universe.seed, rules.galaxy, system_count=count, starting_site_count=sites
+            )
         manifest = UniverseGalaxy(
             universe_id=universe_id,
             generator_version=rules.galaxy.galaxy_generator_version,

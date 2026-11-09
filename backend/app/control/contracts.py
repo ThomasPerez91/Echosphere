@@ -82,18 +82,21 @@ class Provision(Wire):
 
 class Start(Wire):
     """UX-API-02/03: create and start a universe in one idempotent operation: SOLO (one human
-    Empire) or PRIVATE multi (2 to 4 human Empires, Q59), 0 to 3 AI opponents of known profiles,
-    at most four Empires in galaxy-v1, pinned ruleset. The result lists the human Empires (seats)
-    so that Portal can grant them; no AI actor identity leaves Game."""
+    Empire) or PRIVATE multi (2 to 10 human Empires, Q59/Q61) with AI opponents of known
+    profiles, ruleset v0.10 (galaxy-v2, A5 of 09/11/2026: every game is v0.10). The map `size`
+    caps the Empires (100 -> 4, 300 -> 12, 500 -> 20, 1000 and 2000 -> 40; exact cap checked
+    against the pinned ruleset by Game). The result lists the human Empires (seats) so that
+    Portal can grant them; no AI actor identity leaves Game."""
 
     kind: Literal["start_universe"]
     universe_id: UUID
     name: str = Field(min_length=1, max_length=120)
     seed: str = Field(min_length=1, max_length=200)
     family: Literal["solo", "private"]
-    humans: StrictInt = Field(default=1, ge=1, le=4)
-    ruleset: Literal["v0.9"]
-    profiles: list[Literal["economic_cautious", "expansionist"]] = Field(max_length=3)
+    humans: StrictInt = Field(default=1, ge=1, le=10)
+    ruleset: Literal["v0.10"]
+    size: Literal[100, 300, 500, 1000, 2000] = 100
+    profiles: list[Literal["economic_cautious", "expansionist"]] = Field(max_length=30)
 
     @model_validator(mode="after")
     def not_blank(self):
@@ -101,8 +104,8 @@ class Start(Wire):
             raise ValueError("Blank name")
         if (self.family == "solo") != (self.humans == 1):
             raise ValueError("Solo means exactly one human Empire")
-        if self.humans + len(self.profiles) > 4:
-            raise ValueError("galaxy-v1 offers at most four starting sites")
+        if self.humans + len(self.profiles) > 40:
+            raise ValueError("galaxy-v2 offers at most forty starting sites")
         return self
 
 

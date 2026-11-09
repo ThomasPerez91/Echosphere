@@ -220,3 +220,6 @@ body { margin: 0; background: #030812; }
 .p-btn-danger { border-color: var(--p-red); color: var(--p-red); }
 .p-left-games ul { margin: 0; padding-left: 18px; }
 .p-join-name { display: grid; gap: 6px; margin: 10px 0; }
+/* Q61 galaxy size and AI counts */
+.p-opponent input[type="number"], .p-count select { max-width: 160px; }
+.p-choice small { margin-left: 6px; opacity: .75; }

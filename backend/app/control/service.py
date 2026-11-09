@@ -166,6 +166,7 @@ class Control:
                 clock.now(),
                 rules=load_ruleset(message.ruleset),
                 humans=message.humans,
+                size=message.size,
             )
         except IdempotencyConflict:
             raise ControlError("universe_content_conflict") from None

@@ -1,18 +1,25 @@
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Icon } from '../theme/Icon';
-import { Pending } from '../site/Site';
 import { Link, paths } from '../router';
 
-/** AI profiles the Game server knows today (app.ai.rules.PROFILES); 0 to 3 opponents per universe. */
+/** AI profiles the Game server knows today (app.ai.rules.PROFILES). */
 const profiles = {
   economic_cautious: { label: 'Prudent', text: 'Développe son économie, défend ses mondes, n’attaque jamais.' },
   expansionist: { label: 'Expansionniste', text: 'Explore et colonise vite, cherche les mondes libres.' },
 } as const;
 type Profile = keyof typeof profiles;
+const PROFILE_ORDER: Profile[] = ['economic_cautious', 'expansionist'];
+const AI_LABELS: Record<Profile, string> = { economic_cautious: 'IA prudentes', expansionist: 'IA expansionnistes' };
+
+/** Q61 map sizes and their Empire caps (players + AI); Game's ruleset stays the authority. */
+const SIZES = [[100, 4], [300, 12], [500, 20], [1000, 40], [2000, 40]] as const;
+const MAX_HUMANS = 10, MAX_AI = 30;
+const grouped = (n: number) => n >= 1000 ? `${Math.floor(n / 1000)} ${String(n % 1000).padStart(3, '0')}` : String(n);
+const capOf = (size: number) => SIZES.find(([s]) => s === size)?.[1] ?? 4;
 
 const errors: Record<string, string> = {
-  too_many_empires: 'La carte actuelle accueille au plus 4 Empires (joueurs et IA).',
+  too_many_empires: 'Trop d’Empires pour cette taille de galaxie : choisissez une carte plus grande ou moins d’IA.',
   invalid_creation: 'Vérifiez le nom (3 à 60 caractères) et les adversaires.',
   invalid_empire_name: 'Le nom d’Empire doit compter 2 à 40 caractères visibles.',
   family_unavailable: 'Ce type de partie n’est pas encore disponible.',
@@ -22,7 +29,8 @@ const errors: Record<string, string> = {
 };
 
 /**
- * « Nouvelle partie » (UX-API-02): a SOLO universe with 0 to 3 AI opponents. One request id per
+ * « Nouvelle partie » (UX-API-02, Q61): SOLO or multi, a galaxy size and AI opponents within its
+ * Empire cap. One request id per
  * form, so a double click or a retry after a lost answer never creates two universes.
  */
 export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreated: () => void; onExpired?: () => void }) {
@@ -33,16 +41,40 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
   const requestId = useRef(crypto.randomUUID());
   // New choices = new request; the same choices retried after a lost answer reuse the same id.
   const fresh = () => { requestId.current = crypto.randomUUID(); };
-  const [opponents, setOpponents] = useState<Profile[]>(['economic_cautious', 'expansionist']);
-  const setCount = (count: number) => setOpponents(current => Array.from({ length: count }, (_, i) => current[i] ?? (i % 2 ? 'expansionist' : 'economic_cautious')));
-  // UX-API-03 (Q59): multi = 2 to 4 humans; galaxy-v1 starts at most four Empires in total.
+  // Q61: galaxy size; players + AI never exceed its Empire cap.
+  const [size, setSize] = useState(100);
+  const [counts, setCounts] = useState<Record<Profile, number>>({ economic_cautious: 1, expansionist: 1 });
   const [family, setFamily] = useState<'solo' | 'private'>('solo');
   const [humans, setHumans] = useState(2);
   const [invite, setInvite] = useState<'link' | 'email'>('link');
   const players = family === 'solo' ? 1 : humans;
-  const maxOpponents = Math.min(3, 4 - players);
-  const chooseFamily = (next: 'solo' | 'private') => { setFamily(next); fresh(); if (next === 'private') setCount(Math.min(opponents.length, 4 - humans)); };
-  const chooseHumans = (next: number) => { setHumans(next); fresh(); setCount(Math.min(opponents.length, 4 - next)); };
+  const cap = capOf(size);
+  const maxAi = Math.max(0, Math.min(MAX_AI, cap - players));
+  const opponents = PROFILE_ORDER.flatMap(id => Array.from({ length: counts[id] }, () => id));
+  // Keeps the AI within the remaining room, dropping the last profiles first.
+  const fit = (room: number) => setCounts(current => {
+    const first = Math.min(current.economic_cautious, room);
+    return { economic_cautious: first, expansionist: Math.min(current.expansionist, room - first) };
+  });
+  const roomFor = (nextSize: number, nextPlayers: number) => Math.max(0, Math.min(MAX_AI, capOf(nextSize) - nextPlayers));
+  const chooseFamily = (next: 'solo' | 'private') => {
+    setFamily(next); fresh();
+    const nextPlayers = next === 'solo' ? 1 : Math.min(humans, Math.min(MAX_HUMANS, cap));
+    if (next === 'private') setHumans(nextPlayers);
+    fit(roomFor(size, nextPlayers));
+  };
+  const chooseHumans = (next: number) => { setHumans(next); fresh(); fit(roomFor(size, next)); };
+  const chooseSize = (next: number) => {
+    setSize(next); fresh();
+    const nextPlayers = family === 'solo' ? 1 : Math.min(humans, Math.min(MAX_HUMANS, capOf(next)));
+    if (family === 'private') setHumans(nextPlayers);
+    fit(roomFor(next, nextPlayers));
+  };
+  const setCount = (id: Profile, value: number) => {
+    const other = PROFILE_ORDER.find(p => p !== id)!;
+    const clean = Number.isFinite(value) ? Math.max(0, Math.min(Math.trunc(value), maxAi - counts[other])) : 0;
+    setCounts(current => ({ ...current, [id]: clean })); fresh();
+  };
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,8 +89,8 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
       const response = await fetch('/api/lobby/universes', { method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
         body: JSON.stringify(family === 'solo'
-          ? { request_id: requestId.current, name: trimmed, family, profiles: opponents, ...named }
-          : { request_id: requestId.current, name: trimmed, family, profiles: opponents, humans, invite, ...named }),
+          ? { request_id: requestId.current, name: trimmed, family, size, profiles: opponents, ...named }
+          : { request_id: requestId.current, name: trimmed, family, size, profiles: opponents, humans, invite, ...named }),
         signal: AbortSignal.timeout(10000) });
       if (response.status === 401) { onExpired?.(); return; }
       if (response.status === 404) { setError('Ce serveur ne sait pas encore créer de partie (mise à jour du Portal nécessaire).'); return; }
@@ -87,6 +119,16 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
       <p id="empire-help" className="p-account-help">Facultatif, 2 à 40 caractères ; visible des autres Empires. Vous pourrez le changer depuis « Mes parties ».</p>
 
       <fieldset>
+        <legend>Taille de la galaxie</legend>
+        <div className="p-choice-row" role="radiogroup" aria-label="Taille de la galaxie">
+          {SIZES.map(([systems, empires]) => <label key={systems} className={`p-choice${size === systems ? ' is-on' : ''}`}>
+            <input type="radio" name="size" checked={size === systems} onChange={() => chooseSize(systems)} />
+            {grouped(systems)} systèmes<small>jusqu’à {empires} Empires</small></label>)}
+        </div>
+        <p className="p-account-help">Chaque Empire démarre avec un système et sa colonie de base. Impasses et passages obligés font des goulots d’étranglement à tenir.</p>
+      </fieldset>
+
+      <fieldset>
         <legend>Type de partie</legend>
         <div className="p-choice-row" role="radiogroup" aria-label="Type de partie">
           {([['solo', 'Solo'], ['private', 'Multijoueur']] as const).map(([id, label]) => <label key={id} className={`p-choice${family === id ? ' is-on' : ''}`}>
@@ -94,11 +136,11 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
         </div>
         {family === 'private' && <>
           <p className="p-account-help">Vous invitez vos amis ; chacun dirige son propre Empire. Alliances, coopération ou trahison se décident en jeu.</p>
-          <div className="p-choice-row" role="radiogroup" aria-label="Nombre de joueurs humains">
-            {[2, 3, 4].map(count => <label key={count} className={`p-choice${humans === count ? ' is-on' : ''}`}>
-              <input type="radio" name="humans" checked={humans === count} onChange={() => chooseHumans(count)} />{count} joueurs</label>)}
-          </div>
-          <p className="p-account-help">Jusqu’à 10 joueurs avec les futures tailles de carte ; la carte actuelle accueille 4 Empires au total.</p>
+          <label className="p-count">Joueurs humains
+            <select aria-label="Joueurs humains" value={humans} onChange={event => chooseHumans(Number(event.target.value))}>
+              {Array.from({ length: Math.min(MAX_HUMANS, cap) - 1 }, (_, i) => i + 2).map(count => <option key={count} value={count}>{count} joueurs</option>)}
+            </select>
+          </label>
           <div className="p-choice-row" role="radiogroup" aria-label="Mode d’invitation">
             {([['link', 'Lien à partager'], ['email', 'Invitation par email']] as const).map(([id, label]) => <label key={id} className={`p-choice${invite === id ? ' is-on' : ''}`}>
               <input type="radio" name="invite" checked={invite === id} onChange={() => { setInvite(id); fresh(); }} />{label}</label>)}
@@ -109,17 +151,12 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
 
       <fieldset>
         <legend>Adversaires dirigés par l’IA</legend>
-        <div className="p-choice-row" role="radiogroup" aria-label="Nombre d’adversaires">
-          {[0, 1, 2, 3].filter(count => count <= maxOpponents).map(count => <label key={count} className={`p-choice${opponents.length === count ? ' is-on' : ''}`}>
-            <input type="radio" name="opponents" checked={opponents.length === count} onChange={() => { setCount(count); fresh(); }} />{count === 0 ? 'Aucun' : count}
-          </label>)}
-        </div>
-        {opponents.map((profile, index) => <label key={index} className="p-opponent">Adversaire {index + 1}
-          <select value={profile} onChange={event => { const value = event.target.value as Profile; setOpponents(current => current.map((p, i) => i === index ? value : p)); fresh(); }}>
-            {(Object.keys(profiles) as Profile[]).map(id => <option key={id} value={id}>{profiles[id].label}</option>)}
-          </select>
-          <small>{profiles[profile].text}</small>
+        {PROFILE_ORDER.map(id => <label key={id} className="p-opponent">{AI_LABELS[id]}
+          <input type="number" inputMode="numeric" aria-label={AI_LABELS[id]} min={0} max={maxAi - counts[PROFILE_ORDER.find(p => p !== id)!]} value={counts[id]}
+            onChange={event => setCount(id, Number(event.target.value))} />
+          <small>{profiles[id].text}</small>
         </label>)}
+        <p className="p-account-help">{opponents.length} adversaire{opponents.length > 1 ? 's' : ''} sur {maxAi} possible{maxAi > 1 ? 's' : ''} : {players + opponents.length} Empire{players + opponents.length > 1 ? 's' : ''} sur {cap} pour cette galaxie.</p>
         <p className="p-account-help">Les IA suivent les mêmes règles que vous : elles ne reçoivent ni ressource ni flotte gratuite.</p>
       </fieldset>
 
@@ -129,7 +166,7 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
         <p><Icon name="clock" /><span><b>Début</b> : immédiat, dès la création.</span></p>
       </div>
 
-      <Pending compact what="Taille de carte et placement des Empires : options à venir. Aujourd’hui, carte standard." />
+      <p className="p-account-help">Placement des départs : <b>équitable</b> (mêmes ressources proches et au moins deux sorties pour chaque Empire). Les placements dispersé et regroupé viendront ensuite.</p>
       <button type="submit" className="p-btn p-btn-primary" disabled={pending}>
         <Icon name="rocket" />{pending ? 'Création…' : 'Créer la partie'}</button>
       {error && <p className="form-error" role="alert">{error}</p>}

@@ -175,9 +175,9 @@ test('signed in, a new SOLO game is created once with the chosen opponents, then
   render(<AccountAccess verificationToken={null} page="new-game" onNavigate={onNavigate} />);
   expect(await screen.findByRole('heading', { name: 'Nouvelle partie' })).toBeVisible();
   fireEvent.change(screen.getByLabelText('Nom de l’univers'), { target: { value: '  Frontière d’Orion ' } });
-  fireEvent.click(screen.getByLabelText('3'));
-  expect(screen.getAllByRole('combobox')).toHaveLength(3);
-  fireEvent.change(screen.getAllByRole('combobox')[2], { target: { value: 'expansionist' } });
+  // 100 systems hold 4 Empires: one player + 3 AI at most.
+  fireEvent.change(screen.getByLabelText('IA expansionnistes'), { target: { value: '5' } });
+  expect(screen.getByLabelText('IA expansionnistes')).toHaveValue(2);
   fireEvent.click(screen.getByRole('button', { name: 'Créer la partie' }));
   await waitFor(() => expect(onNavigate).toHaveBeenCalledWith('/parties'));
   expect(posted).toHaveLength(1);
@@ -185,7 +185,8 @@ test('signed in, a new SOLO game is created once with the chosen opponents, then
   const body = JSON.parse(posted[0].body as string);
   expect(body).toMatchObject({ name: 'Frontière d’Orion', family: 'solo', profiles: ['economic_cautious', 'expansionist', 'expansionist'] });
   expect(body.request_id).toMatch(/^[0-9a-f-]{36}$/);
-  expect(Object.keys(body).sort()).toEqual(['family', 'name', 'profiles', 'request_id']); // never a seed from the browser
+  expect(body.size).toBe(100);
+  expect(Object.keys(body).sort()).toEqual(['family', 'name', 'profiles', 'request_id', 'size']); // never a seed from the browser
 });
 
 test('a lost creation answer is retried with the same request id', async () => {
@@ -208,7 +209,7 @@ test('a lost creation answer is retried with the same request id', async () => {
   expect(ids[0]).toBe(ids[1]);
 });
 
-test('a multiplayer game sends humans and the invitation mode, within four Empires', async () => {
+test('a multiplayer game sends humans, the galaxy size and the invitation mode, within its Empire cap', async () => {
   const posted: string[] = [];
   installFetcher((url: string, options?: RequestInit) => {
     if (url === '/api/lobby/universes') { posted.push(options!.body as string); return Promise.resolve({ ok: true, status: 200, json: async () => ({ universe_id: 'u', status: 'starting' }) }); }
@@ -217,12 +218,21 @@ test('a multiplayer game sends humans and the invitation mode, within four Empir
   render(<AccountAccess verificationToken={null} page="new-game" />);
   fireEvent.change(await screen.findByLabelText('Nom de l’univers'), { target: { value: 'Coalition' } });
   fireEvent.click(screen.getByLabelText('Multijoueur'));
-  fireEvent.click(screen.getByLabelText('3 joueurs'));
-  expect(screen.queryByLabelText('2')).toBeNull(); // 3 humans + 2 AI would exceed four Empires
+  fireEvent.change(screen.getByLabelText('Joueurs humains'), { target: { value: '3' } });
+  // 3 humans on 100 systems (4 Empires): one AI left, the second profile drops to zero.
+  expect(screen.getByLabelText('IA prudentes')).toHaveValue(1);
+  expect(screen.getByLabelText('IA expansionnistes')).toHaveValue(0);
+  expect(screen.queryByRole('option', { name: '5 joueurs' })).toBeNull();
+  fireEvent.click(screen.getByLabelText(/1 000 systèmes/));
+  expect(screen.getByRole('option', { name: '10 joueurs' })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Joueurs humains'), { target: { value: '10' } });
+  fireEvent.change(screen.getByLabelText('IA expansionnistes'), { target: { value: '29' } });
   fireEvent.click(screen.getByLabelText('Invitation par email'));
   fireEvent.click(screen.getByRole('button', { name: 'Créer la partie' }));
   await waitFor(() => expect(posted).toHaveLength(1));
-  expect(JSON.parse(posted[0])).toMatchObject({ family: 'private', humans: 3, invite: 'email', profiles: ['economic_cautious'] });
+  const body = JSON.parse(posted[0]);
+  expect(body).toMatchObject({ family: 'private', humans: 10, invite: 'email', size: 1000 });
+  expect(body.profiles).toHaveLength(30); // 1 cautious + 29 expansionists, 40 Empires
 });
 
 test('a received email invitation is accepted from the games page, then the lobby is re-read', async () => {

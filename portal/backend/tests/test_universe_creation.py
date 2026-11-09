@@ -15,7 +15,7 @@ def body(**changes):
             "profiles": ["economic_cautious", "expansionist"], **changes}
 
 
-def test_solo_request_with_zero_to_three_known_profiles_is_accepted():
+def test_solo_request_with_known_profiles_within_the_map_cap_is_accepted():
     assert AI_PROFILES == {"economic_cautious", "expansionist"}
     for profiles in ([], ["expansionist"], ["economic_cautious"] * 3):
         wanted = creation_request(body(profiles=profiles))
@@ -26,8 +26,11 @@ def test_solo_request_with_zero_to_three_known_profiles_is_accepted():
 @pytest.mark.parametrize(
     "changes",
     [
-        {"profiles": ["expansionist"] * 4},
+        {"profiles": ["expansionist"] * 31},
         {"profiles": ["aggressive"]},
+        {"size": 150},
+        {"size": "100"},
+        {"size": True},
         {"profiles": "expansionist"},
         {"name": "ab"},
         {"name": " Orion"},
@@ -51,13 +54,16 @@ def private(**changes):
     return body(**{"family": "private", "humans": 2, "invite": "link", **changes})
 
 
-def test_private_multi_needs_two_to_four_humans_an_invite_mode_and_at_most_four_empires():
+def test_private_multi_needs_two_to_ten_humans_an_invite_mode_and_the_map_cap():
     wanted = creation_request(private())
     assert (wanted["humans"], wanted["invite"], wanted["family"]) == (2, "link", "private")
+    assert wanted["size"] == 100  # default map (Q61)
     assert creation_request(private(humans=4, profiles=[], invite="email"))["humans"] == 4
+    big = creation_request(private(humans=10, size=2000, profiles=["expansionist"] * 30))
+    assert (big["humans"], big["size"], len(big["profiles"])) == (10, 2000, 30)
     for broken in (
         private(humans=1),
-        private(humans=5, profiles=[]),
+        private(humans=11, profiles=[], size=2000),
         private(humans=True),
         private(humans="2"),
         private(invite="both"),
@@ -68,7 +74,11 @@ def test_private_multi_needs_two_to_four_humans_an_invite_mode_and_at_most_four_
             creation_request(broken)
     with pytest.raises(PublicError) as crowded:
         creation_request(private(humans=3, profiles=["expansionist", "expansionist"]))
-    assert crowded.value.code == "too_many_empires"
+    assert crowded.value.code == "too_many_empires"  # 5 Empires on a 100-system map
+    assert creation_request(private(humans=3, profiles=["expansionist"] * 2, size=300))
+    with pytest.raises(PublicError) as crowded:
+        creation_request(private(humans=10, profiles=["expansionist"] * 11, size=500))
+    assert crowded.value.code == "too_many_empires"  # 21 Empires above the 500 cap
 
 
 def test_start_receipt_must_name_this_universe_and_a_human_empire():

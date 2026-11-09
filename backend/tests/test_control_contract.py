@@ -40,7 +40,7 @@ def test_start_universe_is_solo_with_known_profiles_and_a_pinned_ruleset():
                 "name": "Orion",
                 "seed": "server-random",
                 "family": "solo",
-                "ruleset": "v0.9",
+                "ruleset": "v0.10",
                 "profiles": ["economic_cautious", "expansionist"],
                 **changes,
             },
@@ -52,8 +52,11 @@ def test_start_universe_is_solo_with_known_profiles_and_a_pinned_ruleset():
     ]
     assert Operation.model_validate(message(profiles=[])).message.profiles == []
     for changes in (
-        {"profiles": ["expansionist"] * 4},
+        {"profiles": ["expansionist"] * 40},  # 41 Empires: above any galaxy-v2 cap
         {"profiles": ["aggressive"]},
+        {"size": 150},
+        {"size": "100"},
+        {"ruleset": "v0.9"},  # A5 (09/11/2026): every new game is v0.10
         {"family": "private"},
         {"ruleset": "v0.6"},
         {"name": "   "},
@@ -63,7 +66,7 @@ def test_start_universe_is_solo_with_known_profiles_and_a_pinned_ruleset():
             Operation.model_validate(message(**changes))
 
 
-def test_private_multi_start_has_two_to_four_humans_and_at_most_four_empires():
+def test_private_multi_start_has_two_to_ten_humans_and_a_map_size():
     def message(**changes):
         return {
             "version": 1,
@@ -75,18 +78,20 @@ def test_private_multi_start_has_two_to_four_humans_and_at_most_four_empires():
                 "seed": "server-random",
                 "family": "private",
                 "humans": 2,
-                "ruleset": "v0.9",
+                "ruleset": "v0.10",
                 "profiles": ["expansionist", "economic_cautious"],
                 **changes,
             },
         }
 
     assert Operation.model_validate(message()).message.humans == 2
-    assert Operation.model_validate(message(humans=4, profiles=[])).message.humans == 4
+    assert Operation.model_validate(message(humans=10, profiles=[])).message.humans == 10
+    big = Operation.model_validate(message(humans=10, size=2000, profiles=["expansionist"] * 30))
+    assert (big.message.size, len(big.message.profiles)) == (2000, 30)
+    assert Operation.model_validate(message()).message.size == 100  # default map
     for changes in (
         {"humans": 1},  # one human is a SOLO game
-        {"humans": 3, "profiles": ["expansionist", "expansionist"]},  # five Empires
-        {"humans": 5, "profiles": []},
+        {"humans": 11, "profiles": []},
         {"family": "solo"},
         {"humans": "2"},
     ):

@@ -20,13 +20,17 @@ PERMISSIONS = frozenset(("colony.read", "colony.construct", "colony.cancel",
     "combat.read", "combat.attack", "relations.read", "relations.negotiate"))
 
 
-# AI profiles the Game ruleset v0.9 knows (app.ai.rules.PROFILES); Game validates them again.
+# AI profiles the Game ruleset knows (app.ai.rules.PROFILES); Game validates them again.
 AI_PROFILES = frozenset(("economic_cautious", "expansionist"))
-CREATION_RULESET = "v0.9"
+# A5 (user decision 09/11/2026): every new game is v0.10 (galaxy-v2, opportunities).
+CREATION_RULESET = "v0.10"
 
 
-# galaxy-v1 offers at most four starting sites: humans + AI opponents <= 4 until galaxy-v2.
-MAX_EMPIRES = 4
+# Q61 caps per map size (galaxy-v2): a pre-check for a clear message; Game's pinned ruleset
+# remains the authority and refuses any start beyond it.
+EMPIRE_CAPS = {100: 4, 300: 12, 500: 20, 1000: 40, 2000: 40}
+DEFAULT_SIZE = 100
+MAX_HUMANS, MAX_AI = 10, 30
 INVITE_MODES = frozenset(("link", "email"))
 
 
@@ -58,11 +62,13 @@ def creation_request(body):
     if family not in ("solo", "private"):
         raise PublicError("family_unavailable", 422)
     # Q60: the creator may name their Empire; optional so earlier clients keep working.
-    if set(body) - {"empire_name"} != (base if family == "solo" else base | {"humans", "invite"}):
+    # Q61: the map size is optional (100 systems by default).
+    optional = {"empire_name", "size"}
+    if set(body) - optional != (base if family == "solo" else base | {"humans", "invite"}):
         raise PublicError("invalid_creation")
     humans = 1 if family == "solo" else body["humans"]
     if family == "private" and (
-        type(humans) is not int or not 2 <= humans <= MAX_EMPIRES
+        type(humans) is not int or not 2 <= humans <= MAX_HUMANS
         or body["invite"] not in INVITE_MODES
     ):
         raise PublicError("invalid_creation")
@@ -71,17 +77,23 @@ def creation_request(body):
         raise PublicError("invalid_creation")
     if (
         not isinstance(profiles, list)
-        or len(profiles) > 3
+        or len(profiles) > MAX_AI
         or any(not isinstance(p, str) or p not in AI_PROFILES for p in profiles)
     ):
         raise PublicError("invalid_creation")
-    if humans + len(profiles) > MAX_EMPIRES:
+    size = body.get("size", DEFAULT_SIZE)
+    if type(size) is not int or size not in EMPIRE_CAPS:
+        raise PublicError("invalid_creation")
+    if humans + len(profiles) > EMPIRE_CAPS[size]:
         raise PublicError("too_many_empires")
     try:
         request_id = UUID(str(body["request_id"]))
     except ValueError:
         raise PublicError("invalid_creation") from None
-    wanted = {"request_id": request_id, "name": name, "family": family, "profiles": list(profiles)}
+    wanted = {
+        "request_id": request_id, "name": name, "family": family, "profiles": list(profiles),
+        "size": size,
+    }
     if family == "private":
         wanted.update(humans=humans, invite=body["invite"])
     if "empire_name" in body:
@@ -216,7 +228,7 @@ class Lobby:
                 )
             )
             options = {"family": wanted["family"], "profiles": wanted["profiles"],
-                       "ruleset": CREATION_RULESET}
+                       "ruleset": CREATION_RULESET, "size": wanted["size"]}
             if wanted["family"] == "private":
                 options.update(humans=wanted["humans"], invite=wanted["invite"])
             if "empire_name" in wanted:
@@ -243,6 +255,7 @@ class Lobby:
                 "seed": secrets.token_urlsafe(24),
                 "family": wanted["family"],
                 "ruleset": CREATION_RULESET,
+                "size": wanted["size"],
                 "profiles": wanted["profiles"],
             }
             if wanted["family"] == "private":

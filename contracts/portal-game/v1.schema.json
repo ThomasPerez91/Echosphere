@@ -284,7 +284,7 @@
     },
     "Start": {
       "additionalProperties": false,
-      "description": "UX-API-02/03: create and start a universe in one idempotent operation: SOLO (one human\nEmpire) or PRIVATE multi (2 to 4 human Empires, Q59), 0 to 3 AI opponents of known profiles,\nat most four Empires in galaxy-v1, pinned ruleset. The result lists the human Empires (seats)\nso that Portal can grant them; no AI actor identity leaves Game.",
+      "description": "UX-API-02/03: create and start a universe in one idempotent operation: SOLO (one human\nEmpire) or PRIVATE multi (2 to 10 human Empires, Q59/Q61) with AI opponents of known\nprofiles, ruleset v0.10 (galaxy-v2, A5 of 09/11/2026: every game is v0.10). The map `size`\ncaps the Empires (100 -> 4, 300 -> 12, 500 -> 20, 1000 and 2000 -> 40; exact cap checked\nagainst the pinned ruleset by Game). The result lists the human Empires (seats) so that\nPortal can grant them; no AI actor identity leaves Game.",
       "properties": {
         "kind": {
           "const": "start_universe",
@@ -318,15 +318,27 @@
         },
         "humans": {
           "default": 1,
-          "maximum": 4,
+          "maximum": 10,
           "minimum": 1,
           "title": "Humans",
           "type": "integer"
         },
         "ruleset": {
-          "const": "v0.9",
+          "const": "v0.10",
           "title": "Ruleset",
           "type": "string"
+        },
+        "size": {
+          "default": 100,
+          "enum": [
+            100,
+            300,
+            500,
+            1000,
+            2000
+          ],
+          "title": "Size",
+          "type": "integer"
         },
         "profiles": {
           "items": {
@@ -336,7 +348,7 @@
             ],
             "type": "string"
           },
-          "maxItems": 3,
+          "maxItems": 30,
           "title": "Profiles",
           "type": "array"
         }

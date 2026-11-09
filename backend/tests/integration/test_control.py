@@ -268,7 +268,7 @@ def start(control, profiles=("economic_cautious",), identifier=None, operation=N
             "name": name,
             "seed": "server-random-seed",
             "family": "solo",
-            "ruleset": "v0.9",
+            "ruleset": "v0.10",
             "profiles": list(profiles),
         },
         operation,
@@ -329,7 +329,7 @@ def test_private_start_creates_one_seat_per_human_and_keeps_solo_receipts_unchan
             "seed": "server-random-seed",
             "family": "private",
             "humans": 3,
-            "ruleset": "v0.9",
+            "ruleset": "v0.10",
             "profiles": ["expansionist"],
         }
     )
@@ -353,7 +353,7 @@ def test_a_player_names_their_empire_and_a_left_seat_goes_on_under_an_ai(control
     universe = uuid4()
     started = control.apply(SERVICE, op({
         "kind": "start_universe", "universe_id": str(universe), "name": "Multi",
-        "seed": "server-random-seed", "family": "private", "humans": 2, "ruleset": "v0.9",
+        "seed": "server-random-seed", "family": "private", "humans": 2, "ruleset": "v0.10",
         "profiles": [],
     }))["result"]
     first, second = started["human_empire_ids"]
@@ -397,3 +397,34 @@ def test_a_player_names_their_empire_and_a_left_seat_goes_on_under_an_ai(control
         control.apply(SERVICE, op({"kind": "name_empire", "universe_id": str(uuid4()),
                                    "empire_id": first, "name": "Intrus"}))
     assert scope.value.code == "empire_scope_denied"
+
+
+def test_v010_start_generates_the_requested_map_size_and_enforces_its_empire_cap(control):
+    from app.galaxy.models import GalaxySystem, StartingSite
+
+    def message(size, humans, profiles):
+        return op({
+            "kind": "start_universe", "universe_id": str(uuid4()), "name": "Carte",
+            "seed": "server-random-seed", "family": "private", "humans": humans,
+            "ruleset": "v0.10", "size": size, "profiles": profiles,
+        })
+
+    # 100 systems hold 4 Empires at most (Q61): a fifth is refused before any write.
+    with pytest.raises(ControlError) as capped:
+        control.apply(SERVICE, message(100, 3, ["expansionist", "economic_cautious"]))
+    assert capped.value.code == "invalid_bootstrap_configuration"
+    request = message(300, 5, ["expansionist"] * 3)
+    universe = UUID(request["message"]["universe_id"])
+    result = control.apply(SERVICE, request)["result"]
+    assert len(result["human_empire_ids"]) == 5
+    with control.factory() as session:
+        def count(model):
+            return session.scalar(
+                select(func.count()).select_from(model).where(model.universe_id == universe)
+            )
+
+        systems, sites = count(GalaxySystem), count(StartingSite)
+        assert (systems, sites) == (300, 8)  # one starting site per Empire of the game
+        assert session.scalar(
+            select(func.count()).select_from(Empire).where(Empire.universe_id == universe)
+        ) == 8
