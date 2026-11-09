@@ -1,7 +1,8 @@
-"""Trusted technical orchestration. No public create/join policy is introduced."""
+"""Trusted technical orchestration and the self-service SOLO creation (UX-API-02, Q59)."""
 
 import hashlib
 import json
+import secrets
 from datetime import UTC, timedelta
 from uuid import UUID, uuid4
 
@@ -10,13 +11,57 @@ from sqlalchemy import select
 from portal_app.accounts.models import User
 from portal_app.accounts.security import PublicError
 from portal_app.control.models import ControlOutbox, UniverseMembership, UniverseReference
-from portal_app.sessions.service import Sessions
+from portal_app.sessions.service import Sessions, check_csrf
 
 PERMISSIONS = frozenset(("colony.read", "colony.construct", "colony.cancel",
     "research.read", "research.start", "research.cancel",
     "galaxy.read", "exploration.read", "exploration.start",
     "fleet.read", "fleet.build", "fleet.command", "colony.expand",
     "combat.read", "combat.attack", "relations.read", "relations.negotiate"))
+
+
+# AI profiles the Game ruleset v0.9 knows (app.ai.rules.PROFILES); Game validates them again.
+AI_PROFILES = frozenset(("economic_cautious", "expansionist"))
+CREATION_RULESET = "v0.9"
+
+
+def creation_request(body):
+    """Validated SOLO creation intention, or PublicError. Pure: no clock, no database."""
+    if not isinstance(body, dict) or set(body) != {"request_id", "name", "family", "profiles"}:
+        raise PublicError("invalid_creation")
+    name, profiles = body["name"], body["profiles"]
+    if body["family"] != "solo":
+        raise PublicError("family_unavailable", 422)
+    if not isinstance(name, str) or not 3 <= len(name.strip()) <= 60 or name != name.strip():
+        raise PublicError("invalid_creation")
+    if (
+        not isinstance(profiles, list)
+        or len(profiles) > 3
+        or any(not isinstance(p, str) or p not in AI_PROFILES for p in profiles)
+    ):
+        raise PublicError("invalid_creation")
+    try:
+        request_id = UUID(str(body["request_id"]))
+    except ValueError:
+        raise PublicError("invalid_creation") from None
+    return {"request_id": request_id, "name": name, "family": "solo", "profiles": list(profiles)}
+
+
+def start_receipt(message, result):
+    """True when Game's receipt names this universe and a well-formed human Empire."""
+    if (
+        result.get("status") != "applied"
+        or result.get("universe_id") != message["universe_id"]
+        or result.get("name") != message["name"]
+        or not isinstance(result.get("human_empire_id"), str)
+        or not isinstance(result.get("started_at"), str)
+    ):
+        return False
+    try:
+        UUID(result["human_empire_id"])
+    except ValueError:
+        return False
+    return True
 
 
 def digest(value):
@@ -101,6 +146,56 @@ class Lobby:
             )
             return str(row.id)
 
+    def create(self, raw, proof, body, peer="unknown"):
+        """Self-service SOLO universe: one Portal transaction stores the intention and the
+        start_universe delivery. Replaying the same request_id returns the same universe."""
+        check_csrf(raw, proof)
+        wanted = creation_request(body)
+        target = self.accounts.settings.creation_target
+        if target not in self.accounts.settings.control_targets:
+            raise PublicError("creation_unavailable", 503)
+        with self.accounts.factory.begin() as session:
+            _, user = Sessions(self.accounts).locked(session, raw)
+            existing = session.scalar(
+                select(UniverseReference).where(
+                    UniverseReference.created_by == user.id,
+                    UniverseReference.creation_request_id == wanted["request_id"],
+                )
+            )
+            options = {"family": wanted["family"], "profiles": wanted["profiles"],
+                       "ruleset": CREATION_RULESET}
+            if existing is not None:
+                if existing.name != wanted["name"] or existing.start_request != options:
+                    raise PublicError("creation_request_conflict", 409)
+                return {"universe_id": str(existing.id), "status": "starting"}
+            self.accounts.limit("universe_create", peer, str(user.id))
+            now, identifier = self.accounts.clock(), uuid4()
+            session.add(
+                UniverseReference(
+                    id=identifier, backend_id=target, name=wanted["name"], created_at=now,
+                    created_by=user.id, creation_request_id=wanted["request_id"],
+                    start_request=options,
+                )
+            )
+            session.flush()
+            enqueue(
+                session,
+                target,
+                {
+                    "kind": "start_universe",
+                    "universe_id": str(identifier),
+                    "name": wanted["name"],
+                    # Server-side randomness; never chosen by the browser.
+                    "seed": secrets.token_urlsafe(24),
+                    "family": wanted["family"],
+                    "ruleset": CREATION_RULESET,
+                    "profiles": wanted["profiles"],
+                },
+                now,
+                universe_id=identifier,
+            )
+            return {"universe_id": str(identifier), "status": "starting"}
+
     def set_access(self, user_id, universe_id, status, bindings):
         if status not in ("active", "suspended", "revoked"):
             raise PublicError("invalid_access")
@@ -108,55 +203,59 @@ class Lobby:
         with self.accounts.factory.begin() as session:
             user = session.get(User, UUID(str(user_id)), with_for_update=True)
             universe = session.get(UniverseReference, UUID(str(universe_id)))
-            if user is None or universe is None or (status == "active" and user.status != "active"):
-                raise PublicError("access_scope_denied", 403)
-            row = session.scalar(
-                select(UniverseMembership).where(
-                    UniverseMembership.user_id == user.id,
-                    UniverseMembership.universe_id == universe.id,
-                )
+            return self.grant(session, user, universe, status, bindings)
+
+    def grant(self, session, user, universe, status, bindings):
+        """Membership intention + access delivery in the caller's transaction (user locked)."""
+        if user is None or universe is None or (status == "active" and user.status != "active"):
+            raise PublicError("access_scope_denied", 403)
+        row = session.scalar(
+            select(UniverseMembership).where(
+                UniverseMembership.user_id == user.id,
+                UniverseMembership.universe_id == universe.id,
             )
-            now = self.accounts.clock()
-            if row is None:
-                row = UniverseMembership(
-                    id=uuid4(), user_id=user.id, universe_id=universe.id, revision=1, access_epoch=1
-                )
-                session.add(row)
-            else:
-                row.revision += 1
-                if row.desired_status != status or row.bindings != bindings:
-                    row.access_epoch += 1
-            row.desired_status, row.bindings = status, bindings
-            row.portal_confirmed_at, row.valid_until = now, now + timedelta(hours=8)
-            row.next_check_at, row.reconciliation_pending = now, True
-            message = {
-                "kind": "set_universe_access",
-                "membership_id": str(row.id),
-                "global_user_id": str(user.id),
-                "universe_id": str(universe.id),
-                "revision": row.revision,
-                "access_epoch": row.access_epoch,
-                "account_epoch": user.security_epoch,
-                "status": status,
-                "portal_confirmed_at": wire_time(now),
-                "valid_until": wire_time(row.valid_until),
-                "bindings": bindings,
-            }
-            row.desired_snapshot = message
-            session.flush()
-            delivery = enqueue(
-                session,
-                universe.backend_id,
-                message,
-                now,
-                membership_id=row.id,
-                universe_id=universe.id,
+        )
+        now = self.accounts.clock()
+        if row is None:
+            row = UniverseMembership(
+                id=uuid4(), user_id=user.id, universe_id=universe.id, revision=1, access_epoch=1
             )
-            return {
-                "membership_id": str(row.id),
-                "operation_id": str(delivery.id),
-                "revision": row.revision,
-            }
+            session.add(row)
+        else:
+            row.revision += 1
+            if row.desired_status != status or row.bindings != bindings:
+                row.access_epoch += 1
+        row.desired_status, row.bindings = status, bindings
+        row.portal_confirmed_at, row.valid_until = now, now + timedelta(hours=8)
+        row.next_check_at, row.reconciliation_pending = now, True
+        message = {
+            "kind": "set_universe_access",
+            "membership_id": str(row.id),
+            "global_user_id": str(user.id),
+            "universe_id": str(universe.id),
+            "revision": row.revision,
+            "access_epoch": row.access_epoch,
+            "account_epoch": user.security_epoch,
+            "status": status,
+            "portal_confirmed_at": wire_time(now),
+            "valid_until": wire_time(row.valid_until),
+            "bindings": bindings,
+        }
+        row.desired_snapshot = message
+        session.flush()
+        delivery = enqueue(
+            session,
+            universe.backend_id,
+            message,
+            now,
+            membership_id=row.id,
+            universe_id=universe.id,
+        )
+        return {
+            "membership_id": str(row.id),
+            "operation_id": str(delivery.id),
+            "revision": row.revision,
+        }
 
     def read(self, raw):
         with self.accounts.factory.begin() as session:
@@ -223,8 +322,25 @@ class Lobby:
                             "created_at": wire_time(item.created_at),
                         }
                     )
+            joined = {UUID(item["universe_id"]) for item in memberships}
+            creations = [
+                {
+                    "universe_id": str(universe.id),
+                    "name": universe.name,
+                    "created_at": wire_time(universe.created_at),
+                    "state": "starting",
+                }
+                for universe in session.scalars(
+                    select(UniverseReference)
+                    .where(UniverseReference.created_by == user.id)
+                    .order_by(UniverseReference.created_at, UniverseReference.id)
+                )
+                # Started universes appear as memberships once access is granted.
+                if universe.id not in joined
+            ]
             return {
                 "memberships": memberships,
+                "creations": creations,
                 "revocations": revocations,
                 "handoff_available": True,
             }

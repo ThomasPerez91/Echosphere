@@ -209,6 +209,67 @@
       ],
       "title": "Revoke",
       "type": "object"
+    },
+    "Start": {
+      "additionalProperties": false,
+      "description": "UX-API-02: create and start a SOLO universe in one idempotent operation (one human Empire,\n0 to 3 AI opponents of known profiles, pinned ruleset). The result names the human Empire so\nthat Portal can grant it to the creator; no other actor identity leaves Game.",
+      "properties": {
+        "kind": {
+          "const": "start_universe",
+          "title": "Kind",
+          "type": "string"
+        },
+        "universe_id": {
+          "format": "uuid",
+          "title": "Universe Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "seed": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Seed",
+          "type": "string"
+        },
+        "family": {
+          "const": "solo",
+          "title": "Family",
+          "type": "string"
+        },
+        "ruleset": {
+          "const": "v0.9",
+          "title": "Ruleset",
+          "type": "string"
+        },
+        "profiles": {
+          "items": {
+            "enum": [
+              "economic_cautious",
+              "expansionist"
+            ],
+            "type": "string"
+          },
+          "maxItems": 3,
+          "title": "Profiles",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "universe_id",
+        "name",
+        "seed",
+        "family",
+        "ruleset",
+        "profiles"
+      ],
+      "title": "Start",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -229,13 +290,17 @@
         "mapping": {
           "provision_universe": "#/$defs/Provision",
           "revoke_sessions": "#/$defs/Revoke",
-          "set_universe_access": "#/$defs/Access"
+          "set_universe_access": "#/$defs/Access",
+          "start_universe": "#/$defs/Start"
         },
         "propertyName": "kind"
       },
       "oneOf": [
         {
           "$ref": "#/$defs/Provision"
+        },
+        {
+          "$ref": "#/$defs/Start"
         },
         {
           "$ref": "#/$defs/Access"
