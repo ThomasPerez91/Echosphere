@@ -94,6 +94,31 @@ export const point = (w: World, id: string): Point | null => {
   return s ? { x: s.x, y: s.y } : null;
 };
 
+/**
+ * Shortest number of jumps from the nearest own colony, over the routes this Empire knows (the
+ * same graph the server uses for paths). Null when no known route links the system to a colony.
+ */
+export function knownHops(w: World, target: string): { hops: number; from: string } | null {
+  const starts = w.galaxy.systems.filter((s) => s.observation?.own_colony_ids.length).map((s) => s.id);
+  const next = new Map<string, string[]>();
+  for (const r of w.galaxy.routes) {
+    next.set(r.a_id, [...(next.get(r.a_id) ?? []), r.b_id]);
+    next.set(r.b_id, [...(next.get(r.b_id) ?? []), r.a_id]);
+  }
+  const origin = new Map(starts.map((id) => [id, id]));
+  let frontier = starts, hops = 0;
+  while (frontier.length) {
+    const hit = frontier.find((id) => id === target);
+    if (hit) return { hops, from: origin.get(hit)! };
+    const following: string[] = [];
+    for (const id of frontier) for (const n of next.get(id) ?? []) {
+      if (!origin.has(n)) { origin.set(n, origin.get(id)!); following.push(n); }
+    }
+    frontier = following; hops += 1;
+  }
+  return null;
+}
+
 /** Display name under Fog of War: a DETECTED system is only a signal, never named. */
 export function systemName(w: World, id: string | null | undefined) {
   if (!id) return "—";

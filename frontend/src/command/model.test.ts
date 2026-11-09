@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { validFleets } from "../fleet/api";
 import { validProjection } from "../galaxy/api";
 import { fleetFixture, galaxyFixture, ids, quoteFixture, SERVER_TIME } from "../prototype/fixtures";
-import { defaultUnits, eligibleFleets, engageable, fleetLines, missionPosition, missionRoute, missionRouteLabel, offers, point, recallable, serverPath, systemName } from "./model";
+import { defaultUnits, knownHops, eligibleFleets, engageable, fleetLines, missionPosition, missionRoute, missionRouteLabel, offers, point, recallable, serverPath, systemName } from "./model";
 import type { World } from "./model";
 
 const world = (): World => ({ fleets: fleetFixture(), galaxy: galaxyFixture() });
@@ -142,4 +142,14 @@ test("recall follows the Fleet screen rule: while travelling, or until the battl
     attack: { engagement_id: m.id, battle_at: "2099-01-02T11:40:00Z", state: "pending" as const } };
   expect(recallable(attack, Date.parse("2099-01-01T18:00:00Z"))).toBe(true);
   expect(recallable({ ...attack, attack: { ...attack.attack, state: "resolved" as const } }, Date.parse("2099-01-01T18:00:00Z"))).toBe(false);
+});
+
+test("distance = fewest jumps from the nearest own colony over the known routes, unknown without a route", () => {
+  const w = world();
+  expect(knownHops(w, ids.home)).toEqual({ hops: 0, from: ids.home });
+  expect(knownHops(w, ids.vesta)).toEqual({ hops: 1, from: ids.home });
+  expect(knownHops(w, ids.lyra)).toEqual({ hops: 2, from: ids.home });
+  expect(knownHops(w, ids.signalC)).toEqual({ hops: 3, from: ids.home });
+  const cut = { ...w, galaxy: { ...w.galaxy, routes: w.galaxy.routes.filter((r) => r.b_id !== ids.signalB) } };
+  expect(knownHops(cut, ids.signalB)).toBeNull();
 });

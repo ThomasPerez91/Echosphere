@@ -8,7 +8,7 @@ import { MissionPlanner } from "./MissionPlanner";
 import type { PlannerStep } from "./MissionPlanner";
 import { StarMap } from "./StarMap";
 import type { MapFilter } from "./StarMap";
-import { actionLabels, defaultUnits, eligibleFleets, isGarrison, missionPosition, offers, point, serverPath, stationed, systemName } from "./model";
+import { actionLabels, defaultUnits, eligibleFleets, isGarrison, knownHops, missionPosition, offers, point, serverPath, stationed, systemName } from "./model";
 import type { ActionOffer, FleetLine, World } from "./model";
 import type { CommandFeedback, MissionApi } from "./types";
 import { useMedia } from "../shell/useNow";
@@ -146,6 +146,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
     if (ok) setNotice(`Rappel confirmé : ${world.fleets.fleets?.find((f) => f.id === m.fleet_id)?.name ?? "la flotte"} fait demi-tour.`);
     return ok;
   };
+  const distance = selected ? knownHops(world, selected) : null;
   const neighbours = selected ? world.galaxy.routes.filter((r) => r.a_id === selected || r.b_id === selected)
     .map((r) => (r.a_id === selected ? r.b_id : r.a_id)) : [];
   const filters: [MapFilter, string][] = [["all", "Tous"], ["known", "Systèmes connus"], ["own", "Mes colonies"], ["fleets", "Mes flottes"], ["signals", "Signaux"]];
@@ -242,7 +243,9 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
             <div className="cmd-tiles">
               <div><span>Connaissance</span><strong>{target.state === "DETECTED" ? "Détecté" : target.state === "MONITORED" ? "Surveillé" : "Cartographié"}</strong></div>
               <div><span>Vos flottes ici</span><strong>{fleetsHere.length}</strong></div>
-              <div><span>Distance</span><strong className="cmd-na" title="Implémentation backend nécessaire">N/D</strong></div>
+              <div><span>Distance</span>{distance
+                ? <strong title={`Plus court chemin sur vos routes connues depuis ${systemName(world, distance.from)}`}>{distance.hops === 0 ? "Ici" : `${distance.hops} saut${distance.hops > 1 ? "s" : ""}`}</strong>
+                : <strong className="cmd-na" title="Aucune route connue ne relie ce système à vos colonies">Inconnue</strong>}</div>
               <div><span>Planètes connues</span><strong>{target.state === "DETECTED" ? "?" : (ref?.planets ?? []).length}</strong></div>
             </div>
             {target.state === "DETECTED" ? <p>Existence et position approximative seulement. Nom, planètes et occupants restent inconnus tant qu’une sonde ne l’a pas cartographié.</p>
@@ -262,7 +265,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
             <ul className="cmd-routes" aria-label="Routes connues">{neighbours.map((id) =>
               <li key={id}><button type="button" className="button cmd-ghost" onClick={() => select(id)}>
                 {systemName(world, target.id)} ↔ {systemName(world, id)}</button></li>)}</ul>
-            <p className="cmd-help">Seules vos routes connues sont listées ; les distances ne sont pas transmises par le serveur.</p>
+            <p className="cmd-help">Seules vos routes connues sont listées. {distance ? `À ${distance.hops} saut${distance.hops > 1 ? "s" : ""} de ${systemName(world, distance.from)} par ces routes ; la durée exacte figure dans le résumé du serveur avant tout envoi.` : "Aucune route connue ne le relie encore à vos colonies."}</p>
           </div>}
           {tab === "data" && <div role="tabpanel" id="cmd-tabpanel-data" aria-labelledby="cmd-tab-data">
             <div className="d-pending"><strong>Implémentation backend nécessaire</strong><span>Ressources, anomalies et historique d’observation du système.</span></div>

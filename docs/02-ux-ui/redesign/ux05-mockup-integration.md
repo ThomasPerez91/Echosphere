@@ -74,7 +74,7 @@ Le tableau de bord Empire réutilise les mêmes fonctions d’événements et re
 | Empire | Classement / puissance, objectifs, diplomatie hors pactes |
 | Rapports | Recherche et export du fil (cloche et non-lus livrés le 09/11, Q60) ; historique au-delà de ce que conserve la projection Flottes |
 | Colonie | Accélération de construction, Orbite (emplacements orbitaux, routes), Défense (modules), objectifs, population/moral si décidés |
-| Galaxie | Distance entre systèmes, onglet « Données » (ressources, anomalies, historique d’observation), filtres Alliés/Neutres/Hostiles, systèmes hostiles dans la légende, régions, vue « Influence » |
+| Galaxie | Onglet « Données » (ressources, anomalies, historique d’observation), filtres Alliés/Neutres/Hostiles, systèmes hostiles dans la légende, régions, vue « Influence » |
 | Portal | **Création de partie en libre-service (priorité n° 1)**, invitations, actualités, statistiques publiques, catalogue d’univers ouverts, Empire / mode / tour par partie, journal d’activité des parties, notifications |
 
 Ces éléments ne reçoivent aucune valeur inventée : bloc pointillé ambre, « N/D » ou contrôle désactivé.
@@ -111,3 +111,10 @@ du navigateur (`localStorage`, par univers et Empire) : à la première visite, 
 marqué comme vu sauf une attaque encore annoncée ; ouvrir la cloche marque tout comme lu. Relecture
 lente (2 min, onglet visible) pour les faits qui ne viennent pas de nos propres échéances.
 Limite : la cloche relit les projections en plus de l’écran courant (requêtes GET en double).
+
+## Distance entre systèmes (09/11/2026)
+
+Carte de commandement, onglets « Aperçu » et « Routes » : nombre de sauts depuis la colonie la
+plus proche, calculé sur les routes connues de l’Empire (le même graphe que le serveur pour ses
+trajets) ; « Ici » pour un système de colonie, « Inconnue » sans route connue. La durée exacte reste
+celle du résumé serveur avant envoi.
