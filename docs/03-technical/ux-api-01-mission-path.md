@@ -73,7 +73,16 @@ atteint, en le présentant comme estimé ; avant v0.9, le moteur ne modélise qu
 | `backend/tests/integration/test_mission_path.py` | PostgreSQL : devis = mission = legs, lecture sans mutation ni recalcul, snapshot divergent, rappel et retour, ATTACK après bataille, 0 saut, SURVEY v0.4, interception, retraite, autres Empires/univers, lecteur `fleet.read` |
 | `backend/tests/integration/test_combat.py` | `path` ajouté à la comparaison « même devis quelle que soit l’occupation » |
 
-## Intégration frontend (PR #19, lot séparé, non commencé)
+## Intégration frontend (faite le 09/11/2026, branche `work/ux-mission-path-front`)
+
+Livré sur la base de recette : `missions[].path` validé dans `validFleets` (UUID, `hops + 1`,
+départ = `origin.id`, arrivée = `destination.id`, sinon supprimé), `missionRoute`/`missionPosition`
+le suivent (`frontend/src/command/model.ts`) et remplacent la mémoire locale de la carte ; système
+absent de la carte → segment départ–destination « tracé estimé » ; 0 saut → flotte sur son
+système sans ligne ; retour libellé « Retour estimé en miroir de l’aller ». Le tableau ci-dessous
+est l’examen d’origine (historique).
+
+### Examen d’origine (PR #19)
 
 Examen du code de `work/ux-redesign` à `d7986ce`, sans modification de cette branche :
 

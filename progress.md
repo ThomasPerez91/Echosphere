@@ -11,6 +11,8 @@ Mise à jour : 2026-11-05. [Contexte](context.md), [passation](docs/06-handoff/R
 | Fusion master | **Non faite** : après la recette utilisateur et sur autorisation explicite |
 | Tests | Fast CI de chaque PR verte sur sa tête ; Fast CI de l’ensemble via la PR de recette ; tests PostgreSQL/Chromium (Full CI) seulement après fusion sur master |
 | Recette | [Procédure](docs/02-ux-ui/redesign/ux05-recette-locale.md) |
+| Ajouts | #24 multi privé (invitations lien ou email, 2–4 Empires humains+IA, plafond galaxy-v1) ; `work/ux-mission-path-front` : trajet réel des missions (`missions[].path`) sur la carte |
+| Étapes suivantes | Atelier génération de carte (tailles 100–2000, placement dispersé/regroupé, 10 joueurs + ~30 IA) avec l’utilisateur avant de lever le plafond de 4 Empires ; cloche/notifications, distances, Empire/mode/tour dans « Mes parties », abandon de partie, état d’échec de création |
 
 ## Reprise rapide — refonte UX (work/ux-redesign)
 

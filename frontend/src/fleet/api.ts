@@ -77,6 +77,8 @@ export type MissionView = {
   recalled_at: string | null;
   return_at: string | null;
   completed_at: string | null;
+  /** UX-API-01: ordered systems from departure to destination (kept only when consistent). */
+  path?: string[];
   payer_colony_id: string | null;
   target_planet: { id: string; name: string } | null;
   attack?: AttackState | null;
@@ -133,7 +135,7 @@ export type Quote = {
   package_minimum: Amounts | null;
   battle_at?: string;
   units?: Record<string, number>;
-  /** UX-API-01 (proposed, not served yet): ordered known systems from departure to destination. */
+  /** UX-API-01: ordered known systems from departure to destination. */
   path?: string[];
 };
 
@@ -233,6 +235,12 @@ const frontier = (v: unknown) =>
   v === null || v === undefined || (object(v) && list(v.protocols, (x) => PROTOCOLS.includes(String(x))) &&
     list(v.detections, detection) && list(v.encounters, encounter));
 
+const missionPath = (m: MissionView) => {
+  const path: unknown = m.path;
+  return Array.isArray(path) && path.length === m.hops + 1 && path.every(id) &&
+    !!m.origin && !!m.destination && path[0] === m.origin.id && path[path.length - 1] === m.destination.id;
+};
+
 export function validFleets(value: unknown, empire: string): value is FleetProjection {
   if (!object(value) || !date(value.server_time) || !object(value.empire) || value.empire.id !== empire ||
     typeof value.empire.name !== "string" || !list(value.permissions, (p) => typeof p === "string") ||
@@ -261,6 +269,9 @@ export function validFleets(value: unknown, empire: string): value is FleetProje
     f.home_colony_id || f.colonies_here.length) || v.missions!.some((m) => m.payer_colony_id || m.report?.result.colony_id) ||
     v.systems!.some((s) => s.planets?.some((p) => p.colony_id)) || v.colonization?.colonizer_quote))
     return false;
+  // Optional UX-API-01 field: a path that does not run from origin to destination in hops + 1
+  // systems is dropped, never repaired; the map then falls back to an estimated segment.
+  for (const m of v.missions!) if ("path" in m && !missionPath(m)) delete m.path;
   const known = new Set(v.systems!.map((s) => s.id));
   return v.fleets!.every((f) => !f.system || known.has(f.system.id));
 }

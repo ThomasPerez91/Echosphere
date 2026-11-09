@@ -3,7 +3,7 @@ import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
 import { GalaxyCanvas } from "../galaxy/GalaxyCanvas";
 import type { Scene } from "../galaxy/render";
 import type { MissionView } from "../fleet/api";
-import { missionPosition, point, stationed, systemName } from "./model";
+import { missionPosition, missionRoute, missionRouteLabel, point, stationed, systemName } from "./model";
 import type { Point, World } from "./model";
 
 export type RoutePreview = { from: string; to: string; path?: string[] };
@@ -28,9 +28,9 @@ const stateLabel = { DETECTED: "Détecté", MAPPED: "Cartographié", MONITORED: 
  * the mockup's regions, influence and distances have no game data and are not reproduced.
  * Every system is a real button (Tab, Enter/Space); nothing depends on hover.
  */
-export function StarMap({ world, selected, onSelect, preview, missions, now, paths, filter = "all", showRoutes = true, showNames = true, focus, backdrop = true, menu }: {
+export function StarMap({ world, selected, onSelect, preview, missions, now, filter = "all", showRoutes = true, showNames = true, focus, backdrop = true, menu }: {
   world: World; selected: string | null; onSelect: (id: string) => void; preview: RoutePreview | null;
-  missions: MissionView[]; now: number; paths: Record<string, string[] | undefined>;
+  missions: MissionView[]; now: number;
   filter?: MapFilter; showRoutes?: boolean; showNames?: boolean;
   /** "Localiser": centre the view on this point (keeps the zoom); `key` makes a repeat request count. */
   focus?: { x: number; y: number; key: number } | null;
@@ -148,12 +148,13 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, pat
         <title>{preview?.path?.length ? "Trajet calculé par le serveur" : "Représentation indicative : départ et destination reliés directement, pas le trajet réel"}</title>
       </polyline>}
       {missions.map((m) => {
-        const ends = (paths[m.id]?.length ? paths[m.id]! : [m.origin?.id, m.destination?.id]).map((id) => (id ? point(world, id) : null)).filter((p): p is Point => !!p);
-        const at = missionPosition(world, m, now, paths[m.id]);
+        const route = missionRoute(world, m);
+        const ends = route?.points ?? [];
+        const at = missionPosition(world, m, now);
         return <g key={m.id} className="cmd-mission">
           {ends.length > 1 && <polyline points={ends.map((p) => `${p.x},${p.y}`).join(" ")} strokeWidth={2 * scale}
-            strokeDasharray={`${2 * scale} ${6 * scale}`} className="cmd-mission-path">
-            <title>{paths[m.id]?.length ? "Trajet de la mission" : "Départ et destination de la mission (tracé indicatif)"}</title></polyline>}
+            strokeDasharray={`${2 * scale} ${6 * scale}`} className={`cmd-mission-path${route?.kind === "estimated" ? " cmd-mission-path--estimate" : ""}`}>
+            <title>{missionRouteLabel(m, route!)}</title></polyline>}
           {at && <g transform={`translate(${at.x} ${at.y}) scale(${scale})`}><title>{`Mission vers ${systemName(world, m.destination?.id)} — position estimée, non transmise par le serveur`}</title>
             <circle r={9} className="cmd-mission-halo" /><path d="M -5 4 L 0 -6 L 5 4 L 0 1 Z" className="cmd-mission-ship" /></g>}
         </g>;

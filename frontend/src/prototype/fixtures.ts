@@ -126,7 +126,7 @@ export function fleetFixture(): FleetProjection {
     ],
     missions: [{
       id: ids.surveyMission, fleet_id: ids.scout, kind: "SURVEY", status: "active",
-      origin: ref(ids.draco), destination: ref(ids.signalB), hops: 1, stacks: { probe: 1 }, cargo: zero,
+      origin: ref(ids.draco), destination: ref(ids.signalB), hops: 1, path: [ids.draco, ids.signalB], stacks: { probe: 1 }, cargo: zero,
       cost: { alloys: "0", flux: M(4), data: M(20) },
       started_at: "2099-01-01T11:40:00Z", travel_arrival_at: "2099-01-01T12:20:00Z", due_at: "2099-01-01T12:35:00Z",
       recalled_at: null, return_at: null, completed_at: null, payer_colony_id: ids.colony, target_planet: null, report: null,
