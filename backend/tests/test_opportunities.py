@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.colony.rules import Ruleset, load_ruleset, since
-from app.galaxy.generator import generate
+from app.galaxy.generator_v2 import generate_v2
 from app.galaxy.opportunities import (
     MAX_SITES,
     OpportunityRules,
@@ -19,15 +19,15 @@ V10 = load_ruleset("v0.10")
 
 
 def world_of(seed):
-    return generate(seed, V10.galaxy)["world"]
+    return generate_v2(seed, V10.galaxy, size=100)["world"]
 
 
-def test_v010_is_v09_plus_opportunities_only():
+def test_v010_is_v09_plus_opportunities_and_galaxy_v2_only():
     old, new = load_ruleset("v0.9").model_dump(), V10.model_dump()
     assert set(new) == set(old) and old["opportunities"] is None
     for part in old:
-        if part == "opportunities" or old[part] is None:
-            continue
+        if part in ("opportunities", "galaxy") or old[part] is None:
+            continue  # galaxy-v2 has its own tests (test_galaxy_v2.py)
         assert {**new[part], "version": "v0.9"} == old[part], part
     assert new["opportunities"]["opportunity_generator_version"] == "opportunities-v1"
     for version in [f"v0.{n}" for n in range(1, 10)]:

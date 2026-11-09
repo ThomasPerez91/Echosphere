@@ -13,6 +13,7 @@ from app.colonization.rules import ColonizationRules
 from app.combat.rules import CombatRules
 from app.fleet.rules import FleetRules
 from app.frontier.rules import FrontierRules
+from app.galaxy.generator_v2 import GalaxyRulesV2
 from app.galaxy.opportunities import OpportunityRules
 from app.galaxy.rules import ExplorationRules, GalaxyRules
 from app.relations.rules import RelationsRules
@@ -187,7 +188,7 @@ class Ruleset(StrictModel):
     colony: ColonyRules
     catalogue: InfrastructureRules
     research: ResearchRules | None = None
-    galaxy: GalaxyRules | None = None
+    galaxy: GalaxyRulesV2 | GalaxyRules | None = None
     exploration: ExplorationRules | None = None
     fleets: FleetRules | None = None
     colonization: ColonizationRules | None = None
@@ -290,6 +291,11 @@ class Ruleset(StrictModel):
                 raise ValueError("Missing or mixed Frontier version")
         elif self.frontier is not None:
             raise ValueError("Frontier unavailable in historical rulesets")
+        # galaxy-v2 (Q61: sizes, dead ends, chokepoints) from v0.10; v0.3-v0.9 keep galaxy-v1.
+        if self.galaxy is not None and isinstance(self.galaxy, GalaxyRulesV2) != since(
+            self.version, "v0.10"
+        ):
+            raise ValueError("galaxy-v2 is the generator of v0.10 and later only")
         # EXP-01 opportunities exist from v0.10 only; v0.1-v0.9 stay strictly unchanged.
         if since(self.version, "v0.10"):
             if self.opportunities is None or self.opportunities.version != self.version:
