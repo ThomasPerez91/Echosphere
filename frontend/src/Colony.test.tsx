@@ -65,7 +65,9 @@ afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); window.h
 test('real server projection renders without any mutation, even under StrictMode', async () => {
   const fetcher = setup('colony/infrastructure', {}, true);
   expect(await screen.findByRole('heading', { name: 'Kepler Test' })).toBeVisible();
-  expect(screen.getByLabelText('Stocks de la colonie')).toHaveTextContent('2 000');
+  // Stocks live in the top bar only (recette 09/11/2026), not repeated in the colony header.
+  expect(screen.getByLabelText('Stocks de Kepler Test')).toHaveTextContent('2 000');
+  expect(screen.queryByLabelText('Stocks de la colonie')).not.toBeInTheDocument();
   expect(screen.getAllByText('+120/h').length).toBeGreaterThan(0);
   expect(screen.getByRole('button', { name: 'Construire Nœud de données' })).toBeEnabled();
   expect(screen.getByRole('button', { name: 'Construire Complexe industriel' })).toBeDisabled();

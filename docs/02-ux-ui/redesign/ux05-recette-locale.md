@@ -164,6 +164,11 @@ système choisit, clic droit ou Échap annule et rouvre la fenêtre.
   droits » et n’apparaît que lorsque l’accès (fenêtre de quelques heures) se termine ; carte : toutes
   les étoiles visibles, « Voir toute la galaxie », effet radar retiré ; les créations bloquées
   avant #39 aboutissent.
+- PR #42 : onglet Infrastructures réordonné (file, bâtiments existants avec leur niveau suivant
+  dans la même ligne, nouvelles constructions avec les indisponibles grisées), stock retiré de
+  l’en-tête de colonie, **renommer la colonie** (migration Game 0018), jauge de stockage à la place
+  de la courbe 24 h, barres de progression fluides, notifications nouvelles marquées « Nouveau »,
+  sélecteurs univers/colonie de même taille, état des services caché sauf s’il est indisponible.
 - La pile de recette porte le nom de projet Compose `echosphere` sur ce poste : elle partage les
   volumes de la pile conservée. Ne jamais lancer `down -v`.
 

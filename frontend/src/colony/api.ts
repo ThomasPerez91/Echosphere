@@ -93,7 +93,8 @@ export async function readColony(universe: string, colony: string, signal: Abort
 
 export type Command =
   | { kind: 'construct'; infrastructure_type: string; sector_index: number; target_level: number }
-  | { kind: 'cancel'; order_id: string };
+  | { kind: 'cancel'; order_id: string }
+  | { kind: 'rename'; name: string };
 
 export async function sendCommand(universe: string, colony: string, csrf: string, command: Command,
   idempotencyKey: string, signal: AbortSignal) {
@@ -101,6 +102,7 @@ export async function sendCommand(universe: string, colony: string, csrf: string
   const [url, payload] = command.kind === 'construct'
     ? [root, { idempotency_key: idempotencyKey, infrastructure_type: command.infrastructure_type,
       sector_index: command.sector_index, target_level: command.target_level }]
+    : command.kind === 'rename' ? [`/api/game/${universe}/colonies/${colony}/name`, { name: command.name }]
     : [`${root}/${command.order_id}/cancel`, {}];
   const body = await request(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
     body: JSON.stringify(payload) }, signal);

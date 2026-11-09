@@ -133,4 +133,7 @@
 .d-notif-list small { display: block; color: var(--d-muted); font-size: 12px; }
 .d-notif-list time { color: var(--d-muted); font-size: 11px; white-space: nowrap; }
 .d-notif-list .d-red b { color: var(--d-red, #e0605a); }
-.d-notif-new a { box-shadow: inset 3px 0 0 var(--d-amber); }
+/* New since the last opening (recette 09/11/2026): a tinted row and a visible "Nouveau" tag. */
+.d-notif-new a { background: rgba(59, 227, 255, .07); }
+.d-notif-new b::after { content: "Nouveau"; margin-left: 8px; padding: 1px 6px; border-radius: 6px; vertical-align: 1px;
+  font: 600 10px/1.5 inherit; letter-spacing: .04em; text-transform: uppercase; color: #04121f; background: var(--d-cyan, #3be3ff); }

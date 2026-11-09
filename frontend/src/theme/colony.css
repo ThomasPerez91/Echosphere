@@ -346,3 +346,25 @@
   .d-colony .d-stock-card strong{font-size:14px}
   .d-colony .d-def-status{grid-template-columns:1fr}
 }
+
+/* Recette 09/11/2026: buildings with their next level in one row; new constructions greyed when
+   unavailable; the colony name can be changed in place. */
+.d-colony .d-built-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.d-colony .d-built{display:grid;grid-template-columns:96px 1fr;gap:10px 14px;align-items:center;padding:10px;border-radius:12px;border:1px solid var(--d-line);background:rgba(10,22,40,.5)}
+.d-colony .d-built>img{width:96px;height:72px;object-fit:cover;border-radius:8px}
+.d-colony .d-built-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.d-colony .d-built-next{grid-column:1/-1;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.d-colony .d-built-next .effect{display:inline;margin:0}
+.d-colony .d-built-next-title{color:#cfe0f0}
+.d-colony .d-built>.d-btn{grid-column:1/-1}
+@media (min-width:900px){
+  .d-colony .d-built{grid-template-columns:96px minmax(180px,1fr) minmax(220px,1.3fr) auto}
+  .d-colony .d-built-next{grid-column:auto}
+  .d-colony .d-built>.d-btn{grid-column:auto;min-width:130px}
+}
+.d-colony .option-card.is-locked,.d-colony .d-bcard.is-locked{opacity:.55;filter:grayscale(.7)}
+.d-colony .option-card.is-locked:hover{opacity:.75}
+.d-col-title{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.d-col-title h1{margin:0}
+.d-col-rename input{font:inherit;font-size:22px;padding:6px 10px;border-radius:8px;border:1px solid var(--d-line-2,#2a4a6a);background:rgba(4,12,24,.8);color:#fff;min-width:0;width:min(360px,100%)}
+.d-btn-sm{padding:6px 12px;font-size:13px}

@@ -44,22 +44,21 @@ export function EmpireWelcome({ children }: { children: ReactNode }) {
   </div>;
 }
 
-/** Stock projected over the next 24 h at the current server rate, capped by the capacity. */
-function Projection({ resource, color }: { resource: Resource; color: string }) {
-  const W = 120, H = 44, N = 24;
-  const values = Array.from({ length: N + 1 }, (_, i) => estimate(resource, i * 3.6e6));
-  const max = Math.max(...values, 1), min = Math.min(...values);
-  const span = Math.max(1e-9, max - min || max);
-  const pts = values.map((v, i) => [i / N * W, H - 4 - ((v - min) / span) * (H - 12)] as const);
-  const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
-  const id = `spark-${resource.resource}`;
-  return <svg className="d-spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
-    <title>Projection du stock sur 24 h au rythme actuel</title>
-    <defs><linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={color} stopOpacity=".35" /><stop offset="1" stopColor={color} stopOpacity="0" /></linearGradient></defs>
-    <path d={`${d} L${W} ${H} L0 ${H} Z`} fill={`url(#${id})`} />
-    <path className="d-spark-line" d={d} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" vectorEffect="non-scaling-stroke" style={{ filter: `drop-shadow(0 0 3px ${color})` }} />
-    <circle cx={pts[N][0]} cy={pts[N][1]} r="2.4" fill="#fff" />
-  </svg>;
+/** Storage gauge (recette 09/11/2026, instead of an always-rising 24 h curve): how full the
+ * storage is now and when it will be full at the current rate. */
+function Projection({ resource, color, elapsed }: { resource: Resource; color: string; elapsed: number }) {
+  const capacity = resource.capacity === null ? null : Number(resource.capacity) / 1e6;
+  if (!capacity) return <p className="d-store"><small>Stockage illimité</small></p>;
+  const stock = estimate(resource, elapsed), perHour = Number(resource.rate_per_hour) / 1e6;
+  const share = Math.min(100, stock / capacity * 100);
+  const hours = perHour > 0 ? (capacity - stock) / perHour : Infinity;
+  const when = share >= 100 ? 'Stockage plein : la production est perdue' : !Number.isFinite(hours) ? 'Pas de production'
+    : hours < 1 ? `Plein dans ${Math.max(1, Math.round(hours * 60))} min` : hours < 48 ? `Plein dans ${Math.round(hours)} h` : `Plein dans ${Math.round(hours / 24)} j`;
+  return <div className={`d-store${share >= 90 ? ' is-high' : ''}`}>
+    <span className="d-store-bar" role="meter" aria-label={`Stockage ${resource.resource}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share)}>
+      <i style={{ width: `${share}%`, background: color }} /></span>
+    <small>{Math.round(share)} % du stockage · {when}</small>
+  </div>;
 }
 
 function Countdown({ order, offset, now }: { order: Order; offset: number; now: number }) {
@@ -150,7 +149,7 @@ export function EmpireDashboard({ universe, access, colony, href }: {
       {projection?.resources.map(res => <article className="d-card d-stat-res" key={res.resource}>
         <img src={asset(resourceIcon[res.resource])} alt="" width="56" height="56" />
         <div><span className="d-label">{resourceLabels[res.resource]}</span><strong>{compact(estimate(res, elapsed))}</strong><em className="d-pos">+{rate(res.rate_per_hour)}/h</em></div>
-        <Projection resource={res} color={res.resource === 'data' ? '#FFB547' : '#3BE3FF'} />
+        <Projection resource={res} elapsed={elapsed} color={res.resource === 'data' ? '#FFB547' : '#3BE3FF'} />
       </article>)}
       <article className="d-card d-stat-mini"><Pic src="icons/stats/stat-colonies.svg" size={44} /><div><strong>{colony.colonies.length}</strong><span>Colonie{colony.colonies.length > 1 ? 's' : ''}</span></div></article>
       <article className="d-card d-stat-mini"><Pic src="icons/stats/stat-systemes.svg" size={44} /><div><strong>{g ? known.length : '—'}</strong><span>Systèmes connus</span></div></article>

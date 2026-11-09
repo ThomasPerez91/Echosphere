@@ -26,6 +26,7 @@ from app.simulation.service import TimeEngine
 router = APIRouter(prefix="/game/{universe_id}/colonies")
 
 STATUS = {
+    "invalid_colony_name": 422,
     "system_not_found": 404,
     "opportunity_not_found": 404,
     "exploration_busy": 503,
@@ -63,6 +64,19 @@ class Construction(BaseModel):
 
 class Empty(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class Rename(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    name: str = Field(min_length=2, max_length=40)
+
+
+def colony_name(value):
+    """2 to 40 visible characters, single spaces, no control character (like Empire names)."""
+    name = " ".join(value.split())
+    if len(name) < 2 or len(name) > 40 or any(ord(c) < 32 or 127 <= ord(c) < 160 for c in name):
+        raise ColonyError("Invalid colony name", "invalid_colony_name")
+    return name
 
 
 class Colonies:
@@ -112,7 +126,7 @@ class Colonies:
                 "colonies": [
                     {
                         "id": str(colony.id),
-                        "name": session.get(Planet, colony.planet_id).name,
+                        "name": colony.display_name(session.get(Planet, colony.planet_id)),
                         "empire": {
                             "id": str(colony.empire_id),
                             "name": session.get(Empire, colony.empire_id).name,
@@ -193,6 +207,20 @@ class Colonies:
                 "order": {"id": str(order.id), "status": order.status},
                 "colony": project(session, rules, colony, permissions, now),
             }
+
+    def rename(self, raw, universe_id, colony_id, command: Rename):
+        name = colony_name(command.name)
+        with self.factory.begin() as session:
+            colony, permissions, _ = self.authorize(
+                session, raw, universe_id, colony_id, "colony.construct", interaction=True
+            )
+            colony.name = name
+            session.flush()
+            now = self.clock.now()
+            rules = catch_up_owned(
+                session, self.engine, universe_id, colony.empire_id, colony.id, now
+            )
+            return {"colony": project(session, rules, colony, permissions, now)}
 
     def cancel(self, raw, universe_id, colony_id, order_id):
         with self.factory.begin() as session:
@@ -288,6 +316,13 @@ async def construction_history(
     return await call(
         Colonies(request.app.state).history, raw, universe_id, colony_id, before_sequence
     )
+
+
+@router.post("/{colony_id}/name")
+async def rename(universe_id: UUID, colony_id: UUID, request: Request):
+    """Recette 09/11/2026: the player names the colony (colony.construct)."""
+    raw, body = await command(request, universe_id, Rename)
+    return await call(Colonies(request.app.state).rename, raw, universe_id, colony_id, body)
 
 
 @router.post("/{colony_id}/construction-orders/{order_id}/cancel")

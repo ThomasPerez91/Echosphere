@@ -99,7 +99,7 @@ export function useColony(universe: string | null, enabled: boolean, csrf: strin
       intent.current = null;
       if (!active.current || observed !== generation.current) return;
       late.current = 0; accept(result);
-      setFeedback({ tone: 'success', text: value.kind === 'construct' ? 'Ordre de construction accepté par le serveur.' : 'Annulation enregistrée, remboursement crédité.' });
+      setFeedback({ tone: 'success', text: value.kind === 'construct' ? 'Ordre de construction accepté par le serveur.' : value.kind === 'rename' ? 'Nom de la colonie enregistré.' : 'Annulation enregistrée, remboursement crédité.' });
     } catch (error) {
       if (!active.current || observed !== generation.current) return;
       if (error instanceof ApiError && error.status > 0 && error.status < 500) {

@@ -168,7 +168,7 @@ def project(
         "permissions": sorted(permissions),
         "colony": {
             "id": str(colony.id),
-            "name": planet.name,
+            "name": colony.display_name(planet),
             "planet": {
                 "name": planet.name,
                 "sector_capacity": planet.sector_capacity,

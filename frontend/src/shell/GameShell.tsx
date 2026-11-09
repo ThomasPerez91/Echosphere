@@ -98,7 +98,8 @@ export function GameShell({ universe, access, colony, status, destination, href,
         })}
       </ul>}
       <div className="d-top-actions">
-        <div className={`d-network d-network--${status}`} role="status" title={readiness[status]}><span className="d-status-dot" aria-hidden="true" />{readiness[status]}</div>
+        {/* Recette 09/11/2026: only a lost connection is shown in the bar; the state stays readable. */}
+        <div className={`d-network d-network--${status}${status === 'unavailable' ? '' : ' visually-hidden'}`} role="status" title={readiness[status]}><span className="d-status-dot" aria-hidden="true" />{readiness[status]}</div>
         <button type="button" className="d-icon-btn" aria-label="Messages" aria-expanded={popover === 'messages'}
           onClick={() => setPopover(value => value === 'messages' ? null : 'messages')}><Pic src="icons/ui/ui-messages.svg" size={34} /></button>
         {universe && active

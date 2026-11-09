@@ -117,7 +117,11 @@ class Galaxy(Colonies):
                     for r in ("alloys", "flux", "data")
                 }
                 sources.append(
-                    {"id": str(colony.id), "name": planet.name, "stocks": amounts(stocks)}
+                    {
+                        "id": str(colony.id),
+                        "name": colony.display_name(planet),
+                        "stocks": amounts(stocks),
+                    }
                 )
                 for target in knowledge:
                     if target.state != "DETECTED":

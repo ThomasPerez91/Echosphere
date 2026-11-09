@@ -4,7 +4,7 @@ import { costParts, duration, errorMessage, exactUnits, infrastructureLabel, rat
   resourceLabels, time, units } from '../colony/format';
 import type { useColony } from '../hooks/useColony';
 import { Bar, Ico, PanelHead, Pending, Pic } from '../shell/visual';
-import { asset, buildingImage, estimate, integer, resourceIcon } from '../shell/assets';
+import { asset, buildingImage, estimate, resourceIcon } from '../shell/assets';
 import { useNow } from '../shell/useNow';
 import { Button } from './ui';
 
@@ -160,27 +160,71 @@ function OptionCard({ colony, option, free, canBuild, stocks }: { colony: Colony
   </li>;
 }
 
+/** Recette 09/11/2026: the player names the colony (the planet name until then). */
+function ColonyTitle({ colony, name, canRename }: { colony: Colony; name: string; canRename: boolean }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(name);
+  const [hint, setHint] = useState('');
+  if (!editing) return <div className="d-col-title"><h1 tabIndex={-1}>{name}</h1>
+    {canRename && <button type="button" className="d-btn d-btn-ghost d-btn-sm" onClick={() => { setValue(name); setHint(''); setEditing(true); }}>Renommer</button>}</div>;
+  const save = async () => {
+    const clean = value.split(/\s+/).filter(Boolean).join(' ');
+    if (clean.length < 2 || clean.length > 40) { setHint('Le nom doit compter 2 à 40 caractères.'); return; }
+    await colony.command({ kind: 'rename', name: clean });
+    setEditing(false);
+  };
+  return <form className="d-col-title d-col-rename" onSubmit={event => { event.preventDefault(); void save(); }}>
+    <label className="visually-hidden" htmlFor="colony-name">Nom de la colonie</label>
+    <input id="colony-name" value={value} maxLength={40} autoFocus onChange={event => setValue(event.target.value)} />
+    <button type="submit" className="d-btn d-primary d-btn-sm" disabled={!!colony.pending}>Enregistrer</button>
+    <button type="button" className="d-btn d-btn-ghost d-btn-sm" onClick={() => setEditing(false)}>Annuler</button>
+    {hint && <p role="alert" className="reason">{hint}</p>}
+  </form>;
+}
+
+/** Recette 09/11/2026: the queue first, then the colony's buildings each with its next level
+ * (cost, duration, action) in the same row, then new constructions; unavailable ones greyed. */
+function BuiltRow({ colony, row, upgrade, canBuild, stocks }: { colony: Colony; row: Projection['infrastructures'][number]; upgrade?: Option; canBuild: boolean; stocks: Record<string, number> }) {
+  const label = infrastructureLabel(row.infrastructure_type);
+  const command = upgrade && { kind: 'construct' as const, infrastructure_type: upgrade.infrastructure_type, sector_index: upgrade.sector_index ?? 0, target_level: upgrade.target_level };
+  const pending = !!command && colony.pending === JSON.stringify(command);
+  const describe = `upgrade-${row.sector_index}`;
+  return <li className={`d-built${upgrade && !upgrade.available ? ' is-waiting' : ''}`}>
+    <img src={buildingImage(row.infrastructure_type)} alt="" width="96" height="72" />
+    <div className="d-built-info">
+      <span className="d-inst-top"><b>{label}</b><em className="d-lvl-badge">Niveau {row.level}</em></span>
+      <small>Secteur {row.sector_index} · Surface</small><Effect option={row} />
+    </div>
+    {upgrade ? <div className="d-built-next">
+      <span className="d-built-next-title">Niveau {upgrade.target_level} : <Effect option={upgrade} /></span>
+      <Costs value={upgrade.cost} stocks={stocks} minutes={duration(upgrade.estimated_duration_us ?? upgrade.base_duration_us)} />
+      {upgrade.reason && <p id={describe} className="reason">{reasonLabel(upgrade.reason)}</p>}
+    </div> : <div className="d-built-next"><span className="muted">Aucune amélioration proposée pour l’instant.</span></div>}
+    {upgrade && canBuild && command && <button type="button" className={`d-btn${upgrade.available ? ' d-primary' : ''}`}
+      disabled={!upgrade.available || !!colony.pending} aria-describedby={upgrade.reason ? describe : undefined}
+      onClick={() => { void colony.command(command); }} aria-label={pending ? 'Envoi…' : `Améliorer ${label} niveau ${upgrade.target_level}`}>
+      <Ico name="act-ameliorer" /><span aria-hidden="true">{pending ? 'Envoi…' : 'Améliorer'}</span></button>}
+  </li>;
+}
+
 function Infrastructures({ colony, data, server, stocks }: { colony: Colony; data: Projection; server: number; stocks: Record<string, number> }) {
   const builds = data.options.filter(option => option.action === 'build');
   const upgrades = data.options.filter(option => option.action === 'upgrade');
   const canBuild = data.permissions.includes('colony.construct');
+  // Available constructions first; unavailable ones stay visible, greyed, after them.
+  const ordered = [...builds].sort((a, b) => Number(b.available) - Number(a.available));
   return <div className="d-tabpanel">
     <Queue colony={colony} projection={data} server={server} />
-    <section className="d-card d-panel" aria-labelledby="available-title">
-      <PanelHead id="available-title" icon="icons/actions/action-construire.svg" title="Bâtiments disponibles"><span className="d-queue-count">{data.sectors.free} secteur{data.sectors.free > 1 ? 's' : ''} libre{data.sectors.free > 1 ? 's' : ''}</span></PanelHead>
-      <ul className="d-build-grid option-grid">{builds.map(option => <OptionCard key={option.infrastructure_type} colony={colony} option={option}
-        free={data.sectors.free_indices} canBuild={canBuild} stocks={stocks} />)}</ul>
-    </section>
     <section className="d-card d-panel" aria-labelledby="built-title">
-      <PanelHead id="built-title" icon="icons/colonie/colonie-secteurs.svg" title="Infrastructures de la colonie"><span className="d-queue-count">{data.sectors.built} / {data.sectors.capacity} secteurs</span></PanelHead>
-      <ul className="d-install-list">{data.infrastructures.map(row => <li key={row.sector_index} className="d-install">
-        <img src={buildingImage(row.infrastructure_type)} alt="" width="96" height="72" />
-        <div className="d-inst-info"><span className="d-inst-top"><b>{infrastructureLabel(row.infrastructure_type)}</b><em className="d-lvl-badge">Niveau {row.level}</em></span>
-          <small>Secteur {row.sector_index} · Surface</small><Effect option={row} /></div>
-      </li>)}</ul>
-      {!!upgrades.length && <><h3 className="d-subtitle">Améliorations possibles</h3>
-        <ul className="d-build-grid option-grid">{upgrades.map(option => <OptionCard key={`${option.sector_index}-${option.target_level}`} colony={colony} option={option}
-          free={data.sectors.free_indices} canBuild={canBuild} stocks={stocks} />)}</ul></>}
+      <PanelHead id="built-title" icon="icons/colonie/colonie-secteurs.svg" title="Bâtiments de la colonie"><span className="d-queue-count">{data.sectors.built} / {data.sectors.capacity} secteurs</span></PanelHead>
+      {data.infrastructures.length ? <ul className="d-built-list">{data.infrastructures.map(row => <BuiltRow key={row.sector_index} colony={colony} row={row}
+        upgrade={upgrades.find(option => option.sector_index === row.sector_index)} canBuild={canBuild} stocks={stocks} />)}</ul>
+        : <p className="muted">Aucun bâtiment pour l’instant : commencez par une construction ci-dessous.</p>}
+    </section>
+    <section className="d-card d-panel" aria-labelledby="available-title">
+      <PanelHead id="available-title" icon="icons/actions/action-construire.svg" title="Nouvelles constructions"><span className="d-queue-count">{data.sectors.free} secteur{data.sectors.free > 1 ? 's' : ''} libre{data.sectors.free > 1 ? 's' : ''}</span></PanelHead>
+      <ul className="d-build-grid option-grid">{ordered.map(option => <OptionCard key={option.infrastructure_type} colony={colony} option={option}
+        free={data.sectors.free_indices} canBuild={canBuild} stocks={stocks} />)}</ul>
     </section>
   </div>;
 }
@@ -283,7 +327,7 @@ export function ColonyScreen({ colony, view, link, onNavigate }: { colony: Colon
     <section className="d-col-hero">
       <div className="d-col-hero-text">
         <nav className="d-crumbs" aria-label="Fil d’Ariane"><span>Colonies</span><span aria-hidden="true">›</span><span aria-current="page">{data.colony.name}</span></nav>
-        <h1 tabIndex={-1}>{data.colony.name}</h1>
+        <ColonyTitle colony={colony} name={data.colony.name} canRename={data.permissions.includes('colony.construct')} />
         <p className="d-col-level">Colonie de l’Empire {data.colony.empire.name}</p>
         <p className="d-col-meta"><span>Planète {data.colony.planet.name}</span><span>Système {data.colony.system.name}</span><span>{/^univers\b/i.test(data.colony.universe.name) ? data.colony.universe.name : `Univers ${data.colony.universe.name}`}</span></p>
         <p className="d-col-desc">Type de monde, niveau et description de la colonie : implémentation backend nécessaire.</p>
@@ -300,12 +344,6 @@ export function ColonyScreen({ colony, view, link, onNavigate }: { colony: Colon
       <article className="d-card d-cap-card"><Pic src="icons/colonie/colonie-emplacements-orbitaux.svg" size={64} />
         <div className="d-cap-body"><div className="d-cap-top"><strong>0 <i>/</i> {data.colony.planet.orbital_capacity}</strong><span className="d-cap-free">à venir</span></div>
           <span className="d-cap-label">Emplacements orbitaux</span><Bar value={0} /></div></article>
-      <article className="d-card d-stock-card" aria-label="Stocks de la colonie">
-        <h2>Stock des ressources</h2>
-        <ul>{data.resources.map(r => <li key={r.resource} title={`Capacité ${r.capacity ? units(r.capacity) : 'illimitée'} · estimation depuis la dernière lecture`}>
-          <img src={asset(resourceIcon[r.resource])} alt="" width="44" height="44" />
-          <span><strong>{integer(estimate(r, elapsed))}</strong><em>+{rate(r.rate_per_hour)}/h</em></span><span className="sr-only">{resourceLabels[r.resource]}</span></li>)}</ul>
-      </article>
     </section>
 
     {data.incoming?.some(a => a.state === 'pending') && <section className="d-card d-panel panel combat-alert" role="alert" aria-labelledby="incoming-title">

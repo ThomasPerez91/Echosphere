@@ -123,3 +123,8 @@ class Colony(Record, Base):
     planet_id: Mapped[UUID] = mapped_column(Uuid)
     founded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     founding_mission_id: Mapped[UUID | None] = mapped_column(Uuid)
+    # Recette 09/11/2026: the player names a colony; the planet name until then.
+    name: Mapped[str | None] = mapped_column(String(40))
+
+    def display_name(self, planet):
+        return self.name or planet.name
