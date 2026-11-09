@@ -17,11 +17,11 @@ export type ActionOffer = { kind: MapAction; label: string; hint: string; planet
 
 export const actionLabels: Record<MissionKind, string> = {
   SURVEY: "Cartographier", DEPLOY: "Déplacer une flotte", COLONIZE: "Coloniser", ATTACK: "Attaquer", RETURN: "Rentrer",
-  PROSPECT: "Prospecter", STUDY: "Étudier",
+  PROSPECT: "Prospecter", STUDY: "Étudier", EXTRACT: "Extraire",
 };
 export const kindNames: Record<MissionKind, string> = {
   SURVEY: "Cartographie", DEPLOY: "Déplacement", COLONIZE: "Colonisation", ATTACK: "Attaque", RETURN: "Retour",
-  PROSPECT: "Prospection", STUDY: "Étude",
+  PROSPECT: "Prospection", STUDY: "Étude", EXTRACT: "Extraction",
 };
 export const actionHints: Record<MapAction, string> = {
   SURVEY: "Une sonde se rend sur ce signal et révèle le système (nom, planètes, routes).",
@@ -30,6 +30,7 @@ export const actionHints: Record<MapAction, string> = {
   ATTACK: "Des vaisseaux militaires attaquent ce monde ; la bataille a lieu au plus tôt 24 h après le départ.",
   PROSPECT: "Une sonde étudie le système en profondeur et révèle ses gisements et curiosités (réserves datées).",
   STUDY: "La flotte étudie cette curiosité une fois pour toutes ; les Données rentrent dans sa soute.",
+  EXTRACT: "Les extracteurs exploitent le gisement pendant la durée choisie ; le débit est partagé avec les autres Empires présents.",
 };
 
 export const opportunityNames: Record<string, string> = {
@@ -53,6 +54,8 @@ export function engageable(w: World, fleet: FleetView, kind: MissionKind): Recor
   if (kind === "SURVEY" || kind === "PROSPECT") return pick(surveyClasses(w));
   // STUDY: the whole fleet goes (its hold brings the Data home); it needs a probe or an extractor.
   if (kind === "STUDY" && !Object.keys(pick([...surveyClasses(w), "extractor"])).length) return {};
+  // EXTRACT: the whole fleet goes (escorts and freighters add protection and hold); one extractor at least.
+  if (kind === "EXTRACT" && !fleet.stacks.extractor) return {};
   if (kind === "ATTACK") return pick(military(w));
   if (kind === "COLONIZE") { const c = colonizer(w); return c && fleet.stacks[c] ? { [c]: 1 } : {}; }
   return Object.fromEntries(Object.entries(fleet.stacks).filter(([, n]) => n > 0));
@@ -95,6 +98,11 @@ export function offers(w: World, systemId: string): ActionOffer[] {
       if (o.family !== "curiosity" || o.studied) continue;
       result.push({ kind: "STUDY", label: `${actionLabels.STUDY} : ${opportunityNames[o.kind] ?? o.kind}`, hint: actionHints.STUDY, opportunity: o.id,
         reason: reasonFor("STUDY", "Aucune flotte avec une sonde ou un extracteur, et une soute pour les Données.") });
+    }
+    for (const o of found.known) {
+      if (o.family !== "deposit") continue;
+      result.push({ kind: "EXTRACT", label: `${actionLabels.EXTRACT} : ${opportunityNames[o.kind] ?? o.kind}`, hint: actionHints.EXTRACT, opportunity: o.id,
+        reason: reasonFor("EXTRACT", "Aucune flotte stationnée avec un extracteur : construisez-en depuis l’écran Flottes.") });
     }
   }
   for (const planet of ref?.planets ?? []) {
@@ -215,7 +223,8 @@ export function missionPosition(w: World, m: MissionView, now: number): Point | 
 /** ATTACK: recall until battle_at; every other mission only while travelling (Fleet screen rule). */
 export function recallable(m: MissionView, now: number) {
   const attack = m.kind === "ATTACK";
-  return m.status === "active" && m.kind !== "RETURN" && now < Date.parse(attack ? m.due_at : m.travel_arrival_at)
+  // EXP-02b: an extraction can be stopped until its end (what was extracted stays aboard).
+  return m.status === "active" && m.kind !== "RETURN" && now < Date.parse(attack || m.kind === "EXTRACT" ? m.due_at : m.travel_arrival_at)
     && (!attack || m.attack?.state === "pending");
 }
 

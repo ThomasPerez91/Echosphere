@@ -59,6 +59,7 @@ def test_migrations_roundtrip_and_no_model_drift(database_engine, migration_conf
         "galaxy_opportunities",
         "opportunity_knowledge",
         "opportunity_studies",
+        "deposit_claims",
         "empire_exploration",
         "system_knowledge",
         "planet_knowledge",

@@ -9,7 +9,7 @@ import { Badge, Button, EmptyState, Panel } from "./ui";
 import { message } from "../fleet/messages";
 import { protocols } from "../fleet/protocols";
 
-const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation", ATTACK: "Attaque", PROSPECT: "Prospection", STUDY: "Étude" };
+const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation", ATTACK: "Attaque", PROSPECT: "Prospection", STUDY: "Étude", EXTRACT: "Extraction" };
 const outcomeLabels: Record<string, string> = {
   attacker_win: "Victoire de l’attaquant", defender_win: "Victoire du défenseur",
   mutual_destruction: "Destruction mutuelle", unopposed: "Aucune défense militaire", target_unavailable: "Cible indisponible",
@@ -402,9 +402,9 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           const badge = m.status === "returning" ? (attack && !m.recalled_at ? "Retour après la bataille" : "Retour après rappel")
             : analysing ? "Analyse en cours" : approaching ? (server >= Date.parse(m.due_at) ? "Bataille en résolution" : "Approche — bataille prévue")
             : attack ? "Attaque — en route" : kindLabels[m.kind];
-          // ATTACK: recall until battle_at; every other mission only while travelling.
+          // ATTACK: recall until battle_at; EXTRACT until its end (stops it); others while travelling.
           const recallable = m.status === "active" && m.kind !== "RETURN" &&
-            server < Date.parse(attack ? m.due_at : m.travel_arrival_at) && (!attack || m.attack?.state === "pending");
+            server < Date.parse(attack || m.kind === "EXTRACT" ? m.due_at : m.travel_arrival_at) && (!attack || m.attack?.state === "pending");
           return <li key={m.id} className="fleet-card">
             <div className="panel-head"><h3>{fleetName(m.fleet_id)}</h3>
               <Badge tone={attack ? "warning" : "accent"}>{badge}</Badge></div>

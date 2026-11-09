@@ -80,6 +80,7 @@ class Operations(StrictModel):
     prospect_seconds: Positive
     extractor_class: Key
     extraction_per_hour: Positive
+    extract_max_hours: Positive
 
 
 class OpportunityRules(StrictModel):

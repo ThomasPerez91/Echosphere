@@ -14,8 +14,11 @@ const titles: Record<PlannerStep, string> = { fleet: "Quelle flotte envoyer ?", 
  * One decision at a time (all screen sizes): fleet → units → server summary → confirm, with
  * visible Back/Continue. The map stays the context; nothing is sent before the explicit confirm.
  */
-export function MissionPlanner({ world, target, offer, fleets, fleet, units, step, quoteKey, quote, path, pending, onFleet, onUnits, onStep, onConfirm, onCancel }: {
+export const EXTRACT_HOURS = { initial: 8, max: 24 }; // UI bounds only: the server applies the ruleset
+
+export function MissionPlanner({ world, target, offer, fleets, fleet, units, hours = EXTRACT_HOURS.initial, onHours, step, quoteKey, quote, path, pending, onFleet, onUnits, onStep, onConfirm, onCancel }: {
   world: World; target: string; offer: ActionOffer; fleets: FleetView[]; fleet: FleetView | null; units: Record<string, number>;
+  hours?: number; onHours?: (h: number) => void;
   step: PlannerStep; quoteKey: string | null; quote: QuoteState; path: string[] | undefined; pending: boolean;
   onFleet: (id: string) => void; onUnits: (u: Record<string, number>) => void; onStep: (s: PlannerStep) => void;
   onConfirm: () => void; onCancel: () => void;
@@ -78,6 +81,12 @@ export function MissionPlanner({ world, target, offer, fleets, fleet, units, ste
             </div>;
           })}
           <p className="cmd-help" aria-live="polite">{engaged} unité(s) engagée(s) sur {total}.</p>
+          {offer.kind === "EXTRACT" && <div className="cmd-stepper" role="group" aria-label="Durée d’extraction">
+            <span className="cmd-stepper-label">Durée d’extraction</span>
+            <button type="button" className="button" aria-label="Une heure de moins" disabled={hours <= 1} onClick={() => onHours?.(hours - 1)}>−</button>
+            <output aria-live="polite">{hours} h</output>
+            <button type="button" className="button" aria-label="Une heure de plus" disabled={hours >= EXTRACT_HOURS.max} onClick={() => onHours?.(hours + 1)}>+</button>
+          </div>}
         </>}
       </>}
 
@@ -89,7 +98,7 @@ export function MissionPlanner({ world, target, offer, fleets, fleet, units, ste
             <div><dt>Départ</dt><dd>{systemName(world, fleet?.system?.id)}</dd></div>
             <div><dt>Destination</dt><dd>{systemName(world, q.destination_id)}</dd></div>
             <div><dt>Sauts</dt><dd>{q.hops === 0 ? "0 (même système)" : q.hops}</dd></div>
-            <div><dt>Durée</dt><dd>{duration(q.travel_us)}{["SURVEY", "PROSPECT", "STUDY"].includes(q.kind) ? ` + analyse ${duration(q.survey_us)}` : ""}</dd></div>
+            <div><dt>Durée</dt><dd>{duration(q.travel_us)}{["SURVEY", "PROSPECT", "STUDY"].includes(q.kind) ? ` + analyse ${duration(q.survey_us)}` : q.kind === "EXTRACT" ? ` + extraction ${duration(q.survey_us)}` : ""}</dd></div>
             <div><dt>Arrivée</dt><dd>{time(q.travel_arrival_at)}</dd></div>
             {q.battle_at && <div><dt>Bataille</dt><dd>{time(q.battle_at)}</dd></div>}
             <div><dt>Carburant</dt><dd>{resourceKeys.filter((k) => BigInt(q.cost[k]) > 0n).map((k) => `${amount(q.cost[k])} ${resourceLabels[k]}`).join(" · ") || "aucun"}{q.kind === "ATTACK" ? " (aller-retour)" : ""}</dd></div>

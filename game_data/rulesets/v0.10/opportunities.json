@@ -118,6 +118,7 @@
   "operations": {
     "prospect_seconds": 1800,
     "extractor_class": "extractor",
-    "extraction_per_hour": 20
+    "extraction_per_hour": 20,
+    "extract_max_hours": 24
   }
 }

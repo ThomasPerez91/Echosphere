@@ -13,7 +13,7 @@ from sqlalchemy import func, literal, select, tuple_
 from app.colonization.service import found_colony
 from app.colony.service import ColonyError, catch_up_owned, owned_colony, recoverable_refunds
 from app.colony.service import rules_for as ruleset_for
-from app.fleet import exploitation
+from app.fleet import exploitation, extraction
 from app.fleet.models import (
     Fleet,
     FleetCargo,
@@ -748,17 +748,19 @@ def check_attack(session, empire_id, target_planet_id, colony_read):
 
 def plan_mission(
     session, rules, fleet, kind, destination_id, stacks, target_planet_id=None,
-    target_opportunity_id=None, cargo_room=None,
+    target_opportunity_id=None, cargo_room=None, duration_hours=None,
 ):
-    """Server path and quote; the client never chooses routes, durations or costs."""
+    """Server path and quote; the client never chooses routes or costs (EXTRACT: only its
+    length in whole hours, bounded by the ruleset)."""
     if kind in exploitation.ANALYSES:
         if target_planet_id is not None:
             raise FleetError("Unknown mission", "invalid_request")
         room = cargo_room or (lambda units: rules.fleets.cargo_capacity(units))
         return exploitation.plan(
-            session, rules, fleet, kind, destination_id, stacks, target_opportunity_id, room
+            session, rules, fleet, kind, destination_id, stacks, target_opportunity_id, room,
+            duration_hours,
         )
-    if target_opportunity_id is not None:
+    if target_opportunity_id is not None or duration_hours is not None:
         raise FleetError("Unknown mission", "invalid_request")
     if kind == "COLONIZE":
         return plan_colonize(session, rules, fleet, destination_id, stacks, target_planet_id)
@@ -838,6 +840,7 @@ def launch(
     target_planet_id=None,
     colony_read=False,
     target_opportunity_id=None,
+    duration_hours=None,
 ):
     with session.begin_nested():
         rules = rules_for(session, universe_id)
@@ -853,6 +856,8 @@ def launch(
             request["target_planet_id"] = str(target_planet_id)
         if target_opportunity_id is not None:
             request["target_opportunity_id"] = str(target_opportunity_id)
+        if duration_hours is not None:
+            request["duration_hours"] = duration_hours
         existing = session.scalar(
             select(FleetMission).where(
                 FleetMission.empire_id == empire_id, FleetMission.idempotency_key == key
@@ -877,6 +882,7 @@ def launch(
             session, rules, source, kind, destination_id, stacks, target_planet_id,
             target_opportunity_id,
             lambda units: rules.fleets.cargo_capacity(units) - sum(carried.values()),
+            duration_hours,
         )
         if kind == "COLONIZE":
             check_colonize(
@@ -916,8 +922,10 @@ def launch(
             snapshot |= colonize_terms(rules, target_planet_id, due, utc(at), mission_id)
         if kind == "ATTACK":
             snapshot |= attack_terms(rules, target_planet_id, due)
-        if kind == "STUDY":
+        if kind in ("STUDY", "EXTRACT"):
             snapshot["target_opportunity_id"] = str(target_opportunity_id)
+        if kind == "EXTRACT":
+            snapshot["duration_hours"] = duration_hours
         snapshot["request"] = request
         mission = FleetMission(
             id=mission_id,
@@ -930,7 +938,7 @@ def launch(
             destination_id=destination,
             payer_colony_id=fleet.home_colony_id,
             target_planet_id=target_planet_id,
-            target_opportunity_id=target_opportunity_id if kind == "STUDY" else None,
+            target_opportunity_id=target_opportunity_id if kind in ("STUDY", "EXTRACT") else None,
             idempotency_key=key,
             snapshot=snapshot,
             started_at=utc(at),
@@ -954,6 +962,9 @@ def launch(
         fleet.status, fleet.system_id, fleet.active_mission_id = "MOVING", None, mission.id
         session.flush()
         frontier.record_outbound(session, rules, mission, state.stream_id, path, quote[1])
+        if kind == "EXTRACT":
+            extractors, room = extraction_terms(session, rules, fleet, stacks)
+            extraction.open_claim(session, rules, mission, extractors, room, utc(at))
         if kind == "ATTACK":
             # No arrival event: the Combat orchestrator resolves the engagement at battle_at.
             from app.combat.service import open_engagement
@@ -1017,6 +1028,7 @@ def preview(
     target_planet_id=None,
     colony_read=False,
     target_opportunity_id=None,
+    duration_hours=None,
 ):
     """Read-only quote of a launch; the command recomputes everything under lock."""
     rules = rules_for(session, universe_id)
@@ -1029,6 +1041,7 @@ def preview(
         session, rules, source, kind, destination_id, wanted, target_planet_id,
         target_opportunity_id,
         lambda units: rules.fleets.cargo_capacity(units) - sum(carried.values()),
+        duration_hours,
     )
     if kind == "COLONIZE":
         # The package aboard is chosen at launch; the launch checks it against the minimum.
@@ -1196,6 +1209,13 @@ SNAPSHOT_KEYS = {
 COLONIZE_KEYS = SNAPSHOT_KEYS | {"target_planet_id", "colonization", "rank"}
 ATTACK_KEYS = SNAPSHOT_KEYS | {"target_planet_id", "combat", "battle_at"}
 STUDY_KEYS = SNAPSHOT_KEYS | {"target_opportunity_id"}
+EXTRACT_KEYS = STUDY_KEYS | {"duration_hours"}
+
+
+def extraction_terms(session, rules, fleet, stacks):
+    """(extractors, free hold) of an engaged EXTRACT fleet, as at its launch."""
+    room = rules.fleets.cargo_capacity(stacks) - sum(cargo_of(session, fleet.id).values())
+    return stacks.get(rules.opportunities.operations.extractor_class, 0), room
 
 
 def verify_mission_snapshot(session, mission, engaged=None):
@@ -1213,6 +1233,7 @@ def verify_mission_snapshot(session, mission, engaged=None):
         COLONIZE_KEYS if colonize
         else ATTACK_KEYS if attack
         else STUDY_KEYS if mission.kind == "STUDY"
+        else EXTRACT_KEYS if mission.kind == "EXTRACT"
         else SNAPSHOT_KEYS
     )
     if (
@@ -1245,18 +1266,28 @@ def verify_mission_snapshot(session, mission, engaged=None):
             raise ValueError("PROSPECT with a non-survey class")
         if mission.kind == "STUDY" and not exploitation.can_study(rules, stacks):
             raise ValueError("STUDY without instruments")
-        if analysis:
+        if mission.kind == "EXTRACT":
+            extractors, room = extraction_terms(session, rules, fleet, stacks)
+            if extractors < 1 or room <= 0:
+                raise ValueError("EXTRACT without extractor or hold")
+            analysis_us = extraction.planned_us(
+                rules, session.get(GalaxyOpportunity, mission.target_opportunity_id),
+                extractors, room, snapshot.get("duration_hours"),
+            )
+        elif analysis:
             seconds = (
                 rules.opportunities.operations.prospect_seconds
                 if mission.kind == "PROSPECT"
                 else session.get(GalaxyOpportunity, mission.target_opportunity_id).study_seconds
             )
+            analysis_us = amount(seconds * MICRO_UNITS)
+        if analysis:
             cost, duration = dict(NO_COST), 0
             if path:
                 cost, duration, _ = rules.fleets.mission_quote(
                     stacks, len(path), rules.colony.speeds["fleet"], False
                 )
-            quote = (cost, duration, amount(seconds * MICRO_UNITS))
+            quote = (cost, duration, analysis_us)
         elif (colonize or attack) and not path:
             quote = (dict(NO_COST), 0, 0)
         else:
@@ -1287,8 +1318,10 @@ def verify_mission_snapshot(session, mission, engaged=None):
             raise TimelineError("Inconsistent mission snapshot")
     if attack:
         expected |= attack_terms(rules, mission.target_planet_id, mission.due_at)
-    if mission.kind == "STUDY":
+    if mission.kind in ("STUDY", "EXTRACT"):
         expected["target_opportunity_id"] = str(mission.target_opportunity_id)
+    if mission.kind == "EXTRACT":
+        expected["duration_hours"] = snapshot.get("duration_hours")
     if any(snapshot[k] != v for k, v in expected.items()):
         raise TimelineError("Inconsistent mission snapshot")
     if mission.kind == "RETURN" and mission.destination_id != colony_system(
@@ -1316,6 +1349,23 @@ def settle_fleet(session, mission, system_id, at):
     session.flush()
 
 
+def finish_extraction(session, mission, at):
+    """The claim's credit, final at `at`, is loaded in the hold (it fits: the claim's room is
+    the free hold at launch). The fleet then stays in the system."""
+    rules = ruleset_for(session, mission.universe_id)
+    resource, credited = extraction.close_claim(session, rules, mission, at)
+    cargo = cargo_of(session, mission.fleet_id)
+    cargo[resource] = cargo.get(resource, 0) + credited
+    if sum(cargo.values()) > rules.fleets.cargo_capacity(stacks_of(session, mission.fleet_id)):
+        raise TimelineError("Extraction beyond the hold")
+    set_cargo(session, mission.fleet_id, {r: v for r, v in cargo.items() if v})
+    return {
+        "opportunity_id": str(mission.target_opportunity_id),
+        "resource": resource,
+        "extracted": str(credited),
+    }
+
+
 def complete_arrival(session, event, processed_at):
     mission = check_mission_event(session, event, "fleet-arrival")
     if mission.status == "completed" and session.get(FleetReport, mission.id) is not None:
@@ -1337,6 +1387,8 @@ def complete_arrival(session, event, processed_at):
         )
     if mission.kind == "PROSPECT":
         result |= exploitation.prospect(session, mission, event.due_at)
+    if mission.kind == "EXTRACT":
+        result |= finish_extraction(session, mission, event.due_at)
     if mission.kind == "STUDY":
         rules = ruleset_for(session, mission.universe_id)
         fleet_id = mission.fleet_id
@@ -1463,6 +1515,8 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
             return recall_attack(session, state, mission, key, request, at)
         if mission.kind == "COLONIZE":
             lock_target(session, mission)  # visible to a competing claim only once committed
+        if mission.kind == "EXTRACT" and utc(at) >= mission.travel_arrival_at:
+            return stop_extraction(session, state, mission, key, request, at)
         # DEPLOY until arrival; SURVEY only while travelling, never during the analysis.
         if utc(at) >= mission.travel_arrival_at:
             raise FleetError("Fleet already arrived", "recall_too_late")
@@ -1477,6 +1531,8 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         # Never schedule a return from a drifted mission: its origin comes from the snapshot.
         verify_mission_snapshot(session, mission)
         event.status, event.completed_at, event.error_code = "completed", utc(at), "cancelled"
+        if mission.kind == "EXTRACT":
+            extraction.close_claim(session, rules, mission, utc(at))  # empty window
         mission.status, mission.recalled_at = "returning", utc(at)
         mission.return_at = utc(at) + (utc(at) - mission.started_at)
         session.flush()
@@ -1492,6 +1548,36 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         )
         record(session, universe_id, empire_id, key, "recall", request, request, at)
         return mission
+
+
+def stop_extraction(session, state, mission, key, request, at):
+    """EXP-02b: a recall during the extraction stops it now; what was extracted is loaded and
+    the fleet stays in the system (it travels home by an ordinary mission)."""
+    event = session.scalar(
+        select(ScheduledEvent).where(
+            ScheduledEvent.stream_id == state.stream_id,
+            ScheduledEvent.idempotency_key == f"fleet-arrival:{mission.id}",
+        )
+    )
+    if event is None or event.status != "pending":
+        raise TimelineError("Arrival event missing or blocked")
+    verify_mission_snapshot(session, mission)
+    event.status, event.completed_at, event.error_code = "completed", utc(at), "cancelled"
+    result = {"kind": "EXTRACT", "destination_id": str(mission.destination_id), "stopped": True}
+    result |= finish_extraction(session, mission, utc(at))
+    session.add(
+        FleetReport(
+            mission_id=mission.id,
+            empire_id=mission.empire_id,
+            universe_id=mission.universe_id,
+            observed_at=utc(at),
+            processed_at=utc(at),
+            result=result,
+        )
+    )
+    settle_fleet(session, mission, mission.destination_id, utc(at))
+    record(session, mission.universe_id, mission.empire_id, key, "recall", request, request, at)
+    return mission
 
 
 def recall_attack(session, state, mission, key, request, at):

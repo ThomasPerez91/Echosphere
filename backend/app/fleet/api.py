@@ -48,11 +48,15 @@ class Order(Body):
 
 class Plan(Body):
     fleet_id: str = Field(pattern=UUID_PATTERN)
-    kind: Literal["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK", "PROSPECT", "STUDY"]
+    kind: Literal[
+        "DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK", "PROSPECT", "STUDY", "EXTRACT"
+    ]
     destination_id: str | None = Field(default=None, pattern=UUID_PATTERN)
     target_planet_id: str | None = Field(default=None, pattern=UUID_PATTERN)
-    # EXP-02a (v0.10): the curiosity a STUDY analyses.
+    # EXP-02 (v0.10): the curiosity a STUDY analyses, the deposit an EXTRACT works.
     target_opportunity_id: str | None = Field(default=None, pattern=UUID_PATTERN)
+    # EXP-02b: extraction length in whole hours (bounded by the pinned ruleset).
+    duration_hours: int | None = Field(default=None, ge=1, le=1000)
     units: Units = Field(min_length=1, max_length=16)
 
 
@@ -487,7 +491,7 @@ class Fleets(Colonies):
         if kind == "COLONIZE":
             # Founding is irreversible in v0.5: a dedicated right, never colony.construct.
             return ("fleet.command", "galaxy.read", "colony.expand")
-        if kind in ("SURVEY", "PROSPECT", "STUDY"):
+        if kind in ("SURVEY", "PROSPECT", "STUDY", "EXTRACT"):
             return ("fleet.command", "galaxy.read")
         return ("fleet.command",)
 
@@ -508,6 +512,7 @@ class Fleets(Colonies):
                 UUID(body.target_planet_id) if body.target_planet_id else None,
                 "colony.read" in permissions,
                 UUID(body.target_opportunity_id) if body.target_opportunity_id else None,
+                body.duration_hours,
             )
             if "colony.read" not in permissions:
                 # Commanding stays allowed without colony.read; the paying colony is not shown.
@@ -535,6 +540,7 @@ class Fleets(Colonies):
                 target_opportunity_id=UUID(body.target_opportunity_id)
                 if body.target_opportunity_id
                 else None,
+                duration_hours=body.duration_hours,
             )
             return {"mission_id": str(mission.id), "fleet_id": str(mission.fleet_id)}
 

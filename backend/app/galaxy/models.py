@@ -323,6 +323,7 @@ class GalaxyOpportunity(Record, Base):
         CheckConstraint("family IN ('deposit','curiosity')", name="family"),
         CheckConstraint("tier IN ('common','remarkable')", name="tier"),
         CheckConstraint(DEPOSIT_SHAPE, name="shape"),
+        CheckConstraint("settle_remainder >= 0", name="settle_remainder"),
         CheckConstraint(
             "(dossier IS NULL AND clue IS NULL) OR (family = 'curiosity' AND dossier >= 0 "
             "AND clue >= 0)",
@@ -344,6 +345,10 @@ class GalaxyOpportunity(Record, Base):
     data_reward: Mapped[int | None] = mapped_column(BigInteger)
     dossier: Mapped[int | None]
     clue: Mapped[int | None]
+    # EXP-02b: extraction is settled up to settled_at (shared by every Empire's claim); the
+    # supply fraction below one micro-unit is kept, never lost (micro-unit x microsecond / h).
+    settled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    settle_remainder: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
 
 
 class OpportunityKnowledge(Base):
@@ -391,3 +396,36 @@ class OpportunityStudy(Base):
     mission_id: Mapped[UUID] = mapped_column(Uuid, unique=True)
     studied_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     data_credited: Mapped[int] = mapped_column(BigInteger)
+
+
+class DepositClaim(Base):
+    """EXP-02b: one EXTRACT mission working a deposit between active_from (arrival) and
+    active_until (planned end, or recall). Shares of the deposit throughput are settled on the
+    deposit row lock, in time order, across every Empire's claims; credited is final once
+    settled past active_until. Never visible to another Empire."""
+
+    __tablename__ = "deposit_claims"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["empire_id", "universe_id"],
+            ["empire_exploration.empire_id", "empire_exploration.universe_id"],
+        ),
+        ForeignKeyConstraint(
+            ["opportunity_id", "universe_id"],
+            ["galaxy_opportunities.id", "galaxy_opportunities.universe_id"],
+        ),
+        ForeignKeyConstraint(["mission_id"], ["fleet_missions.id"]),
+        CheckConstraint("extractors > 0", name="extractors"),
+        CheckConstraint("room >= 0 AND credited >= 0 AND credited <= room", name="credited"),
+        CheckConstraint("active_until >= active_from", name="window"),
+        Index("ix_deposit_claims_opportunity", "opportunity_id", "active_until"),
+    )
+    mission_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    empire_id: Mapped[UUID] = mapped_column(Uuid)
+    universe_id: Mapped[UUID] = mapped_column(Uuid)
+    opportunity_id: Mapped[UUID] = mapped_column(Uuid)
+    extractors: Mapped[int]
+    room: Mapped[int] = mapped_column(BigInteger)
+    active_from: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    active_until: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    credited: Mapped[int] = mapped_column(BigInteger, default=0)

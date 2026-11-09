@@ -87,7 +87,8 @@ E progression furtive · F contournement · G jeu hors ligne · H crash/redémar
 | Galaxie v2 + bascule v0.10 | `work/galaxy-v2` (PR #33) | Livrés : impasses, goulots, tailles 100–2 000, start_universe/Portal en v0.10 |
 | EXP-01b | `work/exp-01b-opportunities` | Livré : tables `galaxy_opportunities` / `opportunity_knowledge` (migration 0015), génération avec le monde v0.10 (insertion groupée), signatures à la cartographie, détails datés après prospection, onglet « Données » |
 | EXP-02a | `work/exp-02a-prospect-study` | Livré : classe Extracteur, missions PROSPECT/STUDY (migration 0016), Données d’étude en soute, offres « Prospecter » / « Étudier » sur la carte |
-| EXP-02b | — | Suivant : EXTRACT, partage proportionnel entre extracteurs, capacité de transport |
+| EXP-02b | `work/exp-02b-extract` | Livré : mission EXTRACT, chantiers partagés au prorata (migration 0017), arrêt sur rappel, offre « Extraire » |
+| EXP-02c | — | Suivant : dossiers complets (A4), exploitation contestée (A1), flottes civiles destructibles |
 
 ## 8. EXP-01b — contrat de projection (09/11/2026)
 
@@ -122,30 +123,31 @@ l’Empire, droits `fleet.command` + `galaxy.read`.
 - Carte : « Prospecter » sur un système portant des signatures ou des opportunités connues ;
   « Étudier : <curiosité> » par curiosité non étudiée (flotte entière, sa soute rapporte les Données).
 
-## 10. EXP-02b — conception EXTRACT (09/11/2026, avant implémentation)
+## 10. EXP-02b — contrat EXTRACT (09/11/2026)
 
 Règles validées appliquées : partage entre Empires neutres selon les extracteurs présents et la
 capacité de transport (A3 remplacé) ; entre ennemis, l’affrontement relève d’EXP-02c (A1 remplacé).
 
 - **Lancement** : `target_opportunity_id` = gisement prospecté par l’Empire (`opportunity_not_found`
-  sinon), au moins un extracteur (`extract_units`), soute libre > 0 (`cargo_insufficient`),
-  `duration_hours` borné par le ruleset, `after` = `STAY` ou `RETURN`. Carburant selon la règle
-  des missions existantes, chemin serveur, 0 saut possible.
-- **Chantier** : à l’arrivée, une ligne `deposit_claims` (mission, Empire, extracteurs, soute libre,
-  début, fin prévue, crédit, reste µ) devient active. Aucun premier arrivé propriétaire.
-- **Règlement** : la ligne du gisement porte `settled_at`. Toute arrivée, fin, rappel ou contrôle
-  d’un chantier verrouille la ligne du gisement (`FOR UPDATE`, jamais le stream d’un autre Empire),
-  puis règle l’intervalle `[settled_at, maintenant]` : offre = débit/h × durée ; demande de chaque
-  chantier = extracteurs × `extraction_per_hour` × durée, plafonnée par sa soute restante ; si la
-  demande dépasse l’offre, partage au prorata des extracteurs, la part qu’un chantier plein ne peut
-  prendre étant redistribuée aux autres (remplissage) ; la réserve baisse de la somme, jamais sous
-  zéro ; arrondis en µ-unités entières, restes persistés par chantier.
-- **Fin** : chaque Empire planifie sur son propre stream un contrôle à l’heure estimée de soute
-  pleine ou de fin prévue ; au contrôle, règlement puis fin si soute pleine, réserve épuisée ou durée
-  atteinte, sinon nouveau contrôle à la nouvelle estimation (l’arrivée d’un concurrent ne réécrit
-  jamais le stream d’un autre). Fin → `STAY` (la flotte reste, cargo à bord) ou `RETURN` (trajet
-  retour vers la colonie d’origine, déchargement normal).
-- **Reprise après crash** : tout est daté et réglé sous verrou dans la transaction du handler ; un
-  contrôle rejoué règle un intervalle vide.
-- **Fog** : un Empire ne voit pas les chantiers des autres ; il constate seulement son crédit et,
-  à une nouvelle observation, la réserve.
+  sinon, sa réserve actuelle restant inconnue), `duration_hours` entier de 1 à
+  `operations.extract_max_hours` (`invalid_request`), au moins un extracteur (`extract_units`), soute
+  libre > 0 (`cargo_insufficient`). La flotte entière part (escortes et cargos ajoutent protection et
+  soute). Chemin serveur, 0 saut possible, carburant selon la règle des missions existantes.
+- **Durée prévue** = min(heures choisies, temps pour remplir la soute seul au débit
+  min(extracteurs × `extraction_per_hour`, débit du gisement)) ; la concurrence ne fait que ralentir.
+- **Chantier** (`deposit_claims`, migration 0017) : créé au lancement, actif de l’arrivée à la fin
+  prévue ; aucun premier arrivé propriétaire ; jamais visible d’un autre Empire.
+- **Règlement** : la ligne du gisement porte `settled_at` et `settle_remainder`. Lancement, fin ou
+  rappel verrouillent la ligne du gisement (`FOR UPDATE`, jamais le stream d’un autre Empire) et
+  règlent `[settled_at, date]` par segments entre bornes de chantiers : offre = débit × durée (reste
+  sous la µ-unité conservé) ; demande = extracteurs × taux × durée, plafonnée par la soute libre ;
+  partage au prorata des extracteurs avec redistribution de la part d’un chantier plein ; réserve
+  jamais négative. Chaque date de règlement arrondit une fois de plus (au plus une µ-unité par date) :
+  résultat fonction des dates persistées seulement, jamais de l’Empire qui règle.
+- **Fin** : à l’échéance, le crédit final est chargé en soute et la flotte **reste** dans le système
+  (elle rentre par une mission ordinaire). Rappel pendant le trajet : retour symétrique, fenêtre vide ;
+  rappel pendant l’extraction : arrêt immédiat, ce qui est extrait est chargé, la flotte reste.
+- **Écart avec la conception** : le choix « reste/rentre » au lancement n’est pas implémenté ; la flotte
+  reste toujours et l’Empire la renvoie ensuite (un aller-retour automatique pourra s’ajouter).
+- **Interface** : « Extraire : <gisement> » sur la carte, durée réglable dans l’étape « Unités »
+  (bornes d’affichage 1–24 h, le serveur applique le ruleset).

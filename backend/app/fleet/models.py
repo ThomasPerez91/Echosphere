@@ -191,7 +191,7 @@ class FleetMission(Record, Base):
         UniqueConstraint("id", "empire_id", "universe_id", name="uq_fleet_mission_scope"),
         UniqueConstraint("empire_id", "idempotency_key", name="uq_fleet_mission_key"),
         CheckConstraint(
-            "kind IN ('DEPLOY','SURVEY','RETURN','COLONIZE','ATTACK','PROSPECT','STUDY')",
+            "kind IN ('DEPLOY','SURVEY','RETURN','COLONIZE','ATTACK','PROSPECT','STUDY','EXTRACT')",
             name="kind",
         ),
         CheckConstraint("status IN ('active','returning','completed')", name="status"),
@@ -200,11 +200,13 @@ class FleetMission(Record, Base):
         ),
         # EXP-02: STUDY targets one curiosity of the destination system.
         CheckConstraint(
-            "(kind = 'STUDY') = (target_opportunity_id IS NOT NULL)", name="opportunity"
+            "(kind IN ('STUDY','EXTRACT')) = (target_opportunity_id IS NOT NULL)",
+            name="opportunity",
         ),
         # COLONIZE, ATTACK and the EXP-02 analyses may target the current system: 0 hop.
         CheckConstraint(
-            "origin_id <> destination_id OR kind IN ('COLONIZE','ATTACK','PROSPECT','STUDY')",
+            "origin_id <> destination_id "
+            "OR kind IN ('COLONIZE','ATTACK','PROSPECT','STUDY','EXTRACT')",
             name="route",
         ),
         CheckConstraint(
@@ -214,9 +216,9 @@ class FleetMission(Record, Base):
         ),
         # ATTACK: due_at is battle_at, after the arrival and strictly after the start.
         CheckConstraint(
-            "(kind IN ('SURVEY','PROSPECT','STUDY') AND due_at > travel_arrival_at) "
+            "(kind IN ('SURVEY','PROSPECT','STUDY','EXTRACT') AND due_at > travel_arrival_at) "
             "OR (kind = 'ATTACK' AND due_at >= travel_arrival_at AND due_at > started_at) "
-            "OR (kind NOT IN ('SURVEY','PROSPECT','STUDY','ATTACK') "
+            "OR (kind NOT IN ('SURVEY','PROSPECT','STUDY','EXTRACT','ATTACK') "
             "AND due_at = travel_arrival_at)",
             name="deadline",
         ),
