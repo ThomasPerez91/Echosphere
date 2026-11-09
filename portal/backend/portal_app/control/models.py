@@ -24,11 +24,32 @@ from portal_app.sessions import models as session_models  # noqa: F401
 
 class UniverseReference(Base):
     __tablename__ = "universe_references"
+    __table_args__ = (
+        CheckConstraint(
+            "(created_by IS NULL) = (creation_request_id IS NULL) "
+            "AND (created_by IS NULL) = (start_request IS NULL)",
+            name="universe_creation_fields",
+        ),
+        Index(
+            "uq_universe_creation_request",
+            "created_by",
+            "creation_request_id",
+            unique=True,
+            postgresql_where=text("creation_request_id IS NOT NULL"),
+        ),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     backend_id: Mapped[str] = mapped_column(String(40))
     name: Mapped[str] = mapped_column(String(120))
     provisioned: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # UX-API-02 self-service creation: who asked, with which idempotent request and start options;
+    # the human Empire comes back only in Game's acknowledged receipt. Null for operator provisions.
+    created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), index=True)
+    creation_request_id: Mapped[UUID | None] = mapped_column()
+    start_request: Mapped[dict | None] = mapped_column(JSONB)
+    human_empire_id: Mapped[UUID | None] = mapped_column()
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class UniverseMembership(Base):

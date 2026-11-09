@@ -25,6 +25,30 @@ ruleset d’un univers existant. Les multiplicateurs employés par les tests ne 
 En pause, progression gameplay et IA doivent réellement être suspendues. Une maintenance technique
 n’est pas une pause gameplay. Aucun système de pause n’est implémenté dans ce lot.
 
+## Décisions utilisateur du 09/11/2026 — création de parties (Q59)
+
+Provenance : retours de recette locale et réponses explicites de l’utilisateur le 09/11/2026.
+Elles complètent Q19–Q29/Q55 ; en cas d’écart, **ces décisions priment** sur les valeurs initiales
+ci-dessus pour SOLO et PRIVATE.
+
+- **Priorité** : SOLO et parties à plusieurs (famille PRIVATE, appelée « multi » ou « coop » en
+  interface) d’abord ; PERSISTENT plus tard.
+- **Création en libre-service** depuis le Portal ; un compte peut créer et rejoindre **plusieurs
+  parties**. La création ne demande aucune vérification supplémentaire (la confirmation d’adresse
+  se fait à l’inscription ; l’entrée dans un univers garde sa règle existante).
+- **Multi = un seul mode** : pas de « coop » distincte ni de pacte ou d’équipe imposés ; les
+  joueurs s’allient, coopèrent, se trahissent ou s’affrontent en jeu avec les mécanismes existants.
+- **Taille PRIVATE** : jusqu’à **10 joueurs humains** (remplace le maximum initial de 8) et de
+  l’ordre de **30 IA**, toujours plafonnés selon la taille de la carte.
+- **Invitation** : au choix du créateur, **soit un lien** à copier-coller, **soit un envoi par
+  email** ; jamais les deux pour une même invitation.
+- **Génération de carte** (lot futur) : tailles proposées 100, 300, 500, 1 000 et 2 000 systèmes ;
+  placement des Empires au choix (par exemple *Dispersé* : placement aléatoire ; *Regroupé* : les
+  Empires joueurs proches) ; nombre maximal de joueurs et d’IA déterminé par la taille.
+- **Garde-fou** : rester loin d’un jeu « Stellaris-like » ; le gameplay des grandes cartes et du
+  grand nombre d’Empires est à revoir avec l’utilisateur avant d’activer ces options (Q59 ouverte
+  sur ce point, comme la démonstration de charge Q29).
+
 ## Compte global, Empire partagé et départ (Q21/Q23)
 
 Un compte global peut participer simultanément à plusieurs univers : User → UniverseMembership →

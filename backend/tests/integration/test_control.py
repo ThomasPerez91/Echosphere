@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from alembic import command
@@ -257,3 +257,61 @@ def test_control_downgrade_populated_is_refused(control, migration_config):
         command.downgrade(migration_config, "0004_colony_economy")
     assert control.revision(SERVICE, request.message.membership_id)
     command.check(migration_config)
+
+
+def start(control, profiles=("economic_cautious",), identifier=None, operation=None, name="Orion"):
+    universe = identifier or uuid4()
+    request = op(
+        {
+            "kind": "start_universe",
+            "universe_id": str(universe),
+            "name": name,
+            "seed": "server-random-seed",
+            "family": "solo",
+            "ruleset": "v0.9",
+            "profiles": list(profiles),
+        },
+        operation,
+    )
+    return universe, request, control.apply(SERVICE, request)
+
+
+def test_start_universe_bootstraps_one_human_and_ai_opponents_with_an_immutable_receipt(control):
+    from app.ai.models import AIController
+
+    universe, request, receipt = start(control, ("economic_cautious", "expansionist"))
+    result = receipt["result"]
+    assert result["status"] == "applied" and result["universe_id"] == str(universe)
+    with control.factory() as session:
+        empires = session.scalars(select(Empire).where(Empire.universe_id == universe)).all()
+        assert len(empires) == 3
+        human = session.get(Empire, UUID(result["human_empire_id"]))
+        assert human.controller_type == "human" and human.universe_id == universe
+        controlled = set(session.scalars(select(AIController.empire_id)))
+        assert human.id not in controlled and len(controlled & {e.id for e in empires}) == 2
+    # A retried delivery replays the receipt; the world is not started twice.
+    assert control.apply(SERVICE, request) == receipt
+    with control.factory() as session:
+        assert session.scalar(select(func.count()).select_from(Empire)) == 3
+    # The receipt's human Empire is the one Portal may grant; an AI Empire is refused.
+    granted = control.apply(
+        SERVICE,
+        access(
+            control,
+            universe=universe,
+            bindings=[{"empire_id": result["human_empire_id"], "permissions": ["colony.read"]}],
+        ),
+    )
+    assert granted["result"]["status"] == "applied"
+
+
+def test_start_universe_refuses_a_different_intention_for_the_same_universe(control):
+    universe, _, _ = start(control, ())
+    with pytest.raises(ControlError) as refused:
+        start(control, ("expansionist",), identifier=universe)
+    assert refused.value.code == "universe_content_conflict"
+    # An operator-provisioned universe (other seed) is never started over by this operation.
+    provisioned = provision(control)
+    with pytest.raises(ControlError) as occupied:
+        start(control, (), identifier=provisioned, name="Test")
+    assert occupied.value.code == "bootstrap_requires_empty_universe"
