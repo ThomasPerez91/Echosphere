@@ -5,9 +5,8 @@ from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import select
-from test_colonization import reenter
 from test_colony_api import Clock, game  # noqa: F401
-from test_fleet import FULL, fleets, order, post, surveyed, view, worker  # noqa: F401
+from test_fleet import FULL, fleets, order, post, rebind, surveyed, view, worker  # noqa: F401
 
 from app.fleet.models import FleetReport
 from app.fleet.service import colony_system
@@ -46,9 +45,19 @@ def extract(w, fleet, deposit, units, hours, key=None):
 
 
 def wait(w, minutes):
-    """Advance the clock; a new GameSession afterwards (sessions expire after 2 h idle)."""
+    """Advance the clock, resolve due frontier entries (13B, v0.10) like the combat-worker, then
+    a new access revision and GameSession (long waits outlive both)."""
+    from app.frontier.orchestrator import FrontierOrchestrator
+
     w.advance(minutes=minutes)
-    reenter(w)
+    runner = FrontierOrchestrator(w.game.factory, Clock(w.game))
+    for _ in range(4):  # entries, then the events they unfence, then entries they create
+        for _ in range(50):
+            if runner.process_next() is None:
+                break
+        worker(w)
+    w.revision = getattr(w, "revision", 1) + 1
+    rebind(w, FULL, revision=w.revision)
 
 
 def fleet_by(w, fleet_id):
@@ -115,6 +124,8 @@ def test_a_probe_cannot_extract(fleets):
 def test_an_extraction_elsewhere_can_come_back_home_with_its_load(fleets):
     w = fleets(permissions=FULL, ruleset="v0.10")
     probe_fleet, target = surveyed(w)
+    wait(w, 1)
+    worker(w)
     with w.game.factory.begin() as s:
         deposit = GalaxyOpportunity(
             universe_id=w.universe, system_id=UUID(target), ordinal=90, family="deposit",
