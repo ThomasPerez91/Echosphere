@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { MissionView, Plan } from "../fleet/api";
+import type { FleetView, MissionView, Plan } from "../fleet/api";
 import { message } from "../fleet/messages";
 import type { QuoteState } from "./copy";
 import { FleetDock } from "./FleetDock";
+import { FleetWindow, PickBar } from "./FleetWindow";
 import { MissionPlanner } from "./MissionPlanner";
 import type { PlannerStep } from "./MissionPlanner";
 import { StarMap } from "./StarMap";
@@ -43,6 +44,9 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false); // local guard until the container reports `pending`
   const [menuHidden, setMenuHidden] = useState(false);
+  // Fleets on the map (09/11/2026): window of the fleets of one system, then destination picking.
+  const [fleetAt, setFleetAt] = useState<string | null>(null);
+  const [moving, setMoving] = useState<FleetView | null>(null);
   // Desktop: actions in a context menu next to the system; narrow screens: in the bottom sheet.
   const desktop = useMedia("(min-width: 961px)");
   const panel = useRef<HTMLDivElement>(null);
@@ -84,6 +88,27 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, planKey, api]);
 
+  // Picking: Escape (or right click on the map) cancels and restores the fleet window.
+  useEffect(() => {
+    if (!moving) return;
+    const key = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); setMoving(null); } };
+    document.addEventListener("keydown", key);
+    return () => document.removeEventListener("keydown", key);
+  }, [moving]);
+  const openFleets = (id: string) => { setMoving(null); setFleetAt(id); };
+  const pick = (id: string) => {
+    const f = moving!;
+    const name = systemName(world, id);
+    if (f.system?.id === id) { setNotice(`${f.name} est déjà à ${name} : choisissez un autre système.`); return; }
+    const offer = offers(world, id).find((o) => o.kind === "DEPLOY");
+    if (!offer) { setNotice(`${name} n’est qu’un signal : cartographiez-le avant d’y envoyer une flotte.`); return; }
+    setMoving(null); setFleetAt(null); setNotice(null);
+    setSelected(id); setMenuHidden(true); setTab("overview"); setFailed(false);
+    setIntent({ offer, fleet: f.id, units: defaultUnits(world, f, "DEPLOY") });
+    // A task fleet moves as it is (summary next); a garrison chooses what it detaches.
+    setStep(isGarrison(f) ? "units" : "summary");
+    setQuote({ status: "idle" });
+  };
   const select = (id: string) => {
     setSelected(id); setMenuHidden(false); setIntent(null); setNotice(null); setTab("overview"); setFailed(false);
     // Narrow screens: keep the map in view above the bottom sheet that now holds the system.
@@ -203,7 +228,13 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
             Régions<span className="cmd-switch-track" aria-hidden="true"><span /></span></button>
         </div>
       </div>
-      <StarMap world={world} selected={selected} onSelect={select} missions={missions} now={now}
+      <StarMap world={world} selected={selected} onSelect={moving ? pick : select} missions={missions} now={now}
+        onFleets={openFleets} picking={!!moving} onCancelPick={() => setMoving(null)}
+        overlay={moving ? <PickBar fleet={moving} onCancel={() => setMoving(null)} />
+          : fleetAt ? <FleetWindow world={world} system={fleetAt} now={now} canCommand={canCommand} pending={pending || busy}
+            onClose={() => setFleetAt(null)} onMove={(f) => { setMoving(f); setNotice(null); }}
+            onProtocol={api.protocol ? async (f, p) => { setBusy(true); try { return await api.protocol!(f.id, p); } finally { setBusy(false); } } : undefined} />
+          : null}
         filter={filter} showRoutes={showRoutes} showNames={showNames} focus={focus} backdrop={backdrop} menu={menu}
         preview={intent && fleet?.system && selected && step === "summary" ? { from: fleet.system.id, to: ready?.destination_id ?? selected, path } : null} />
       <details className="cmd-list">
