@@ -8,17 +8,12 @@ import { MissionPlanner } from "./MissionPlanner";
 import type { PlannerStep } from "./MissionPlanner";
 import { StarMap } from "./StarMap";
 import type { MapFilter } from "./StarMap";
-import { actionLabels, defaultUnits, eligibleFleets, isGarrison, knownHops, missionPosition, offers, point, serverPath, stationed, systemName } from "./model";
+import { actionLabels, defaultUnits, eligibleFleets, isGarrison, knownHops, missionPosition, opportunityNames, offers, point, serverPath, stationed, systemName } from "./model";
 import type { ActionOffer, FleetLine, World } from "./model";
 import type { CommandFeedback, MissionApi } from "./types";
 import { useMedia } from "../shell/useNow";
 import { planetImage } from "../shell/assets";
 
-const kindNames: Record<string, string> = {
-  metal_belt: "Ceinture métallique", flux_cloud: "Nuage de flux", memory_crystals: "Cristaux mémoriels",
-  anomaly: "Anomalie spatiale", ancient_wreck: "Épave ancienne", unknown_structure: "Structure d’origine inconnue",
-  artificial_signal: "Signal artificiel",
-};
 const resourceNames = { alloys: "Alliages", flux: "Flux", data: "Données" } as const;
 const whole = (micro?: string) => micro ? Math.floor(Number(micro) / 1_000_000).toLocaleString("fr-FR") : "?";
 
@@ -29,7 +24,7 @@ function OpportunityList({ data }: { data: NonNullable<World["galaxy"]["systems"
       une prospection par une sonde révélera s’il s’agit de gisements ou de curiosités.</p>
       : data.known.length === 0 ? <p>Aucune ressource ni anomalie détectée dans ce système.</p> : null}
     {data.known.length > 0 && <ul className="cmd-opportunities" aria-label="Opportunités connues">{data.known.map((o) => <li key={o.id}>
-      <strong>{kindNames[o.kind] ?? o.kind}</strong>{o.tier === "remarkable" && <span className="cmd-chip cmd-chip--own">Remarquable</span>}
+      <strong>{opportunityNames[o.kind] ?? o.kind}</strong>{o.tier === "remarkable" && <span className="cmd-chip cmd-chip--own">Remarquable</span>}
       <span className="cmd-help">{o.family === "deposit"
         ? `${resourceNames[o.resource!]} · réserve ${whole(o.reserve)} · débit max ${whole(o.throughput_per_hour)}/h`
         : `Étude ${Math.round((o.study_seconds ?? 0) / 3600)} h · ${whole(o.data)} Données${o.dossier !== undefined ? " · indice de dossier" : ""}`}
@@ -83,7 +78,8 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   const engaged = intent ? Object.fromEntries(Object.entries(intent.units).filter(([, n]) => n > 0)) : {};
   const plan: Plan | null = intent && fleet && selected && Object.keys(engaged).length ? {
     fleet_id: fleet.id, kind: intent.offer.kind, units: engaged,
-    ...(intent.offer.planet ? { target_planet_id: intent.offer.planet } : { destination_id: selected }),
+    ...(intent.offer.planet ? { target_planet_id: intent.offer.planet }
+      : intent.offer.opportunity ? { target_opportunity_id: intent.offer.opportunity } : { destination_id: selected }),
   } : null;
   const planKey = plan ? JSON.stringify(plan) : null;
   const ready = quote.status === "ready" && quote.key === planKey ? quote.quote : null;

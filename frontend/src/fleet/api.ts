@@ -57,7 +57,7 @@ export type FrontierRetreat = {
   outcome: "retreated" | "retreat_failed" | "retreat_impossible" | "void"; reason: string | null; destination: SystemRef | null;
 };
 export type Frontier = { protocols: Protocol[]; detections: FrontierDetection[]; encounters: (FrontierEngagement | FrontierRetreat)[] };
-export type MissionKind = "DEPLOY" | "SURVEY" | "RETURN" | "COLONIZE" | "ATTACK";
+export type MissionKind = "DEPLOY" | "SURVEY" | "RETURN" | "COLONIZE" | "ATTACK" | "PROSPECT" | "STUDY";
 /** Own engagement only: battle instant and state; the defender is never projected. */
 export type AttackState = { engagement_id: string; battle_at: string; state: "pending" | "resolved" | "cancelled" };
 export type MissionView = {
@@ -179,7 +179,7 @@ const attackState = (v: unknown) =>
   object(v) && exactKeys(v, ["engagement_id", "battle_at", "state"]) && id(v.engagement_id) && date(v.battle_at) &&
   ["pending", "resolved", "cancelled"].includes(String(v.state));
 const mission = (v: unknown) =>
-  object(v) && id(v.id) && id(v.fleet_id) && ["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK"].includes(String(v.kind)) &&
+  object(v) && id(v.id) && id(v.fleet_id) && ["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK", "PROSPECT", "STUDY"].includes(String(v.kind)) &&
   (["COLONIZE", "ATTACK"].includes(String(v.kind)) ? object(v.target_planet) && id(v.target_planet.id) && typeof v.target_planet.name === "string" : v.target_planet === null) &&
   (v.kind === "ATTACK" ? attackState(v.attack) : v.attack === null || v.attack === undefined) &&
   ["active", "returning", "completed"].includes(String(v.status)) && nullableRef(v.origin) &&
@@ -323,7 +323,7 @@ export async function fleetCommand(universe: string, empire: string, csrf: strin
   return { result: reply.result, fleets: reply.fleets };
 }
 
-export type Plan = { fleet_id: string; kind: MissionKind; destination_id?: string; target_planet_id?: string; units: Record<string, number> };
+export type Plan = { fleet_id: string; kind: MissionKind; destination_id?: string; target_planet_id?: string; target_opportunity_id?: string; units: Record<string, number> };
 
 /** Quote of a launch. A paying colony without colony.read is a leak, refused rather than hidden. */
 export async function previewMission(universe: string, empire: string, csrf: string, plan: Plan, colonyRead: boolean,

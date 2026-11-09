@@ -74,6 +74,14 @@ class Dossiers(StrictModel):
     reward_data: Positive
 
 
+class Operations(StrictModel):
+    """EXP-02 missions: prospection length, the civilian extractor class and its hourly rate."""
+
+    prospect_seconds: Positive
+    extractor_class: Key
+    extraction_per_hour: Positive
+
+
 class OpportunityRules(StrictModel):
     version: str
     opportunity_generator_version: Literal["opportunities-v1"]
@@ -85,6 +93,7 @@ class OpportunityRules(StrictModel):
     dossiers: Dossiers
     starting_zone_radius: Annotated[int, Field(strict=True, ge=1, le=3)]
     starting_zone_deposits: Annotated[int, Field(strict=True, ge=0, le=2)]
+    operations: Operations
 
     @model_validator(mode="after")
     def coherent(self):

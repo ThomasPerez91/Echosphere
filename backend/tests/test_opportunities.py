@@ -28,6 +28,12 @@ def test_v010_is_v09_plus_opportunities_and_galaxy_v2_only():
     for part in old:
         if part in ("opportunities", "galaxy") or old[part] is None:
             continue  # galaxy-v2 has its own tests (test_galaxy_v2.py)
+        if part == "fleets":  # EXP-02: one more civilian class, nothing else changes
+            classes = dict(new["fleets"]["classes"])
+            extractor = classes.pop("extractor")
+            assert {**new["fleets"], "classes": classes, "version": "v0.9"} == old[part]
+            assert extractor["cargo"] > 0 and not extractor["survey"]
+            continue
         assert {**new[part], "version": "v0.9"} == old[part], part
     assert new["opportunities"]["opportunity_generator_version"] == "opportunities-v1"
     for version in [f"v0.{n}" for n in range(1, 10)]:

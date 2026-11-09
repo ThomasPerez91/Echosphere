@@ -22,6 +22,7 @@ from app.galaxy.models import (
     GalaxySystem,
     MissionLeg,
     OpportunityKnowledge,
+    OpportunityStudy,
     PlanetKnowledge,
     RouteKnowledge,
     SystemKnowledge,
@@ -237,6 +238,14 @@ def opportunity_views(session, universe_id, empire_id, system_ids=None):
             )
         )
     }
+    studied = set(
+        session.scalars(
+            select(OpportunityStudy.opportunity_id).where(
+                OpportunityStudy.universe_id == universe_id,
+                OpportunityStudy.empire_id == empire_id,
+            )
+        )
+    )
     views = {}
     for o in session.scalars(rows.order_by(GalaxyOpportunity.system_id, GalaxyOpportunity.ordinal)):
         view = views.setdefault(o.system_id, {"signatures": 0, "known": []})
@@ -250,7 +259,9 @@ def opportunity_views(session, universe_id, empire_id, system_ids=None):
             item.update(resource=o.resource, reserve=str(seen.observed_reserve),
                         throughput_per_hour=str(o.throughput_per_hour))
         else:
-            item.update(study_seconds=o.study_seconds, data=str(o.data_reward))
+            item.update(
+                study_seconds=o.study_seconds, data=str(o.data_reward), studied=o.id in studied
+            )
             if o.dossier is not None:
                 item.update(dossier=o.dossier, clue=o.clue)
         view["known"].append(item)

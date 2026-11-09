@@ -13,6 +13,7 @@ from sqlalchemy import func, literal, select, tuple_
 from app.colonization.service import found_colony
 from app.colony.service import ColonyError, catch_up_owned, owned_colony, recoverable_refunds
 from app.colony.service import rules_for as ruleset_for
+from app.fleet import exploitation
 from app.fleet.models import (
     Fleet,
     FleetCargo,
@@ -27,11 +28,17 @@ from app.fleet.path import public_path, systems_along
 from app.frontier import service as frontier
 from app.frontier.encounter import add as frontier_add
 from app.galaxy import service as galaxy
-from app.galaxy.models import GalaxyRoute, PlanetKnowledge, RouteKnowledge, SystemKnowledge
+from app.galaxy.models import (
+    GalaxyOpportunity,
+    GalaxyRoute,
+    PlanetKnowledge,
+    RouteKnowledge,
+    SystemKnowledge,
+)
 from app.persistence.models import Colony, Planet
 from app.simulation.clock import utc
 from app.simulation.models import ColonyTimeline, ResourceBalance, ScheduledEvent
-from app.simulation.production import RESOURCES, ProductionState, amount, produce
+from app.simulation.production import MICRO_UNITS, RESOURCES, ProductionState, amount, produce
 from app.simulation.scheduler import IdempotencyConflict, TimelineError, lock_stream, schedule
 
 OPEN = ("queued", "active")
@@ -739,8 +746,20 @@ def check_attack(session, empire_id, target_planet_id, colony_read):
     return owner
 
 
-def plan_mission(session, rules, fleet, kind, destination_id, stacks, target_planet_id=None):
+def plan_mission(
+    session, rules, fleet, kind, destination_id, stacks, target_planet_id=None,
+    target_opportunity_id=None, cargo_room=None,
+):
     """Server path and quote; the client never chooses routes, durations or costs."""
+    if kind in exploitation.ANALYSES:
+        if target_planet_id is not None:
+            raise FleetError("Unknown mission", "invalid_request")
+        room = cargo_room or (lambda units: rules.fleets.cargo_capacity(units))
+        return exploitation.plan(
+            session, rules, fleet, kind, destination_id, stacks, target_opportunity_id, room
+        )
+    if target_opportunity_id is not None:
+        raise FleetError("Unknown mission", "invalid_request")
     if kind == "COLONIZE":
         return plan_colonize(session, rules, fleet, destination_id, stacks, target_planet_id)
     if kind == "ATTACK":
@@ -818,6 +837,7 @@ def launch(
     at,
     target_planet_id=None,
     colony_read=False,
+    target_opportunity_id=None,
 ):
     with session.begin_nested():
         rules = rules_for(session, universe_id)
@@ -831,6 +851,8 @@ def launch(
         }
         if target_planet_id is not None:
             request["target_planet_id"] = str(target_planet_id)
+        if target_opportunity_id is not None:
+            request["target_opportunity_id"] = str(target_opportunity_id)
         existing = session.scalar(
             select(FleetMission).where(
                 FleetMission.empire_id == empire_id, FleetMission.idempotency_key == key
@@ -850,8 +872,11 @@ def launch(
         stacks = have if whole else wanted
         if any(have.get(c, 0) < n for c, n in wanted.items()):
             raise FleetError("Units unavailable in fleet", "units_unavailable")
+        carried = cargo_of(session, source.id) if whole else moved_cargo
         destination, path, *quote = plan_mission(
-            session, rules, source, kind, destination_id, stacks, target_planet_id
+            session, rules, source, kind, destination_id, stacks, target_planet_id,
+            target_opportunity_id,
+            lambda units: rules.fleets.cargo_capacity(units) - sum(carried.values()),
         )
         if kind == "COLONIZE":
             check_colonize(
@@ -891,6 +916,8 @@ def launch(
             snapshot |= colonize_terms(rules, target_planet_id, due, utc(at), mission_id)
         if kind == "ATTACK":
             snapshot |= attack_terms(rules, target_planet_id, due)
+        if kind == "STUDY":
+            snapshot["target_opportunity_id"] = str(target_opportunity_id)
         snapshot["request"] = request
         mission = FleetMission(
             id=mission_id,
@@ -903,6 +930,7 @@ def launch(
             destination_id=destination,
             payer_colony_id=fleet.home_colony_id,
             target_planet_id=target_planet_id,
+            target_opportunity_id=target_opportunity_id if kind == "STUDY" else None,
             idempotency_key=key,
             snapshot=snapshot,
             started_at=utc(at),
@@ -988,6 +1016,7 @@ def preview(
     at,
     target_planet_id=None,
     colony_read=False,
+    target_opportunity_id=None,
 ):
     """Read-only quote of a launch; the command recomputes everything under lock."""
     rules = rules_for(session, universe_id)
@@ -995,8 +1024,11 @@ def preview(
     wanted, have = parse_units(rules, units), stacks_of(session, source.id)
     if any(have.get(c, 0) < n for c, n in wanted.items()):
         raise FleetError("Units unavailable in fleet", "units_unavailable")
+    carried = cargo_of(session, source.id) if source.kind == "TASK" and wanted == have else {}
     destination, path, cost, travel, survey = plan_mission(
-        session, rules, source, kind, destination_id, wanted, target_planet_id
+        session, rules, source, kind, destination_id, wanted, target_planet_id,
+        target_opportunity_id,
+        lambda units: rules.fleets.cargo_capacity(units) - sum(carried.values()),
     )
     if kind == "COLONIZE":
         # The package aboard is chosen at launch; the launch checks it against the minimum.
@@ -1163,6 +1195,7 @@ SNAPSHOT_KEYS = {
 }
 COLONIZE_KEYS = SNAPSHOT_KEYS | {"target_planet_id", "colonization", "rank"}
 ATTACK_KEYS = SNAPSHOT_KEYS | {"target_planet_id", "combat", "battle_at"}
+STUDY_KEYS = SNAPSHOT_KEYS | {"target_opportunity_id"}
 
 
 def verify_mission_snapshot(session, mission, engaged=None):
@@ -1175,11 +1208,18 @@ def verify_mission_snapshot(session, mission, engaged=None):
     snapshot, fleet = mission.snapshot, session.get(Fleet, mission.fleet_id)
     rules = ruleset_for(session, mission.universe_id)
     colonize, attack = mission.kind == "COLONIZE", mission.kind == "ATTACK"
-    keys = COLONIZE_KEYS if colonize else (ATTACK_KEYS if attack else SNAPSHOT_KEYS)
+    analysis = mission.kind in exploitation.ANALYSES
+    keys = (
+        COLONIZE_KEYS if colonize
+        else ATTACK_KEYS if attack
+        else STUDY_KEYS if mission.kind == "STUDY"
+        else SNAPSHOT_KEYS
+    )
     if (
         rules.fleets is None
         or (colonize and rules.colonization is None)
         or (attack and rules.combat is None)
+        or (analysis and rules.opportunities is None)
         or not isinstance(snapshot, dict)
         or set(snapshot) != keys
         or fleet is None
@@ -1187,7 +1227,7 @@ def verify_mission_snapshot(session, mission, engaged=None):
         or fleet.home_colony_id != mission.payer_colony_id
     ):
         raise TimelineError("Inconsistent mission snapshot")
-    path = verified_path(session, mission, local=colonize or attack)
+    path = verified_path(session, mission, local=colonize or attack or analysis)
     stacks = stacks_of(session, fleet.id) if engaged is None else engaged
     # 13B: units destroyed by frontier engagements on the way were part of the launch.
     stacks = frontier_add(stacks, frontier.intercepted_losses(session, mission.id))
@@ -1201,7 +1241,23 @@ def verify_mission_snapshot(session, mission, engaged=None):
             raise ValueError("ATTACK engages military units only")
         if attack and cargo_of(session, fleet.id):
             raise ValueError("ATTACK carries no cargo")
-        if (colonize or attack) and not path:
+        if mission.kind == "PROSPECT" and not all(rules.fleets.classes[c].survey for c in stacks):
+            raise ValueError("PROSPECT with a non-survey class")
+        if mission.kind == "STUDY" and not exploitation.can_study(rules, stacks):
+            raise ValueError("STUDY without instruments")
+        if analysis:
+            seconds = (
+                rules.opportunities.operations.prospect_seconds
+                if mission.kind == "PROSPECT"
+                else session.get(GalaxyOpportunity, mission.target_opportunity_id).study_seconds
+            )
+            cost, duration = dict(NO_COST), 0
+            if path:
+                cost, duration, _ = rules.fleets.mission_quote(
+                    stacks, len(path), rules.colony.speeds["fleet"], False
+                )
+            quote = (cost, duration, amount(seconds * MICRO_UNITS))
+        elif (colonize or attack) and not path:
             quote = (dict(NO_COST), 0, 0)
         else:
             quote = rules.fleets.mission_quote(
@@ -1231,6 +1287,8 @@ def verify_mission_snapshot(session, mission, engaged=None):
             raise TimelineError("Inconsistent mission snapshot")
     if attack:
         expected |= attack_terms(rules, mission.target_planet_id, mission.due_at)
+    if mission.kind == "STUDY":
+        expected["target_opportunity_id"] = str(mission.target_opportunity_id)
     if any(snapshot[k] != v for k, v in expected.items()):
         raise TimelineError("Inconsistent mission snapshot")
     if mission.kind == "RETURN" and mission.destination_id != colony_system(
@@ -1276,6 +1334,18 @@ def complete_arrival(session, event, processed_at):
         # Mapping happens at due_at only, after the analysis; same monotone Knowledge merge.
         result["discoveries"] = galaxy.map_system(
             session, mission.universe_id, mission.empire_id, mission.destination_id, event.due_at
+        )
+    if mission.kind == "PROSPECT":
+        result |= exploitation.prospect(session, mission, event.due_at)
+    if mission.kind == "STUDY":
+        rules = ruleset_for(session, mission.universe_id)
+        fleet_id = mission.fleet_id
+        result |= exploitation.study(
+            session, rules, mission,
+            lambda: cargo_of(session, fleet_id),
+            lambda values: set_cargo(session, fleet_id, values),
+            rules.fleets.cargo_capacity(stacks_of(session, fleet_id)),
+            event.due_at,
         )
     session.add(
         FleetReport(

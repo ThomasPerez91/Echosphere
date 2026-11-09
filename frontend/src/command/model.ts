@@ -13,19 +13,29 @@ import type { FleetProjection, FleetView, MissionKind, MissionView } from "../fl
 import type { CommandQuote } from "./types";
 
 export type MapAction = Exclude<MissionKind, "RETURN">;
-export type ActionOffer = { kind: MapAction; label: string; hint: string; planet?: string; reason: string | null };
+export type ActionOffer = { kind: MapAction; label: string; hint: string; planet?: string; opportunity?: string; reason: string | null };
 
 export const actionLabels: Record<MissionKind, string> = {
   SURVEY: "Cartographier", DEPLOY: "Déplacer une flotte", COLONIZE: "Coloniser", ATTACK: "Attaquer", RETURN: "Rentrer",
+  PROSPECT: "Prospecter", STUDY: "Étudier",
 };
 export const kindNames: Record<MissionKind, string> = {
   SURVEY: "Cartographie", DEPLOY: "Déplacement", COLONIZE: "Colonisation", ATTACK: "Attaque", RETURN: "Retour",
+  PROSPECT: "Prospection", STUDY: "Étude",
 };
 export const actionHints: Record<MapAction, string> = {
   SURVEY: "Une sonde se rend sur ce signal et révèle le système (nom, planètes, routes).",
   DEPLOY: "La flotte se rend dans ce système et y reste stationnée.",
   COLONIZE: "Un colonisateur fonde une colonie sur ce monde, si personne ne l’occupe à l’arrivée.",
   ATTACK: "Des vaisseaux militaires attaquent ce monde ; la bataille a lieu au plus tôt 24 h après le départ.",
+  PROSPECT: "Une sonde étudie le système en profondeur et révèle ses gisements et curiosités (réserves datées).",
+  STUDY: "La flotte étudie cette curiosité une fois pour toutes ; les Données rentrent dans sa soute.",
+};
+
+export const opportunityNames: Record<string, string> = {
+  metal_belt: "Ceinture métallique", flux_cloud: "Nuage de flux", memory_crystals: "Cristaux mémoriels",
+  anomaly: "Anomalie spatiale", ancient_wreck: "Épave ancienne", unknown_structure: "Structure d’origine inconnue",
+  artificial_signal: "Signal artificiel",
 };
 
 export type World = { fleets: FleetProjection; galaxy: { systems: KnownSystem[]; routes: Route[] } };
@@ -40,7 +50,9 @@ export const isGarrison = (f: FleetView) => f.kind === "GARRISON";
 /** Maximum units of each class a fleet can engage for an action (same families as the Fleet screen). */
 export function engageable(w: World, fleet: FleetView, kind: MissionKind): Record<string, number> {
   const pick = (classes: string[]) => Object.fromEntries(Object.entries(fleet.stacks).filter(([c, n]) => n > 0 && classes.includes(c)));
-  if (kind === "SURVEY") return pick(surveyClasses(w));
+  if (kind === "SURVEY" || kind === "PROSPECT") return pick(surveyClasses(w));
+  // STUDY: the whole fleet goes (its hold brings the Data home); it needs a probe or an extractor.
+  if (kind === "STUDY" && !Object.keys(pick([...surveyClasses(w), "extractor"])).length) return {};
   if (kind === "ATTACK") return pick(military(w));
   if (kind === "COLONIZE") { const c = colonizer(w); return c && fleet.stacks[c] ? { [c]: 1 } : {}; }
   return Object.fromEntries(Object.entries(fleet.stacks).filter(([, n]) => n > 0));
@@ -50,7 +62,7 @@ export function engageable(w: World, fleet: FleetView, kind: MissionKind): Recor
 export function defaultUnits(w: World, fleet: FleetView, kind: MissionKind): Record<string, number> {
   if (isGarrison(fleet) || kind === "ATTACK") return {};
   const max = engageable(w, fleet, kind);
-  if (kind === "SURVEY") { const [first] = Object.keys(max); return first ? { [first]: 1 } : {}; }
+  if (kind === "SURVEY" || kind === "PROSPECT") { const [first] = Object.keys(max); return first ? { [first]: 1 } : {}; }
   return max; // COLONIZE: exactly one colonizer; DEPLOY: the task fleet moves as it is
 }
 
@@ -74,6 +86,17 @@ export function offers(w: World, systemId: string): ActionOffer[] {
   }
   result.push({ kind: "DEPLOY", label: actionLabels.DEPLOY, hint: actionHints.DEPLOY,
     reason: reasonFor("DEPLOY", "Aucune flotte stationnée ailleurs ne peut s’y rendre.") });
+  // EXP-02a (v0.10): only where the server projects opportunities for this system.
+  const found = known.opportunities;
+  if (found && can(w, "galaxy.read")) {
+    if (found.signatures > 0 || found.known.length) result.push({ kind: "PROSPECT", label: actionLabels.PROSPECT, hint: actionHints.PROSPECT,
+      reason: reasonFor("PROSPECT", "Aucune sonde stationnée : produisez une Sonde depuis l’écran Flottes.") });
+    for (const o of found.known) {
+      if (o.family !== "curiosity" || o.studied) continue;
+      result.push({ kind: "STUDY", label: `${actionLabels.STUDY} : ${opportunityNames[o.kind] ?? o.kind}`, hint: actionHints.STUDY, opportunity: o.id,
+        reason: reasonFor("STUDY", "Aucune flotte avec une sonde ou un extracteur, et une soute pour les Données.") });
+    }
+  }
   for (const planet of ref?.planets ?? []) {
     if (planet.colony_id) continue; // own colony (named only with colony.read)
     if (colonizer(w) && can(w, "colony.expand") && can(w, "galaxy.read")) {

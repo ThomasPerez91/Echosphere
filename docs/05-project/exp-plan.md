@@ -86,7 +86,8 @@ E progression furtive · F contournement · G jeu hors ligne · H crash/redémar
 | EXP-01a | `work/exp-01-opportunities` | Ruleset v0.10, règles et générateur pur livrés, tests purs exécutés |
 | Galaxie v2 + bascule v0.10 | `work/galaxy-v2` (PR #33) | Livrés : impasses, goulots, tailles 100–2 000, start_universe/Portal en v0.10 |
 | EXP-01b | `work/exp-01b-opportunities` | Livré : tables `galaxy_opportunities` / `opportunity_knowledge` (migration 0015), génération avec le monde v0.10 (insertion groupée), signatures à la cartographie, détails datés après prospection, onglet « Données » |
-| EXP-02a | — | Suivant : Extracteur, PROSPECT, STUDY, rapports |
+| EXP-02a | `work/exp-02a-prospect-study` | Livré : classe Extracteur, missions PROSPECT/STUDY (migration 0016), Données d’étude en soute, offres « Prospecter » / « Étudier » sur la carte |
+| EXP-02b | — | Suivant : EXTRACT, partage proportionnel entre extracteurs, capacité de transport |
 
 ## 8. EXP-01b — contrat de projection (09/11/2026)
 
@@ -98,3 +99,25 @@ une curiosité `study_seconds`, `data`, éventuellement `dossier`/`clue`. Un sys
 jamais ce champ (refusé par le client comme fuite de Fog). Les rapports de cartographie stockés
 restent inchangés. La génération écrit les mondes par lots (identifiants explicites, une insertion
 par table) pour qu’une carte de 2 000 systèmes tienne dans la transaction de démarrage.
+
+## 9. EXP-02a — contrat PROSPECT / STUDY (09/11/2026)
+
+Deux analyses du moteur de missions Flottes, ruleset v0.10 seulement (`exploitation_unavailable`
+sinon) ; mêmes invariants que SURVEY : chemin serveur sur routes connues (0 saut possible dans le
+système courant, sans carburant), analyse après l’arrivée, résolution par le handler d’opérations de
+l’Empire, droits `fleet.command` + `galaxy.read`.
+
+- **PROSPECT** (`destination_id`) : unités de relevé seules (`survey_units`), système MAPPED+
+  (`system_not_mapped`), durée d’analyse `operations.prospect_seconds`. Effet : chaque opportunité du
+  système devient connue de l’Empire, réserve datée (`observed_at`, `observed_reserve`) ; une
+  nouvelle prospection rafraîchit la valeur. Ne modifie jamais la ligne partagée.
+- **STUDY** (`target_opportunity_id`, destination facultative = système de la curiosité) : curiosité
+  prospectée et jamais étudiée par l’Empire (`opportunity_not_found` 404 indistinct, `already_studied`),
+  une sonde ou un extracteur engagé (`study_units`), soute libre ≥ récompense (`cargo_insufficient` :
+  une étude ne perd jamais une partie de son résultat). Durée `study_seconds`. Effet : ligne
+  `opportunity_studies` (une par Empire et curiosité), Données chargées dans la soute, déchargées par
+  la commande habituelle ; progression de dossier rapportée (`index`, `clues`, `studied`).
+- Classe **Extracteur** (cargo 400, non militaire, sans relevé) : définie et validée, utilisée par EXTRACT
+  en EXP-02b. Valeurs de balance provisoires (`opportunities.json` → `operations`).
+- Carte : « Prospecter » sur un système portant des signatures ou des opportunités connues ;
+  « Étudier : <curiosité> » par curiosité non étudiée (flotte entière, sa soute rapporte les Données).

@@ -153,3 +153,16 @@ test("distance = fewest jumps from the nearest own colony over the known routes,
   const cut = { ...w, galaxy: { ...w.galaxy, routes: w.galaxy.routes.filter((r) => r.b_id !== ids.signalB) } };
   expect(knownHops(cut, ids.signalB)).toBeNull();
 });
+
+test("EXP-02a: a prospected system offers a fresh prospection and one study per unstudied curiosity", () => {
+  const w = world();
+  const found = offers(w, ids.vesta);
+  expect(found.map((o) => o.kind)).toEqual(["DEPLOY", "PROSPECT", "STUDY", "COLONIZE", "ATTACK"]);
+  const study = found.find((o) => o.kind === "STUDY");
+  expect(study?.label).toBe("Étudier : Anomalie spatiale");
+  expect(study?.opportunity).toBe("80000000-0000-4000-8000-000000000002");
+  const studied = world();
+  const vesta = studied.galaxy.systems.find((s) => s.id === ids.vesta);
+  vesta?.opportunities?.known.forEach((o) => { if (o.family === "curiosity") o.studied = true; });
+  expect(offers(studied, ids.vesta).map((o) => o.kind)).not.toContain("STUDY");
+});

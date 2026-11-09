@@ -27,6 +27,7 @@ router = APIRouter(prefix="/game/{universe_id}/colonies")
 
 STATUS = {
     "system_not_found": 404,
+    "opportunity_not_found": 404,
     "exploration_busy": 503,
     "galaxy_unavailable": 409,
     "exploration_unavailable": 409,

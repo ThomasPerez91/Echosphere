@@ -48,9 +48,11 @@ class Order(Body):
 
 class Plan(Body):
     fleet_id: str = Field(pattern=UUID_PATTERN)
-    kind: Literal["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK"]
+    kind: Literal["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK", "PROSPECT", "STUDY"]
     destination_id: str | None = Field(default=None, pattern=UUID_PATTERN)
     target_planet_id: str | None = Field(default=None, pattern=UUID_PATTERN)
+    # EXP-02a (v0.10): the curiosity a STUDY analyses.
+    target_opportunity_id: str | None = Field(default=None, pattern=UUID_PATTERN)
     units: Units = Field(min_length=1, max_length=16)
 
 
@@ -485,7 +487,9 @@ class Fleets(Colonies):
         if kind == "COLONIZE":
             # Founding is irreversible in v0.5: a dedicated right, never colony.construct.
             return ("fleet.command", "galaxy.read", "colony.expand")
-        return ("fleet.command", "galaxy.read") if kind == "SURVEY" else ("fleet.command",)
+        if kind in ("SURVEY", "PROSPECT", "STUDY"):
+            return ("fleet.command", "galaxy.read")
+        return ("fleet.command",)
 
     def preview(self, raw, universe_id, empire_id, body: Plan):
         with self.factory.begin() as session:
@@ -503,6 +507,7 @@ class Fleets(Colonies):
                 self.clock.now(),
                 UUID(body.target_planet_id) if body.target_planet_id else None,
                 "colony.read" in permissions,
+                UUID(body.target_opportunity_id) if body.target_opportunity_id else None,
             )
             if "colony.read" not in permissions:
                 # Commanding stays allowed without colony.read; the paying colony is not shown.
@@ -527,6 +532,9 @@ class Fleets(Colonies):
                 at=at,
                 target_planet_id=UUID(body.target_planet_id) if body.target_planet_id else None,
                 colony_read="colony.read" in permissions,
+                target_opportunity_id=UUID(body.target_opportunity_id)
+                if body.target_opportunity_id
+                else None,
             )
             return {"mission_id": str(mission.id), "fleet_id": str(mission.fleet_id)}
 

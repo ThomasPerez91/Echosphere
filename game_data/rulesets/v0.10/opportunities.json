@@ -16,48 +16,90 @@
       "name": "Ceinture métallique",
       "resource": "alloys",
       "weight": 45,
-      "reserve": [3000, 9000],
-      "throughput_per_hour": [60, 150]
+      "reserve": [
+        3000,
+        9000
+      ],
+      "throughput_per_hour": [
+        60,
+        150
+      ]
     },
     "flux_cloud": {
       "name": "Nuage de flux",
       "resource": "flux",
       "weight": 35,
-      "reserve": [2500, 7500],
-      "throughput_per_hour": [50, 120]
+      "reserve": [
+        2500,
+        7500
+      ],
+      "throughput_per_hour": [
+        50,
+        120
+      ]
     },
     "memory_crystals": {
       "name": "Cristaux mémoriels",
       "resource": "data",
       "weight": 20,
-      "reserve": [1200, 3600],
-      "throughput_per_hour": [25, 60]
+      "reserve": [
+        1200,
+        3600
+      ],
+      "throughput_per_hour": [
+        25,
+        60
+      ]
     }
   },
   "curiosities": {
     "anomaly": {
       "name": "Anomalie spatiale",
       "weight": 35,
-      "study_seconds": [3600, 10800],
-      "data": [150, 400]
+      "study_seconds": [
+        3600,
+        10800
+      ],
+      "data": [
+        150,
+        400
+      ]
     },
     "ancient_wreck": {
       "name": "Épave ancienne",
       "weight": 30,
-      "study_seconds": [5400, 14400],
-      "data": [200, 500]
+      "study_seconds": [
+        5400,
+        14400
+      ],
+      "data": [
+        200,
+        500
+      ]
     },
     "unknown_structure": {
       "name": "Structure d’origine inconnue",
       "weight": 20,
-      "study_seconds": [10800, 21600],
-      "data": [350, 800]
+      "study_seconds": [
+        10800,
+        21600
+      ],
+      "data": [
+        350,
+        800
+      ]
     },
     "artificial_signal": {
       "name": "Signal artificiel",
       "weight": 15,
-      "study_seconds": [7200, 14400],
-      "data": [250, 600]
+      "study_seconds": [
+        7200,
+        14400
+      ],
+      "data": [
+        250,
+        600
+      ]
     }
   },
   "remarkable": {
@@ -72,5 +114,10 @@
     "reward_data": 2000
   },
   "starting_zone_radius": 2,
-  "starting_zone_deposits": 1
+  "starting_zone_deposits": 1,
+  "operations": {
+    "prospect_seconds": 1800,
+    "extractor_class": "extractor",
+    "extraction_per_hour": 20
+  }
 }

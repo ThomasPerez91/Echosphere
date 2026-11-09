@@ -302,6 +302,17 @@ class Ruleset(StrictModel):
                 raise ValueError("Missing or mixed Opportunities version")
         elif self.opportunities is not None:
             raise ValueError("Opportunities unavailable in historical rulesets")
+        if self.opportunities is not None:
+            # The extractor is a civilian cargo class of this ruleset, never a combat class.
+            extractor = self.fleets.classes.get(self.opportunities.operations.extractor_class)
+            combat = set(self.combat.classes) if self.combat else set()
+            if (
+                extractor is None
+                or extractor.cargo <= 0
+                or extractor.survey
+                or self.opportunities.operations.extractor_class in combat
+            ):
+                raise ValueError("Extractor class must be a civilian cargo class")
         c, catalogue = self.colony, self.catalogue.infrastructures
         if set(c.initial_stocks) != RESOURCES or set(c.speeds) != {
             "economy",

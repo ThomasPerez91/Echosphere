@@ -182,17 +182,30 @@ class FleetMission(Record, Base):
             ["planets.id", "planets.system_id", "planets.universe_id"],
             name="fk_fleet_missions_target_planet_system",
         ),
+        ForeignKeyConstraint(
+            ["target_opportunity_id", "universe_id"],
+            ["galaxy_opportunities.id", "galaxy_opportunities.universe_id"],
+            name="fk_fleet_missions_target_opportunity",
+        ),
         UniqueConstraint("id", "fleet_id", name="uq_fleet_mission_fleet"),
         UniqueConstraint("id", "empire_id", "universe_id", name="uq_fleet_mission_scope"),
         UniqueConstraint("empire_id", "idempotency_key", name="uq_fleet_mission_key"),
-        CheckConstraint("kind IN ('DEPLOY','SURVEY','RETURN','COLONIZE','ATTACK')", name="kind"),
+        CheckConstraint(
+            "kind IN ('DEPLOY','SURVEY','RETURN','COLONIZE','ATTACK','PROSPECT','STUDY')",
+            name="kind",
+        ),
         CheckConstraint("status IN ('active','returning','completed')", name="status"),
         CheckConstraint(
             "(kind IN ('COLONIZE','ATTACK')) = (target_planet_id IS NOT NULL)", name="target"
         ),
-        # Only COLONIZE and ATTACK may target the current system: 0 hop, arrival = start.
+        # EXP-02: STUDY targets one curiosity of the destination system.
         CheckConstraint(
-            "origin_id <> destination_id OR kind IN ('COLONIZE','ATTACK')", name="route"
+            "(kind = 'STUDY') = (target_opportunity_id IS NOT NULL)", name="opportunity"
+        ),
+        # COLONIZE, ATTACK and the EXP-02 analyses may target the current system: 0 hop.
+        CheckConstraint(
+            "origin_id <> destination_id OR kind IN ('COLONIZE','ATTACK','PROSPECT','STUDY')",
+            name="route",
         ),
         CheckConstraint(
             "(origin_id <> destination_id AND travel_arrival_at > started_at) "
@@ -201,9 +214,10 @@ class FleetMission(Record, Base):
         ),
         # ATTACK: due_at is battle_at, after the arrival and strictly after the start.
         CheckConstraint(
-            "(kind = 'SURVEY' AND due_at > travel_arrival_at) "
+            "(kind IN ('SURVEY','PROSPECT','STUDY') AND due_at > travel_arrival_at) "
             "OR (kind = 'ATTACK' AND due_at >= travel_arrival_at AND due_at > started_at) "
-            "OR (kind NOT IN ('SURVEY','ATTACK') AND due_at = travel_arrival_at)",
+            "OR (kind NOT IN ('SURVEY','PROSPECT','STUDY','ATTACK') "
+            "AND due_at = travel_arrival_at)",
             name="deadline",
         ),
         # A return without recall exists only after an ATTACK's battle.
@@ -264,6 +278,7 @@ class FleetMission(Record, Base):
     destination_id: Mapped[UUID] = mapped_column(Uuid)
     payer_colony_id: Mapped[UUID] = mapped_column(Uuid)
     target_planet_id: Mapped[UUID | None] = mapped_column(Uuid)
+    target_opportunity_id: Mapped[UUID | None] = mapped_column(Uuid)
     idempotency_key: Mapped[str] = mapped_column(String(160))
     snapshot: Mapped[dict] = mapped_column(JSONB)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

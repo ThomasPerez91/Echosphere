@@ -89,7 +89,7 @@ export function MissionPlanner({ world, target, offer, fleets, fleet, units, ste
             <div><dt>Départ</dt><dd>{systemName(world, fleet?.system?.id)}</dd></div>
             <div><dt>Destination</dt><dd>{systemName(world, q.destination_id)}</dd></div>
             <div><dt>Sauts</dt><dd>{q.hops === 0 ? "0 (même système)" : q.hops}</dd></div>
-            <div><dt>Durée</dt><dd>{duration(q.travel_us)}{q.kind === "SURVEY" ? ` + analyse ${duration(q.survey_us)}` : ""}</dd></div>
+            <div><dt>Durée</dt><dd>{duration(q.travel_us)}{["SURVEY", "PROSPECT", "STUDY"].includes(q.kind) ? ` + analyse ${duration(q.survey_us)}` : ""}</dd></div>
             <div><dt>Arrivée</dt><dd>{time(q.travel_arrival_at)}</dd></div>
             {q.battle_at && <div><dt>Bataille</dt><dd>{time(q.battle_at)}</dd></div>}
             <div><dt>Carburant</dt><dd>{resourceKeys.filter((k) => BigInt(q.cost[k]) > 0n).map((k) => `${amount(q.cost[k])} ${resourceLabels[k]}`).join(" · ") || "aucun"}{q.kind === "ATTACK" ? " (aller-retour)" : ""}</dd></div>

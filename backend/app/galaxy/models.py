@@ -367,3 +367,27 @@ class OpportunityKnowledge(Base):
     universe_id: Mapped[UUID] = mapped_column(Uuid)
     observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     observed_reserve: Mapped[int | None] = mapped_column(BigInteger)
+
+
+class OpportunityStudy(Base):
+    """EXP-02: a curiosity studied once per Empire; dossier progress is read from these rows."""
+
+    __tablename__ = "opportunity_studies"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["empire_id", "universe_id"],
+            ["empire_exploration.empire_id", "empire_exploration.universe_id"],
+        ),
+        ForeignKeyConstraint(
+            ["opportunity_id", "universe_id"],
+            ["galaxy_opportunities.id", "galaxy_opportunities.universe_id"],
+        ),
+        ForeignKeyConstraint(["mission_id"], ["fleet_missions.id"]),
+        CheckConstraint("data_credited >= 0", name="credited"),
+    )
+    empire_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    opportunity_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    universe_id: Mapped[UUID] = mapped_column(Uuid)
+    mission_id: Mapped[UUID] = mapped_column(Uuid, unique=True)
+    studied_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    data_credited: Mapped[int] = mapped_column(BigInteger)

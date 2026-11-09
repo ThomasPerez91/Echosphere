@@ -39,6 +39,19 @@
       "cargo": 500,
       "survey": false
     },
+    "extractor": {
+      "name": "Extracteur",
+      "cost": {
+        "alloys": 260,
+        "flux": 90,
+        "data": 30
+      },
+      "build_seconds": 3000,
+      "hop_seconds": 1200,
+      "flux_per_hop": 9,
+      "cargo": 400,
+      "survey": false
+    },
     "colonizer": {
       "name": "Colonisateur",
       "cost": {

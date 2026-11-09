@@ -8,7 +8,7 @@ import { duration, exactUnits, resourceKeys, resourceLabels, time, units } from 
 import { Badge, Button, EmptyState, Panel } from "./ui";
 import { message } from "../fleet/messages";
 
-const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation", ATTACK: "Attaque" };
+const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation", ATTACK: "Attaque", PROSPECT: "Prospection", STUDY: "Étude" };
 const outcomeLabels: Record<string, string> = {
   attacker_win: "Victoire de l’attaquant", defender_win: "Victoire du défenseur",
   mutual_destruction: "Destruction mutuelle", unopposed: "Aucune défense militaire", target_unavailable: "Cible indisponible",

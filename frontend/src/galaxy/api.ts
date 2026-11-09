@@ -29,6 +29,8 @@ export type KnownOpportunity = {
   id: string; family: "deposit" | "curiosity"; kind: string; tier: "common" | "remarkable"; observed_at: string;
   resource?: "alloys" | "flux" | "data"; reserve?: string; throughput_per_hour?: string;
   study_seconds?: number; data?: string; dossier?: number; clue?: number;
+  /** EXP-02a: this Empire already studied this curiosity (one study per Empire). */
+  studied?: boolean;
 };
 export type Route = { id: string; a_id: string; b_id: string };
 export type Report = {
@@ -87,7 +89,8 @@ const opportunity = (o: unknown) => object(o) && id(o.id) && typeof o.kind === "
   && (o.tier === "common" || o.tier === "remarkable")
   && (o.family === "deposit"
     ? ["alloys", "flux", "data"].includes(String(o.resource)) && micro(o.reserve) && micro(o.throughput_per_hour) && !("data" in o)
-    : o.family === "curiosity" && integer(o.study_seconds) && micro(o.data) && !("reserve" in o));
+    : o.family === "curiosity" && integer(o.study_seconds) && micro(o.data) && !("reserve" in o)
+      && (o.studied === undefined || typeof o.studied === "boolean"));
 const opportunities = (v: unknown) => v === undefined
   || (object(v) && integer(v.signatures) && v.signatures >= 0 && list(v.known, opportunity));
 
