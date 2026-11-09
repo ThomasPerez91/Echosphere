@@ -57,7 +57,8 @@ def creation_request(body):
     family = body["family"]
     if family not in ("solo", "private"):
         raise PublicError("family_unavailable", 422)
-    if set(body) != (base if family == "solo" else base | {"humans", "invite"}):
+    # Q60: the creator may name their Empire; optional so earlier clients keep working.
+    if set(body) - {"empire_name"} != (base if family == "solo" else base | {"humans", "invite"}):
         raise PublicError("invalid_creation")
     humans = 1 if family == "solo" else body["humans"]
     if family == "private" and (
@@ -83,6 +84,10 @@ def creation_request(body):
     wanted = {"request_id": request_id, "name": name, "family": family, "profiles": list(profiles)}
     if family == "private":
         wanted.update(humans=humans, invite=body["invite"])
+    if "empire_name" in body:
+        from portal_app.control.life import empire_name
+
+        wanted["empire_name"] = empire_name(body["empire_name"])
     return wanted
 
 
@@ -214,6 +219,8 @@ class Lobby:
                        "ruleset": CREATION_RULESET}
             if wanted["family"] == "private":
                 options.update(humans=wanted["humans"], invite=wanted["invite"])
+            if "empire_name" in wanted:
+                options["empire_name"] = wanted["empire_name"]
             if existing is not None:
                 if existing.name != wanted["name"] or existing.start_request != options:
                     raise PublicError("creation_request_conflict", 409)
@@ -373,6 +380,7 @@ class Lobby:
             from portal_app.control.models import UniverseInvitation
 
             references = {universe.id: universe for _, universe in rows}
+            members = {member.id: member for member, _ in rows}
             for item in memberships:
                 universe = references[UUID(item["universe_id"])]
                 options = universe.start_request or {}
@@ -380,6 +388,11 @@ class Lobby:
                 item["creator"] = universe.created_by == user.id
                 if universe.started_at is not None:
                     item["started_at"] = wire_time(universe.started_at)
+                member = members[UUID(item["membership_id"])]
+                # Q60: chosen Empire name, archived solo game, multi game left by this player.
+                item["empire_name"] = member.empire_name
+                item["archived"] = universe.archived_at is not None
+                item["left"] = member.left_at is not None
                 if options.get("family") == "private":
                     item["seats_total"] = options.get("humans", 1)
                     item["seats_taken"] = len(taken_seats(session, universe))

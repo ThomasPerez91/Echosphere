@@ -14,6 +14,7 @@ type Profile = keyof typeof profiles;
 const errors: Record<string, string> = {
   too_many_empires: 'La carte actuelle accueille au plus 4 Empires (joueurs et IA).',
   invalid_creation: 'Vérifiez le nom (3 à 60 caractères) et les adversaires.',
+  invalid_empire_name: 'Le nom d’Empire doit compter 2 à 40 caractères visibles.',
   family_unavailable: 'Ce type de partie n’est pas encore disponible.',
   creation_request_conflict: 'Cette demande a déjà été envoyée avec d’autres choix. Rechargez la page.',
   creation_unavailable: 'La création de partie est indisponible pour le moment.',
@@ -26,6 +27,7 @@ const errors: Record<string, string> = {
  */
 export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreated: () => void; onExpired?: () => void }) {
   const [name, setName] = useState('');
+  const [empireName, setEmpireName] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const requestId = useRef(crypto.randomUUID());
@@ -47,13 +49,16 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
     if (pending) return;
     const trimmed = name.trim();
     if (trimmed.length < 3 || trimmed.length > 60) { setError(errors.invalid_creation); return; }
+    const empire = empireName.split(/\s+/).filter(Boolean).join(' ');
+    if (empire && (empire.length < 2 || empire.length > 40)) { setError(errors.invalid_empire_name); return; }
+    const named = empire ? { empire_name: empire } : {};
     setPending(true); setError('');
     try {
       const response = await fetch('/api/lobby/universes', { method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
         body: JSON.stringify(family === 'solo'
-          ? { request_id: requestId.current, name: trimmed, family, profiles: opponents }
-          : { request_id: requestId.current, name: trimmed, family, profiles: opponents, humans, invite }),
+          ? { request_id: requestId.current, name: trimmed, family, profiles: opponents, ...named }
+          : { request_id: requestId.current, name: trimmed, family, profiles: opponents, humans, invite, ...named }),
         signal: AbortSignal.timeout(10000) });
       if (response.status === 401) { onExpired?.(); return; }
       if (response.status === 404) { setError('Ce serveur ne sait pas encore créer de partie (mise à jour du Portal nécessaire).'); return; }
@@ -76,6 +81,10 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
         <input value={name} onChange={event => { setName(event.target.value); fresh(); }} required minLength={3} maxLength={60} placeholder="Par exemple : Frontière d’Orion" aria-describedby="name-help" />
       </label>
       <p id="name-help" className="p-account-help">Entre 3 et 60 caractères. Il apparaîtra dans « Mes parties » et en haut de l’écran de jeu.</p>
+      <label>Nom de votre Empire
+        <input value={empireName} onChange={event => { setEmpireName(event.target.value); fresh(); }} maxLength={40} placeholder="Par exemple : Concorde d’Aube" aria-describedby="empire-help" />
+      </label>
+      <p id="empire-help" className="p-account-help">Facultatif, 2 à 40 caractères ; visible des autres Empires. Vous pourrez le changer depuis « Mes parties ».</p>
 
       <fieldset>
         <legend>Type de partie</legend>

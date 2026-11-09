@@ -109,3 +109,25 @@ Vérifications UX-API-03 : tests purs Game `test_control_contract.py` (4/4) exé
 Ruff Game/Portal ; tests purs Portal et Vitest via Fast CI ; **non exécutés** :
 `backend/tests/integration/test_control.py` (multi), `portal/backend/tests/integration/test_multiplayer.py`,
 `test_migrations.py` (tête `p0007_invitations`) — Full CI après fusion ; recette Compose à faire.
+
+## Q60 — Nom d’Empire, quitter une partie multi, archiver une partie SOLO (09/11/2026)
+
+Décisions : [Q60](../01-game-design/game-modes.md#décisions-utilisateur-du-09112026--vie-dune-partie-q60).
+
+| Action (Portal) | Route | Effet Game (outbox de contrôle) |
+| --- | --- | --- |
+| Nommer à la création | `empire_name` facultatif dans `POST /api/lobby/universes` (conservé dans la demande) | `name_empire` après le reçu `start_universe`, pour la place du créateur |
+| Nommer en rejoignant | `empire_name` facultatif dans `POST /api/lobby/invitations/accept` | `name_empire` pour la place accordée |
+| Renommer | `POST /api/lobby/universes/{id}/empire-name` `{"name"}` | `name_empire` |
+| Archiver (SOLO, créateur) | `POST /api/lobby/universes/{id}/leave` | accès réduit aux droits `*.read` (consultation seule), rien d’effacé |
+| Quitter (multi) | même route | accès `revoked`, puis `hand_over_empire` (profil `economic_cautious`) |
+
+- Nom : 2 à 40 caractères visibles après réduction des espaces, sans caractère de contrôle ; même
+  règle des deux côtés. Game refuse de renommer un Empire dirigé par une IA.
+- `hand_over_empire` : Game refuse (`empire_still_bound`, réessai automatique) tant qu’une liaison
+  humaine existe sur l’Empire, puis passe l’Empire en `ai` et active un `AIController` par le même
+  chemin que le bootstrap (aucune ressource, unité ni connaissance offerte). Idempotent ; un autre
+  profil pour le même Empire est un conflit. Un Empire IA ne peut plus être accordé à un humain.
+- Portal : la place quittée est mémorisée (`left_seats`) et jamais reproposée ; la participation
+  quittée apparaît sous « Parties quittées ». Migration Accounts `p0008_game_life`.
+- Reçus vérifiés par le worker : univers, Empire et valeur appliquée (nom ou profil) en écho.

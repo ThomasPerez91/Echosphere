@@ -13,6 +13,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 
 from portal_app.accounts.security import PublicError, normalize_email, token_digest
+from portal_app.control.life import empire_name, set_name
 from portal_app.control.models import (
     InvitationEmailOutbox,
     UniverseInvitation,
@@ -34,9 +35,10 @@ def invite_token(value):
 
 
 def taken_seats(session, universe):
-    """Seats already bound to a membership of this universe (any status keeps its seat)."""
+    """Seats already bound to a membership of this universe (any status keeps its seat), and
+    seats handed over to an AI when their player left (Q60): never offered again."""
     seats = set(universe.seats or [])
-    taken = set()
+    taken = set(universe.left_seats or []) & seats
     for bindings in session.scalars(
         select(UniverseMembership.bindings).where(UniverseMembership.universe_id == universe.id)
     ):
@@ -155,9 +157,12 @@ class Invitations:
                 row.state = "revoked"
             return {"state": row.state}
 
-    def accept(self, raw, proof, token=None, invitation_id=None):
-        """Join with a link token or an email invitation addressed to this account."""
+    def accept(self, raw, proof, token=None, invitation_id=None, name=None):
+        """Join with a link token or an email invitation addressed to this account, optionally
+        naming the Empire of the seat (Q60)."""
         check_csrf(raw, proof)
+        if name is not None:
+            name = empire_name(name)
         if (token is None) == (invitation_id is None) or (
             token is not None and not invite_token(token)
         ):
@@ -200,10 +205,13 @@ class Invitations:
             seats = free_seats(session, universe)
             if not seats:
                 raise PublicError("game_full", 409)
-            Lobby(self.accounts).grant(
+            granted = Lobby(self.accounts).grant(
                 session, user, universe, "active",
                 [{"empire_id": seats[0], "permissions": sorted(PERMISSIONS)}],
             )
+            if name is not None:
+                joined = session.get(UniverseMembership, UUID(granted["membership_id"]))
+                set_name(session, self.accounts, universe, joined, name)
             if row.mode == "email":
                 row.state, row.accepted_by, row.accepted_at = "accepted", user.id, now
             return {"universe_id": str(universe.id), "status": "joined"}

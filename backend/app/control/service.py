@@ -7,7 +7,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.dialects.postgresql import insert
 
 from app.ai.models import AIController
-from app.control.contracts import Access, Provision, Revoke, Start, digest
+from app.control.contracts import Access, HandOver, NameEmpire, Provision, Revoke, Start, digest
 from app.control.models import (
     ControlOperation,
     EmpireBinding,
@@ -22,6 +22,8 @@ ALLOWED = frozenset(
     (
         "provision_universe",
         "start_universe",
+        "name_empire",
+        "hand_over_empire",
         "set_universe_access",
         "revoke_sessions",
         "get_operation",
@@ -86,6 +88,10 @@ class Control:
                 result = self.provision(session, message)
             elif isinstance(message, Start):
                 result = self.start(session, message)
+            elif isinstance(message, NameEmpire):
+                result = self.name_empire(session, message)
+            elif isinstance(message, HandOver):
+                result = self.hand_over(session, message)
             elif isinstance(message, Access):
                 result = self.access(session, message)
             elif isinstance(message, Revoke):
@@ -176,6 +182,58 @@ class Control:
         if message.family != "solo":
             result["human_empire_ids"] = seats  # seat order = starting-site order
         return result
+
+    @staticmethod
+    def _empire(session, message):
+        # Same parent row lock as the access grant and AI activation paths.
+        empire = session.scalar(
+            select(Empire).where(Empire.id == message.empire_id).with_for_update()
+        )
+        if empire is None or empire.universe_id != message.universe_id:
+            raise ControlError("empire_scope_denied", 403)
+        return empire
+
+    def name_empire(self, session, message):
+        """Q60: renames a human Empire; an AI-controlled Empire keeps its name."""
+        empire = self._empire(session, message)
+        if session.scalar(select(AIController.id).where(AIController.empire_id == empire.id)):
+            raise ControlError("empire_ai_controlled", 409)
+        empire.name = message.name
+        return {
+            "status": "applied",
+            "universe_id": str(message.universe_id),
+            "empire_id": str(empire.id),
+            "name": message.name,
+        }
+
+    def hand_over(self, session, message):
+        """Q60: the Empire of a player who left goes on under a server AI with the same rules
+        (no resource, unit or knowledge granted). Idempotent: an existing controller replays."""
+        from app.ai.controller import AIDenied, activate
+
+        empire = self._empire(session, message)
+        current = session.scalar(select(AIController).where(AIController.empire_id == empire.id))
+        if current is None:
+            bound = select(EmpireBinding.empire_id).where(EmpireBinding.empire_id == empire.id)
+            if session.scalar(bound.limit(1)):
+                # The seat is still bound: Portal's revocation has not been applied yet.
+                raise ControlError("empire_still_bound", 409)
+            empire.controller_type = "ai"
+            try:
+                current = activate(
+                    session, message.universe_id, empire.id, message.profile, self.clock()
+                )
+            except AIDenied as error:
+                code = str(error.args[0]) if error.args else "hand_over_denied"
+                raise ControlError(code) from None
+        elif current.profile != message.profile:
+            raise ControlError("hand_over_conflict")
+        return {
+            "status": "applied",
+            "universe_id": str(message.universe_id),
+            "empire_id": str(empire.id),
+            "profile": current.profile,
+        }
 
     def access(self, session, message):
         principal = account_lock(session, message.global_user_id)

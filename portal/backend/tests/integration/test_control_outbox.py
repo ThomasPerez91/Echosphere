@@ -60,6 +60,8 @@ class Remote:
                 "human_empire_id": empire,
                 "started_at": "2026-11-09T09:00:00+00:00",
             }
+        elif message["kind"] in ("name_empire", "hand_over_empire"):
+            result = {"status": "applied", **{k: v for k, v in message.items() if k != "kind"}}
         elif message["kind"] == "set_universe_access":
             result = {"status": "applied", "snapshot": copy.deepcopy(message)}
             self.states[message["membership_id"]] = {"snapshot": copy.deepcopy(message)}

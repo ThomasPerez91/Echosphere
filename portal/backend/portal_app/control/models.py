@@ -53,6 +53,9 @@ class UniverseReference(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # UX-API-03 multi: every human Empire (seat) of a started PRIVATE universe, in seat order.
     seats: Mapped[list | None] = mapped_column(JSONB)
+    # Q60: a solo game archived by its player; seats handed over to an AI when a player left.
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    left_seats: Mapped[list | None] = mapped_column(JSONB)
 
 
 class UniverseMembership(Base):
@@ -83,6 +86,8 @@ class UniverseMembership(Base):
     last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     next_check_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     reconciliation_pending: Mapped[bool] = mapped_column(default=True)
+    empire_name: Mapped[str | None] = mapped_column(String(40))
+    left_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class UniverseInvitation(Base):

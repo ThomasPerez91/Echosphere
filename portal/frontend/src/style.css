@@ -212,3 +212,11 @@ body { margin: 0; background: #030812; }
 .p-received b { color: #fff; font-weight: 600; }
 .p-received small { color: var(--p-muted); font-size: 12px; }
 .p-received-act { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Q60 life of a game */
+.p-empire-name { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.p-empire-name input { min-width: 0; flex: 1 1 160px; }
+.p-leave { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--p-red); border-radius: 10px; }
+.p-leave p { margin: 0; }
+.p-btn-danger { border-color: var(--p-red); color: var(--p-red); }
+.p-left-games ul { margin: 0; padding-left: 18px; }
+.p-join-name { display: grid; gap: 6px; margin: 10px 0; }

@@ -126,6 +126,78 @@
       "title": "Binding",
       "type": "object"
     },
+    "HandOver": {
+      "additionalProperties": false,
+      "description": "Q60: a player leaving a multi game hands their Empire to a server AI of a known profile;\nrefused while any human binding remains on that Empire (Portal revokes the seat first).",
+      "properties": {
+        "kind": {
+          "const": "hand_over_empire",
+          "title": "Kind",
+          "type": "string"
+        },
+        "universe_id": {
+          "format": "uuid",
+          "title": "Universe Id",
+          "type": "string"
+        },
+        "empire_id": {
+          "format": "uuid",
+          "title": "Empire Id",
+          "type": "string"
+        },
+        "profile": {
+          "enum": [
+            "economic_cautious",
+            "expansionist"
+          ],
+          "title": "Profile",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "universe_id",
+        "empire_id",
+        "profile"
+      ],
+      "title": "HandOver",
+      "type": "object"
+    },
+    "NameEmpire": {
+      "additionalProperties": false,
+      "description": "Q60: the player names the human Empire of their seat (at creation, on joining, later).",
+      "properties": {
+        "kind": {
+          "const": "name_empire",
+          "title": "Kind",
+          "type": "string"
+        },
+        "universe_id": {
+          "format": "uuid",
+          "title": "Universe Id",
+          "type": "string"
+        },
+        "empire_id": {
+          "format": "uuid",
+          "title": "Empire Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 40,
+          "minLength": 2,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "universe_id",
+        "empire_id",
+        "name"
+      ],
+      "title": "NameEmpire",
+      "type": "object"
+    },
     "Provision": {
       "additionalProperties": false,
       "properties": {
@@ -298,6 +370,8 @@
     "message": {
       "discriminator": {
         "mapping": {
+          "hand_over_empire": "#/$defs/HandOver",
+          "name_empire": "#/$defs/NameEmpire",
           "provision_universe": "#/$defs/Provision",
           "revoke_sessions": "#/$defs/Revoke",
           "set_universe_access": "#/$defs/Access",
@@ -311,6 +385,12 @@
         },
         {
           "$ref": "#/$defs/Start"
+        },
+        {
+          "$ref": "#/$defs/NameEmpire"
+        },
+        {
+          "$ref": "#/$defs/HandOver"
         },
         {
           "$ref": "#/$defs/Access"

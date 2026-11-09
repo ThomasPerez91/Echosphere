@@ -52,6 +52,7 @@ def seats_of(accounts, universe):
             for row in session.scalars(
                 select(UniverseMembership).where(UniverseMembership.universe_id == universe)
             )
+            if row.bindings  # a player who left keeps no binding (Q60)
         }
 
 
@@ -138,3 +139,92 @@ def test_declined_and_revoked_invitations_cannot_be_used(world):
     with accounts.factory() as session:
         assert session.scalar(select(func.count()).select_from(UniverseMembership)) == 1
         assert session.scalar(select(func.count()).select_from(User)) == 3
+
+
+def kinds(remote, kind):
+    return [r[3]["message"] for r in remote.requests if r[3] and r[3]["message"]["kind"] == kind]
+
+
+def test_chosen_empire_names_reach_game_and_mes_parties(world):
+    accounts, remote, lobby, invitations, creator = world
+    body = {"request_id": str(uuid4()), "name": "Multi", "family": "private", "profiles": [],
+            "humans": 2, "invite": "link", "empire_name": "  Concorde   d’Aube "}
+    universe = lobby.create(creator, csrf(creator), body, "peer")["universe_id"]
+    drain(accounts, remote)
+    token = invitations.link(creator, csrf(creator), universe)["url"].split("#invite=")[1]
+    friend = player(accounts, "friend@example.org")
+    with pytest.raises(PublicError) as invalid:
+        invitations.accept(friend, csrf(friend), token=token, name="X")
+    assert invalid.value.code == "invalid_empire_name"
+    invitations.accept(friend, csrf(friend), token=token, name="Hégémonie")
+    drain(accounts, remote)
+    seats = seats_of(accounts, UUID(universe))
+    named = {m["empire_id"]: m["name"] for m in kinds(remote, "name_empire")}
+    with accounts.factory() as session:
+        ids = {u.email: u.id for u in session.scalars(select(User))}
+    assert named == {seats[ids["creator@example.org"]]: "Concorde d’Aube",
+                     seats[ids["friend@example.org"]]: "Hégémonie"}
+    view = next(m for m in lobby.read(friend)["memberships"] if m["universe_id"] == universe)
+    assert view["empire_name"] == "Hégémonie" and not view["left"] and not view["archived"]
+    from portal_app.control.life import GameLife
+
+    assert GameLife(accounts).rename(friend, csrf(friend), universe, "Nouvelle Hégémonie") == {
+        "empire_name": "Nouvelle Hégémonie"}
+    drain(accounts, remote)
+    assert kinds(remote, "name_empire")[-1]["name"] == "Nouvelle Hégémonie"
+
+
+def test_leaving_a_multi_game_hands_the_seat_to_an_ai_and_never_reoffers_it(world):
+    from portal_app.control.life import GameLife
+
+    accounts, remote, lobby, invitations, creator = world
+    universe = multi(lobby, creator, 3, "link")
+    drain(accounts, remote)
+    token = invitations.link(creator, csrf(creator), universe)["url"].split("#invite=")[1]
+    friend = player(accounts, "friend@example.org")
+    invitations.accept(friend, csrf(friend), token=token)
+    drain(accounts, remote)
+    seat_id = seats_of(accounts, UUID(universe))
+    life = GameLife(accounts)
+    assert life.leave(friend, csrf(friend), universe) == {"status": "left"}
+    assert life.leave(friend, csrf(friend), universe) == {"status": "left"}  # replay: no effect
+    drain(accounts, remote)
+    (hand_over,) = kinds(remote, "hand_over_empire")
+    with accounts.factory() as session:
+        friend_id = session.scalar(select(User.id).where(User.email == "friend@example.org"))
+    assert hand_over["empire_id"] == seat_id[friend_id] and hand_over["profile"] == (
+        "economic_cautious")
+    view = next(m for m in lobby.read(friend)["memberships"] if m["universe_id"] == universe)
+    assert view["left"] and view["desired_status"] == "revoked" and not view["entry_available"]
+    # One seat left of three: the left seat is not offered to a newcomer.
+    third = player(accounts, "third@example.org")
+    invitations.accept(third, csrf(third), token=token)
+    late = player(accounts, "late@example.org")
+    with pytest.raises(PublicError) as full:
+        invitations.accept(late, csrf(late), token=token)
+    assert full.value.code == "game_full"
+    drain(accounts, remote)
+    assert hand_over["empire_id"] not in seats_of(accounts, UUID(universe)).values()
+
+
+def test_archiving_a_solo_game_keeps_it_readable_only(world):
+    from portal_app.control.life import READ_ONLY, GameLife
+
+    accounts, remote, lobby, _, creator = world
+    body = {"request_id": str(uuid4()), "name": "Solo", "family": "solo", "profiles": []}
+    universe = lobby.create(creator, csrf(creator), body, "peer")["universe_id"]
+    drain(accounts, remote)
+    life = GameLife(accounts)
+    assert life.leave(creator, csrf(creator), universe) == {"status": "archived"}
+    assert life.leave(creator, csrf(creator), universe) == {"status": "archived"}
+    drain(accounts, remote)
+    view = next(m for m in lobby.read(creator)["memberships"] if m["universe_id"] == universe)
+    assert view["archived"] and view["desired_status"] == "active"
+    with accounts.factory() as session:
+        member = session.scalar(select(UniverseMembership).where(
+            UniverseMembership.universe_id == UUID(universe)))
+        assert member.bindings[0]["permissions"] == READ_ONLY
+    assert kinds(remote, "hand_over_empire") == []
+    with pytest.raises(PublicError) as renamed:
+        life.rename(creator, csrf(creator), universe, "Trop tard")
+    assert renamed.value.code == "rename_unavailable"

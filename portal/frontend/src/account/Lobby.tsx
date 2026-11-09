@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../theme/Icon';
+import { EmpireName, LeaveGame } from './GameLife';
 
 type Membership = { membership_id: string; universe_id: string; name: string; desired_status: string;
   applied_status: string | null; delivery_state: 'pending' | 'applied'; expired: boolean;
   valid_until: string; last_checked_at: string | null; entry_available: boolean; entry_url?: string | null;
   /** UX-API-02/03: family, seats and, for the creator of a multi game, its invitations. */
-  family?: string; creator?: boolean; started_at?: string; seats_total?: number; seats_taken?: number; invite_mode?: 'link' | 'email';
+  family?: string; creator?: boolean; started_at?: string;
+  /** Q60: chosen Empire name, archived solo game, multi game left by this player. */
+  empire_name?: string | null; archived?: boolean; left?: boolean; seats_total?: number; seats_taken?: number; invite_mode?: 'link' | 'email';
   sent_invitations?: { id: string; email: string; state: string; expires_at: string }[] };
 export type ReceivedInvitation = { id: string; universe_id: string; name: string; expires_at: string };
 export type LobbySnapshot = Projection;
@@ -59,7 +62,9 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
         && (!item.entry_available || (typeof item.entry_url === 'string' && validEntry(item.entry_url, item.universe_id))))
       || ('invitations' in body && (!Array.isArray(body.invitations) || !body.invitations.every(item => item && typeof item.id === 'string'
         && typeof item.universe_id === 'string' && typeof item.name === 'string' && typeof item.expires_at === 'string')))
-      || !body.memberships.every(item => (item.started_at === undefined || typeof item.started_at === 'string') && (item.seats_total === undefined || (Number.isInteger(item.seats_total) && Number.isInteger(item.seats_taken)))
+      || !body.memberships.every(item => (item.empire_name === undefined || item.empire_name === null || typeof item.empire_name === 'string')
+        && (item.archived === undefined || typeof item.archived === 'boolean') && (item.left === undefined || typeof item.left === 'boolean')
+        && (item.started_at === undefined || typeof item.started_at === 'string') && (item.seats_total === undefined || (Number.isInteger(item.seats_total) && Number.isInteger(item.seats_taken)))
         && (item.invite_mode === undefined || ['link', 'email'].includes(item.invite_mode))
         && (item.sent_invitations === undefined || (Array.isArray(item.sent_invitations) && item.sent_invitations.every(
           (sent: unknown) => !!sent && typeof sent === 'object' && typeof (sent as { id?: unknown }).id === 'string'))))
@@ -83,6 +88,9 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
     return () => window.clearInterval(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [starting]);
+  const reread = () => { void read(AbortSignal.timeout(10000)).catch(() => undefined); };
+  const current = snapshot?.memberships.filter(item => !item.left) ?? [];
+  const left = snapshot?.memberships.filter(item => item.left) ?? [];
   async function refresh() {
     if (busy) return;
     const request = new AbortController(); controller.current = request;
@@ -124,17 +132,20 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
           <p className="p-g-note">{CREATION_LABELS[item.state].note}</p>
         </div>
       </article>)}</div>}
-    {snapshot && snapshot.memberships.length === 0 && !snapshot.creations?.length && <p className="p-empty">Aucune participation à un univers. Aucune partie de démonstration n’est créée automatiquement.</p>}
-    {!!snapshot?.memberships.length && <div className="p-games">{snapshot.memberships.map(item => {
+    {snapshot && current.length === 0 && !snapshot.creations?.length && <p className="p-empty">Aucune participation à un univers. Aucune partie de démonstration n’est créée automatiquement.</p>}
+    {!!current.length && <div className="p-games">{current.map(item => {
       const live = item.desired_status === 'active' && item.delivery_state === 'applied' && !item.expired;
-      const chip = item.delivery_state === 'pending' ? 'En attente' : item.desired_status === 'suspended' ? 'Suspendue' : item.desired_status === 'revoked' ? 'Révoquée' : item.expired ? 'À renouveler' : 'En cours';
+      const chip = item.delivery_state === 'pending' ? 'En attente' : item.desired_status === 'suspended' ? 'Suspendue' : item.desired_status === 'revoked' ? 'Révoquée' : item.expired ? 'À renouveler' : item.archived ? 'Archivée' : 'En cours';
+      const playable = item.desired_status === 'active' && !item.archived;
       return <article key={item.membership_id} className="p-game membership">
         <img className="p-g-img" src={universeImage(item.universe_id)} alt="" width="640" height="360" loading="lazy" />
         <div className="p-g-body">
           <div className="p-g-title"><span className="p-g-emb"><Icon name="orbit" /></span><h3><span>{item.name}</span></h3></div>
           <div className="p-g-tags"><span className={`p-chip${live ? ' p-live' : ''}`}><Icon name="play" />{chip}</span></div>
-          <p className="p-g-status">{item.delivery_state === 'pending' ? 'Confirmation de Game en attente' : item.desired_status === 'suspended' ? 'Participation suspendue' : item.desired_status === 'revoked' ? 'Accès révoqué' : item.expired ? 'Confirmation d’accès expirée' : 'Participation confirmée par Game'}</p>
+          <p className="p-g-status">{item.delivery_state === 'pending' ? 'Confirmation de Game en attente' : item.desired_status === 'suspended' ? 'Participation suspendue' : item.desired_status === 'revoked' ? 'Accès révoqué' : item.expired ? 'Confirmation d’accès expirée' : item.archived ? 'Partie archivée : consultation seule' : 'Participation confirmée par Game'}</p>
           <dl className="p-g-info">
+            {item.empire_name !== undefined && <div><dt><Icon name="flag" />Empire :</dt><EmpireName csrf={csrf} universe={item.universe_id}
+              current={item.empire_name} canRename={playable && item.delivery_state === 'applied'} onChanged={reread} /></div>}
             {item.started_at && <div><dt><Icon name="flag" />Démarrée le :</dt><dd><time dateTime={item.started_at}>{new Date(item.started_at).toLocaleString('fr-FR')}</time></dd></div>}
             <div><dt><Icon name="layers" />Mode :</dt>{item.family === 'solo' ? <dd>Solo</dd> : item.family === 'private' ? <dd>Multijoueur</dd>
               : <dd className="p-na" title="Implémentation backend nécessaire">N/D</dd>}</div>
@@ -142,16 +153,19 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
             {item.last_checked_at && <div><dt><Icon name="clock" />Dernière confirmation :</dt><dd><time dateTime={item.last_checked_at}>{new Date(item.last_checked_at).toLocaleString('fr-FR')}</time></dd></div>}
             <div><dt><Icon name="calendar" />Droits valables jusqu’au :</dt><dd><time dateTime={item.valid_until}>{new Date(item.valid_until).toLocaleString('fr-FR')}</time></dd></div>
           </dl>
-          <p className="p-g-note">Le nom de votre Empire et l’avancement de la partie s’affichent en jeu.</p>
-          {item.creator && item.invite_mode && <InvitePanel csrf={csrf} item={item} onChanged={() => { void read(AbortSignal.timeout(10000)).catch(() => undefined); }} />}
+          {item.creator && item.invite_mode && playable && <InvitePanel csrf={csrf} item={item} onChanged={reread} />}
           <div className="p-g-act">
-            {!error && item.entry_available && item.entry_url ? <a className="p-btn p-btn-glow" href={item.entry_url} referrerPolicy="no-referrer"><Icon name="play" />Entrer dans cet univers</a>
+            {!error && item.entry_available && item.entry_url ? <a className="p-btn p-btn-glow" href={item.entry_url} referrerPolicy="no-referrer"><Icon name="play" />{item.archived ? 'Consulter cet univers' : 'Entrer dans cet univers'}</a>
               : <p className="p-g-note">L’entrée requiert une adresse vérifiée et un accès actif confirmé par Game.</p>}
             {item.desired_status === 'active' && item.delivery_state === 'applied' && <button type="button" className="p-btn p-btn-sm" disabled={busy}
               onClick={() => { void renew(item.universe_id); }}>Confirmer de nouveaux droits pour cette partie</button>}
+            {playable && item.delivery_state === 'applied' && (item.family === 'solo' && item.creator || item.family === 'private') &&
+              <LeaveGame csrf={csrf} universe={item.universe_id} name={item.name} family={item.family as 'solo' | 'private'} onChanged={reread} />}
           </div>
         </div>
       </article>; })}</div>}
+    {!!left.length && <div className="p-tab-pad p-left-games"><h3>Parties quittées</h3><ul>{left.map(item => <li key={item.membership_id}>
+      <strong>{item.name}</strong> — {item.empire_name ? `${item.empire_name} est` : 'votre ancien Empire est'} désormais dirigé par une IA.</li>)}</ul></div>}
     {!!snapshot?.revocations.length && <div className="p-tab-pad p-revocations"><h3>Déconnexions des parties</h3>{snapshot.revocations.map((item, index) => <p key={index}>
       {item.scope === 'account' ? 'Tous les appareils' : 'Un appareil'} : {item.state === 'acknowledged' ? 'révocation confirmée par les services Game' : 'révocation encore en attente sur certains services Game'}
     </p>)}</div>}

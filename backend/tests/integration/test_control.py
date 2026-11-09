@@ -345,3 +345,55 @@ def test_private_start_creates_one_seat_per_human_and_keeps_solo_receipts_unchan
     assert "human_empire_ids" not in receipt["result"]
     with control.factory() as session:
         assert "humans" not in session.get(AIBootstrap, solo).request
+
+
+def test_a_player_names_their_empire_and_a_left_seat_goes_on_under_an_ai(control):
+    from app.ai.models import AIController
+
+    universe = uuid4()
+    started = control.apply(SERVICE, op({
+        "kind": "start_universe", "universe_id": str(universe), "name": "Multi",
+        "seed": "server-random-seed", "family": "private", "humans": 2, "ruleset": "v0.9",
+        "profiles": [],
+    }))["result"]
+    first, second = started["human_empire_ids"]
+    target = {"universe_id": str(universe), "empire_id": second}
+    named = control.apply(SERVICE, op({"kind": "name_empire", **target, "name": "Concorde"}))
+    assert named["result"] == {"status": "applied", **target, "name": "Concorde"}
+    with control.factory() as session:
+        assert session.get(Empire, UUID(second)).name == "Concorde"
+    # A seat still bound to a player is never handed over.
+    membership, user = uuid4(), uuid4()
+    rights = [{"empire_id": second, "permissions": ["colony.read"]}]
+    control.apply(SERVICE, access(control, universe, user, membership, bindings=rights))
+    hand_over = {"kind": "hand_over_empire", **target, "profile": "economic_cautious"}
+    with pytest.raises(ControlError) as bound:
+        control.apply(SERVICE, op(hand_over))
+    assert bound.value.code == "empire_still_bound"
+    control.apply(SERVICE, access(control, universe, user, membership, revision=2, epoch=2,
+                                  state="revoked"))
+    request = op(hand_over)
+    receipt = control.apply(SERVICE, request)
+    assert receipt["result"] == {"status": "applied", **target, "profile": "economic_cautious"}
+    assert control.apply(SERVICE, request) == receipt
+    # A second delivery (new operation id) replays the same controller; another profile conflicts.
+    assert control.apply(SERVICE, op(hand_over))["result"] == receipt["result"]
+    with pytest.raises(ControlError) as other:
+        control.apply(SERVICE, op({**hand_over, "profile": "expansionist"}))
+    assert other.value.code == "hand_over_conflict"
+    with control.factory() as session:
+        empire = session.get(Empire, UUID(second))
+        assert empire.controller_type == "ai" and empire.name == "Concorde"
+        assert session.scalar(select(func.count()).select_from(AIController)) == 1
+    # The AI Empire can be neither renamed nor granted to a human again.
+    with pytest.raises(ControlError) as renamed:
+        control.apply(SERVICE, op({"kind": "name_empire", **target, "name": "Autre"}))
+    assert renamed.value.code == "empire_ai_controlled"
+    with pytest.raises(ControlError) as granted:
+        control.apply(SERVICE, access(control, universe, bindings=rights))
+    assert granted.value.code == "empire_ai_controlled"
+    # An Empire of another universe is out of scope.
+    with pytest.raises(ControlError) as scope:
+        control.apply(SERVICE, op({"kind": "name_empire", "universe_id": str(uuid4()),
+                                   "empire_id": first, "name": "Intrus"}))
+    assert scope.value.code == "empire_scope_denied"
