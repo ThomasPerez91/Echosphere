@@ -1,6 +1,6 @@
 # Expansion opérationnelle, exploitation galactique et guerre de mouvement
 
-**Statut : orientation produit pré-MVP validée par l’utilisateur le 09/11/2026 (Q62) ; ce document
+**Statut : orientation produit pré-MVP validée par l’utilisateur le 09/11/2026 (Q62), arbitrages tranchés le même jour (§9) ; ce document
 est la référence canonique du chantier EXP.** Provenance : instruction utilisateur du 09/11/2026
 (« nouveau gameplay d’expansion galactique, contrôle opérationnel et guerre de mouvement »), qui
 répond aussi aux « zones d’influence » laissées en attente en Q61. Les orientations 1–12 de cette
@@ -144,7 +144,48 @@ Missions persistantes et ordres qui continuent hors connexion ; aucune récolte 
 rapports et alertes (cloche) ; automatisation gratuite pour tous (non pay-to-win) ; dix minutes par
 jour suffisent, une à deux heures permettent de mieux préparer. Pas de RTS.
 
-## 9. Arbitrages produit à valider (bloquants pour leur lot seulement)
+## 9. Décisions utilisateur du 09/11/2026 (après-midi) — priment sur les propositions ci-dessus
+
+Provenance : réponses explicites de l’utilisateur aux arbitrages A1–A5 et compléments du même jour.
+
+- **A1 remplacé — rencontre dans un système en opération** : le résultat dépend de la relation
+  entre les deux Empires et des niveaux de détection :
+  - **Allié** (pacte actif) ou **neutre** (connu, sans acte hostile récent) : simple message
+    « flotte vue dans le système » (si détectée) ; aucune interruption.
+  - **Inconnu** : message de rencontre d’un Empire et **protocole de premier contact** (attaque ou
+    fuite selon le protocole choisi, règles 13B).
+  - **Ennemi** (acte hostile récent, D4) : s’il est **de passage**, il passe, avec ou sans message
+    selon la détection ; s’il a **prévu d’attaquer** les éléments présents, un **affrontement**
+    s’engage avec la flotte en mission dans le système (et ses escortes).
+- **Flottes d’extraction armées** : une flotte peut mêler extracteurs et vaisseaux de combat ;
+  c’est cette flotte armée qui défend l’opération.
+- **Flottes civiles destructibles (amende D5 à partir de v0.10)** : une flotte d’extracteurs **sans
+  escorte** attaquée par un ennemi peut être **détruite**. D5 reste inchangée pour v0.9.
+- **Défense locale obligatoire** : si une flotte de l’Empire est déjà en embuscade ou en patrouille
+  dans le système, une attaque contre ses extracteurs est forcément défendue par elle.
+- **Signatures** : les vaisseaux civils ont une signature plus faible que les vaisseaux de combat.
+  Choix stratégique : extracteurs seuls mais discrets, ou escortés par une armada visible.
+- **A2 validé** : lignes de Recherche *Capteurs* et *Signatures* ; doctrine furtive = +1 signature,
+  durée × 1,5.
+- **A3 remplacé** : entre Empires **neutres**, la réserve est **partagée**, la répartition dépend
+  des extracteurs présents et de la **capacité de transport** (cargos ajoutés à la flotte) ; entre
+  **ennemis**, c’est la flotte d’extraction armée qui décide (affrontement, A1).
+- **A4 validé** : dossier complet = Données importantes + révélation des systèmes remarquables de
+  la région, sans technologie exclusive.
+- **A5 remplacé** : **tout passe en v0.10** (aucune partie existante à préserver) ; la création
+  Portal et `start_universe` utilisent v0.10.
+- **Tests PostgreSQL** : job CI temporaire sur les PR visant la recette, validé.
+- **Galaxie — flottes visibles** : un symbole de flotte au-dessus d’un système ouvre une fenêtre
+  (composition, mission) ; on peut y changer de mission ou ordonner un déplacement : la fenêtre se
+  réduit en haut à gauche avec le filigrane « Choisir une destination », la carte reste utilisable
+  (un clic ne ferme pas la fenêtre) ; choisir un système valide, clic droit ou Échap annule et
+  restaure la fenêtre.
+- **Maillage de la galaxie** : pas de systèmes tous reliés ; des **impasses** et des **connexions
+  uniques** (goulots d’étranglement), enjeu stratégique majeur ; mais **aucun Empire isolé** : le
+  graphe reste connexe et chaque départ garde des sorties. Ce lot de carte (avec les tailles
+  100–2 000 de Q61) passe **avant** l’exploitation.
+
+## 10. Arbitrages A1–A5 (proposition initiale, remplacée par le §9)
 
 | Id | Question | Proposition | Bloque |
 | --- | --- | --- | --- |

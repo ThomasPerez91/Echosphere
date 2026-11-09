@@ -27,9 +27,10 @@ Portal (`CREATION_RULESET`) figée sur v0.9 (A5).
 
 | Lot | Contenu | Dépend de | Testable seul |
 | --- | --- | --- | --- |
-| **EXP-00** | Design, plan, roadmap, arbitrages A1–A5 | — | Docs |
+| **EXP-00** | Design, plan, roadmap, arbitrages A1–A5 (tranchés le 09/11) | — | Docs |
+| **GAL-2** | `galaxy-v2` en v0.10 : impasses et goulots, graphe connexe, départs non isolés, tailles 100–2 000 et plafonds Q61 ; création Portal/Game en v0.10 | EXP-01a | Oui |
 | **EXP-01a** | Ruleset v0.10 (copie v0.9 + `opportunities.json`), règles validées, générateur pur `opportunities-v1`, tests de déterminisme/distribution/équité | EXP-00 | Oui (tests purs) |
-| **EXP-01b** | Tables `galaxy_opportunities`, `opportunity_knowledge`, `discovery_dossiers` ; génération dans `generate_world` pour v0.10 ; signatures révélées à la cartographie ; projection Galaxie/System View sous Fog | 01a | Oui (intégration PostgreSQL) |
+| **EXP-01b** (après GAL-2) | Tables `galaxy_opportunities`, `opportunity_knowledge`, `discovery_dossiers` ; génération dans `generate_world` pour v0.10 ; signatures révélées à la cartographie ; projection Galaxie/System View sous Fog | 01a | Oui (intégration PostgreSQL) |
 | **EXP-02a** | Classe Extracteur ; missions PROSPECT et STUDY ; rapports ; crédit de Données plafonné | 01b | Oui |
 | **EXP-02b** | Mission EXTRACT : durée, cargo, réserve, partage au prorata (A3), fin (rester/rentrer), reprise après crash | 02a | Oui |
 | **EXP-02c** | Dossiers complets (A4) ; exploitation contestée (A1) | 02b + arbitrages | Oui |
@@ -37,9 +38,9 @@ Portal (`CREATION_RULESET`) figée sur v0.9 (A5).
 | **EXP-04a** | Doctrine Contournement (systèmes évités, chemin serveur, coûts) | PR #20 | Oui |
 | **EXP-04b** | Doctrine Furtive (A2 : niveaux, facteur de durée) | Recherche + A2 | Oui |
 | **EXP-05** | IA v0.10 : prospection, exploitation, escorte, patrouilles, doctrines | 02b, 03, 04a | Oui (politique pure + intégration) |
-| **EXP-06** | UI : panneau système, ordres, patrouilles, doctrines, vue Présence stratégique | lots correspondants | Vitest/Playwright |
+| **EXP-06** | UI : symboles de flottes sur la carte et fenêtre de flotte (changement de mission, déplacement avec carte « Choisir une destination »), panneau système, ordres, patrouilles, doctrines, vue Présence stratégique | lots correspondants | Vitest/Playwright |
 | **EXP-07** | Simulations multi-Empires, scénarios A–I, performance, recette | tous | Recette |
-| **Bascule** | `start_universe` et Portal en v0.10 (A5) | 02b au minimum | Oui |
+| **Bascule** | Intégrée à GAL-2 (A5 remplacé : tout en v0.10) | — | — |
 
 Chaque lot backend expose son API et un minimum d’UI quand il devient jouable (pas d’attente
 d’EXP-06 pour tout).
