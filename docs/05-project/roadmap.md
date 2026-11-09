@@ -26,6 +26,7 @@ L'étape 16 industrialise les simulations, elle n'interdit pas les petits tests 
 | 12 | Combat MVP — intégré via PR #15 (`067a4e5`), Q02/Q10 closes v0.7 | Résolution et rapports militaires simples | Q02/Q10 arbitrées, simulation et rejeu des résultats |
 | 13 | Relations IA minimales — lot courant, Q18 close | Interactions compréhensibles entre civilisations | Q18 arbitrée, pas de diplomatie avancée anticipée |
 | 13B | Présence frontalière & Premier contact — pré-MVP, après 13 | Flottes stationnées à protocole, détection déterministe, premier contact | Q57/Q58 arbitrées, transit par saut observable, détection déterministe, quatre protocoles, auto-engagement/repli reproductibles, aucune fuite Fog, mêmes règles humain/IA |
+| EXP | Expansion opérationnelle — **pré-MVP, validée 09/11/2026 (Q62)** | Opportunités, exploitation sans colonie, patrouilles/escortes, doctrines de déplacement, IA et UI ([design](../01-game-design/operational-expansion.md), [plan](exp-plan.md)) | Scénarios A–I jouables, ruleset v0.10+, Fog et mêmes règles humain/IA |
 | 14 | UX sessions courtes | Bilan, alertes et actions prioritaires | Préparation quotidienne en environ dix minutes sur mobile |
 | 15 | Onboarding | Démarrage guidé vers première exploration | Premier cycle compris sans surcharge |
 | 16 | Simulation/balance headless | Campagnes multi-seeds et profils | Métriques et versions consignées, écarts discutés |

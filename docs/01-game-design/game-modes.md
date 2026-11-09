@@ -75,8 +75,8 @@ Provenance : réponses explicites de l’utilisateur le 09/11/2026 (atelier gén
 - **Placement** : premier mode proposé = **Équitable** (distances et ressources de départ
   équilibrées pour tous) ; *Dispersé* et *Regroupé* plus tard.
 - **Garde-fous anti « Stellaris-like »** retenus : **plafond de colonies** par Empire et **zones
-  d’influence**. Les zones d’influence sont **en attente** : l’utilisateur fournira sa propre
-  description ; aucun effet n’est décidé.
+  d’influence**. Les zones d’influence sont définies par l’instruction du 09/11/2026 :
+  représentation de la présence opérationnelle, sans propriété ([Q62](operational-expansion.md)).
 - **Priorité** : ce lot passe en premier après la recette (avant Orbite et Défense).
 
 ## Compte global, Empire partagé et départ (Q21/Q23)
