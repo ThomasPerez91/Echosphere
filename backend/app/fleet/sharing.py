@@ -70,5 +70,3 @@ def settle(throughput, reserve, remainder, rate, claims, start, end):
         reserve -= taken
         extracted += taken
     return credits, extracted, reserve, remainder
-
-

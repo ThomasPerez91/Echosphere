@@ -222,10 +222,10 @@ class FleetMission(Record, Base):
             "AND due_at = travel_arrival_at)",
             name="deadline",
         ),
-        # A return without recall exists only after an ATTACK's battle.
+        # A return without recall exists only after an ATTACK's battle or an extraction.
         CheckConstraint(
             "(recalled_at IS NULL) = (return_at IS NULL) "
-            "OR (kind = 'ATTACK' AND recalled_at IS NULL AND return_at IS NOT NULL)",
+            "OR (kind IN ('ATTACK','EXTRACT') AND recalled_at IS NULL AND return_at IS NOT NULL)",
             name="recall_pair",
         ),
         # Recall only while travelling, never an analysis or a return; time-symmetric way back.
@@ -247,7 +247,7 @@ class FleetMission(Record, Base):
         ),
         CheckConstraint(
             "status <> 'returning' OR recalled_at IS NOT NULL "
-            "OR (kind = 'ATTACK' AND return_at IS NOT NULL)",
+            "OR (kind IN ('ATTACK','EXTRACT') AND return_at IS NOT NULL)",
             name="returning",
         ),
         CheckConstraint("(status = 'completed') = (completed_at IS NOT NULL)", name="completion"),

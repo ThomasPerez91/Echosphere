@@ -57,6 +57,8 @@ class Plan(Body):
     target_opportunity_id: str | None = Field(default=None, pattern=UUID_PATTERN)
     # EXP-02b: extraction length in whole hours (bounded by the pinned ruleset).
     duration_hours: int | None = Field(default=None, ge=1, le=1000)
+    # EXP-02b: after the extraction, stay in the deposit's system (default) or come back.
+    after: Literal["STAY", "RETURN"] | None = None
     units: Units = Field(min_length=1, max_length=16)
 
 
@@ -513,6 +515,7 @@ class Fleets(Colonies):
                 "colony.read" in permissions,
                 UUID(body.target_opportunity_id) if body.target_opportunity_id else None,
                 body.duration_hours,
+                body.after,
             )
             if "colony.read" not in permissions:
                 # Commanding stays allowed without colony.read; the paying colony is not shown.
@@ -541,6 +544,7 @@ class Fleets(Colonies):
                 if body.target_opportunity_id
                 else None,
                 duration_hours=body.duration_hours,
+                after=body.after,
             )
             return {"mission_id": str(mission.id), "fleet_id": str(mission.fleet_id)}
 

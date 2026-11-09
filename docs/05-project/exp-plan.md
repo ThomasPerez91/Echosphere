@@ -144,10 +144,12 @@ capacité de transport (A3 remplacé) ; entre ennemis, l’affrontement relève 
   partage au prorata des extracteurs avec redistribution de la part d’un chantier plein ; réserve
   jamais négative. Chaque date de règlement arrondit une fois de plus (au plus une µ-unité par date) :
   résultat fonction des dates persistées seulement, jamais de l’Empire qui règle.
-- **Fin** : à l’échéance, le crédit final est chargé en soute et la flotte **reste** dans le système
-  (elle rentre par une mission ordinaire). Rappel pendant le trajet : retour symétrique, fenêtre vide ;
-  rappel pendant l’extraction : arrêt immédiat, ce qui est extrait est chargé, la flotte reste.
-- **Écart avec la conception** : le choix « reste/rentre » au lancement n’est pas implémenté ; la flotte
-  reste toujours et l’Empire la renvoie ensuite (un aller-retour automatique pourra s’ajouter).
-- **Interface** : « Extraire : <gisement> » sur la carte, durée réglable dans l’étape « Unités »
-  (bornes d’affichage 1–24 h, le serveur applique le ruleset).
+- **Fin** : à l’échéance, le crédit final est chargé en soute. Choix au lancement (`after`) :
+  `STAY` (défaut, la flotte reste dans le système) ou `RETURN` (validé par l’utilisateur le
+  09/11/2026 : retour automatique vers le système de départ, durée = trajet aller, carburant
+  aller-retour payé au lancement comme une attaque ; rapport au retour). Rappel pendant le trajet :
+  retour symétrique, fenêtre vide ; rappel pendant l’extraction : arrêt immédiat, ce qui est extrait
+  est chargé, puis séjour ou retour selon le choix ; rappel pendant le retour : refusé.
+- **Interface** : « Extraire : <gisement> » sur la carte, durée réglable et choix « Rester sur place »
+  / « Revenir au point de départ » dans l’étape « Unités » (bornes d’affichage 1–24 h, le serveur
+  applique le ruleset).

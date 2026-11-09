@@ -33,7 +33,7 @@ function OpportunityList({ data }: { data: NonNullable<World["galaxy"]["systems"
   </>;
 }
 
-type Intent = { offer: ActionOffer; fleet: string | null; units: Record<string, number>; hours?: number };
+type Intent = { offer: ActionOffer; fleet: string | null; units: Record<string, number>; hours?: number; comeBack?: boolean };
 
 /**
  * Galaxy → Fleet → Mission, driven from the map (D-UX-3/4/5). Controlled: `world` is the server's
@@ -84,7 +84,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
     fleet_id: fleet.id, kind: intent.offer.kind, units: engaged,
     ...(intent.offer.planet ? { target_planet_id: intent.offer.planet }
       : intent.offer.opportunity ? { target_opportunity_id: intent.offer.opportunity } : { destination_id: selected }),
-    ...(intent.offer.kind === "EXTRACT" ? { duration_hours: intent.hours ?? EXTRACT_HOURS.initial } : {}),
+    ...(intent.offer.kind === "EXTRACT" ? { duration_hours: intent.hours ?? EXTRACT_HOURS.initial, ...(intent.comeBack ? { after: "RETURN" as const } : {}) } : {}),
   } : null;
   const planKey = plan ? JSON.stringify(plan) : null;
   const ready = quote.status === "ready" && quote.key === planKey ? quote.quote : null;
@@ -273,6 +273,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
         : intent ? <>
           <MissionPlanner world={world} target={target.id} offer={intent.offer} fleets={candidates} fleet={fleet} units={intent.units}
             hours={intent.hours} onHours={(h) => setIntent((p) => p && { ...p, hours: h })}
+            comeBack={intent.comeBack} onComeBack={(back) => setIntent((p) => p && { ...p, comeBack: back })}
             step={step} quoteKey={planKey} quote={quote} path={path} pending={pending || busy} onFleet={chooseFleet}
             onUnits={(u) => setIntent((p) => p && { ...p, units: u })} onStep={setStep} onConfirm={confirm} onCancel={cancel} />
           {failed && feedback && feedback.tone !== "success" && <p role="alert" className={`feedback feedback--${feedback.tone === "unknown" ? "error" : feedback.tone}`}>

@@ -323,7 +323,7 @@ export async function fleetCommand(universe: string, empire: string, csrf: strin
   return { result: reply.result, fleets: reply.fleets };
 }
 
-export type Plan = { fleet_id: string; kind: MissionKind; destination_id?: string; target_planet_id?: string; target_opportunity_id?: string; duration_hours?: number; units: Record<string, number> };
+export type Plan = { fleet_id: string; kind: MissionKind; destination_id?: string; target_planet_id?: string; target_opportunity_id?: string; duration_hours?: number; after?: "STAY" | "RETURN"; units: Record<string, number> };
 
 /** Quote of a launch. A paying colony without colony.read is a leak, refused rather than hidden. */
 export async function previewMission(universe: string, empire: string, csrf: string, plan: Plan, colonyRead: boolean,

@@ -16,9 +16,9 @@ const titles: Record<PlannerStep, string> = { fleet: "Quelle flotte envoyer ?", 
  */
 export const EXTRACT_HOURS = { initial: 8, max: 24 }; // UI bounds only: the server applies the ruleset
 
-export function MissionPlanner({ world, target, offer, fleets, fleet, units, hours = EXTRACT_HOURS.initial, onHours, step, quoteKey, quote, path, pending, onFleet, onUnits, onStep, onConfirm, onCancel }: {
+export function MissionPlanner({ world, target, offer, fleets, fleet, units, hours = EXTRACT_HOURS.initial, onHours, comeBack = false, onComeBack, step, quoteKey, quote, path, pending, onFleet, onUnits, onStep, onConfirm, onCancel }: {
   world: World; target: string; offer: ActionOffer; fleets: FleetView[]; fleet: FleetView | null; units: Record<string, number>;
-  hours?: number; onHours?: (h: number) => void;
+  hours?: number; onHours?: (h: number) => void; comeBack?: boolean; onComeBack?: (back: boolean) => void;
   step: PlannerStep; quoteKey: string | null; quote: QuoteState; path: string[] | undefined; pending: boolean;
   onFleet: (id: string) => void; onUnits: (u: Record<string, number>) => void; onStep: (s: PlannerStep) => void;
   onConfirm: () => void; onCancel: () => void;
@@ -87,6 +87,13 @@ export function MissionPlanner({ world, target, offer, fleets, fleet, units, hou
             <output aria-live="polite">{hours} h</output>
             <button type="button" className="button" aria-label="Une heure de plus" disabled={hours >= EXTRACT_HOURS.max} onClick={() => onHours?.(hours + 1)}>+</button>
           </div>}
+          {offer.kind === "EXTRACT" && <fieldset className="cmd-fieldset">
+            <legend>Après l’extraction</legend>
+            <label className="cmd-choice"><input type="radio" name="cmd-after" checked={!comeBack} onChange={() => onComeBack?.(false)} />
+              <span className="cmd-choice-title">Rester sur place</span><span className="cmd-choice-meta">La flotte attend vos ordres avec son chargement.</span></label>
+            <label className="cmd-choice"><input type="radio" name="cmd-after" checked={comeBack} onChange={() => onComeBack?.(true)} />
+              <span className="cmd-choice-title">Revenir au point de départ</span><span className="cmd-choice-meta">Retour automatique, carburant aller-retour payé au départ.</span></label>
+          </fieldset>}
         </>}
       </>}
 
@@ -98,10 +105,10 @@ export function MissionPlanner({ world, target, offer, fleets, fleet, units, hou
             <div><dt>Départ</dt><dd>{systemName(world, fleet?.system?.id)}</dd></div>
             <div><dt>Destination</dt><dd>{systemName(world, q.destination_id)}</dd></div>
             <div><dt>Sauts</dt><dd>{q.hops === 0 ? "0 (même système)" : q.hops}</dd></div>
-            <div><dt>Durée</dt><dd>{duration(q.travel_us)}{["SURVEY", "PROSPECT", "STUDY"].includes(q.kind) ? ` + analyse ${duration(q.survey_us)}` : q.kind === "EXTRACT" ? ` + extraction ${duration(q.survey_us)}` : ""}</dd></div>
+            <div><dt>Durée</dt><dd>{duration(q.travel_us)}{["SURVEY", "PROSPECT", "STUDY"].includes(q.kind) ? ` + analyse ${duration(q.survey_us)}` : q.kind === "EXTRACT" ? ` + extraction ${duration(q.survey_us)}${comeBack && q.hops > 0 ? ` + retour ${duration(q.travel_us)}` : ""}` : ""}</dd></div>
             <div><dt>Arrivée</dt><dd>{time(q.travel_arrival_at)}</dd></div>
             {q.battle_at && <div><dt>Bataille</dt><dd>{time(q.battle_at)}</dd></div>}
-            <div><dt>Carburant</dt><dd>{resourceKeys.filter((k) => BigInt(q.cost[k]) > 0n).map((k) => `${amount(q.cost[k])} ${resourceLabels[k]}`).join(" · ") || "aucun"}{q.kind === "ATTACK" ? " (aller-retour)" : ""}</dd></div>
+            <div><dt>Carburant</dt><dd>{resourceKeys.filter((k) => BigInt(q.cost[k]) > 0n).map((k) => `${amount(q.cost[k])} ${resourceLabels[k]}`).join(" · ") || "aucun"}{q.kind === "ATTACK" || (q.kind === "EXTRACT" && comeBack) ? " (aller-retour)" : ""}</dd></div>
             <div><dt>Unités</dt><dd>{Object.entries(units).filter(([, n]) => n > 0).map(([c, n]) => `${n} ${name(c)}`).join(", ")}</dd></div>
           </dl>
           {path ? <ol className="cmd-route-steps" aria-label="Étapes du trajet">{path.map((id, i) =>

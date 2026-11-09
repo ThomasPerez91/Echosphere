@@ -3,7 +3,7 @@
 Revision ID: 0017_extraction
 Revises: 0016_prospect_study
 Frozen DDL; independent of runtime ORM models. Additive: the EXTRACT mission kind (target
-opportunity, analysis-like deadline, 0-hop route), the settlement cursor of a deposit and the
+opportunity, analysis-like deadline, 0-hop route, automatic way back without recall), the settlement cursor of a deposit and the
 claims table. No backfill: no existing mission has this kind, every deposit starts unsettled.
 """
 
@@ -32,21 +32,38 @@ NEW_DEADLINE = (
     "OR (kind = 'ATTACK' AND due_at >= travel_arrival_at AND due_at > started_at) "
     "OR (kind NOT IN ('SURVEY','PROSPECT','STUDY','EXTRACT','ATTACK') AND due_at = travel_arrival_at)"
 )
+OLD_RECALL_PAIR = (
+    "(recalled_at IS NULL) = (return_at IS NULL) "
+    "OR (kind = 'ATTACK' AND recalled_at IS NULL AND return_at IS NOT NULL)"
+)
+NEW_RECALL_PAIR = (
+    "(recalled_at IS NULL) = (return_at IS NULL) "
+    "OR (kind IN ('ATTACK','EXTRACT') AND recalled_at IS NULL AND return_at IS NOT NULL)"
+)
+OLD_RETURNING = (
+    "status <> 'returning' OR recalled_at IS NOT NULL OR (kind = 'ATTACK' AND return_at IS NOT NULL)"
+)
+NEW_RETURNING = (
+    "status <> 'returning' OR recalled_at IS NOT NULL "
+    "OR (kind IN ('ATTACK','EXTRACT') AND return_at IS NOT NULL)"
+)
 
 
-def checks(kinds, opportunity, route, deadline):
+def checks(kinds, opportunity, route, deadline, recall_pair, returning):
     for name, body in (
         ("kind", f"kind IN ({kinds})"),
         ("opportunity", opportunity),
         ("route", route),
         ("deadline", deadline),
+        ("recall_pair", recall_pair),
+        ("returning", returning),
     ):
         op.execute(f"ALTER TABLE fleet_missions DROP CONSTRAINT ck_fleet_missions_{name}")
         op.execute(f"ALTER TABLE fleet_missions ADD CONSTRAINT ck_fleet_missions_{name} CHECK ({body})")
 
 
 def upgrade():
-    checks(NEW_KINDS, NEW_OPPORTUNITY, NEW_ROUTE, NEW_DEADLINE)
+    checks(NEW_KINDS, NEW_OPPORTUNITY, NEW_ROUTE, NEW_DEADLINE, NEW_RECALL_PAIR, NEW_RETURNING)
     op.execute("ALTER TABLE galaxy_opportunities ADD COLUMN settled_at TIMESTAMP WITH TIME ZONE")
     op.execute("ALTER TABLE galaxy_opportunities ADD COLUMN settle_remainder BIGINT DEFAULT '0' NOT NULL")
     op.execute(
@@ -90,4 +107,4 @@ def downgrade():
     op.execute("ALTER TABLE galaxy_opportunities DROP CONSTRAINT ck_galaxy_opportunities_settle_remainder")
     op.execute("ALTER TABLE galaxy_opportunities DROP COLUMN settle_remainder")
     op.execute("ALTER TABLE galaxy_opportunities DROP COLUMN settled_at")
-    checks(OLD_KINDS, OLD_OPPORTUNITY, OLD_ROUTE, OLD_DEADLINE)
+    checks(OLD_KINDS, OLD_OPPORTUNITY, OLD_ROUTE, OLD_DEADLINE, OLD_RECALL_PAIR, OLD_RETURNING)
