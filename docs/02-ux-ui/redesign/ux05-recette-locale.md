@@ -62,6 +62,13 @@ une deuxième adresse quelconque (Mailpit reçoit tout), dans une fenêtre de na
 9. Solo : « Archiver la partie » → confirmer. « Consulter cet univers » ouvre le jeu sans pouvoir
    donner d’ordre (boutons refusés par le serveur).
 
+**Nouvelles cartes v0.10 (PR #33/#35/#36).** Toute nouvelle partie utilise le ruleset v0.10.
+10. « Nouvelle partie » : choisir une taille de carte (100, 300, 500, 1 000 ou 2 000 systèmes). Le
+    nombre d’Empires est plafonné par la taille (100 → 4, 300 → 12, 500 → 20, 1 000 et 2 000 → 40 ;
+    10 humains et 30 IA au plus) : un réglage trop grand est refusé à la création.
+11. En jeu, Galaxie : la carte a des impasses et des liaisons uniques (goulots) ; aucun Empire n’est
+    isolé. Une grande carte (1 000 / 2 000) peut mettre quelques secondes de plus à se créer.
+
 Une création qui n’aboutit pas s’affiche « Création retardée » (jeu injoignable, renvoi automatique)
 ou « Création bloquée » (refus du jeu) au lieu de rester « Création en cours » (PR #26).
 
@@ -120,6 +127,20 @@ considéré comme déjà lu.
 
 **Distances (PR #29)** — Galaxie, clic sur un système, onglet « Aperçu » : « N sauts » depuis votre
 colonie la plus proche (« Inconnue » sans route connue).
+
+**Flottes sur la carte (PR #34)** — un symbole au-dessus d’un système où stationnent vos flottes ;
+un clic ouvre la fenêtre de la flotte (composition, mission, changement de protocole). « Déplacer » :
+la fenêtre se réduit en haut à gauche, filigrane « Choisir une destination » ; un clic sur un
+système choisit, clic droit ou Échap annule et rouvre la fenêtre.
+
+**Opportunités (PR #35/#36)** — Galaxie, système cartographié, onglet « Données » :
+- avant prospection, seulement le nombre de signatures ; un signal (non cartographié) n’en montre aucune ;
+- « Prospecter » (une sonde, 30 min, 0 saut possible dans votre système) : les gisements (ressource,
+  réserve datée, débit) et curiosités apparaissent ;
+- « Étudier : <curiosité> » : la flotte doit avoir une sonde **et** une soute (cargo) libre pour
+  les Données (sinon refus « soute insuffisante ») ; à la fin, les Données sont dans la soute,
+  à décharger sur une colonie ; une deuxième étude de la même curiosité est refusée.
+- L’Extracteur est constructible ; l’extraction elle-même arrive au lot suivant (EXP-02b).
 
 **Rapports**
 - Après une construction terminée : elle apparaît dans Rapports (filtre Constructions), avec la bonne

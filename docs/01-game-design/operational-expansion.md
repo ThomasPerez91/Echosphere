@@ -67,7 +67,7 @@ symétrique, déchargement plafonné sans perte) :
 | --- | --- | --- |
 | **PROSPECT** | au moins une sonde | Arrivée + étude ; révèle les opportunités du système ; rapport ; la flotte stationne |
 | **EXTRACT** | au moins un extracteur, cargo disponible | Arrivée, puis extraction pendant une durée choisie ; arrête à la durée, cargo plein, réserve épuisée ou rappel ; puis reste ou rentre (choix au lancement) ; décharge normale dans une colonie propre |
-| **STUDY** | sonde ou extracteur | Étude d’une curiosité prospectée ; Données créditées à une colonie de l’Empire au rapport (plafond de stockage Q39) ; indice de dossier |
+| **STUDY** | sonde ou extracteur, soute libre ≥ Données | Étude d’une curiosité prospectée, une fois par Empire ; Données chargées dans la soute de la flotte (précision technique EXP-02a : un handler d’opérations ne touche pas une Colony), déchargées normalement dans une colonie (plafond Q39) ; indice de dossier |
 
 - Nouvelle classe **Extracteur** (v0.10, provisoire) : débit par heure, cargo propre, pas de valeur
   militaire (civil : jamais détruit, D5).

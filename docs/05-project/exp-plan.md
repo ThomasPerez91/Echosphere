@@ -121,3 +121,31 @@ l’Empire, droits `fleet.command` + `galaxy.read`.
   en EXP-02b. Valeurs de balance provisoires (`opportunities.json` → `operations`).
 - Carte : « Prospecter » sur un système portant des signatures ou des opportunités connues ;
   « Étudier : <curiosité> » par curiosité non étudiée (flotte entière, sa soute rapporte les Données).
+
+## 10. EXP-02b — conception EXTRACT (09/11/2026, avant implémentation)
+
+Règles validées appliquées : partage entre Empires neutres selon les extracteurs présents et la
+capacité de transport (A3 remplacé) ; entre ennemis, l’affrontement relève d’EXP-02c (A1 remplacé).
+
+- **Lancement** : `target_opportunity_id` = gisement prospecté par l’Empire (`opportunity_not_found`
+  sinon), au moins un extracteur (`extract_units`), soute libre > 0 (`cargo_insufficient`),
+  `duration_hours` borné par le ruleset, `after` = `STAY` ou `RETURN`. Carburant selon la règle
+  des missions existantes, chemin serveur, 0 saut possible.
+- **Chantier** : à l’arrivée, une ligne `deposit_claims` (mission, Empire, extracteurs, soute libre,
+  début, fin prévue, crédit, reste µ) devient active. Aucun premier arrivé propriétaire.
+- **Règlement** : la ligne du gisement porte `settled_at`. Toute arrivée, fin, rappel ou contrôle
+  d’un chantier verrouille la ligne du gisement (`FOR UPDATE`, jamais le stream d’un autre Empire),
+  puis règle l’intervalle `[settled_at, maintenant]` : offre = débit/h × durée ; demande de chaque
+  chantier = extracteurs × `extraction_per_hour` × durée, plafonnée par sa soute restante ; si la
+  demande dépasse l’offre, partage au prorata des extracteurs, la part qu’un chantier plein ne peut
+  prendre étant redistribuée aux autres (remplissage) ; la réserve baisse de la somme, jamais sous
+  zéro ; arrondis en µ-unités entières, restes persistés par chantier.
+- **Fin** : chaque Empire planifie sur son propre stream un contrôle à l’heure estimée de soute
+  pleine ou de fin prévue ; au contrôle, règlement puis fin si soute pleine, réserve épuisée ou durée
+  atteinte, sinon nouveau contrôle à la nouvelle estimation (l’arrivée d’un concurrent ne réécrit
+  jamais le stream d’un autre). Fin → `STAY` (la flotte reste, cargo à bord) ou `RETURN` (trajet
+  retour vers la colonie d’origine, déchargement normal).
+- **Reprise après crash** : tout est daté et réglé sous verrou dans la transaction du handler ; un
+  contrôle rejoué règle un intervalle vide.
+- **Fog** : un Empire ne voit pas les chantiers des autres ; il constate seulement son crédit et,
+  à une nouvelle observation, la réserve.
