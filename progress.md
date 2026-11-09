@@ -1,6 +1,6 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-11-05. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-11-09. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
 ## Reprise rapide — base de recette intégrée (recette/ux-weekend)
 
@@ -13,6 +13,9 @@ Mise à jour : 2026-11-05. [Contexte](context.md), [passation](docs/06-handoff/R
 | Recette | [Procédure](docs/02-ux-ui/redesign/ux05-recette-locale.md) |
 | Ajouts (09/11) | #24 multi privé (invitations lien ou email, 2–4 Empires humains+IA, plafond galaxy-v1, Fast CI 42594450478) ; #25 trajet réel des missions (`missions[].path`) sur la carte (Fast CI 42595525284) ; #26 création « retardée »/« bloquée » et date de démarrage dans « Mes parties » (Fast CI 42595415688 avant fusion de la recette) |
 | Ajouts (09/11, suite) | Q60 consignée (abandon multi → IA, solo archivée, cloche, nom d’Empire choisi) ; #27 cloche (Fast CI 42598912202) ; #28 nom d’Empire, quitter/archiver, opérations Game `name_empire`/`hand_over_empire`, migration Portal `p0008_game_life` (Fast CI 42599825997, échec puis relance verte : instabilité connue de `Research.test.tsx`) ; #29 distances en sauts (Fast CI 42599976802) |
+| Ajouts (09/11, soir) | #32 job CI PostgreSQL temporaire sur les PR vers la recette (validé) ; #34 flottes sur la carte (fenêtre, choix de destination) ; chaîne EXP v0.10 intégrée en `cdf277e` : #30 conception EXP-00, #31 EXP-01a (générateur d’opportunités), #33 galaxie v2 (tailles 100–2 000, impasses/goulots, plafonds Q61, création Portal/Game en v0.10), #35 EXP-01b (opportunités en base, onglet « Données »), #36 EXP-02a (PROSPECT/STUDY, Extracteur). CI de #36 sur `cdf277e` : 6 jobs verts dont backend avec PostgreSQL, 642 tests (job 129219981014) |
+| Recette ce soir | [Procédure](docs/02-ux-ui/redesign/ux05-recette-locale.md) étapes 10–11 et sections « Flottes sur la carte » / « Opportunités » ; migrations Game 0015–0016 additives ; les univers déjà créés restent sur leur ruleset |
+| En cours | EXP-02b EXTRACT (`work/exp-02b-extract`, conception exp-plan §10) |
 | Étapes suivantes | Atelier génération de carte (tailles 100–2000, placement dispersé/regroupé, 10 joueurs + ~30 IA) avec l’utilisateur avant de lever le plafond de 4 Empires ; Orbite/Défense Q30–Q38 à reprioriser ; tests PostgreSQL de #22–#28 seulement en Full CI après fusion master |
 
 ## Reprise rapide — refonte UX (work/ux-redesign)
