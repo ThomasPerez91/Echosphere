@@ -2,8 +2,8 @@
 
 **Statut : procédure à exécuter par l’utilisateur (WSL2 + Docker), non encore exécutée.**
 Elle valide en univers réel les écrans de la PR #19 avec les backends des PR #20 (trajet des
-missions) et #21 (historique des constructions). Rien n’est fusionné : la branche
-`recette/ux-weekend` réunit les trois PR pour ce test seulement (aucune PR, aucune CI dédiée ;
+missions), #21 (historique des constructions) et #22 (création de partie). Rien n’est fusionné : la branche
+`recette/ux-weekend` réunit ces PR pour ce test seulement (aucune PR, aucune CI dédiée ;
 chacune des trois têtes a sa Fast CI verte).
 
 ## 0. Ce qu’il faut
@@ -31,32 +31,33 @@ docker compose ps -a
 Le nom du dossier donne un projet Compose distinct (`echosphere-recette`) avec ses propres volumes.
 Ne jamais lancer `down -v` dans le dossier de la pile conservée.
 
-## 2. Compte, univers et accès
+## 2. Compte et partie
 
-1. Ouvrir https://portal.echosphere.localhost:8443, créer un compte, puis confirmer l’adresse dans
-   Mailpit (http://127.0.0.1:8025).
-2. Identifiant du compte :
-   ```bash
-   docker compose exec portal-postgres psql -U echosphere_accounts -d echosphere_accounts \
-     -tAc "select id from users where email='VOTRE_EMAIL'"
-   ```
-3. Univers (choisir un nom et une graine, les garder identiques aux deux commandes) :
-   ```bash
-   U=$(cat /proc/sys/kernel/random/uuid); echo $U
-   docker compose exec portal-backend python -m portal_app.control.operator provision \
-     --universe-id $U --backend primary --name "Recette UX" --seed recette-ux-1
-   sleep 10   # livraison au Game par portal-control-worker
-   docker compose exec backend python -m app.ai.worker --bootstrap $U \
-     --name "Recette UX" --seed recette-ux-1 --ruleset v0.9
-   ```
-   La sortie liste les acteurs : le premier (`profile: null`) est l’Empire humain, noter son `empire_id`.
-4. Accès avec tous les droits de l’Empire humain :
-   ```bash
-   docker compose exec portal-backend python -m portal_app.control.operator set-access \
-     --user-id <ID_COMPTE> --universe-id $U --status active --bindings '[{"empire_id":"<EMPIRE_ID>","permissions":["colony.read","colony.construct","colony.cancel","research.read","research.start","research.cancel","galaxy.read","exploration.read","exploration.start","fleet.read","fleet.build","fleet.command","colony.expand","combat.read","combat.attack","relations.read","relations.negotiate"]}]'
-   ```
-5. Dans le Portal, « Actualiser mes parties » : la carte « Recette UX » passe à « Participation
-   confirmée par Game », puis « Entrer dans cet univers ».
+1. Ouvrir https://portal.echosphere.localhost:8443, « Inscription », créer un compte, puis confirmer
+   l’adresse dans Mailpit (http://127.0.0.1:8025).
+2. « Nouvelle partie » (PR #22) : un nom, 0 à 3 adversaires IA, « Créer la partie ». « Mes parties »
+   affiche « Création en cours », puis la partie avec « Entrer dans cet univers » après quelques
+   secondes (le temps que le worker de contrôle livre au jeu puis accorde votre Empire).
+3. Si la partie reste « Création en cours » plus d’une minute :
+   `docker compose logs --tail=100 portal-control-worker game-control` et envoyer la sortie.
+
+Les IA ne jouent que si `ai-worker` tourne (`docker compose --profile ai up -d ai-worker`, étape 1).
+
+<details><summary>Procédure opérateur (ancienne méthode, en secours)</summary>
+
+```bash
+docker compose exec portal-postgres psql -U echosphere_accounts -d echosphere_accounts \
+  -tAc "select id from users where email='VOTRE_EMAIL'"
+U=$(cat /proc/sys/kernel/random/uuid)
+docker compose exec portal-backend python -m portal_app.control.operator provision \
+  --universe-id $U --backend primary --name "Recette UX" --seed recette-ux-1
+sleep 10
+docker compose exec backend python -m app.ai.worker --bootstrap $U \
+  --name "Recette UX" --seed recette-ux-1 --ruleset v0.9
+docker compose exec portal-backend python -m portal_app.control.operator set-access \
+  --user-id <ID_COMPTE> --universe-id $U --status active --bindings '[{"empire_id":"<EMPIRE_ID>","permissions":["colony.read","colony.construct","colony.cancel","research.read","research.start","research.cancel","galaxy.read","exploration.read","exploration.start","fleet.read","fleet.build","fleet.command","colony.expand","combat.read","combat.attack","relations.read","relations.negotiate"]}]'
+```
+</details>
 
 ## 3. Parcours à vérifier
 
