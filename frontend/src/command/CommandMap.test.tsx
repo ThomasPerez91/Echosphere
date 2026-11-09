@@ -198,3 +198,14 @@ test("search finds a named known system, tabs show planets and routes, filters o
   expect(signals).toHaveAttribute("aria-pressed", "true");
   expect(map().getAllByRole("button")).toHaveLength(9);
 });
+
+test("EXP-01: the Données tab shows unexplained signatures and the dated details of a prospected deposit", () => {
+  render(<Harness />);
+  fireEvent.click(map().getByRole("button", { name: /^Vesta/ }));
+  fireEvent.click(screen.getByRole("tab", { name: "Données" }));
+  const panel = within(screen.getByRole("tabpanel", { name: "Données" }));
+  expect(panel.getByText("1 signature inexpliquée")).toBeVisible();
+  const known = within(panel.getByRole("list", { name: "Opportunités connues" }));
+  expect(known.getByText("Ceinture métallique")).toBeVisible();
+  expect(known.getByText(/Alliages · réserve 4\s200 · débit max 90\/h/)).toBeVisible();
+});

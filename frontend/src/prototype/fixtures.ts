@@ -60,7 +60,11 @@ export function galaxyFixture(): GalaxyProjection {
     systems: [
       { ...mapped(ids.home, "Aube", 0, 0, [planet(ids.planetHome, "Aube Prime", 12, 2, ids.colony)]),
         state: "MONITORED", last_seen_at: SERVER_TIME, observation: { own_colony_ids: [ids.colony] } },
-      mapped(ids.vesta, "Vesta", 120, -60, [planet(ids.planetVesta, "Vesta II", 10, 2)]),
+      { ...mapped(ids.vesta, "Vesta", 120, -60, [planet(ids.planetVesta, "Vesta II", 10, 2)]),
+        // EXP-01 (v0.10): one prospected deposit, one signature still unexplained.
+        opportunities: { signatures: 1, known: [{ id: "80000000-0000-4000-8000-000000000001", family: "deposit" as const,
+          kind: "metal_belt", tier: "common" as const, observed_at: "2098-12-31T09:00:00Z", resource: "alloys" as const,
+          reserve: "4200000000", throughput_per_hour: "90000000" }] } },
       mapped(ids.orion, "Orion", 80, 110, [planet(ids.planetOrion, "Orion Rift", 9, 1)]),
       mapped(ids.lyra, "Lyra", 240, -20, [planet(ids.planetLyra, "Lyra Bastion", 11, 2)]),
       mapped(ids.cygne, "Cygne", 210, 120, [planet(ids.planetCygne, "Cygne Halo", 8, 1)]),

@@ -14,6 +14,29 @@ import type { CommandFeedback, MissionApi } from "./types";
 import { useMedia } from "../shell/useNow";
 import { planetImage } from "../shell/assets";
 
+const kindNames: Record<string, string> = {
+  metal_belt: "Ceinture métallique", flux_cloud: "Nuage de flux", memory_crystals: "Cristaux mémoriels",
+  anomaly: "Anomalie spatiale", ancient_wreck: "Épave ancienne", unknown_structure: "Structure d’origine inconnue",
+  artificial_signal: "Signal artificiel",
+};
+const resourceNames = { alloys: "Alliages", flux: "Flux", data: "Données" } as const;
+const whole = (micro?: string) => micro ? Math.floor(Number(micro) / 1_000_000).toLocaleString("fr-FR") : "?";
+
+/** EXP-01: what this Empire knows of a system's opportunities (signatures, then dated details). */
+function OpportunityList({ data }: { data: NonNullable<World["galaxy"]["systems"][number]["opportunities"]> }) {
+  return <>
+    {data.signatures > 0 ? <p><strong>{data.signatures} signature{data.signatures > 1 ? "s" : ""} inexpliquée{data.signatures > 1 ? "s" : ""}</strong> :
+      une prospection par une sonde révélera s’il s’agit de gisements ou de curiosités.</p>
+      : data.known.length === 0 ? <p>Aucune ressource ni anomalie détectée dans ce système.</p> : null}
+    {data.known.length > 0 && <ul className="cmd-opportunities" aria-label="Opportunités connues">{data.known.map((o) => <li key={o.id}>
+      <strong>{kindNames[o.kind] ?? o.kind}</strong>{o.tier === "remarkable" && <span className="cmd-chip cmd-chip--own">Remarquable</span>}
+      <span className="cmd-help">{o.family === "deposit"
+        ? `${resourceNames[o.resource!]} · réserve ${whole(o.reserve)} · débit max ${whole(o.throughput_per_hour)}/h`
+        : `Étude ${Math.round((o.study_seconds ?? 0) / 3600)} h · ${whole(o.data)} Données${o.dossier !== undefined ? " · indice de dossier" : ""}`}
+        {" "}(observé le {new Date(o.observed_at).toLocaleDateString("fr-FR")})</span></li>)}</ul>}
+  </>;
+}
+
 type Intent = { offer: ActionOffer; fleet: string | null; units: Record<string, number> };
 
 /**
@@ -268,7 +291,9 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
             <p className="cmd-help">Seules vos routes connues sont listées. {distance ? `À ${distance.hops} saut${distance.hops > 1 ? "s" : ""} de ${systemName(world, distance.from)} par ces routes ; la durée exacte figure dans le résumé du serveur avant tout envoi.` : "Aucune route connue ne le relie encore à vos colonies."}</p>
           </div>}
           {tab === "data" && <div role="tabpanel" id="cmd-tabpanel-data" aria-labelledby="cmd-tab-data">
-            <div className="d-pending"><strong>Implémentation backend nécessaire</strong><span>Ressources, anomalies et historique d’observation du système.</span></div>
+            {target.opportunities ? <OpportunityList data={target.opportunities} />
+              : target.state === "DETECTED" ? <p>Un signal ne révèle rien de plus : cartographiez-le d’abord.</p>
+              : <div className="d-pending"><strong>Implémentation backend nécessaire</strong><span>Ressources et anomalies : univers créés avant les règles v0.10.</span></div>}
           </div>}
           <div className="cmd-system-actions">
             {systemHref && target.state !== "DETECTED" ? <a className="button cmd-ghost" href={systemHref(target.id)}>Observer</a>

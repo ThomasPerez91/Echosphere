@@ -16,10 +16,12 @@ from app.galaxy.models import (
     EmpireExploration,
     ExplorationMission,
     ExplorationReport,
+    GalaxyOpportunity,
     GalaxyPlanet,
     GalaxyRoute,
     GalaxySystem,
     MissionLeg,
+    OpportunityKnowledge,
     PlanetKnowledge,
     RouteKnowledge,
     SystemKnowledge,
@@ -220,7 +222,42 @@ def record_contacts(session, universe_id, empire_id, monitored, at):
         frontier.materialise_introductions(session, universe_id, empire_id, at)
 
 
-def project_system(session, known, colony_read=True):
+def opportunity_views(session, universe_id, empire_id, system_ids=None):
+    """EXP-01 Fog: per known system, the number of signatures this Empire has not prospected and
+    the dated details of those it has. Values are the ones observed, never the current ones."""
+    rows = select(GalaxyOpportunity).where(GalaxyOpportunity.universe_id == universe_id)
+    if system_ids is not None:
+        rows = rows.where(GalaxyOpportunity.system_id.in_(list(system_ids)))
+    known = {
+        k.opportunity_id: k
+        for k in session.scalars(
+            select(OpportunityKnowledge).where(
+                OpportunityKnowledge.universe_id == universe_id,
+                OpportunityKnowledge.empire_id == empire_id,
+            )
+        )
+    }
+    views = {}
+    for o in session.scalars(rows.order_by(GalaxyOpportunity.system_id, GalaxyOpportunity.ordinal)):
+        view = views.setdefault(o.system_id, {"signatures": 0, "known": []})
+        seen = known.get(o.id)
+        if seen is None:
+            view["signatures"] += 1
+            continue
+        item = {"id": str(o.id), "family": o.family, "kind": o.kind, "tier": o.tier,
+                "observed_at": seen.observed_at.isoformat()}
+        if o.family == "deposit":
+            item.update(resource=o.resource, reserve=str(seen.observed_reserve),
+                        throughput_per_hour=str(o.throughput_per_hour))
+        else:
+            item.update(study_seconds=o.study_seconds, data=str(o.data_reward))
+            if o.dossier is not None:
+                item.update(dossier=o.dossier, clue=o.clue)
+        view["known"].append(item)
+    return views
+
+
+def project_system(session, known, colony_read=True, opportunities=None):
     result = {
         "id": str(known.system_id),
         "state": known.state,
@@ -255,6 +292,11 @@ def project_system(session, known, colony_read=True):
                 )
             ],
         )
+        if opportunities is not None:
+            # v0.10 only (EXP-01): mapping reveals signatures; prospection, their details.
+            result["opportunities"] = opportunities.get(
+                known.system_id, {"signatures": 0, "known": []}
+            )
     return result
 
 

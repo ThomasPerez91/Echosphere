@@ -143,6 +143,11 @@ class Galaxy(Colonies):
                         }
                     )
         pinned = rules_for(session, universe_id)
+        opportunities = (
+            service.opportunity_views(session, universe_id, empire_id)
+            if pinned.opportunities is not None
+            else None
+        )
         return {
             "server_time": at.isoformat(),
             "exploration": pinned.exploration.engagement_version
@@ -151,7 +156,8 @@ class Galaxy(Colonies):
             "empire": {"id": str(empire_id), "name": session.get(Empire, empire_id).name},
             "permissions": permissions,
             "systems": [
-                service.project_system(session, k, "colony.read" in permissions) for k in knowledge
+                service.project_system(session, k, "colony.read" in permissions, opportunities)
+                for k in knowledge
             ],
             "routes": [
                 {"id": str(r.route_id), "a_id": str(r.a_id), "b_id": str(r.b_id)} for r in routes

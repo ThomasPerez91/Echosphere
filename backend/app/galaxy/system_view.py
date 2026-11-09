@@ -6,12 +6,17 @@ from sqlalchemy import select
 
 from app.colony.service import rules_for
 from app.galaxy.models import PlanetKnowledge, RouteKnowledge, SystemKnowledge
-from app.galaxy.service import project_system
+from app.galaxy.service import opportunity_views, project_system
 from app.persistence.models import Colony
 
 
 def project(session, known, permissions, at):
-    result = project_system(session, known, "colony.read" in permissions)
+    opportunities = (
+        opportunity_views(session, known.universe_id, known.empire_id, [known.system_id])
+        if rules_for(session, known.universe_id).opportunities is not None
+        else None
+    )
+    result = project_system(session, known, "colony.read" in permissions, opportunities)
     if known.state == "DETECTED":
         return result
     result.update(

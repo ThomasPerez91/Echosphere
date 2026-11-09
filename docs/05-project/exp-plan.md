@@ -84,4 +84,17 @@ E progression furtive · F contournement · G jeu hors ligne · H crash/redémar
 | --- | --- | --- |
 | EXP-00 | `work/exp-00-design` | Rédigé 09/11/2026 |
 | EXP-01a | `work/exp-01-opportunities` | Ruleset v0.10, règles et générateur pur livrés, tests purs exécutés |
-| EXP-01b | — | Suivant : persistance, génération à la création, Fog, projection |
+| Galaxie v2 + bascule v0.10 | `work/galaxy-v2` (PR #33) | Livrés : impasses, goulots, tailles 100–2 000, start_universe/Portal en v0.10 |
+| EXP-01b | `work/exp-01b-opportunities` | Livré : tables `galaxy_opportunities` / `opportunity_knowledge` (migration 0015), génération avec le monde v0.10 (insertion groupée), signatures à la cartographie, détails datés après prospection, onglet « Données » |
+| EXP-02a | — | Suivant : Extracteur, PROSPECT, STUDY, rapports |
+
+## 8. EXP-01b — contrat de projection (09/11/2026)
+
+Galaxie et System View, systèmes MAPPED/MONITORED d’un univers v0.10 seulement :
+`opportunities: {signatures, known[]}`. `signatures` = opportunités du système non encore
+prospectées par cet Empire ; `known[]` = `{id, family, kind, tier, observed_at}` plus, pour un
+gisement, `resource`, `reserve` (µ-unités observées à `observed_at`), `throughput_per_hour`, et pour
+une curiosité `study_seconds`, `data`, éventuellement `dossier`/`clue`. Un système DETECTED n’a
+jamais ce champ (refusé par le client comme fuite de Fog). Les rapports de cartographie stockés
+restent inchangés. La génération écrit les mondes par lots (identifiants explicites, une insertion
+par table) pour qu’une carte de 2 000 systèmes tienne dans la transaction de démarrage.

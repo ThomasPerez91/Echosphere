@@ -4,6 +4,7 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import (
+    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -294,3 +295,75 @@ class ExplorationReport(Base):
     observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     discoveries: Mapped[dict] = mapped_column(JSONB)
+
+
+DEPOSIT_SHAPE = (
+    "(family = 'deposit' AND resource IN ('alloys','flux','data') AND reserve_total > 0 "
+    "AND reserve_remaining >= 0 AND reserve_remaining <= reserve_total "
+    "AND throughput_per_hour > 0 AND study_seconds IS NULL AND data_reward IS NULL) OR "
+    "(family = 'curiosity' AND resource IS NULL AND reserve_total IS NULL "
+    "AND reserve_remaining IS NULL AND throughput_per_hour IS NULL AND study_seconds > 0 "
+    "AND data_reward > 0)"
+)
+
+
+class GalaxyOpportunity(Record, Base):
+    """EXP-01 (v0.10): a deposit or a curiosity of a system, generated with the world
+    (opportunities-v1). Immutable except the remaining reserve, debited by extraction (EXP-02)
+    under this row lock; never a property of an Empire. Amounts in micro-units."""
+
+    __tablename__ = "galaxy_opportunities"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["system_id", "universe_id"], ["galaxy_systems.system_id", "galaxy_systems.universe_id"]
+        ),
+        UniqueConstraint("id", "universe_id", name="uq_galaxy_opportunity_scope"),
+        UniqueConstraint("system_id", "ordinal", name="uq_galaxy_opportunity_ordinal"),
+        CheckConstraint("ordinal >= 0", name="ordinal"),
+        CheckConstraint("family IN ('deposit','curiosity')", name="family"),
+        CheckConstraint("tier IN ('common','remarkable')", name="tier"),
+        CheckConstraint(DEPOSIT_SHAPE, name="shape"),
+        CheckConstraint(
+            "(dossier IS NULL AND clue IS NULL) OR (family = 'curiosity' AND dossier >= 0 "
+            "AND clue >= 0)",
+            name="dossier",
+        ),
+        Index("ix_galaxy_opportunities_system", "universe_id", "system_id"),
+    )
+    universe_id: Mapped[UUID] = mapped_column(Uuid)
+    system_id: Mapped[UUID] = mapped_column(Uuid)
+    ordinal: Mapped[int]
+    family: Mapped[str] = mapped_column(String(10))
+    kind: Mapped[str] = mapped_column(String(32))
+    tier: Mapped[str] = mapped_column(String(12))
+    resource: Mapped[str | None] = mapped_column(String(8))
+    reserve_total: Mapped[int | None] = mapped_column(BigInteger)
+    reserve_remaining: Mapped[int | None] = mapped_column(BigInteger)
+    throughput_per_hour: Mapped[int | None] = mapped_column(BigInteger)
+    study_seconds: Mapped[int | None]
+    data_reward: Mapped[int | None] = mapped_column(BigInteger)
+    dossier: Mapped[int | None]
+    clue: Mapped[int | None]
+
+
+class OpportunityKnowledge(Base):
+    """What one Empire learned of one opportunity by prospection, dated. The observed reserve is
+    the value at `observed_at`; later extraction by others is unknown until a new observation."""
+
+    __tablename__ = "opportunity_knowledge"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["empire_id", "universe_id"],
+            ["empire_exploration.empire_id", "empire_exploration.universe_id"],
+        ),
+        ForeignKeyConstraint(
+            ["opportunity_id", "universe_id"],
+            ["galaxy_opportunities.id", "galaxy_opportunities.universe_id"],
+        ),
+        CheckConstraint("observed_reserve IS NULL OR observed_reserve >= 0", name="observed"),
+    )
+    empire_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    opportunity_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    universe_id: Mapped[UUID] = mapped_column(Uuid)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    observed_reserve: Mapped[int | None] = mapped_column(BigInteger)

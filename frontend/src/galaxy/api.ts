@@ -22,6 +22,13 @@ export type KnownSystem = {
   last_seen_at?: string | null;
   observation?: { own_colony_ids: string[] } | null;
   planets?: KnownPlanet[];
+  /** EXP-01 (v0.10): signatures not prospected yet, and the dated details of those that were. */
+  opportunities?: { signatures: number; known: KnownOpportunity[] };
+};
+export type KnownOpportunity = {
+  id: string; family: "deposit" | "curiosity"; kind: string; tier: "common" | "remarkable"; observed_at: string;
+  resource?: "alloys" | "flux" | "data"; reserve?: string; throughput_per_hour?: string;
+  study_seconds?: number; data?: string; dossier?: number; clue?: number;
 };
 export type Route = { id: string; a_id: string; b_id: string };
 export type Report = {
@@ -75,7 +82,14 @@ const micro = (v: unknown) => typeof v === "string" && /^\d{1,20}$/.test(v);
 const amounts = (v: unknown) => object(v) && ["alloys", "flux", "data"].every((k) => micro(v[k]));
 const list = (v: unknown, item: (x: unknown) => boolean) => Array.isArray(v) && v.every(item);
 const route = (v: unknown) => object(v) && id(v.id) && id(v.a_id) && id(v.b_id);
-const STRUCTURE = ["name", "mapped_at", "last_seen_at", "observation", "planets"];
+const STRUCTURE = ["name", "mapped_at", "last_seen_at", "observation", "planets", "opportunities"];
+const opportunity = (o: unknown) => object(o) && id(o.id) && typeof o.kind === "string" && date(o.observed_at)
+  && (o.tier === "common" || o.tier === "remarkable")
+  && (o.family === "deposit"
+    ? ["alloys", "flux", "data"].includes(String(o.resource)) && micro(o.reserve) && micro(o.throughput_per_hour) && !("data" in o)
+    : o.family === "curiosity" && integer(o.study_seconds) && micro(o.data) && !("reserve" in o));
+const opportunities = (v: unknown) => v === undefined
+  || (object(v) && integer(v.signatures) && v.signatures >= 0 && list(v.known, opportunity));
 
 export function validKnownSystem(v: unknown): v is KnownSystem {
   if (!object(v) || !id(v.id) || !integer(v.x) || !integer(v.y) || !date(v.discovered_at))
@@ -85,6 +99,7 @@ export function validKnownSystem(v: unknown): v is KnownSystem {
   if (v.state !== "MAPPED" && v.state !== "MONITORED") return false;
   return (
     typeof v.name === "string" &&
+    opportunities(v.opportunities) &&
     date(v.mapped_at) &&
     (v.last_seen_at === null || date(v.last_seen_at)) &&
     (v.observation === null ||
