@@ -18,7 +18,8 @@ on:
       # Temporary (03/11/2026): UX and additive UX backend PRs target the unmerged 13B branch (PR #17).
       # Fast CI only, same jobs. Remove once #17 is merged and these PRs are rebased on master.
       - work/step-13b-first-contact
-      # Temporary (09/11/2026): lots built on the integrated recipe base (PR #23).
+      # Temporary (09/11/2026): lots built on the integrated recipe base (PR #23). PRs to it
+      # also run the PostgreSQL suites (user decision of 09/11/2026), not Chromium/Compose.
       - recette/ux-weekend
     types:
       - opened
@@ -37,7 +38,7 @@ jobs:
     services:
       postgres:
         # Full CI only: an empty image never starts the service on pull requests.
-        image: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && 'postgres:17-alpine' || '' }}
+        image: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/master') || github.base_ref == 'recette/ux-weekend') && 'postgres:17-alpine' || '' }}
         env:
           POSTGRES_DB: echosphere_test
           POSTGRES_USER: echosphere
@@ -52,7 +53,7 @@ jobs:
       POSTGRES_USER: echosphere
       POSTGRES_PASSWORD: ci_only
       # Fast CI: PostgreSQL tests skip through the existing RUN_DB_TESTS gate.
-      RUN_DB_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && '1' || '0' }}
+      RUN_DB_TESTS: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/master') || github.base_ref == 'recette/ux-weekend') && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -93,7 +94,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       accounts:
-        image: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && 'postgres:17-alpine' || '' }}
+        image: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/master') || github.base_ref == 'recette/ux-weekend') && 'postgres:17-alpine' || '' }}
         env:
           POSTGRES_DB: echosphere_accounts_test
           POSTGRES_USER: echosphere_accounts
@@ -107,7 +108,7 @@ jobs:
       PORTAL_POSTGRES_DB: echosphere_accounts_test
       PORTAL_POSTGRES_USER: echosphere_accounts
       PORTAL_POSTGRES_PASSWORD: portal_ci_only
-      RUN_DB_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && '1' || '0' }}
+      RUN_DB_TESTS: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/master') || github.base_ref == 'recette/ux-weekend') && '1' || '0' }}
     defaults:
       run:
         working-directory: portal/backend

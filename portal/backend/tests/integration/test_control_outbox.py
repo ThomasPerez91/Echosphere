@@ -52,14 +52,18 @@ class Remote:
             }
         elif message["kind"] == "start_universe":
             self.started = getattr(self, "started", {})
-            empire = self.started.setdefault(message["universe_id"], str(uuid4()))
+            seats = self.started.setdefault(
+                message["universe_id"], [str(uuid4()) for _ in range(message.get("humans", 1))]
+            )
             result = {
                 "status": "applied",
                 "universe_id": message["universe_id"],
                 "name": message["name"],
-                "human_empire_id": empire,
+                "human_empire_id": seats[0],
                 "started_at": "2026-11-09T09:00:00+00:00",
             }
+            if message["family"] != "solo":
+                result["human_empire_ids"] = seats  # like Game: seat order = site order
         elif message["kind"] in ("name_empire", "hand_over_empire"):
             result = {"status": "applied", **{k: v for k, v in message.items() if k != "kind"}}
         elif message["kind"] == "set_universe_access":
@@ -390,7 +394,7 @@ def test_self_service_solo_creation_grants_the_human_empire_to_its_creator(setup
         universe = session.get(UniverseReference, UUID(created["universe_id"]))
         row = session.scalar(select(UniverseMembership))
         assert universe.provisioned and universe.created_by == user
-        empire = remote.started[created["universe_id"]]
+        empire = remote.started[created["universe_id"]][0]
         assert row.bindings == [{"empire_id": empire, "permissions": sorted(PERMISSIONS)}]
     # A second creation (another request) is another universe: several games per account.
     other = lobby.create(raw, csrf(raw), creation(request_id=str(uuid4()), profiles=[]), "peer")
@@ -404,8 +408,8 @@ def test_creation_refuses_conflicts_other_families_and_missing_proofs(setup):
         lobby.create(raw, csrf(raw), creation(name="Autre nom"), "peer")
     assert conflict.value.code == "creation_request_conflict"
     with pytest.raises(PublicError) as family:
-        lobby.create(raw, csrf(raw), creation(request_id=str(uuid4()), family="private"), "peer")
-    assert family.value.code == "family_unavailable"
+        lobby.create(raw, csrf(raw), creation(request_id=str(uuid4()), family="persistent"), "peer")
+    assert family.value.code == "family_unavailable"  # persistent servers come later (Q59)
     with pytest.raises(PublicError) as proof:
         lobby.create(raw, "wrong", creation(request_id=str(uuid4())), "peer")
     assert proof.value.code == "csrf_denied"
