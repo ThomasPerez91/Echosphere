@@ -2,6 +2,16 @@
 
 Mise à jour : 2026-11-05. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
+## Reprise rapide — base de recette intégrée (recette/ux-weekend)
+
+| Champ | État au 09/11/2026 |
+| --- | --- |
+| Branche | `recette/ux-weekend`, demandée par l’utilisateur le 09/11/2026 comme base propre de test avant fusion sur master |
+| Contenu | master `067a4e5` + #16 `aed2fe0` + #17 `b97bd0e` + #18 `4425797` + #19 `b0f3907` + #20 `c1e5a61` + #21 `4eaaf9a` + #22 `d5e96ae` (fusions, conflits résolus : doc UX-API-01 version #20, commentaire du déclencheur CI) |
+| Fusion master | **Non faite** : après la recette utilisateur et sur autorisation explicite |
+| Tests | Fast CI de chaque PR verte sur sa tête ; Fast CI de l’ensemble via la PR de recette ; tests PostgreSQL/Chromium (Full CI) seulement après fusion sur master |
+| Recette | [Procédure](docs/02-ux-ui/redesign/ux05-recette-locale.md) |
+
 ## Reprise rapide — refonte UX (work/ux-redesign)
 
 | Champ | État au 05/11/2026 soir — UX05 publié (maquette intégrée : Portal, Empire, Colonie, Galaxie), recette en univers réel à faire |
