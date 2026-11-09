@@ -70,8 +70,11 @@ class Control:
 
     def apply(self, service, operation):
         authorize(service, operation.message.kind)
-        wire = operation.model_dump(mode="json")
-        checksum = digest(wire)
+        # The receipt digest is the one of the operation as sent (fields left to their defaults
+        # are not part of it): Portal computes it on its own envelope, without Game's defaults.
+        # Rows stored before this rule carry the digest of the full dump: still recognised.
+        checksum = digest(operation.model_dump(mode="json", exclude_unset=True))
+        legacy = digest(operation.model_dump(mode="json"))
         with self.factory.begin() as session:
             lock = int.from_bytes(
                 hashlib.sha256(f"{service}:{operation.operation_id}".encode()).digest()[:8],
@@ -80,8 +83,11 @@ class Control:
             session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock})
             previous = session.get(ControlOperation, (service, operation.operation_id))
             if previous:
-                if previous.request_digest != checksum:
+                if previous.request_digest not in (checksum, legacy):
                     raise ControlError("operation_content_conflict")
+                if previous.request_digest != checksum:
+                    previous.request_digest = checksum  # same content, the caller's digest
+                    session.flush()
                 return self.receipt(previous)
             message = operation.message
             if isinstance(message, Provision):

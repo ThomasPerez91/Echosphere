@@ -428,3 +428,28 @@ def test_v010_start_generates_the_requested_map_size_and_enforces_its_empire_cap
         assert session.scalar(
             select(func.count()).select_from(Empire).where(Empire.universe_id == universe)
         ) == 8
+
+
+def test_the_receipt_digest_is_the_one_portal_computes_on_its_own_envelope(control):
+    """Recette 09/11/2026: Portal hashes the envelope it sent (a solo start has no `humans`);
+    Game's defaults must not enter the receipt digest, or every solo creation is refused."""
+    from app.control.contracts import digest
+
+    sent = {
+        "version": 1,
+        "operation_id": str(uuid4()),
+        "message": {
+            "kind": "start_universe", "universe_id": str(uuid4()), "name": "Shadowsun",
+            "seed": "server-random-seed", "family": "solo", "ruleset": "v0.10", "size": 100,
+            "profiles": ["economic_cautious"],
+        },
+    }
+    receipt = control.apply(SERVICE, Operation.model_validate(sent))
+    assert receipt["request_digest"] == digest(sent)
+    # A row stored under the former rule (digest of the full dump) is still the same operation.
+    legacy = Operation.model_validate(sent)
+    with control.factory.begin() as session:
+        row = session.get(ControlOperation, (SERVICE, legacy.operation_id))
+        row.request_digest = digest(legacy.model_dump(mode="json"))
+    again = control.apply(SERVICE, Operation.model_validate(sent))
+    assert again["request_digest"] == digest(sent) and again["result"] == receipt["result"]
