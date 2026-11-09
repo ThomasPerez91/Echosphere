@@ -164,14 +164,46 @@ test('login asks for a second factor only when the account uses one', async () =
   expect(screen.getByLabelText('Preuve MFA')).toBeVisible();
 });
 
-test('signed in, the new game page shows the choices and never pretends to create a universe', async () => {
-  const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => snapshot });
+test('signed in, a new SOLO game is created once with the chosen opponents, then the games page opens', async () => {
+  const posted: RequestInit[] = [];
+  const fetcher = vi.fn((url: string, options?: RequestInit) => {
+    if (url === '/api/lobby/universes') { posted.push(options!); return Promise.resolve({ ok: true, status: 200, json: async () => ({ universe_id: 'u', status: 'starting' }) }); }
+    return Promise.resolve({ ok: true, json: async () => snapshot });
+  });
   installFetcher(fetcher);
-  render(<AccountAccess verificationToken={null} page="new-game" />);
+  const onNavigate = vi.fn();
+  render(<AccountAccess verificationToken={null} page="new-game" onNavigate={onNavigate} />);
   expect(await screen.findByRole('heading', { name: 'Nouvelle partie' })).toBeVisible();
+  fireEvent.change(screen.getByLabelText('Nom de l’univers'), { target: { value: '  Frontière d’Orion ' } });
   fireEvent.click(screen.getByLabelText('3'));
   expect(screen.getAllByRole('combobox')).toHaveLength(3);
-  expect(screen.getByRole('button', { name: 'Créer la partie' })).toBeDisabled();
-  expect(screen.getByText('Implémentation backend nécessaire')).toBeVisible();
-  expect(fetcher.mock.calls.every(call => call[1]?.method === undefined)).toBe(true);
+  fireEvent.change(screen.getAllByRole('combobox')[2], { target: { value: 'expansionist' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Créer la partie' }));
+  await waitFor(() => expect(onNavigate).toHaveBeenCalledWith('/parties'));
+  expect(posted).toHaveLength(1);
+  expect(posted[0].headers).toMatchObject({ 'X-CSRF-Token': 'session-proof' });
+  const body = JSON.parse(posted[0].body as string);
+  expect(body).toMatchObject({ name: 'Frontière d’Orion', family: 'solo', profiles: ['economic_cautious', 'expansionist', 'expansionist'] });
+  expect(body.request_id).toMatch(/^[0-9a-f-]{36}$/);
+  expect(Object.keys(body).sort()).toEqual(['family', 'name', 'profiles', 'request_id']); // never a seed from the browser
+});
+
+test('a lost creation answer is retried with the same request id', async () => {
+  const ids: string[] = [];
+  let first = true;
+  installFetcher((url: string, options?: RequestInit) => {
+    if (url === '/api/lobby/universes') {
+      ids.push(JSON.parse(options!.body as string).request_id);
+      if (first) { first = false; return Promise.reject(new TypeError('network')); }
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ universe_id: 'u', status: 'starting' }) });
+    }
+    return Promise.resolve({ ok: true, json: async () => snapshot });
+  });
+  render(<AccountAccess verificationToken={null} page="new-game" />);
+  fireEvent.change(await screen.findByLabelText('Nom de l’univers'), { target: { value: 'Orion' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Créer la partie' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('sans créer deux parties');
+  fireEvent.click(screen.getByRole('button', { name: 'Créer la partie' }));
+  await waitFor(() => expect(ids).toHaveLength(2));
+  expect(ids[0]).toBe(ids[1]);
 });
