@@ -132,7 +132,7 @@ def accept_receipt(session, accounts, row, receipt):
             # The creator gets the first seat with every permission, through the same
             # membership/access path as operators (revision, epochs, reconciliation).
             if creator is not None and creator.status == "active":
-                Lobby(accounts).grant(
+                granted = Lobby(accounts).grant(
                     session,
                     creator,
                     universe,
@@ -144,7 +144,20 @@ def accept_receipt(session, accounts, row, receipt):
                         }
                     ],
                 )
+                name = (universe.start_request or {}).get("empire_name")
+                if name:
+                    # Q60: the creator's chosen Empire name, applied by Game like any rename.
+                    from portal_app.control.life import set_name
+
+                    member = session.get(UniverseMembership, UUID(granted["membership_id"]))
+                    set_name(session, accounts, universe, member, name)
         elif str(universe.human_empire_id) != result["human_empire_id"]:
+            raise DeliveryError("invalid_receipt")
+    elif message["kind"] in ("name_empire", "hand_over_empire"):
+        # Q60: Game echoes the target and the applied value; anything else is not this effect.
+        value = "name" if message["kind"] == "name_empire" else "profile"
+        echoed = ("universe_id", "empire_id", value)
+        if result["status"] != "applied" or any(result.get(k) != message[k] for k in echoed):
             raise DeliveryError("invalid_receipt")
     elif message["kind"] == "set_universe_access":
         reported = result.get("snapshot")

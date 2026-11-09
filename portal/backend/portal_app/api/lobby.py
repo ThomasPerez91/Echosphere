@@ -8,6 +8,7 @@ from starlette.concurrency import run_in_threadpool
 from portal_app.api.accounts import check_origin, peer_address
 from portal_app.api.sessions import bootstrap, response
 from portal_app.control.invitations import Invitations
+from portal_app.control.life import GameLife
 from portal_app.control.service import Lobby
 from portal_app.handoff.service import Handoff
 from portal_app.sessions.service import SESSION_COOKIE
@@ -100,7 +101,7 @@ async def invite_accept(request: Request):
     body = await _json(request)
     return response(await run_in_threadpool(
         Invitations(request.app.state.accounts).accept, *_proofs(request),
-        body.get("token"), body.get("invitation_id")))
+        body.get("token"), body.get("invitation_id"), body.get("empire_name")))
 
 
 @router.post("/invitations/{invitation_id}/decline")
@@ -108,3 +109,20 @@ async def invite_decline(invitation_id: UUID, request: Request):
     await _json(request)
     return response(await run_in_threadpool(
         Invitations(request.app.state.accounts).decline, *_proofs(request), invitation_id))
+
+
+@router.post("/universes/{universe_id}/empire-name")
+async def empire_name(universe_id: UUID, request: Request):
+    """Q60: rename the Empire of my seat ({"name"}); applied by Game through the outbox."""
+    body = await _json(request)
+    return response(await run_in_threadpool(
+        GameLife(request.app.state.accounts).rename, *_proofs(request), universe_id,
+        body.get("name")))
+
+
+@router.post("/universes/{universe_id}/leave")
+async def leave(universe_id: UUID, request: Request):
+    """Q60: archive my solo game, or leave a multi game (my Empire goes on under an AI)."""
+    await _json(request)
+    return response(await run_in_threadpool(
+        GameLife(request.app.state.accounts).leave, *_proofs(request), universe_id))

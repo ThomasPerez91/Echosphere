@@ -92,3 +92,26 @@ def test_private_multi_start_has_two_to_four_humans_and_at_most_four_empires():
     ):
         with pytest.raises(ValidationError):
             Operation.model_validate(message(**changes))
+
+
+def test_empire_names_are_visible_text_and_a_hand_over_names_a_known_profile():
+    universe = "00000000-0000-4000-8000-000000000002"
+    empire = "00000000-0000-4000-8000-000000000003"
+
+    def operation(message):
+        return Operation.model_validate(
+            {"version": 1, "operation_id": "00000000-0000-4000-8000-000000000009",
+             "message": {"universe_id": universe, "empire_id": empire, **message}}
+        )
+
+    named = operation({"kind": "name_empire", "name": "Concorde d’Aube"})
+    assert named.message.name == "Concorde d’Aube"
+    for name in ["A", " Concorde", "Concorde ", "Con\ncorde", "x" * 41, "\u0085Nova"]:
+        with pytest.raises(ValidationError):
+            operation({"kind": "name_empire", "name": name})
+    assert operation({"kind": "hand_over_empire", "profile": "expansionist"}).message.profile == (
+        "expansionist"
+    )
+    for extra in [{"profile": "aggressive"}, {"profile": "expansionist", "resources": {}}]:
+        with pytest.raises(ValidationError):
+            operation({"kind": "hand_over_empire", **extra})

@@ -124,3 +124,17 @@ def test_creation_state_tells_a_slow_game_from_a_refused_start():
     # The Game answered and refused: said at once, even if retries go on.
     for code in ("remote_conflict", "remote_refused", "invalid_receipt"):
         assert creation_state(row(code, 1)) == "refused"
+
+
+def test_empire_names_are_trimmed_visible_text_and_optional_at_creation():
+    from portal_app.control.life import empire_name
+
+    assert empire_name("  Concorde   d’Aube ") == "Concorde d’Aube"
+    for bad in [None, 3, "A", "x" * 41, "No\u0007va", "  "]:
+        with pytest.raises(PublicError) as refused:
+            empire_name(bad)
+        assert refused.value.code == "invalid_empire_name"
+    assert "empire_name" not in creation_request(body())
+    assert creation_request(body(empire_name=" Nova "))["empire_name"] == "Nova"
+    with pytest.raises(PublicError):
+        creation_request(body(empire_name="N"))

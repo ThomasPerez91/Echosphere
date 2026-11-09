@@ -65,3 +65,43 @@ test('a started game shows its mode, players and start date', async () => {
   expect(screen.getByText('Démarrée le :')).toBeVisible();
   expect(document.body.textContent).not.toContain('N/D');
 });
+
+test('Q60: the player names their Empire, leaves a multi game in two steps, and a left game is listed apart', async () => {
+  const live = { ...member, delivery_state: 'applied', applied_status: 'active', family: 'private', creator: false,
+    seats_total: 2, seats_taken: 2, started_at: '2026-11-09T09:00:00Z', empire_name: null as string | null, archived: false, left: false };
+  const posts: [string, string][] = [];
+  let state = live;
+  vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+    if (init?.method === 'POST') {
+      posts.push([url, String(init.body)]);
+      if (url.endsWith('/leave')) state = { ...state, left: true, desired_status: 'revoked' };
+      if (url.endsWith('/empire-name')) state = { ...state, empire_name: 'Concorde' };
+      return Promise.resolve(ok({}));
+    }
+    return Promise.resolve(ok({ revocations: [], memberships: [state] }));
+  }));
+  render(<Lobby csrf="csrf" />);
+  expect(await screen.findByText('Nom non choisi')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Choisir un nom' }));
+  fireEvent.change(screen.getByLabelText('Nom de votre Empire'), { target: { value: '  Concorde ' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+  expect(await screen.findByText('Concorde')).toBeVisible();
+  expect(posts[0]).toEqual(['/api/lobby/universes/universe/empire-name', JSON.stringify({ name: 'Concorde' })]);
+  fireEvent.click(screen.getByRole('button', { name: 'Quitter la partie' }));
+  expect(posts).toHaveLength(1); // the first click only asks for confirmation
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmer : quitter la partie' }));
+  expect(await screen.findByText('Parties quittées')).toBeVisible();
+  expect(posts[1][0]).toBe('/api/lobby/universes/universe/leave');
+  expect(screen.getByText(/Concorde est désormais dirigé par une IA/)).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Quitter la partie' })).toBeNull();
+});
+
+test('Q60: an archived solo game is only consultable', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok({ revocations: [], memberships: [{ ...member, delivery_state: 'applied',
+    applied_status: 'active', family: 'solo', creator: true, empire_name: 'Nova', archived: true, left: false,
+    entry_available: true, entry_url: 'https://game.example.org/api/game/universe/start' }] })));
+  render(<Lobby csrf="csrf" />);
+  expect(await screen.findByText('Partie archivée : consultation seule')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Consulter cet univers' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: /Archiver|Renommer/ })).toBeNull();
+});

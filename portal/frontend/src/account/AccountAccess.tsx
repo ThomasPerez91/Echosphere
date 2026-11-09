@@ -330,6 +330,7 @@ const joinErrors: Record<string, string> = {
   invitation_not_found: 'Ce lien n’est plus valable : il a expiré ou a été remplacé. Demandez-en un nouveau.',
   invitation_other_account: 'Cette invitation a été envoyée à une autre adresse email.',
   game_full: 'Cette partie est complète.', game_starting: 'La partie est encore en préparation. Réessayez dans un instant.',
+  invalid_empire_name: 'Le nom d’Empire doit compter 2 à 40 caractères visibles.',
 };
 
 async function lobbyPost(path: string, csrf: string, body: object) {
@@ -367,18 +368,22 @@ function ReceivedInvitations({ csrf, invitations, onChanged }: { csrf: string; i
 function JoinGame({ csrf, token, onJoined }: { csrf: string; token: string | null; onJoined: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [empireName, setEmpireName] = useState('');
   if (!token) return <section className="p-panel p-new-game" aria-labelledby="join-title"><div className="p-tab-pad">
     <h2 id="join-title">Rejoindre une partie</h2><p>Ouvrez le lien d’invitation reçu (il commence par …/rejoindre#invite=).</p>
     <Link to={paths.games} className="p-btn">Mes parties</Link></div></section>;
   const join = async () => {
     if (busy) return; setBusy(true); setError('');
-    try { await lobbyPost('/api/lobby/invitations/accept', csrf, { token }); onJoined(); }
+    const name = empireName.split(/\s+/).filter(Boolean).join(' ');
+    try { await lobbyPost('/api/lobby/invitations/accept', csrf, name ? { token, empire_name: name } : { token }); onJoined(); }
     catch (failure) { setError(joinErrors[(failure as Error).message] ?? 'Action non confirmée. Réessayez.'); }
     finally { setBusy(false); }
   };
   return <section className="p-panel p-new-game" aria-labelledby="join-title"><div className="p-tab-pad">
     <h2 id="join-title">Rejoindre une partie</h2>
     <p>Un joueur vous invite dans sa partie multijoueur. En la rejoignant, vous recevez votre propre Empire et une colonie de départ.</p>
+    <label className="p-join-name">Nom de votre Empire (facultatif)
+      <input value={empireName} onChange={event => setEmpireName(event.target.value)} maxLength={40} placeholder="Par exemple : Hégémonie de Vela" /></label>
     <button type="button" className="p-btn p-btn-primary" disabled={busy} onClick={() => { void join(); }}>{busy ? 'Connexion à la partie…' : 'Rejoindre la partie'}</button>
     {error && <p className="form-error" role="alert">{error}</p>}
   </div></section>;

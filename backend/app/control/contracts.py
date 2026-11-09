@@ -106,6 +106,38 @@ class Start(Wire):
         return self
 
 
+def empire_name(value):
+    """Q60: a player's own Empire name, 2 to 40 visible characters, no control character."""
+    hidden = any(ord(c) < 32 or 127 <= ord(c) < 160 for c in value)
+    if value != value.strip() or len(value) < 2 or hidden:
+        raise ValueError("Invalid Empire name")
+    return value
+
+
+class NameEmpire(Wire):
+    """Q60: the player names the human Empire of their seat (at creation, on joining, later)."""
+
+    kind: Literal["name_empire"]
+    universe_id: UUID
+    empire_id: UUID
+    name: str = Field(min_length=2, max_length=40)
+
+    @model_validator(mode="after")
+    def visible(self):
+        empire_name(self.name)
+        return self
+
+
+class HandOver(Wire):
+    """Q60: a player leaving a multi game hands their Empire to a server AI of a known profile;
+    refused while any human binding remains on that Empire (Portal revokes the seat first)."""
+
+    kind: Literal["hand_over_empire"]
+    universe_id: UUID
+    empire_id: UUID
+    profile: Literal["economic_cautious", "expansionist"]
+
+
 class Access(Wire):
     kind: Literal["set_universe_access"]
     membership_id: UUID
@@ -154,7 +186,9 @@ class Revoke(Wire):
 class Operation(Wire):
     version: StrictInt = Field(ge=1, le=1)
     operation_id: UUID
-    message: Annotated[Provision | Start | Access | Revoke, Field(discriminator="kind")]
+    message: Annotated[
+        Provision | Start | NameEmpire | HandOver | Access | Revoke, Field(discriminator="kind")
+    ]
 
 
 def digest(value):
