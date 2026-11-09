@@ -34,8 +34,18 @@ une partie ») et décisions [Q59](../01-game-design/game-modes.md#décisions-ut
 ## Lecture du lobby
 
 `GET /api/lobby/memberships` ajoute `creations` : les univers créés par le compte et pas encore
-accordés (`{"universe_id", "name", "created_at", "state": "starting"}`). Ils disparaissent de la
-liste dès que la participation existe.
+accordés (`{"universe_id", "name", "created_at", "state"}`). Ils disparaissent de la
+liste dès que la participation existe. `state` (09/11/2026) est lu sur le dernier message de
+contrôle non livré de l’univers (`creation_state`) :
+
+| `state` | Condition | Affichage « Mes parties » |
+| --- | --- | --- |
+| `starting` | rien en échec, ou un seul échec réseau | « Création en cours », relecture toutes les 4 s |
+| `delayed` | Game injoignable après 3 tentatives (`control_unavailable`, `unknown_target`) | « Création retardée » : demande conservée, renvoi automatique |
+| `refused` | Game a répondu par un refus (`remote_conflict`, `remote_refused`, `invalid_receipt`) | « Création bloquée », sans relecture rapide ; journaux du worker de contrôle |
+
+L’outbox reste « au moins une fois » : un refus continue d’être réessayé avec recul, il n’est jamais
+abandonné en silence. Aucun corps de réponse distant n’est exposé, seulement l’état.
 
 ## Limites connues
 

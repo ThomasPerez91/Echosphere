@@ -192,8 +192,9 @@ body { margin: 0; background: #030812; }
 .p-missing h1 { font: 700 34px var(--p-font); }
 .p-family-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .p-family-row .p-chip { height: auto; min-height: 30px; white-space: normal; text-align: left; }
-.p-game--starting { opacity: .85; }
-.p-game--starting .p-g-img { filter: saturate(.4) brightness(.7); }
+.p-game--starting, .p-game--delayed { opacity: .85; }
+.p-game--starting .p-g-img, .p-game--delayed .p-g-img, .p-game--refused .p-g-img { filter: saturate(.4) brightness(.7); }
+.p-game--refused { border-color: var(--p-red); }
 .p-new-game-form .form-error { color: #ff9aa4 !important; margin: 0 !important; }
 
 /* Multi (UX-API-03): invitations sent by the creator and received by the player. */

@@ -10,7 +10,16 @@ type Membership = { membership_id: string; universe_id: string; name: string; de
 export type ReceivedInvitation = { id: string; universe_id: string; name: string; expires_at: string };
 export type LobbySnapshot = Projection;
 /** UX-API-02: universes this account created that Game has not started/granted yet. */
-type Creation = { universe_id: string; name: string; created_at: string; state: 'starting' };
+type Creation = { universe_id: string; name: string; created_at: string; state: 'starting' | 'delayed' | 'refused' };
+const CREATION_STATES = ['starting', 'delayed', 'refused'];
+const CREATION_LABELS: Record<Creation['state'], { chip: string; status: string; note: string }> = {
+  starting: { chip: 'Création en cours', status: 'Le serveur de jeu prépare votre univers : galaxie, colonie de départ et adversaires.',
+    note: 'La partie apparaîtra ici, prête à jouer, dans quelques instants.' },
+  delayed: { chip: 'Création retardée', status: 'Le serveur de jeu ne répond pas pour le moment. Votre demande est conservée et renvoyée automatiquement.',
+    note: 'Rien à refaire : la partie apparaîtra ici dès que le serveur de jeu répondra. Si cela dure, prévenez l’administrateur du serveur.' },
+  refused: { chip: 'Création bloquée', status: 'Le serveur de jeu a refusé de démarrer cette partie.',
+    note: 'Elle ne démarrera probablement pas seule. Créez une nouvelle partie ou prévenez l’administrateur du serveur (journaux du worker de contrôle).' },
+};
 type Projection = { memberships: Membership[]; creations?: Creation[]; invitations?: ReceivedInvitation[]; revocations: { scope: string; state: string; created_at: string }[] };
 
 function validEntry(value: string, universe: string) {
@@ -55,7 +64,7 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
         && (item.sent_invitations === undefined || (Array.isArray(item.sent_invitations) && item.sent_invitations.every(
           (sent: unknown) => !!sent && typeof sent === 'object' && typeof (sent as { id?: unknown }).id === 'string'))))
       || ('creations' in body && (!Array.isArray(body.creations) || !body.creations.every(item => item && typeof item.universe_id === 'string'
-        && typeof item.name === 'string' && typeof item.created_at === 'string' && item.state === 'starting')))
+        && typeof item.name === 'string' && typeof item.created_at === 'string' && CREATION_STATES.includes(item.state))))
       || !body.revocations.every(item => item && ['account', 'device'].includes(item.scope)
         && ['pending', 'acknowledged'].includes(item.state) && typeof item.created_at === 'string')) throw new Error('projection');
     if (active.current && !signal.aborted) { setSnapshot(body as Projection); onSnapshot?.(body as Projection); setError(''); }
@@ -66,7 +75,8 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version]);
   // While a created universe is starting, re-read quietly (a read never extends idle or rights).
-  const starting = snapshot?.creations?.length ?? 0;
+  // A refused start does not resolve by itself: no fast polling for it.
+  const starting = snapshot?.creations?.filter(item => item.state !== 'refused').length ?? 0;
   useEffect(() => {
     if (!starting) return;
     const timer = window.setInterval(() => { void read(AbortSignal.timeout(10000)).catch(() => undefined); }, 4000);
@@ -105,13 +115,13 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
       <div className="p-tools"><button type="button" className="p-btn p-btn-sm" disabled={busy} onClick={() => { void refresh(); }}>Actualiser mes parties</button></div></div>
     {!snapshot && !error && <p className="p-empty" role="status">Chargement des participations…</p>}
     {!!snapshot?.creations?.length && <div className="p-games">{snapshot.creations.map(item =>
-      <article key={item.universe_id} className="p-game p-game--starting" aria-busy="true">
+      <article key={item.universe_id} className={`p-game p-game--${item.state}`} aria-busy={item.state !== 'refused'}>
         <img className="p-g-img" src={universeImage(item.universe_id)} alt="" width="640" height="360" loading="lazy" />
         <div className="p-g-body">
           <div className="p-g-title"><span className="p-g-emb"><Icon name="orbit" /></span><h3><span>{item.name}</span></h3></div>
-          <div className="p-g-tags"><span className="p-chip"><Icon name="clock" />Création en cours</span></div>
-          <p className="p-g-status">Le serveur de jeu prépare votre univers : galaxie, colonie de départ et adversaires.</p>
-          <p className="p-g-note">La partie apparaîtra ici, prête à jouer, dans quelques instants.</p>
+          <div className="p-g-tags"><span className="p-chip"><Icon name="clock" />{CREATION_LABELS[item.state].chip}</span></div>
+          <p className="p-g-status" role={item.state === 'starting' ? undefined : 'status'}>{CREATION_LABELS[item.state].status}</p>
+          <p className="p-g-note">{CREATION_LABELS[item.state].note}</p>
         </div>
       </article>)}</div>}
     {snapshot && snapshot.memberships.length === 0 && !snapshot.creations?.length && <p className="p-empty">Aucune participation à un univers. Aucune partie de démonstration n’est créée automatiquement.</p>}

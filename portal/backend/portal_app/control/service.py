@@ -30,6 +30,25 @@ MAX_EMPIRES = 4
 INVITE_MODES = frozenset(("link", "email"))
 
 
+# Delivery errors after which the Game answered but refused the start: retries go on (at-least-once
+# outbox), yet the creator must know it will probably not succeed on its own.
+REFUSED_ERRORS = frozenset({"remote_conflict", "remote_refused", "invalid_receipt"})
+DELAYED_AFTER_ATTEMPTS = 3
+
+
+def creation_state(pending):
+    """What the creator sees while a started universe is not playable yet.
+
+    `pending` is the newest undelivered control message of the universe (or None). The error codes
+    are the transport's own short codes, never a remote body or a stack trace.
+    """
+    if pending is None or not pending.last_error:
+        return "starting"
+    if pending.last_error in REFUSED_ERRORS:
+        return "refused"
+    return "delayed" if pending.attempts >= DELAYED_AFTER_ATTEMPTS else "starting"
+
+
 def creation_request(body):
     """Validated SOLO or PRIVATE (multi) creation intention, or PublicError. Pure function."""
     base = {"request_id", "name", "family", "profiles"}
@@ -396,7 +415,17 @@ class Lobby:
                     "universe_id": str(universe.id),
                     "name": universe.name,
                     "created_at": wire_time(universe.created_at),
-                    "state": "starting",
+                    "state": creation_state(
+                        session.scalar(
+                            select(ControlOutbox)
+                            .where(
+                                ControlOutbox.universe_id == universe.id,
+                                ControlOutbox.state == "pending",
+                            )
+                            .order_by(ControlOutbox.created_at.desc())
+                            .limit(1)
+                        )
+                    ),
                 }
                 for universe in session.scalars(
                     select(UniverseReference)

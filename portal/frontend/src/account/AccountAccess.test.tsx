@@ -259,3 +259,17 @@ test('the join page uses the link token once signed in and explains a replaced l
   await waitFor(() => expect(onNavigate).toHaveBeenCalledWith('/parties'));
   expect(JSON.parse(bodies[0])).toEqual({ token });
 });
+
+test('a delayed or refused creation says so instead of an endless "Création en cours"', async () => {
+  vi.stubGlobal('fetch', (url: string) => Promise.resolve(
+    url === '/api/auth/revocation-status' ? { ok: false, status: 404, json: async () => ({ error: { code: 'receipt_expired' } }) }
+    : url === '/api/lobby/memberships' ? { ok: true, json: async () => ({ memberships: [], revocations: [], invitations: [], creations: [
+      { universe_id: 'u1', name: 'Lente', created_at: '2026-11-09T09:00:00Z', state: 'delayed' },
+      { universe_id: 'u2', name: 'Bloquée', created_at: '2026-11-09T09:00:00Z', state: 'refused' }] }) }
+    : { ok: true, json: async () => snapshot }));
+  render(<AccountAccess verificationToken={null} page="games" />);
+  expect(await screen.findByText('Création retardée')).toBeVisible();
+  expect(screen.getByText('Création bloquée')).toBeVisible();
+  expect(screen.getByText(/renvoyée automatiquement/)).toBeVisible();
+  expect(screen.getByText(/a refusé de démarrer cette partie/)).toBeVisible();
+});

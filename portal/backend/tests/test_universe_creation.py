@@ -105,3 +105,22 @@ def test_link_tokens_have_a_fixed_shape_before_any_lookup():
     assert invite_token("a" * 43) and invite_token("A-b_c" * 9)
     for value in ("short", "a" * 65, "a" * 42 + "!", None, 43):
         assert not invite_token(value)
+
+
+def test_creation_state_tells_a_slow_game_from_a_refused_start():
+    from types import SimpleNamespace
+
+    from portal_app.control.service import creation_state
+
+    def row(error, attempts):
+        return SimpleNamespace(last_error=error, attempts=attempts)
+
+    assert creation_state(None) == "starting"
+    assert creation_state(row(None, 1)) == "starting"
+    # A first network miss is ordinary; a Game still unreachable after a few attempts is shown.
+    assert creation_state(row("control_unavailable", 1)) == "starting"
+    assert creation_state(row("control_unavailable", 3)) == "delayed"
+    assert creation_state(row("unknown_target", 5)) == "delayed"
+    # The Game answered and refused: said at once, even if retries go on.
+    for code in ("remote_conflict", "remote_refused", "invalid_receipt"):
+        assert creation_state(row(code, 1)) == "refused"
