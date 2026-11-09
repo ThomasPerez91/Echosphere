@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { RevocationStatus } from './RevocationStatus';
 import { Lobby } from './Lobby';
-import type { LobbySnapshot } from './Lobby';
+import type { LobbySnapshot, ReceivedInvitation } from './Lobby';
 import { Icon } from '../theme/Icon';
 import { Pending } from '../site/Site';
 import type { SignedIn } from '../site/Site';
@@ -33,15 +33,17 @@ function validState(body: unknown): body is SessionState {
 const bootstrap = { 'X-Portal-Request': 'bootstrap' };
 
 /** Which Portal page is shown. Signed out, every private page shows the login form. */
-export type AccountPage = 'home' | 'login' | 'register' | 'games' | 'new-game' | 'account';
+export type AccountPage = 'home' | 'login' | 'register' | 'games' | 'new-game' | 'account' | 'join';
 
-export function AccountAccess({ verificationToken, onSession, page = 'register', onNavigate }: {
+export function AccountAccess({ verificationToken, onSession, page = 'register', onNavigate, inviteToken = null }: {
   verificationToken: string | null;
   /** Lets the page switch between the public home and the player's space; never carries the CSRF token. */
   onSession?: (account: SignedIn | null) => void;
   page?: AccountPage;
   /** Moves between the login and registration pages when the visitor switches form. */
   onNavigate?: (path: string) => void;
+  /** UX-API-03: link token read from /rejoindre#invite=…, kept in memory only. */
+  inviteToken?: string | null;
 }) {
   const [bootstrapError, setBootstrapError] = useState(false);
   const [booting, setBooting] = useState(true);
@@ -60,6 +62,7 @@ export function AccountAccess({ verificationToken, onSession, page = 'register',
   const bootstrapFlight = useRef<AbortController | null>(null);
   const currentState = useRef(state); currentState.current = state;
   const [lobby, setLobby] = useState<LobbySnapshot | null>(null);
+  const [lobbyVersion, setLobbyVersion] = useState(0);
   const email = state?.user.email ?? null, verified = state?.user.email_verified ?? false;
   useEffect(() => { onSession?.(email ? { email, verified } : null); }, [email, verified, onSession]);
   useEffect(() => { if (!state) setLobby(null); }, [state]);
@@ -70,7 +73,7 @@ export function AccountAccess({ verificationToken, onSession, page = 'register',
   const switchForm = () => {
     setRecovering(false); setMfaRecovering(false);
     const next = !loginMode; setLoginMode(next);
-    onNavigate?.(next ? paths.login : paths.register);
+    if (page !== 'join') onNavigate?.(next ? paths.login : paths.register); // keep the invitation page
   };
 
   useEffect(() => {
@@ -170,7 +173,7 @@ export function AccountAccess({ verificationToken, onSession, page = 'register',
     <Stats snapshot={lobby} />
     <div className="p-dash-grid">
       <div className="p-games-col">
-        <Lobby csrf={state.csrf_token} onSnapshot={setLobby} onExpired={expired} />
+        <Lobby csrf={state.csrf_token} onSnapshot={setLobby} onExpired={expired} version={lobbyVersion} />
         {lobby && lobby.memberships.length === 0 && !lobby.creations?.length && <section className="p-panel p-first-game" aria-labelledby="first-game-title">
           <div className="p-tab-pad"><h2 id="first-game-title">Aucune partie pour l’instant</h2>
             <p>Créez votre premier univers : vous y commencez avec une colonie, face à des Empires dirigés par l’IA.</p>
@@ -178,10 +181,7 @@ export function AccountAccess({ verificationToken, onSession, page = 'register',
         </section>}
       </div>
       <div className="p-side">
-        <section className="p-panel" aria-labelledby="invitations-title">
-          <div className="p-p-head"><h2 id="invitations-title"><Icon name="mail" />Invitations</h2></div>
-          <div className="p-tab-pad"><Pending what="Invitations à rejoindre une partie (accepter / refuser)." /></div>
-        </section>
+        <ReceivedInvitations csrf={state.csrf_token} invitations={lobby?.invitations ?? []} onChanged={() => setLobbyVersion(v => v + 1)} />
         <Activity snapshot={lobby} />
       </div>
     </div>
@@ -217,8 +217,10 @@ export function AccountAccess({ verificationToken, onSession, page = 'register',
     {notice && <p role="alert">{notice}</p>}
     {!mfaRecovering && !recovering && <RevocationStatus key={receiptVersion} />}
     {codes.length > 0 && <section className="panel"><h2>Vos dix codes de secours</h2><p>Conservez ces codes en lieu sûr. Ils ne seront plus consultables après fermeture de cet écran ; chaque code sert une seule fois.</p><pre className="recovery-codes">{codes.join('\n')}</pre><button type="button" onClick={() => setCodes([])}>Masquer les codes</button></section>}
-    {state ? (page === 'account' ? account : page === 'new-game' ? <NewGame csrf={state.csrf_token} onExpired={expired} onCreated={() => onNavigate?.(paths.games)} /> : games) : <>
+    {state ? (page === 'join' ? <JoinGame csrf={state.csrf_token} token={inviteToken} onJoined={() => onNavigate?.(paths.games)} />
+      : page === 'account' ? account : page === 'new-game' ? <NewGame csrf={state.csrf_token} onExpired={expired} onCreated={() => onNavigate?.(paths.games)} /> : games) : <>
       {(page === 'games' || page === 'new-game' || page === 'account') && !mfaRecovering && !recovering && <p className="p-auth-note">Connectez-vous pour accéder à cette page.</p>}
+      {page === 'join' && !mfaRecovering && !recovering && <p className="p-auth-note">Connectez-vous ou créez un compte pour rejoindre la partie : l’invitation reste en attente sur cette page.</p>}
       {mfaRecovering ? <MfaRecovery onBack={() => setMfaRecovering(false)} onOutcome={mfaOutcome} /> : recovering ? <ResetRequestForm onBack={() => { setRecovering(false); setLoginMode(true); }} /> : loginMode ? <LoginForm onLogin={value => {
         // Login deleted the previous receipt server-side; never keep showing its stale status.
         transition.current++; setState(value); setNotice(''); setReceiptVersion(version => version + 1);
@@ -322,4 +324,62 @@ function Activity({ snapshot }: { snapshot: LobbySnapshot | null }) {
       : <p className="p-empty">Aucune activité datée pour l’instant.</p>}
     <div className="p-tab-pad"><Pending compact what="Journal des parties (tours, recherches, messages)." /></div>
   </section>;
+}
+
+const joinErrors: Record<string, string> = {
+  invitation_not_found: 'Ce lien n’est plus valable : il a expiré ou a été remplacé. Demandez-en un nouveau.',
+  invitation_other_account: 'Cette invitation a été envoyée à une autre adresse email.',
+  game_full: 'Cette partie est complète.', game_starting: 'La partie est encore en préparation. Réessayez dans un instant.',
+};
+
+async function lobbyPost(path: string, csrf: string, body: object) {
+  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+    body: JSON.stringify(body), signal: AbortSignal.timeout(10000) });
+  const data: unknown = await response.json().catch(() => null);
+  const code = data && typeof data === 'object' && 'error' in data && data.error && typeof data.error === 'object' && 'code' in data.error ? String(data.error.code) : '';
+  if (!response.ok) throw new Error(code || 'request');
+}
+
+/** UX-API-03: email invitations addressed to this account, accepted or declined here. */
+function ReceivedInvitations({ csrf, invitations, onChanged }: { csrf: string; invitations: ReceivedInvitation[]; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const act = async (path: string, body: object) => {
+    if (busy) return; setBusy(true); setError('');
+    try { await lobbyPost(path, csrf, body); onChanged(); }
+    catch (failure) { setError(joinErrors[(failure as Error).message] ?? 'Action non confirmée. Réessayez.'); }
+    finally { setBusy(false); }
+  };
+  return <section className="p-panel" aria-labelledby="invitations-title">
+    <div className="p-p-head"><h2 id="invitations-title"><Icon name="mail" />Invitations</h2></div>
+    {invitations.length ? <ul className="p-received">{invitations.map(item => <li key={item.id}>
+      <div><b>{item.name}</b><small>Expire le {new Date(item.expires_at).toLocaleDateString('fr-FR')}</small></div>
+      <div className="p-received-act">
+        <button type="button" className="p-btn p-btn-sm p-btn-glow" disabled={busy} onClick={() => { void act('/api/lobby/invitations/accept', { invitation_id: item.id }); }}>Accepter</button>
+        <button type="button" className="p-btn p-btn-sm" disabled={busy} onClick={() => { void act(`/api/lobby/invitations/${encodeURIComponent(item.id)}/decline`, {}); }}>Refuser</button>
+      </div></li>)}</ul>
+      : <p className="p-empty">Aucune invitation en attente. Les invitations reçues par email apparaissent ici.</p>}
+    {error && <p className="p-empty form-error" role="alert">{error}</p>}
+  </section>;
+}
+
+/** /rejoindre#invite=…: join the multi game the link belongs to, then open Mes parties. */
+function JoinGame({ csrf, token, onJoined }: { csrf: string; token: string | null; onJoined: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  if (!token) return <section className="p-panel p-new-game" aria-labelledby="join-title"><div className="p-tab-pad">
+    <h2 id="join-title">Rejoindre une partie</h2><p>Ouvrez le lien d’invitation reçu (il commence par …/rejoindre#invite=).</p>
+    <Link to={paths.games} className="p-btn">Mes parties</Link></div></section>;
+  const join = async () => {
+    if (busy) return; setBusy(true); setError('');
+    try { await lobbyPost('/api/lobby/invitations/accept', csrf, { token }); onJoined(); }
+    catch (failure) { setError(joinErrors[(failure as Error).message] ?? 'Action non confirmée. Réessayez.'); }
+    finally { setBusy(false); }
+  };
+  return <section className="p-panel p-new-game" aria-labelledby="join-title"><div className="p-tab-pad">
+    <h2 id="join-title">Rejoindre une partie</h2>
+    <p>Un joueur vous invite dans sa partie multijoueur. En la rejoignant, vous recevez votre propre Empire et une colonie de départ.</p>
+    <button type="button" className="p-btn p-btn-primary" disabled={busy} onClick={() => { void join(); }}>{busy ? 'Connexion à la partie…' : 'Rejoindre la partie'}</button>
+    {error && <p className="form-error" role="alert">{error}</p>}
+  </div></section>;
 }

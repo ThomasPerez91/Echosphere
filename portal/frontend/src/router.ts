@@ -3,7 +3,7 @@ import type { AnchorHTMLAttributes, MouseEvent } from 'react';
 
 /** Portal pages. Paths are real URLs (the dev server and the local edge fall back to index.html). */
 export const paths = {
-  home: '/', login: '/connexion', register: '/inscription', games: '/parties', newGame: '/parties/nouvelle', account: '/compte',
+  home: '/', login: '/connexion', register: '/inscription', games: '/parties', newGame: '/parties/nouvelle', account: '/compte', join: '/rejoindre',
 } as const;
 export type Page = keyof typeof paths | 'missing';
 

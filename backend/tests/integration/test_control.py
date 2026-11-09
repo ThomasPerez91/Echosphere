@@ -315,3 +315,33 @@ def test_start_universe_refuses_a_different_intention_for_the_same_universe(cont
     with pytest.raises(ControlError) as occupied:
         start(control, (), identifier=provisioned, name="Test")
     assert occupied.value.code == "bootstrap_requires_empty_universe"
+
+
+def test_private_start_creates_one_seat_per_human_and_keeps_solo_receipts_unchanged(control):
+    from app.ai.models import AIBootstrap
+
+    universe = uuid4()
+    request = op(
+        {
+            "kind": "start_universe",
+            "universe_id": str(universe),
+            "name": "Multi",
+            "seed": "server-random-seed",
+            "family": "private",
+            "humans": 3,
+            "ruleset": "v0.9",
+            "profiles": ["expansionist"],
+        }
+    )
+    result = control.apply(SERVICE, request)["result"]
+    seats = result["human_empire_ids"]
+    assert len(seats) == 3 and result["human_empire_id"] == seats[0]
+    with control.factory() as session:
+        types = {e.id: e.controller_type for e in session.scalars(
+            select(Empire).where(Empire.universe_id == universe))}
+        assert len(types) == 4 and {types[UUID(s)] for s in seats} == {"human"}
+        assert session.get(AIBootstrap, universe).request["humans"] == 3
+    solo, _, receipt = start(control, ())
+    assert "human_empire_ids" not in receipt["result"]
+    with control.factory() as session:
+        assert "humans" not in session.get(AIBootstrap, solo).request

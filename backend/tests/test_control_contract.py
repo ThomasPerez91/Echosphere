@@ -61,3 +61,34 @@ def test_start_universe_is_solo_with_known_profiles_and_a_pinned_ruleset():
     ):
         with pytest.raises(ValidationError):
             Operation.model_validate(message(**changes))
+
+
+def test_private_multi_start_has_two_to_four_humans_and_at_most_four_empires():
+    def message(**changes):
+        return {
+            "version": 1,
+            "operation_id": "00000000-0000-4000-8000-000000000010",
+            "message": {
+                "kind": "start_universe",
+                "universe_id": "00000000-0000-4000-8000-000000000003",
+                "name": "Orion",
+                "seed": "server-random",
+                "family": "private",
+                "humans": 2,
+                "ruleset": "v0.9",
+                "profiles": ["expansionist", "economic_cautious"],
+                **changes,
+            },
+        }
+
+    assert Operation.model_validate(message()).message.humans == 2
+    assert Operation.model_validate(message(humans=4, profiles=[])).message.humans == 4
+    for changes in (
+        {"humans": 1},  # one human is a SOLO game
+        {"humans": 3, "profiles": ["expansionist", "expansionist"]},  # five Empires
+        {"humans": 5, "profiles": []},
+        {"family": "solo"},
+        {"humans": "2"},
+    ):
+        with pytest.raises(ValidationError):
+            Operation.model_validate(message(**changes))

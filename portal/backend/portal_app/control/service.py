@@ -25,13 +25,28 @@ AI_PROFILES = frozenset(("economic_cautious", "expansionist"))
 CREATION_RULESET = "v0.9"
 
 
+# galaxy-v1 offers at most four starting sites: humans + AI opponents <= 4 until galaxy-v2.
+MAX_EMPIRES = 4
+INVITE_MODES = frozenset(("link", "email"))
+
+
 def creation_request(body):
-    """Validated SOLO creation intention, or PublicError. Pure: no clock, no database."""
-    if not isinstance(body, dict) or set(body) != {"request_id", "name", "family", "profiles"}:
+    """Validated SOLO or PRIVATE (multi) creation intention, or PublicError. Pure function."""
+    base = {"request_id", "name", "family", "profiles"}
+    if not isinstance(body, dict) or not base <= set(body):
+        raise PublicError("invalid_creation")
+    family = body["family"]
+    if family not in ("solo", "private"):
+        raise PublicError("family_unavailable", 422)
+    if set(body) != (base if family == "solo" else base | {"humans", "invite"}):
+        raise PublicError("invalid_creation")
+    humans = 1 if family == "solo" else body["humans"]
+    if family == "private" and (
+        type(humans) is not int or not 2 <= humans <= MAX_EMPIRES
+        or body["invite"] not in INVITE_MODES
+    ):
         raise PublicError("invalid_creation")
     name, profiles = body["name"], body["profiles"]
-    if body["family"] != "solo":
-        raise PublicError("family_unavailable", 422)
     if not isinstance(name, str) or not 3 <= len(name.strip()) <= 60 or name != name.strip():
         raise PublicError("invalid_creation")
     if (
@@ -40,15 +55,20 @@ def creation_request(body):
         or any(not isinstance(p, str) or p not in AI_PROFILES for p in profiles)
     ):
         raise PublicError("invalid_creation")
+    if humans + len(profiles) > MAX_EMPIRES:
+        raise PublicError("too_many_empires")
     try:
         request_id = UUID(str(body["request_id"]))
     except ValueError:
         raise PublicError("invalid_creation") from None
-    return {"request_id": request_id, "name": name, "family": "solo", "profiles": list(profiles)}
+    wanted = {"request_id": request_id, "name": name, "family": family, "profiles": list(profiles)}
+    if family == "private":
+        wanted.update(humans=humans, invite=body["invite"])
+    return wanted
 
 
 def start_receipt(message, result):
-    """True when Game's receipt names this universe and a well-formed human Empire."""
+    """Seats (human Empires, creator's first) when Game's receipt matches this start, else None."""
     if (
         result.get("status") != "applied"
         or result.get("universe_id") != message["universe_id"]
@@ -56,12 +76,21 @@ def start_receipt(message, result):
         or not isinstance(result.get("human_empire_id"), str)
         or not isinstance(result.get("started_at"), str)
     ):
-        return False
+        return None
+    humans = message.get("humans", 1)
+    seats = result.get("human_empire_ids", [result["human_empire_id"]])
+    if (
+        not isinstance(seats, list)
+        or len(seats) != humans
+        or seats[0] != result["human_empire_id"]
+        or (humans == 1 and "human_empire_ids" in result)
+    ):
+        return None
     try:
-        UUID(result["human_empire_id"])
-    except ValueError:
-        return False
-    return True
+        seats = [str(UUID(seat)) for seat in seats]
+    except (TypeError, ValueError):
+        return None
+    return seats if len(set(seats)) == len(seats) else None
 
 
 def digest(value):
@@ -164,6 +193,8 @@ class Lobby:
             )
             options = {"family": wanted["family"], "profiles": wanted["profiles"],
                        "ruleset": CREATION_RULESET}
+            if wanted["family"] == "private":
+                options.update(humans=wanted["humans"], invite=wanted["invite"])
             if existing is not None:
                 if existing.name != wanted["name"] or existing.start_request != options:
                     raise PublicError("creation_request_conflict", 409)
@@ -178,22 +209,19 @@ class Lobby:
                 )
             )
             session.flush()
-            enqueue(
-                session,
-                target,
-                {
-                    "kind": "start_universe",
-                    "universe_id": str(identifier),
-                    "name": wanted["name"],
-                    # Server-side randomness; never chosen by the browser.
-                    "seed": secrets.token_urlsafe(24),
-                    "family": wanted["family"],
-                    "ruleset": CREATION_RULESET,
-                    "profiles": wanted["profiles"],
-                },
-                now,
-                universe_id=identifier,
-            )
+            message = {
+                "kind": "start_universe",
+                "universe_id": str(identifier),
+                "name": wanted["name"],
+                # Server-side randomness; never chosen by the browser.
+                "seed": secrets.token_urlsafe(24),
+                "family": wanted["family"],
+                "ruleset": CREATION_RULESET,
+                "profiles": wanted["profiles"],
+            }
+            if wanted["family"] == "private":
+                message["humans"] = wanted["humans"]
+            enqueue(session, target, message, now, universe_id=identifier)
             return {"universe_id": str(identifier), "status": "starting"}
 
     def set_access(self, user_id, universe_id, status, bindings):
@@ -322,7 +350,47 @@ class Lobby:
                             "created_at": wire_time(item.created_at),
                         }
                     )
+            from portal_app.control.invitations import taken_seats
+            from portal_app.control.models import UniverseInvitation
+
+            references = {universe.id: universe for _, universe in rows}
+            for item in memberships:
+                universe = references[UUID(item["universe_id"])]
+                options = universe.start_request or {}
+                item["family"] = options.get("family", "operator")
+                item["creator"] = universe.created_by == user.id
+                if options.get("family") == "private":
+                    item["seats_total"] = options.get("humans", 1)
+                    item["seats_taken"] = len(taken_seats(session, universe))
+                    if item["creator"]:
+                        item["invite_mode"] = options.get("invite")
+                        item["sent_invitations"] = [
+                            {"id": str(sent.id), "email": sent.email, "state": sent.state,
+                             "expires_at": wire_time(sent.expires_at)}
+                            for sent in session.scalars(
+                                select(UniverseInvitation)
+                                .where(UniverseInvitation.universe_id == universe.id,
+                                       UniverseInvitation.mode == "email")
+                                .order_by(UniverseInvitation.created_at.desc())
+                                .limit(20)
+                            )
+                        ]
             joined = {UUID(item["universe_id"]) for item in memberships}
+            invitations = [
+                {"id": str(row.id), "universe_id": str(row.universe_id), "name": name,
+                 "expires_at": wire_time(row.expires_at)}
+                for row, name in session.execute(
+                    select(UniverseInvitation, UniverseReference.name)
+                    .join(UniverseReference, UniverseReference.id == UniverseInvitation.universe_id)
+                    .where(UniverseInvitation.mode == "email",
+                           UniverseInvitation.state == "open",
+                           UniverseInvitation.email == user.email_key,
+                           UniverseInvitation.expires_at > now)
+                    .order_by(UniverseInvitation.created_at)
+                    .limit(20)
+                )
+                if row.universe_id not in joined
+            ]
             creations = [
                 {
                     "universe_id": str(universe.id),
@@ -341,6 +409,7 @@ class Lobby:
             return {
                 "memberships": memberships,
                 "creations": creations,
+                "invitations": invitations,
                 "revocations": revocations,
                 "handoff_available": True,
             }

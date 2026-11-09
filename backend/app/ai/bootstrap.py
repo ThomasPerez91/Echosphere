@@ -26,13 +26,17 @@ def pinned(rules):
     return data
 
 
-def bootstrap(session, engine, universe_id, name, seed, profiles, at, *, rules=None):
-    """`rules` permits explicit injected test timings, never runtime defaults from fixtures."""
+def bootstrap(session, engine, universe_id, name, seed, profiles, at, *, rules=None, humans=1):
+    """`rules` permits explicit injected test timings, never runtime defaults from fixtures.
+    `humans` human Empires (multi, Q59) take the first starting sites, then the AI profiles;
+    galaxy-v1 offers at most four sites in total."""
     rules = rules or load_ruleset("v0.6")
     if (
         rules.version not in {"v0.6", "v0.7", "v0.8", "v0.9"}
         or rules.ai is None
         or not 0 <= len(profiles) <= 3
+        or not 1 <= humans <= 4
+        or humans + len(profiles) > 4
         or any(p not in rules.ai.profiles for p in profiles)
     ):
         raise AIDenied("invalid_bootstrap_configuration")
@@ -42,6 +46,9 @@ def bootstrap(session, engine, universe_id, name, seed, profiles, at, *, rules=N
         "profiles": list(profiles),
         "rules_digest": fingerprint(pinned(rules)),
     }
+    if humans != 1:
+        # Omitted for one human so receipts recorded before multi replay identically.
+        request["humans"] = humans
     session.execute(
         text("SELECT pg_advisory_xact_lock(:key)"),
         {"key": int.from_bytes(universe_id.bytes[:8], signed=True)},
@@ -75,10 +82,10 @@ def bootstrap(session, engine, universe_id, name, seed, profiles, at, *, rules=N
             .limit(4)
         )
     )
-    if len(sites) < len(profiles) + 1:
+    if len(sites) < len(profiles) + humans:
         raise AIDenied("insufficient_starting_sites")
     actors = []
-    for index, profile in enumerate([None, *profiles]):
+    for index, profile in enumerate([*([None] * humans), *profiles]):
         empire = Empire(
             universe_id=universe_id,
             name=f"Empire {index + 1}",
