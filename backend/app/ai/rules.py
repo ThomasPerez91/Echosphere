@@ -155,6 +155,6 @@ class FrontierPolicy(BaseModel):
 class AIRulesV4(AIRulesV3):
     """v0.9 (13B B08): policy v4 = v3 plus frontier protocol choices. v0.8 dumps unchanged."""
 
-    version: Literal["v0.9"]
+    version: Literal["v0.9", "v0.10"]
     policy_version: Literal["utility-goals-v4"]
     frontier: FrontierPolicy

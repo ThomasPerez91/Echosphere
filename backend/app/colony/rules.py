@@ -13,6 +13,7 @@ from app.colonization.rules import ColonizationRules
 from app.combat.rules import CombatRules
 from app.fleet.rules import FleetRules
 from app.frontier.rules import FrontierRules
+from app.galaxy.opportunities import OpportunityRules
 from app.galaxy.rules import ExplorationRules, GalaxyRules
 from app.relations.rules import RelationsRules
 from app.simulation.production import MAX_AMOUNT, MICRO_UNITS, RESOURCES, amount
@@ -173,6 +174,14 @@ class ResearchRules(StrictModel):
         return self
 
 
+def since(version: str, first: str) -> bool:
+    """Numeric ruleset order (v0.10 follows v0.9); every domain exists from one version on."""
+    def key(v):
+        return tuple(int(part) for part in v[1:].split("."))
+
+    return key(version) >= key(first)
+
+
 class Ruleset(StrictModel):
     resources: ResourceRules
     colony: ColonyRules
@@ -186,6 +195,7 @@ class Ruleset(StrictModel):
     combat: CombatRules | None = None
     relations: RelationsRules | None = None
     frontier: FrontierRules | None = None
+    opportunities: OpportunityRules | None = None
 
     @property
     def version(self) -> str:
@@ -244,7 +254,7 @@ class Ruleset(StrictModel):
                 raise ValueError("Founding package must fit the colonizer and new colony storage")
             self.fleets.order_quote(x.colonizer_class, x.colonizer_max_quantity)
             x.multiplier_bps(x.max_colonies)
-        if self.version in {"v0.6", "v0.7", "v0.8", "v0.9"}:
+        if since(self.version, "v0.6"):
             if self.ai is None or self.ai.version != self.version:
                 raise ValueError("Pinned AI configuration required, not an active controller")
             ai_kinds = {*self.ai.producers.values(), self.ai.industry_kind, self.ai.storage_kind}
@@ -253,7 +263,7 @@ class Ruleset(StrictModel):
         elif self.ai is not None:
             raise ValueError("AI configuration unavailable in historical rulesets")
         # Combat exists from v0.7: military classes with Combat stats, no offensive AI.
-        if self.version in {"v0.7", "v0.8", "v0.9"}:
+        if since(self.version, "v0.7"):
             k = self.combat
             if k is None or k.version != self.version:
                 raise ValueError("Missing or mixed Combat version")
@@ -266,20 +276,26 @@ class Ruleset(StrictModel):
         elif self.combat is not None:
             raise ValueError("Combat unavailable in historical rulesets")
         # Relations exist from v0.8 only (Q18): contacts, NO_AGREEMENT/PACT, AI diplomacy v3.
-        if self.version in {"v0.8", "v0.9"}:
+        if since(self.version, "v0.8"):
             if self.relations is None or self.relations.version != self.version:
                 raise ValueError("Missing or mixed Relations version")
-            expected = AIRulesV4 if self.version == "v0.9" else AIRulesV3
+            expected = AIRulesV4 if since(self.version, "v0.9") else AIRulesV3
             if type(self.ai) is not expected:
                 raise ValueError("Relations require the diplomacy AI policy of this version")
         elif self.relations is not None:
             raise ValueError("Relations unavailable in historical rulesets")
         # Frontier presence (13B) exists from v0.9 only; v0.1-v0.8 stay strictly unchanged.
-        if self.version == "v0.9":
+        if since(self.version, "v0.9"):
             if self.frontier is None or self.frontier.version != self.version:
                 raise ValueError("Missing or mixed Frontier version")
         elif self.frontier is not None:
             raise ValueError("Frontier unavailable in historical rulesets")
+        # EXP-01 opportunities exist from v0.10 only; v0.1-v0.9 stay strictly unchanged.
+        if since(self.version, "v0.10"):
+            if self.opportunities is None or self.opportunities.version != self.version:
+                raise ValueError("Missing or mixed Opportunities version")
+        elif self.opportunities is not None:
+            raise ValueError("Opportunities unavailable in historical rulesets")
         c, catalogue = self.colony, self.catalogue.infrastructures
         if set(c.initial_stocks) != RESOURCES or set(c.speeds) != {
             "economy",
@@ -384,6 +400,8 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
             extensions += ("ai", "combat", "relations")
         if version == "v0.9":
             extensions += ("ai", "combat", "relations", "frontier")
+        if version == "v0.10":
+            extensions += ("ai", "combat", "relations", "frontier", "opportunities")
         for name in extensions:
             parts[name] = json.loads(
                 (location / "rulesets" / version / f"{name}.json").read_text(),

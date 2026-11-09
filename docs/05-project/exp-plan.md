@@ -82,4 +82,5 @@ E progression furtive · F contournement · G jeu hors ligne · H crash/redémar
 | Lot | Branche | État |
 | --- | --- | --- |
 | EXP-00 | `work/exp-00-design` | Rédigé 09/11/2026 |
-| EXP-01a | `work/exp-01-opportunities` | En cours |
+| EXP-01a | `work/exp-01-opportunities` | Ruleset v0.10, règles et générateur pur livrés, tests purs exécutés |
+| EXP-01b | — | Suivant : persistance, génération à la création, Fog, projection |
