@@ -16,7 +16,7 @@ function navigate(hash: string) {
 test('shows real service readiness and explicitly unavailable stocks', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ready));
   render(<App />);
-  expect(screen.getByRole('heading', { level: 1, name: 'Votre horizon commence ici.' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { level: 1, name: 'Bonjour, Commandant.' })).toBeInTheDocument();
   expect(await screen.findByRole('status')).toHaveTextContent('Services disponibles');
   expect(screen.getAllByText('Stocks non disponibles')).toHaveLength(3);
   expect(screen.getByRole('link', { name: 'Empire' })).toHaveAttribute('aria-current', 'page');
@@ -71,7 +71,7 @@ test('supports deep links, route changes, focus and browser history events', asy
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ready));
   window.history.replaceState(null, '', '#galaxy');
   render(<App />);
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Au-delà du connu.');
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Galaxie');
   navigate('#colony');
   expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
   expect(screen.getByRole('link', { name: 'Colonie' })).toHaveAttribute('aria-current', 'page');
@@ -82,13 +82,18 @@ test('supports deep links, route changes, focus and browser history events', asy
   await screen.findByText('Services disponibles', { selector: '[role="status"]' });
 });
 
-test('more navigation closes after selection and skip link focuses content', async () => {
+test('mobile: the tab bar opens the drawer, a destination closes it, skip link focuses content', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ready));
+  // Below 1200 px (mockup breakpoint) the sidebar becomes a drawer opened from the tab bar.
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Plus' }));
   expect(screen.getByRole('button', { name: 'Plus' })).toHaveAttribute('aria-expanded', 'true');
+  expect(screen.getByRole('button', { name: 'Ouvrir le menu' })).toHaveAttribute('aria-expanded', 'true');
+  expect(screen.getByRole('navigation', { name: 'Sections du jeu' })).toBeVisible();
   navigate('#reports');
   expect(screen.getByRole('button', { name: 'Plus' })).toHaveAttribute('aria-expanded', 'false');
+  expect(screen.getByRole('button', { name: 'Plus' })).toHaveClass('d-active');
   fireEvent.click(screen.getByRole('link', { name: 'Aller au contenu' }));
   expect(screen.getByRole('main')).toHaveFocus();
   await screen.findByText('Services disponibles', { selector: '[role="status"]' });

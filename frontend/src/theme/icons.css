@@ -1,0 +1,21 @@
+/* Mono mask icons (currentColor), self-hosted SVG files. */
+.d-i-empire{--d-i:url(/assets/icons/sidebar/mono/nav-empire-mono.svg)}
+.d-i-colonie{--d-i:url(/assets/icons/sidebar/mono/nav-colonie-mono.svg)}
+.d-i-recherche{--d-i:url(/assets/icons/sidebar/mono/nav-recherche-mono.svg)}
+.d-i-galaxie{--d-i:url(/assets/icons/sidebar/mono/nav-galaxie-mono.svg)}
+.d-i-flottes{--d-i:url(/assets/icons/sidebar/mono/nav-flottes-mono.svg)}
+.d-i-rapports{--d-i:url(/assets/icons/sidebar/mono/nav-rapports-mono.svg)}
+.d-i-relations{--d-i:url(/assets/icons/sidebar/mono/nav-relations-mono.svg)}
+.d-i-tab-vue-ensemble{--d-i:url(/assets/icons/onglets/mono/onglet-vue-ensemble-mono.svg)}
+.d-i-tab-infrastructures{--d-i:url(/assets/icons/onglets/mono/onglet-infrastructures-mono.svg)}
+.d-i-tab-orbite{--d-i:url(/assets/icons/onglets/mono/onglet-orbite-mono.svg)}
+.d-i-tab-defense{--d-i:url(/assets/icons/onglets/mono/onglet-defense-mono.svg)}
+.d-i-act-accelerer{--d-i:url(/assets/icons/actions/mono/action-accelerer-mono.svg)}
+.d-i-act-ameliorer{--d-i:url(/assets/icons/actions/mono/action-ameliorer-mono.svg)}
+.d-i-act-annuler{--d-i:url(/assets/icons/actions/mono/action-annuler-mono.svg)}
+.d-i-act-construire{--d-i:url(/assets/icons/actions/mono/action-construire-mono.svg)}
+.d-i-act-gerer{--d-i:url(/assets/icons/actions/mono/action-gerer-mono.svg)}
+.d-i-act-info{--d-i:url(/assets/icons/actions/mono/action-info-mono.svg)}
+.d-i-act-lancer{--d-i:url(/assets/icons/actions/mono/action-lancer-mono.svg)}
+.d-i-act-renforcer{--d-i:url(/assets/icons/actions/mono/action-renforcer-mono.svg)}
+.d-i-act-verrouille{--d-i:url(/assets/icons/actions/mono/action-verrouille-mono.svg)}

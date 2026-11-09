@@ -27,6 +27,7 @@ for (const width of [320, 390, 768, 1440]) {
   test(`galaxy ${width}px: pan, zoom, keyboard, list, touch and confirmed expedition`, async ({ browser }, testInfo) => {
     const context = await browser.newContext({ viewport: { width, height: 800 }, hasTouch: true });
     const page = await context.newPage();
+    await page.addInitScript(() => { try { localStorage.setItem("echosphere.galaxy.mode", "classic"); } catch { /* none */ } }); // UX05: these steps drive the classic map
     const counter = await routes(page);
     await page.goto(`/#universe/${universe}/galaxy`);
     const map = page.locator("svg.galaxy-map");

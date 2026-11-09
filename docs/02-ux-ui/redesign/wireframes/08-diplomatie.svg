@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" width="1280" height="800" font-family="system-ui, sans-serif" role="img" aria-label="Wireframe — Diplomatie">
+<title>Wireframe — Diplomatie</title>
+<rect width="1280" height="800" fill="#ffffff"/>
+<rect x="0" y="0" width="1280" height="56" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="16" y="34" font-size="15" fill="#1d2b3a" font-weight="800">ECHOSPHERE</text>
+<text x="160" y="24" font-size="11" fill="#46566a" font-weight="400">Univers · Empire ▾</text>
+<text x="160" y="42" font-size="11" fill="#46566a" font-weight="400">Colonie active ▾ · Alliages · Flux · Données (stock, +/h) — valeurs serveur</text>
+<rect x="980" y="12" width="120" height="32" rx="6" fill="#fff1d6" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="990" y="32" font-size="13" font-weight="700" fill="#1d2b3a">🔔 Alertes 3</text>
+<rect x="1110" y="12" width="154" height="32" rx="6" fill="#f4f6f8" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="1120" y="32" font-size="13" font-weight="700" fill="#1d2b3a">Commandant ▾</text>
+<rect x="0" y="56" width="170" height="744" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<rect x="10" y="72" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="92" font-size="13" font-weight="700" fill="#1d2b3a">Empire</text>
+<rect x="10" y="118" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="138" font-size="13" font-weight="700" fill="#1d2b3a">Galaxie</text>
+<rect x="10" y="164" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="184" font-size="13" font-weight="700" fill="#1d2b3a">Colonies</text>
+<rect x="10" y="210" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="230" font-size="13" font-weight="700" fill="#1d2b3a">Recherche</text>
+<rect x="10" y="256" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="276" font-size="13" font-weight="700" fill="#1d2b3a">Flottes</text>
+<rect x="10" y="302" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="322" font-size="13" font-weight="700" fill="#1d2b3a">Rapports</text>
+<rect x="10" y="348" width="150" height="38" rx="6" fill="#d7f3f6" stroke="#1f8fb8" stroke-width="1.2"/>
+<text x="20" y="368" font-size="13" font-weight="700" fill="#1d2b3a">Diplomatie</text>
+<text x="190" y="88" font-size="20" fill="#1d2b3a" font-weight="700">Diplomatie</text>
+<rect x="190" y="110" width="1070" height="70" rx="6" fill="#fff1d6" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="200" y="130" font-size="13" font-weight="700" fill="#1d2b3a">Propositions en attente (1)</text>
+<text x="200" y="150" font-size="11.5" fill="#46566a">Ligue Aurorale propose un pacte · expire dans 20 h  [Accepter] [Refuser]</text>
+<rect x="190" y="194" width="520" height="570" rx="6" fill="#f4f6f8" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="200" y="214" font-size="13" font-weight="700" fill="#1d2b3a">Civilisations connues</text>
+<text x="200" y="234" font-size="11.5" fill="#46566a">Concorde · Pacte actif depuis 2 j</text>
+<text x="200" y="251" font-size="11.5" fill="#46566a">Ligue Aurorale · Aucun accord · proposition reçue</text>
+<text x="200" y="268" font-size="11.5" fill="#46566a">Empire inconnu (signature) · détecté à Vesta</text>
+<rect x="730" y="194" width="530" height="570" rx="6" fill="#f4f6f8" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="740" y="214" font-size="13" font-weight="700" fill="#1d2b3a">Fiche de la civilisation</text>
+<text x="740" y="234" font-size="11.5" fill="#46566a">Emblème · portrait (cosmétique, selon droits)</text>
+<text x="740" y="251" font-size="11.5" fill="#46566a">État : aucun accord / pacte</text>
+<text x="740" y="268" font-size="11.5" fill="#46566a">Faits datés : dernier acte hostile, contact depuis</text>
+<text x="740" y="285" font-size="11.5" fill="#46566a">Actions : [Proposer un pacte] [Rompre…] (confirmation)</text>
+<text x="740" y="302" font-size="11.5" fill="#46566a">Historique</text>
+</svg>

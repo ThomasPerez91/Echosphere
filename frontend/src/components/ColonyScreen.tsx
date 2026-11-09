@@ -1,38 +1,45 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { Amounts, Option, Order, Projection } from '../colony/api';
 import { costParts, duration, errorMessage, exactUnits, infrastructureLabel, rate, ratio, reasonLabel, resourceKeys,
-  resourceLabels, resourceSymbols, time, units } from '../colony/format';
+  resourceLabels, time, units } from '../colony/format';
 import type { useColony } from '../hooks/useColony';
-import { Badge, Button } from './ui';
+import { Bar, Ico, PanelHead, Pending, Pic } from '../shell/visual';
+import { asset, buildingImage, estimate, integer, resourceIcon } from '../shell/assets';
+import { useNow } from '../shell/useNow';
+import { Button } from './ui';
 
 type Colony = ReturnType<typeof useColony>;
 const colonyViews = [
-  { id: 'overview', label: 'Vue d’ensemble' },
-  { id: 'infrastructure', label: 'Infrastructures' },
-  { id: 'orbit', label: 'Orbite' },
-  { id: 'defense', label: 'Défense' },
+  { id: 'overview', label: 'Vue d’ensemble', icon: 'tab-vue-ensemble' },
+  { id: 'infrastructure', label: 'Infrastructures', icon: 'tab-infrastructures' },
+  { id: 'orbit', label: 'Orbite', icon: 'tab-orbite' },
+  { id: 'defense', label: 'Défense', icon: 'tab-defense' },
 ] as const;
+/** What each surface infrastructure does, in player words (its figures come from the server). */
+const roles: Record<string, string> = {
+  extraction_complex: 'Extrait les alliages du sous-sol de la planète.',
+  flux_reactor: 'Produit le flux qui alimente la colonie.',
+  data_node: 'Collecte les données utiles à la recherche.',
+  industrial_complex: 'Accélère les constructions de la colonie.',
+  logistics_center: 'Augmente la capacité de stockage de chaque ressource.',
+};
 
-/** Visual projection of server dates only; it never completes or changes anything. */
-function Progress({ order, offset }: { order: Order; offset: number }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
-  if (!order.started_at || !order.due_at) return <span className="queue-waiting">En attente du démarrage</span>;
-  const start = Date.parse(order.started_at), end = Date.parse(order.due_at), server = now + offset;
-  const percent = Math.max(0, Math.min(100, Math.floor((server - start) / Math.max(1, end - start) * 100)));
-  const left = Math.max(0, Math.ceil((end - server) / 1000));
-  return <div className="queue-progress">
-    <div className="meter" role="progressbar" aria-label={`Avancement estimé de ${infrastructureLabel(order.infrastructure_type)}`}
-      aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}><span style={{ width: `${percent}%` }} /></div>
-    <span>{left > 0 ? `${duration(String(left * 1_000_000))} restantes · fin ${time(order.due_at)}` : 'Échéance atteinte, confirmation serveur…'}</span>
-  </div>;
+/** Server dates only: an estimate between two readings, never a completion. */
+function progress(order: Order, server: number) {
+  if (!order.started_at || !order.due_at) return null;
+  const start = Date.parse(order.started_at), end = Date.parse(order.due_at);
+  return { percent: Math.max(0, Math.min(100, Math.floor((server - start) / Math.max(1, end - start) * 100))), left: Math.max(0, Math.ceil((end - server) / 1000)) };
 }
+const level = (order: Order) => order.target_level === 1 ? 'Nouvelle infrastructure' : `Niveau ${order.target_level - 1} → ${order.target_level}`;
 
-function Cost({ value }: { value: Option['cost'] }) {
+function Costs({ value, minutes, stocks }: { value: Amounts; minutes?: string; stocks?: Record<string, number> }) {
   const parts = costParts(value);
-  return <ul className="cost" aria-label="Coût">{parts.length ? parts.map(part => <li key={part.key}>
-    <span aria-hidden="true" className={`resource-symbol--${part.key}`}>{resourceSymbols[part.key]}</span>
-    <span className="sr-only">{part.label} </span>{part.value}</li>) : <li>Gratuit</li>}</ul>;
+  return <div className="d-costs" aria-label="Coût">
+    {parts.length ? parts.map(part => <span key={part.key} className={`d-cost${stocks && stocks[part.key] < Number(value[part.key]) / 1e6 ? ' d-short' : ''}`}>
+      <img src={asset(resourceIcon[part.key])} alt="" width="17" height="17" /><span className="sr-only">{part.label} </span>{part.value}</span>)
+      : <span className="d-cost">Gratuit</span>}
+    {minutes && <span className="d-cost"><img src={asset('icons/ui/ui-chronometre.svg')} alt="" width="17" height="17" /><span className="sr-only">Durée </span>{minutes}</span>}
+  </div>;
 }
 
 function Effect({ option }: { option: Pick<Option, 'production_per_hour' | 'construction_bonus_bps' | 'capacity'> }) {
@@ -42,174 +49,266 @@ function Effect({ option }: { option: Pick<Option, 'production_per_hour' | 'cons
     {option.capacity ? `Capacité ${units(option.capacity)} par ressource` : ''}</p>;
 }
 
-function Resources({ projection }: { projection: Projection }) {
-  return <section className="colony-resources" aria-label="Stocks de la colonie">
-    {projection.resources.map(resource => {
-      const filled = ratio(resource.stock, resource.capacity);
-      return <div className="resource-card" key={resource.resource}>
-        <span className={`resource-symbol resource-symbol--${resource.resource}`} aria-hidden="true">{resourceSymbols[resource.resource]}</span>
-        <div className="resource-body"><h2>{resourceLabels[resource.resource]}</h2>
-          <p className="resource-amount">{units(resource.stock)} <span>/ {resource.capacity ? units(resource.capacity) : '∞'}</span></p>
-          <p className="resource-rate">+{rate(resource.rate_per_hour)}/h</p>
-          <div className={`meter ${filled >= 90 ? 'meter--warning' : ''}`} role="meter" aria-label={`Remplissage ${resourceLabels[resource.resource]}`}
-            aria-valuemin={0} aria-valuemax={100} aria-valuenow={filled}><span style={{ width: `${filled}%` }} /></div>
-        </div>
-      </div>;
-    })}
+function Alerts({ projection }: { projection: Projection }) {
+  const items = [
+    ...(projection.incoming ?? []).filter(a => a.state === 'pending').map(a => ({ key: a.id, tone: 'danger', icon: 'alerte-flotte-ennemie', title: 'Force hostile annoncée', text: `Bataille prévue ${time(a.battle_at)}` })),
+    ...projection.resources.filter(r => ratio(r.stock, r.capacity) >= 90).map(r => ({ key: r.resource, tone: 'warn', icon: 'alerte-stockage-limite',
+      title: 'Stock proche de la capacité', text: `${resourceLabels[r.resource]} : la production au-delà est perdue.` })),
+    ...(projection.queue.length >= projection.queue_limit ? [{ key: 'queue', tone: 'warn', icon: 'alerte-construction-terminee', title: 'File de construction pleine', text: `${projection.queue.length} / ${projection.queue_limit} ordres` }] : []),
+    ...(!projection.sectors.free ? [{ key: 'sectors', tone: 'danger', icon: 'alerte-critique', title: 'Secteurs à capacité maximale', text: 'Aucun secteur libre pour une nouvelle infrastructure.' }]
+      : projection.sectors.free <= 2 ? [{ key: 'sectors', tone: 'warn', icon: 'alerte-stockage-limite', title: 'Secteurs bientôt saturés', text: `Plus que ${projection.sectors.free} secteur${projection.sectors.free > 1 ? 's' : ''} libre${projection.sectors.free > 1 ? 's' : ''}.` }] : []),
+  ];
+  return <section className="d-card d-panel" aria-labelledby="colony-alerts">
+    <PanelHead id="colony-alerts" icon="icons/ui/ui-alerte.svg" title="Alertes de la colonie" />
+    <ul className="d-alert-list colony-alerts" aria-label="Alertes de la colonie">{items.map(item => <li key={item.key} className={`d-${item.tone}`}>
+      <Pic src={`icons/alertes/${item.icon}.svg`} size={32} /><div><strong>{item.title}</strong><span>{item.text}</span></div><time /></li>)}
+      {!items.length && <li className="d-info"><Pic src="icons/alertes/alerte-construction-terminee.svg" size={32} /><div><strong>Aucune alerte</strong><span>Stocks, file et secteurs vérifiés à la dernière lecture.</span></div><time /></li>}
+    </ul>
   </section>;
 }
 
-function Alerts({ projection }: { projection: Projection }) {
-  const full = projection.resources.filter(r => ratio(r.stock, r.capacity) >= 90);
-  const items = [
-    ...full.map(r => ({ key: r.resource, text: `${resourceLabels[r.resource]} : stock proche de la capacité. La production au-delà est perdue.` })),
-    ...(projection.queue.length >= projection.queue_limit ? [{ key: 'queue', text: 'File de construction pleine.' }] : []),
-    ...(!projection.sectors.free ? [{ key: 'sectors', text: 'Aucun secteur libre pour une nouvelle infrastructure.' }] : []),
-  ];
-  if (!items.length) return null;
-  return <ul className="colony-alerts" aria-label="Alertes de la colonie">{items.map(item => <li key={item.key}><span aria-hidden="true">▲</span>{item.text}</li>)}</ul>;
+function DefenseStatus({ projection, banner }: { projection: Projection; banner?: (v: string) => string }) {
+  const threats = (projection.incoming ?? []).filter(a => a.state === 'pending').length;
+  return <section className="d-card d-panel" aria-labelledby="colony-defense-status">
+    <PanelHead id="colony-defense-status" icon="icons/defense/statut-defense.svg" title="Statut de défense" />
+    <Pending what="Couverture planétaire, modules et garnison : la défense planétaire (Q30–Q38) n’est pas encore implémentée." />
+    <p className="d-note">{threats ? `${threats} force${threats > 1 ? 's' : ''} hostile${threats > 1 ? 's' : ''} annoncée${threats > 1 ? 's' : ''} : seules les unités militaires stationnées combattront.` : 'Aucune force hostile annoncée sur cette colonie.'}</p>
+    {banner && <a className="d-orbital-banner" href={banner('colony/orbit')}>
+      <img src={asset('img/colonie/banniere-defenses-orbitales.webp')} alt="" width="1200" height="360" />
+      <span className="d-ob-ico"><Pic src="icons/defense/defenses-orbitales.svg" size={40} /></span>
+      <span className="d-ob-text"><b>Gérer les défenses orbitales</b><small>Voir l’orbite de la colonie</small></span>
+      <svg className="d-chev-r" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></a>}
+  </section>;
 }
 
-function Queue({ colony, projection, offset }: { colony: Colony; projection: Projection; offset: number }) {
+/** Full queue with the explicit cancellation flow (refund, losses and cascade before any POST). */
+function Queue({ colony, projection, server }: { colony: Colony; projection: Projection; server: number }) {
   const [confirm, setConfirm] = useState<string | null>(null);
-  return <section className="panel queue-panel" aria-labelledby="queue-title">
-    <div className="panel-head"><h2 id="queue-title">Constructions en cours</h2><span className="panel-meta">{projection.queue.length} / {projection.queue_limit}</span></div>
+  const canCancel = projection.permissions.includes('colony.cancel');
+  return <section className="d-card d-panel queue-panel" aria-labelledby="queue-title">
+    <PanelHead id="queue-title" icon="icons/colonie/panel-activites.svg" title="Constructions en cours"><span className="d-queue-count">{projection.queue.length} / {projection.queue_limit}</span></PanelHead>
     {colony.awaiting && <p className="notice" role="status">Échéance dépassée : en attente de confirmation du serveur.
       <Button onClick={colony.refresh}>Actualiser la colonie</Button></p>}
-    {!projection.queue.length ? <p className="muted">Aucune construction en cours. Les ordres continuent sans navigateur ouvert.</p>
-      : <ol className="queue-list">{projection.queue.map(order => {
+    {!projection.queue.length ? <p className="d-empty">Aucune construction en cours. Les ordres continuent sans navigateur ouvert.</p>
+      : <ol className="d-job-list">{projection.queue.map(order => {
         const label = infrastructureLabel(order.infrastructure_type);
         const describeAmounts = (value: Amounts) => resourceKeys.filter(key => BigInt(value[key]) > 0n).map(key => `${exactUnits(value[key])} ${resourceLabels[key]}`).join(', ') || 'aucun';
         const pending = colony.pending === JSON.stringify({ kind: 'cancel', order_id: order.id });
-        return <li key={order.id} className="queue-item">
-          <div className="queue-title"><strong>{label}</strong>
-            <span>Secteur {order.sector_index} · {order.target_level === 1 ? 'Nouvelle infrastructure' : `Niveau ${order.target_level - 1} → ${order.target_level}`}</span>
-            <Badge tone={order.status === 'active' ? 'accent' : 'neutral'}>{order.status === 'active' ? 'En cours' : 'En file'}</Badge></div>
-          {order.status === 'active' ? <Progress order={order} offset={offset} /> : <span className="queue-waiting">Démarre après l’ordre précédent ; durée fixée au démarrage.</span>}
-          {projection.permissions.includes('colony.cancel') && (confirm === order.id
-            ? <div className="confirm" role="group" aria-label={`Confirmer l’annulation de ${label}`}>
-                <p>Remboursement théorique : {describeAmounts(order.cancel.refund)}.</p>
-                <p>Vous récupérerez : {describeAmounts(order.cancel.recoverable)}.</p>
-                <p>Perte définitive faute de stockage : {describeAmounts(order.cancel.lost)}.</p>
-                {!!order.cancel.also_cancels.length && <>
-                  <p>Seront aussi annulées les améliorations dépendantes suivantes (incluses dans ces montants) :</p>
-                  <ul>{order.cancel.also_cancels.map(id => {
-                    const dependent = projection.queue.find(row => row.id === id)!;
-                    return <li key={id}>{infrastructureLabel(dependent.infrastructure_type)} · Secteur {dependent.sector_index} · Niveau {dependent.target_level}</li>;
-                  })}</ul>
-                </>}
-                <p className="muted">Estimation à la date serveur affichée ; montants recalculés au moment de l’annulation.</p>
-                <Button className="button--danger" disabled={!!colony.pending || !order.cancel.available}
-                  onClick={() => { void colony.command({ kind: 'cancel', order_id: order.id }); setConfirm(null); }}>Confirmer l’annulation</Button>
-                <Button onClick={() => setConfirm(null)}>Garder</Button>
-              </div>
-            : <div className="queue-actions"><Button disabled={!!colony.pending || !order.cancel.available}
-                aria-describedby={order.cancel.reason ? `cancel-${order.id}` : undefined}
-                onClick={() => setConfirm(order.id)}>{pending ? 'Annulation…' : `Annuler ${label}`}</Button>
-              {order.cancel.reason && <span id={`cancel-${order.id}`} className="reason">{reasonLabel(order.cancel.reason)}</span>}</div>)}
+        const p = progress(order, server);
+        return <li key={order.id} className="d-job">
+          <img className="d-job-img" src={buildingImage(order.infrastructure_type)} alt="" width="96" height="72" />
+          <div className="d-job-info"><b>{label}</b><small>Secteur {order.sector_index} · Surface · {level(order)}</small>
+            <small className="d-job-state">{order.status === 'active' ? 'En cours' : 'En file : démarre après l’ordre précédent, durée fixée au démarrage'}</small></div>
+          {canCancel && confirm !== order.id && <div className="d-job-act">
+            <button type="button" className="d-btn d-btn-sq" disabled aria-label={`Accélérer ${label} : implémentation backend nécessaire`}
+              title="Accélération : implémentation backend nécessaire"><Ico name="act-accelerer" /></button>
+            <button type="button" className="d-btn d-btn-sq d-danger" disabled={!!colony.pending || !order.cancel.available}
+              aria-describedby={order.cancel.reason ? `cancel-${order.id}` : undefined} onClick={() => setConfirm(order.id)}
+              aria-label={pending ? 'Annulation…' : `Annuler ${label}`}><Ico name="act-annuler" /></button></div>}
+          <div className="d-job-prog">{p ? <><Bar value={p.percent} label={`Avancement estimé de ${label}`} />
+            <span className="d-job-meta"><b className="d-pct">{p.percent} %</b><time dateTime={order.due_at!}>{p.left > 0 ? `${duration(String(p.left * 1_000_000))} · fin ${time(order.due_at!)}` : 'Confirmation serveur…'}</time></span></>
+            : <span className="queue-waiting">En attente du démarrage</span>}</div>
+          {order.cancel.reason && <span id={`cancel-${order.id}`} className="reason">{reasonLabel(order.cancel.reason)}</span>}
+          {canCancel && confirm === order.id && <div className="confirm" role="group" aria-label={`Confirmer l’annulation de ${label}`}>
+            <p>Remboursement théorique : {describeAmounts(order.cancel.refund)}.</p>
+            <p>Vous récupérerez : {describeAmounts(order.cancel.recoverable)}.</p>
+            <p>Perte définitive faute de stockage : {describeAmounts(order.cancel.lost)}.</p>
+            {!!order.cancel.also_cancels.length && <>
+              <p>Seront aussi annulées les améliorations dépendantes suivantes (incluses dans ces montants) :</p>
+              <ul>{order.cancel.also_cancels.map(id => {
+                const dependent = projection.queue.find(row => row.id === id)!;
+                return <li key={id}>{infrastructureLabel(dependent.infrastructure_type)} · Secteur {dependent.sector_index} · Niveau {dependent.target_level}</li>;
+              })}</ul>
+            </>}
+            <p className="muted">Estimation à la date serveur affichée ; montants recalculés au moment de l’annulation.</p>
+            <Button className="button--danger" disabled={!!colony.pending || !order.cancel.available}
+              onClick={() => { void colony.command({ kind: 'cancel', order_id: order.id }); setConfirm(null); }}>Confirmer l’annulation</Button>
+            <Button onClick={() => setConfirm(null)}>Garder</Button>
+          </div>}
         </li>;
       })}</ol>}
   </section>;
 }
 
-function OptionCard({ colony, option, free, canBuild, compact = false }: { colony: Colony; option: Option; free: number[]; canBuild: boolean; compact?: boolean }) {
+function OptionCard({ colony, option, free, canBuild, stocks }: { colony: Colony; option: Option; free: number[]; canBuild: boolean; stocks: Record<string, number> }) {
   const [sector, setSector] = useState(option.sector_index);
   const label = infrastructureLabel(option.infrastructure_type);
   const chosen = option.action === 'build' ? (sector && free.includes(sector) ? sector : option.sector_index) : option.sector_index;
   const command = { kind: 'construct' as const, infrastructure_type: option.infrastructure_type, sector_index: chosen ?? 0, target_level: option.target_level };
   const pending = colony.pending === JSON.stringify(command);
   const describe = `option-${option.action}-${option.infrastructure_type}-${option.sector_index ?? 'none'}`;
-  return <li className={`option-card ${option.available ? '' : 'is-locked'} ${compact ? 'option-card--compact' : ''}`}>
-    {compact ? <p className="option-meta">Amélioration vers le niveau {option.target_level}</p> : <>
-      <h3>{label}</h3>
-      <p className="option-meta">{option.action === 'build' ? 'Nouvelle infrastructure · niveau 1' : `Secteur ${option.sector_index} · niveau ${option.target_level - 1} → ${option.target_level}`}</p></>}
-    <Effect option={option} />
-    <Cost value={option.cost} />
-    <p className="option-time">Durée de base {duration(option.base_duration_us)}
-      {option.estimated_duration_us && option.estimated_duration_us !== option.base_duration_us ? ` · effective ${duration(option.estimated_duration_us)}` : ''}</p>
-    {option.action === 'build' && option.available && free.length > 1 && <label className="sector-select">Secteur
-      <select value={chosen ?? ''} onChange={event => setSector(Number(event.target.value))}>
-        {free.map(index => <option key={index} value={index}>Secteur {index}</option>)}
-      </select></label>}
-    {canBuild && <Button className={option.available ? 'button--primary' : ''}
-      disabled={!option.available || !!colony.pending || !chosen} aria-describedby={option.reason ? describe : undefined}
-      onClick={() => { void colony.command(command); }}>
-      {pending ? 'Envoi…' : option.action === 'build' ? `Construire ${label}` : `Améliorer ${label} niveau ${option.target_level}`}</Button>}
-    {option.reason && <p id={describe} className="reason">{reasonLabel(option.reason)}</p>}
+  const locked = !option.available && option.reason === 'prerequisites_unmet';
+  return <li className={`d-bcard option-card${option.available ? '' : ' is-locked'}${locked ? ' d-locked' : ''}`}>
+    <img src={buildingImage(option.infrastructure_type)} alt="" width="420" height="420" />
+    <div className="d-bcard-body">
+      <h3>{option.action === 'build' ? label : `${label} · secteur ${option.sector_index}`}</h3>
+      <p>{option.action === 'build' ? roles[option.infrastructure_type] ?? 'Nouvelle infrastructure de surface.' : `Amélioration niveau ${option.target_level - 1} → ${option.target_level}`}</p>
+      <Effect option={option} />
+      <Costs value={option.cost} stocks={stocks} minutes={duration(option.estimated_duration_us ?? option.base_duration_us)} />
+      {option.action === 'build' && option.available && free.length > 1 && <label className="sector-select">Secteur
+        <select value={chosen ?? ''} onChange={event => setSector(Number(event.target.value))}>
+          {free.map(index => <option key={index} value={index}>Secteur {index}</option>)}
+        </select></label>}
+      {canBuild && <button type="button" className={`d-btn d-btn-block${option.available ? ' d-primary' : ''}`}
+        disabled={!option.available || !!colony.pending || !chosen} aria-describedby={option.reason ? describe : undefined}
+        onClick={() => { void colony.command(command); }}
+        aria-label={pending ? 'Envoi…' : option.action === 'build' ? `Construire ${label}` : `Améliorer ${label} niveau ${option.target_level}`}>
+        <Ico name={locked ? 'act-verrouille' : option.action === 'build' ? 'act-construire' : 'act-ameliorer'} />
+        <span aria-hidden="true">{pending ? 'Envoi…' : locked ? 'Verrouillé' : option.action === 'build' ? 'Construire' : 'Améliorer'}</span></button>}
+      {option.reason && <p id={describe} className="reason">{reasonLabel(option.reason)}</p>}
+    </div>
   </li>;
 }
 
-function Infrastructures({ colony, data, offset }: { colony: Colony; data: Projection; offset: number }) {
+function Infrastructures({ colony, data, server, stocks }: { colony: Colony; data: Projection; server: number; stocks: Record<string, number> }) {
   const builds = data.options.filter(option => option.action === 'build');
+  const upgrades = data.options.filter(option => option.action === 'upgrade');
   const canBuild = data.permissions.includes('colony.construct');
-  const upgrades = new Map(data.options.filter(option => option.action === 'upgrade').map(option => [option.sector_index, option]));
-  return <div className="infrastructure-layout">
-    <Queue colony={colony} projection={data} offset={offset} />
-    <section className="panel" aria-labelledby="built-title">
-      <div className="panel-head"><h2 id="built-title">Infrastructures de la colonie</h2>
-        <span className="panel-meta">{data.sectors.built} / {data.sectors.capacity} secteurs</span></div>
-      <ul className="option-grid">{data.infrastructures.map(row => {
-        const upgrade = upgrades.get(row.sector_index);
-        return <li key={row.sector_index} className="built-card">
-          <h3>{infrastructureLabel(row.infrastructure_type)}</h3>
-          <p className="option-meta">Secteur {row.sector_index} · niveau {row.level}</p>
-          <Effect option={row} />
-          {upgrade && <ul className="option-grid nested"><OptionCard colony={colony} option={upgrade} free={data.sectors.free_indices} canBuild={canBuild} compact /></ul>}
-        </li>;
-      })}</ul>
+  return <div className="d-tabpanel">
+    <Queue colony={colony} projection={data} server={server} />
+    <section className="d-card d-panel" aria-labelledby="available-title">
+      <PanelHead id="available-title" icon="icons/actions/action-construire.svg" title="Bâtiments disponibles"><span className="d-queue-count">{data.sectors.free} secteur{data.sectors.free > 1 ? 's' : ''} libre{data.sectors.free > 1 ? 's' : ''}</span></PanelHead>
+      <ul className="d-build-grid option-grid">{builds.map(option => <OptionCard key={option.infrastructure_type} colony={colony} option={option}
+        free={data.sectors.free_indices} canBuild={canBuild} stocks={stocks} />)}</ul>
     </section>
-    <section className="panel" aria-labelledby="available-title">
-      <div className="panel-head"><h2 id="available-title">Nouvelles infrastructures</h2>
-        <span className="panel-meta">{data.sectors.free} secteur(s) libre(s)</span></div>
-      <ul className="option-grid">{builds.map(option => <OptionCard key={option.infrastructure_type} colony={colony} option={option}
-        free={data.sectors.free_indices} canBuild={canBuild} />)}</ul>
+    <section className="d-card d-panel" aria-labelledby="built-title">
+      <PanelHead id="built-title" icon="icons/colonie/colonie-secteurs.svg" title="Infrastructures de la colonie"><span className="d-queue-count">{data.sectors.built} / {data.sectors.capacity} secteurs</span></PanelHead>
+      <ul className="d-install-list">{data.infrastructures.map(row => <li key={row.sector_index} className="d-install">
+        <img src={buildingImage(row.infrastructure_type)} alt="" width="96" height="72" />
+        <div className="d-inst-info"><span className="d-inst-top"><b>{infrastructureLabel(row.infrastructure_type)}</b><em className="d-lvl-badge">Niveau {row.level}</em></span>
+          <small>Secteur {row.sector_index} · Surface</small><Effect option={row} /></div>
+      </li>)}</ul>
+      {!!upgrades.length && <><h3 className="d-subtitle">Améliorations possibles</h3>
+        <ul className="d-build-grid option-grid">{upgrades.map(option => <OptionCard key={`${option.sector_index}-${option.target_level}`} colony={colony} option={option}
+          free={data.sectors.free_indices} canBuild={canBuild} stocks={stocks} />)}</ul></>}
     </section>
   </div>;
 }
 
-function Overview({ colony, data, offset, link }: { colony: Colony; data: Projection; offset: number; link: (v: string) => string }) {
-  return <div className="overview-layout">
-    <Alerts projection={data} />
-    <Queue colony={colony} projection={data} offset={offset} />
-    <section className="panel" aria-labelledby="summary-title">
-      <div className="panel-head"><h2 id="summary-title">Infrastructures</h2><a className="text-link" href={link('colony/infrastructure')}>Gérer →</a></div>
-      <table className="summary-table"><caption className="sr-only">Résumé des infrastructures</caption>
-        <thead><tr><th scope="col">Secteur</th><th scope="col">Infrastructure</th><th scope="col">Niveau</th><th scope="col">Effet</th></tr></thead>
-        <tbody>{data.infrastructures.map(row => <tr key={row.sector_index}><td>{row.sector_index}</td><td>{infrastructureLabel(row.infrastructure_type)}</td>
-          <td>{row.level}</td><td><Effect option={row} /></td></tr>)}</tbody></table>
+function Overview({ data, server, link }: { data: Projection; server: number; link: (v: string) => string }) {
+  const maxRate = Math.max(1, ...data.resources.map(r => Number(r.rate_per_hour)));
+  const used = data.sectors.built + data.sectors.reserved;
+  return <div className="d-tabpanel d-grid-2">
+    <section className="d-card d-panel" aria-labelledby="summary-title">
+      <PanelHead id="summary-title" icon="icons/colonie/panel-resume-colonie.svg" title="Résumé de la colonie" />
+      <div className="d-summary">
+        <img className="d-summary-img" src={asset('img/batiments/centre-de-commandement.webp')} alt={`Centre de commandement de ${data.colony.name}`} width="420" height="420" />
+        <dl className="d-kv">
+          <div><dt><Pic src="icons/colonie/colonie-secteurs.svg" size={24} />Secteurs (utilisés / total)</dt><dd>{used} / {data.sectors.capacity}</dd></div>
+          <div><dt><Pic src="icons/colonie/stat-emplacements.svg" size={24} />Emplacements orbitaux</dt><dd>{data.colony.planet.orbital_capacity}</dd></div>
+          <div><dt><Pic src="icons/colonie/panel-activites.svg" size={24} />File de construction</dt><dd>{data.queue.length} / {data.queue_limit}</dd></div>
+          {[['stat-niveau-colonie', 'Niveau de la colonie'], ['stat-population', 'Population estimée'], ['stat-stabilite', 'Stabilité'], ['stat-habitabilite', 'Habitabilité']].map(([icon, label]) =>
+            <div key={icon}><dt><Pic src={`icons/colonie/${icon}.svg`} size={24} />{label}</dt><dd className="d-na" title="Implémentation backend nécessaire">N/D</dd></div>)}
+        </dl>
+      </div>
+      <p className="d-note">N/D : niveau, population, stabilité et habitabilité — implémentation backend nécessaire.</p>
     </section>
+    <section className="d-card d-panel" aria-labelledby="activity-title">
+      <PanelHead id="activity-title" icon="icons/colonie/panel-activites.svg" title="Activités en cours" more={{ href: link('colony/infrastructure'), label: 'Voir la file complète' }} />
+      <ul className="d-activity-list">{data.queue.slice(0, 3).map(order => {
+        const p = progress(order, server);
+        return <li className="d-act" key={order.id}><img src={buildingImage(order.infrastructure_type)} alt="" width="84" height="56" />
+          <div><span className="d-act-top"><b>{order.target_level === 1 ? 'Construction' : 'Amélioration'} : {infrastructureLabel(order.infrastructure_type)}</b><b className="d-pct">{p ? `${p.percent} %` : 'En file'}</b></span>
+            <small>Secteur {order.sector_index} · Surface · {level(order)}</small><Bar value={p?.percent ?? 0} /></div></li>;
+      })}
+        {!data.queue.length && <li className="d-empty">Aucune activité en cours.</li>}</ul>
+    </section>
+    <section className="d-card d-panel" aria-labelledby="production-title">
+      <PanelHead id="production-title" icon="icons/sidebar/nav-empire.svg" title="Production par heure" />
+      <ul className="d-prod-list">{data.resources.map(r => <li key={r.resource}><img src={asset(resourceIcon[r.resource])} alt="" width="40" height="40" />
+        <div><span className="d-pl-top"><b>{resourceLabels[r.resource]}</b><em>+{rate(r.rate_per_hour)} /h</em></span>
+          <Bar value={Number(r.rate_per_hour) / maxRate * 100} tone={r.resource === 'data' ? 'amber' : undefined} /></div></li>)}</ul>
+    </section>
+    <section className="d-card d-panel" aria-labelledby="infra-title">
+      <PanelHead id="infra-title" icon="icons/colonie/panel-points-interet.svg" title="Infrastructures en service" more={{ href: link('colony/infrastructure'), label: 'Gérer' }} />
+      <div className="d-poi">
+        <img src={buildingImage(data.infrastructures[0]?.infrastructure_type ?? 'data_node')} alt="" width="420" height="420" />
+        <div><h3>Rôle de {data.colony.name}</h3>
+          <ul className="d-checks summary-table" aria-label="Résumé des infrastructures">{data.infrastructures.map(row =>
+            <li key={row.sector_index}>{infrastructureLabel(row.infrastructure_type)} · niveau {row.level} <span className="d-muted">(secteur {row.sector_index})</span></li>)}
+            {!data.infrastructures.length && <li>Aucune infrastructure construite.</li>}</ul></div>
+      </div>
+    </section>
+  </div>;
+}
+
+function Orbit({ data }: { data: Projection }) {
+  return <div className="d-tabpanel d-grid-orbit">
+    <section className="d-card d-panel d-installs" aria-labelledby="orbit-title">
+      <PanelHead id="orbit-title" icon="icons/colonie/stat-emplacements.svg" title="Installations orbitales"><span className="d-more d-static">0 / {data.colony.planet.orbital_capacity} emplacements utilisés</span></PanelHead>
+      <ul className="d-install-list">{Array.from({ length: data.colony.planet.orbital_capacity }, (_, i) => <li key={i} className="d-install d-free">
+        <span className="d-free-ico"><Pic src="icons/colonie/emplacement-libre.svg" size={52} /></span>
+        <div className="d-inst-info"><b>Emplacement orbital {i + 1}</b><small>Constructions orbitales : implémentation backend nécessaire.</small></div>
+      </li>)}</ul>
+    </section>
+    <div className="d-stack">
+      <section className="d-card d-panel" aria-labelledby="yards-title"><PanelHead id="yards-title" icon="icons/colonie/panel-chantiers-orbitaux.svg" title="Chantiers orbitaux" />
+        <Pending what="File de construction orbitale." /></section>
+      <section className="d-card d-panel" aria-labelledby="traffic-title"><PanelHead id="traffic-title" icon="icons/colonie/panel-trafic-orbital.svg" title="Trafic orbital" />
+        <Pending what="Flottes amarrées, convois entrants et routes de fret de la colonie." /></section>
+    </div>
+  </div>;
+}
+
+function Defense({ data }: { data: Projection }) {
+  const pending = (data.incoming ?? []).filter(a => a.state === 'pending');
+  return <div className="d-tabpanel">
+    <section className="d-card d-panel" aria-labelledby="network-title"><PanelHead id="network-title" icon="icons/defense/reseau-defensif.svg" title="Réseau défensif" />
+      <Pending what="Réseau limité de modules persistants (canons, missiles, boucliers, drones, garnison) — décisions Q30–Q38 validées, non implémentées." /></section>
+    <div className="d-grid-def">
+      <section className="d-card d-panel" aria-labelledby="defprod-title"><PanelHead id="defprod-title" icon="icons/defense/production-defensive.svg" title="Production défensive" />
+        <Pending what="Composants, charges et cellules de défense." compact /></section>
+      <section className="d-card d-panel" aria-labelledby="ops-title"><PanelHead id="ops-title" icon="icons/defense/operations-tactiques.svg" title="Opérations tactiques" />
+        <Pending what="Patrouilles, renforcements et exercices." compact />
+        <p className="d-watch"><i className="d-pulse" aria-hidden="true" /><b>Veille du secteur</b><span>{pending.length ? `${pending.length} force${pending.length > 1 ? 's' : ''} hostile${pending.length > 1 ? 's' : ''} annoncée${pending.length > 1 ? 's' : ''}` : 'Aucune force hostile annoncée'}</span></p>
+      </section>
+    </div>
   </div>;
 }
 
 export function ColonyScreen({ colony, view, link, onNavigate }: { colony: Colony; view: string; link: (v: string) => string; onNavigate?: () => void }) {
+  const now = useNow(1000);
   if (colony.phase === 'loading' || colony.phase === 'idle') return <p className="panel" aria-live="polite">Chargement de votre colonie…</p>;
-  if (colony.phase === 'empty') return <section className="panel"><h2>Aucune colonie accessible</h2>
+  if (colony.phase === 'empty') return <section className="panel"><h1 tabIndex={-1}>Aucune colonie accessible</h1>
     <p>Votre participation ne donne accès à aucune colonie dans cet univers.</p></section>;
-  if (colony.phase === 'error' || !colony.projection) return <section className="panel" role="alert"><h2>Colonie indisponible</h2>
+  if (colony.phase === 'error' || !colony.projection) return <section className="panel" role="alert"><h1 tabIndex={-1}>Colonie indisponible</h1>
     <p>{errorMessage(colony.error ?? 'unavailable')}</p><Button onClick={colony.refresh}>Réessayer</Button></section>;
   const data = colony.projection;
   const offset = Date.parse(data.server_time) - colony.receivedAt;
+  const server = now + offset, elapsed = now - colony.receivedAt;
   const used = data.sectors.built + data.sectors.reserved;
-  return <section className="colony-screen" aria-label={`Colonie ${data.colony.name}`}>
-    <header className="colony-header">
-      <div><p className="eyebrow">COLONIE · {data.colony.system.name.toUpperCase()}</p>
-        <h2 className="colony-name">{data.colony.name}</h2>
-        <p className="muted">Empire {data.colony.empire.name} · Univers {data.colony.universe.name}</p></div>
-      <div className="colony-stats">
-        <div className="stat"><strong>{used} / {data.sectors.capacity}</strong><span>Secteurs utilisés</span>
-          <div className="meter" role="meter" aria-label="Secteurs utilisés" aria-valuemin={0} aria-valuemax={data.sectors.capacity} aria-valuenow={used}>
-            <span style={{ width: `${used / data.sectors.capacity * 100}%` }} /></div></div>
-        <div className="stat"><strong>{data.colony.planet.orbital_capacity}</strong><span>Emplacements orbitaux · à venir</span></div>
+  const stocks = Object.fromEntries(data.resources.map(r => [r.resource, estimate(r, elapsed)]));
+  const current = colonyViews.find(item => item.id === view)?.id ?? 'overview';
+  return <div className="d-colony d-scope colony-screen" aria-label={`Colonie ${data.colony.name}`}>
+    <section className="d-col-hero">
+      <div className="d-col-hero-text">
+        <nav className="d-crumbs" aria-label="Fil d’Ariane"><span>Colonies</span><span aria-hidden="true">›</span><span aria-current="page">{data.colony.name}</span></nav>
+        <h1 tabIndex={-1}>{data.colony.name}</h1>
+        <p className="d-col-level">Colonie de l’Empire {data.colony.empire.name}</p>
+        <p className="d-col-meta"><span>Planète {data.colony.planet.name}</span><span>Système {data.colony.system.name}</span><span>{/^univers\b/i.test(data.colony.universe.name) ? data.colony.universe.name : `Univers ${data.colony.universe.name}`}</span></p>
+        <p className="d-col-desc">Type de monde, niveau et description de la colonie : implémentation backend nécessaire.</p>
       </div>
-      {colony.colonies.length > 1 && <label className="sector-select">Colonie
-        <select value={data.colony.id} onChange={event => colony.select(event.target.value)}>
-          {colony.colonies.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
-    </header>
-    <Resources projection={data} />
-    <nav aria-label="Sections de la colonie" className="colony-navigation">
-      {colonyViews.map(item => <a key={item.id} href={link(`colony/${item.id}`)} onClick={onNavigate} aria-current={item.id === view ? 'page' : undefined}>{item.label}</a>)}
-    </nav>
-    {data.incoming?.some(a => a.state === 'pending') && <section className="panel combat-alert" role="alert" aria-labelledby="incoming-title">
+      <a className="d-btn d-btn-ghost d-hero-cta" href={link('galaxy')} onClick={onNavigate}>Voir sur la galaxie <span aria-hidden="true">→</span></a>
+    </section>
+
+    <section className="d-col-stats" aria-label="Capacités de la colonie">
+      <article className="d-card d-cap-card"><Pic src="icons/colonie/colonie-secteurs.svg" size={64} />
+        <div className="d-cap-body"><div className="d-cap-top"><strong>{used} <i>/</i> {data.sectors.capacity}</strong>
+          <span className={`d-cap-free${data.sectors.free ? '' : ' d-none'}`}>{data.sectors.free} libre{data.sectors.free > 1 ? 's' : ''}</span></div>
+          <span className="d-cap-label">Secteurs utilisés</span>
+          <span role="meter" aria-label="Secteurs utilisés" aria-valuemin={0} aria-valuemax={data.sectors.capacity} aria-valuenow={used}><Bar value={used / data.sectors.capacity * 100} /></span></div></article>
+      <article className="d-card d-cap-card"><Pic src="icons/colonie/colonie-emplacements-orbitaux.svg" size={64} />
+        <div className="d-cap-body"><div className="d-cap-top"><strong>0 <i>/</i> {data.colony.planet.orbital_capacity}</strong><span className="d-cap-free">à venir</span></div>
+          <span className="d-cap-label">Emplacements orbitaux</span><Bar value={0} /></div></article>
+      <article className="d-card d-stock-card" aria-label="Stocks de la colonie">
+        <h2>Stock des ressources</h2>
+        <ul>{data.resources.map(r => <li key={r.resource} title={`Capacité ${r.capacity ? units(r.capacity) : 'illimitée'} · estimation depuis la dernière lecture`}>
+          <img src={asset(resourceIcon[r.resource])} alt="" width="44" height="44" />
+          <span><strong>{integer(estimate(r, elapsed))}</strong><em>+{rate(r.rate_per_hour)}/h</em></span><span className="sr-only">{resourceLabels[r.resource]}</span></li>)}</ul>
+      </article>
+    </section>
+
+    {data.incoming?.some(a => a.state === 'pending') && <section className="d-card d-panel panel combat-alert" role="alert" aria-labelledby="incoming-title">
       <h2 id="incoming-title">Force hostile en approche</h2>
       <ul>{data.incoming.filter(a => a.state === 'pending').map(a => <li key={a.id}>Bataille prévue : {time(a.battle_at)}</li>)}</ul>
       <p className="panel-meta">Ni l’attaquant ni sa force ne sont connus avant la bataille. Seules les unités militaires stationnées dans ce système combattront ; aucune ressource, aucun bâtiment ni aucune recherche ne peut être perdu.</p>
@@ -221,13 +320,33 @@ export function ColonyScreen({ colony, view, link, onNavigate }: { colony: Colon
         <Button onClick={colony.dismiss}>Fermer</Button></div>}
       {colony.error && <p className="feedback feedback--error" role="alert">Actualisation impossible : {errorMessage(colony.error)}</p>}
     </div>
-    <div className="colony-toolbar"><span className="muted">État serveur au {time(data.server_time)} · ruleset {data.ruleset_version}</span>
-      <Button onClick={colony.refresh}>Actualiser la colonie</Button></div>
-    {view === 'infrastructure' ? <Infrastructures colony={colony} data={data} offset={offset} />
-      : view === 'orbit' ? <section className="panel destination-panel"><Badge>À venir</Badge><h2>Orbite — système futur</h2>
-          <p>Les {data.colony.planet.orbital_capacity} emplacements orbitaux de référence sont réservés. Aucune construction orbitale n’est disponible à cette étape.</p></section>
-      : view === 'defense' ? <section className="panel destination-panel"><Badge>À venir</Badge><h2>Défense — système futur</h2>
-          <p>La défense planétaire sera un réseau limité de modules persistants. Aucun module, réparation ou effet de combat n’est disponible.</p></section>
-      : <Overview colony={colony} data={data} offset={offset} link={link} />}
-  </section>;
+
+    <div className="d-col-layout">
+      <nav className="d-col-tabs" aria-label="Sections de la colonie">
+        {colonyViews.map(item => <a key={item.id} href={link(`colony/${item.id}`)} onClick={onNavigate} aria-current={item.id === current ? 'page' : undefined}
+          className={item.id === current ? 'd-tab is-current' : 'd-tab'}><Ico name={item.icon} /><span>{item.label}</span></a>)}
+      </nav>
+      <div className="d-col-main">
+        {current === 'infrastructure' ? <Infrastructures colony={colony} data={data} server={server} stocks={stocks} />
+          : current === 'orbit' ? <Orbit data={data} />
+          : current === 'defense' ? <Defense data={data} />
+          : <Overview data={data} server={server} link={link} />}
+      </div>
+      <aside className="d-col-side" aria-label="Informations complémentaires">
+        {current !== 'orbit' && <Alerts projection={data} />}
+        {current === 'overview' && <section className="d-card d-panel" aria-labelledby="objectives-title">
+          <PanelHead id="objectives-title" icon="icons/colonie/panel-objectifs.svg" title="Objectifs prioritaires" />
+          <Pending what="Objectifs de colonie suivis par le serveur." /></section>}
+        {current === 'orbit' && <>
+          <section className="d-card d-panel" aria-labelledby="window-title"><PanelHead id="window-title" icon="icons/colonie/panel-fenetre-orbitale.svg" title="Fenêtre orbitale" />
+            <div className="d-window"><img src={asset('img/colonie/fenetre-orbitale.webp')} alt="" width="420" height="420" /><Pending what="Fenêtres de lancement et leurs effets." compact /></div></section>
+          <section className="d-card d-panel" aria-labelledby="routes-title"><PanelHead id="routes-title" icon="icons/colonie/panel-routes-commerciales.svg" title="Routes commerciales" />
+            <Pending what="Routes commerciales, volume et revenus." compact /></section>
+        </>}
+        <DefenseStatus projection={data} banner={current === 'orbit' ? undefined : link} />
+        <div className="d-sync"><span className="muted">État serveur au {time(data.server_time)} · ruleset {data.ruleset_version}</span>
+          <Button onClick={colony.refresh}>Actualiser la colonie</Button></div>
+      </aside>
+    </div>
+  </div>;
 }

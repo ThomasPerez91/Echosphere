@@ -6,6 +6,7 @@ for (const width of [320, 390, 768, 1440]) {
   test(`system ${width}px: knowledge, keyboard/touch, deep-link and history`, async ({ browser }, testInfo) => {
     const context = await browser.newContext({ viewport: { width, height: 850 }, hasTouch: true });
     const page = await context.newPage();
+    await page.addInitScript(() => { try { localStorage.setItem('echosphere.galaxy.mode', 'classic'); } catch { /* none */ } }); // UX05: these steps drive the classic map
     const requests: string[] = [];
     page.on('request', r => { if (r.url().includes('/api/game/')) requests.push(`${r.method()} ${r.url()}`); });
     await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));

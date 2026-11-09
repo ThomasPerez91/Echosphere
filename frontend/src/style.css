@@ -1,8 +1,9 @@
 :root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #e6f2ff; background: #050d16; font-synthesis: none; line-height: 1.6;
-  --surface: #0e1b2a; --surface-raised: #132436; --border: #223a52; --muted: #9fb3c8; --accent: #6fd8ff;
-  --primary: #23c2ff; --success: #2ecf88; --gold: #ffb347; --danger: #ff6b6b; --radius: 12px; --space: 24px;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #e6eef8; background: #040912; font-synthesis: none; line-height: 1.6;
+  /* Aligned on the Echosphere visual pack (theme/dashboard.css) so older views match the new shell. */
+  --surface: rgba(12, 24, 42, .72); --surface-raised: #0b1729; --border: rgba(120, 170, 230, .2); --muted: #8ea3bd; --accent: #3be3ff;
+  --primary: #3be3ff; --success: #2ecf88; --gold: #ffb347; --danger: #ff6b6b; --radius: 12px; --space: 24px;
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 280px; }
@@ -262,6 +263,8 @@ html { scroll-padding-bottom: 24px; }
 
 /* Étape 7 Galaxy — server knowledge only; state by shape and text, never colour alone. */
 .galaxy-screen { display: grid; gap: 20px; }
+.galaxy-mode { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 16px; }
+.galaxy-mode .button { min-height: 44px; }
 .galaxy-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 20px; align-items: start; }
 .galaxy-field { display: grid; gap: 4px; font-size: .75rem; color: var(--muted); }
 .galaxy-field select { min-height: 44px; max-width: 100%; border-radius: 7px; border: 1px solid var(--border); background: #0b1726; color: #e6f2ff; padding: 0 10px; font: inherit; }
@@ -317,7 +320,7 @@ html { scroll-padding-bottom: 24px; }
 /* System View: known structure only. Graphic positions are layout, never simulation. */
 .system-screen { display: grid; gap: var(--space); min-width: 0; }
 /* Galaxy/System metadata carries names and dates: let it wrap instead of widening the page. */
-.galaxy-screen .panel-meta, .system-screen .panel-meta { white-space: normal; overflow-wrap: anywhere; }
+.galaxy-screen .panel-meta, .system-screen .panel-meta, .galaxy-mode .panel-meta, .cmd-root .panel-meta { white-space: normal; overflow-wrap: anywhere; }
 .system-heading h2 { font-size: clamp(1.35rem, 3vw, 2rem); overflow-wrap: anywhere; }
 .system-heading .panel-head { margin-top: 20px; }
 .system-heading p { margin-bottom: 8px; font-size: .85rem; }
