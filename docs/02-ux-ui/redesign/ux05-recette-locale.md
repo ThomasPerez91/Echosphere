@@ -3,7 +3,7 @@
 **Statut : procédure à exécuter par l’utilisateur (WSL2 + Docker), non encore exécutée.**
 Elle valide en univers réel les écrans de la PR #19 avec les backends des PR #20 (trajet des
 missions), #21 (historique des constructions) et #22 (création de partie). Rien n’est fusionné : la branche
-`recette/ux-weekend` réunit ces PR (puis #24 multi, #25 trajet des missions, #26 état de création) pour ce test seulement (aucune PR, aucune CI dédiée ;
+`recette/ux-weekend` réunit ces PR (puis #24 multi, #25 trajet des missions, #26 état de création, #27 cloche, #28 nom d’Empire / quitter / archiver, #29 distances) pour ce test seulement (aucune PR, aucune CI dédiée ;
 chacune des trois têtes a sa Fast CI verte).
 
 ## 0. Ce qu’il faut
@@ -52,6 +52,15 @@ une deuxième adresse quelconque (Mailpit reçoit tout), dans une fenêtre de na
    parties » (« Accepter » / « Refuser »).
 6. Vérifier : « Joueurs : 2 / 2 », un nouveau lien ou une nouvelle invitation est refusé (« Toutes les
    places sont prises »), chacun entre dans l’univers avec son propre Empire.
+
+**Vie d’une partie (PR #28, Q60).**
+7. « Nouvelle partie » et « Rejoindre » : remplir « Nom de votre Empire » ; il s’affiche dans « Mes
+   parties » et en jeu (profil en haut à droite, Relations des autres joueurs) après quelques
+   secondes. « Renommer » depuis la carte de la partie.
+8. Multi, compte B : « Quitter la partie » → confirmer. La partie passe sous « Parties quittées » ;
+   côté A, l’Empire de B continue (IA, si `ai-worker` tourne) et sa place n’est pas reproposée.
+9. Solo : « Archiver la partie » → confirmer. « Consulter cet univers » ouvre le jeu sans pouvoir
+   donner d’ordre (boutons refusés par le serveur).
 
 Une création qui n’aboutit pas s’affiche « Création retardée » (jeu injoignable, renvoi automatique)
 ou « Création bloquée » (refus du jeu) au lieu de rester « Création en cours » (PR #26).
@@ -103,6 +112,14 @@ mode appareil, 390 px) et au clavier (Tab, Entrée, Échap).
 - Flotte en route sur plusieurs sauts : la ligne suit les systèmes réellement traversés (PR #25) ;
   après un rappel, le libellé indique « Retour estimé en miroir de l’aller ».
 - La « Carte classique » reste accessible et fonctionne.
+
+**Cloche (PR #27)** — l’icône en haut à droite : pastille de non-lus, attaques annoncées,
+constructions et recherches terminées, missions, diplomatie ; un clic ouvre la liste et remet le
+compteur à zéro ; chaque entrée mène au bon écran. À la toute première visite, l’historique est
+considéré comme déjà lu.
+
+**Distances (PR #29)** — Galaxie, clic sur un système, onglet « Aperçu » : « N sauts » depuis votre
+colonie la plus proche (« Inconnue » sans route connue).
 
 **Rapports**
 - Après une construction terminée : elle apparaît dans Rapports (filtre Constructions), avec la bonne

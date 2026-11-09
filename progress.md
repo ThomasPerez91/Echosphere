@@ -12,7 +12,8 @@ Mise à jour : 2026-11-05. [Contexte](context.md), [passation](docs/06-handoff/R
 | Tests | Fast CI de chaque PR verte sur sa tête ; Fast CI de l’ensemble via la PR de recette ; tests PostgreSQL/Chromium (Full CI) seulement après fusion sur master |
 | Recette | [Procédure](docs/02-ux-ui/redesign/ux05-recette-locale.md) |
 | Ajouts (09/11) | #24 multi privé (invitations lien ou email, 2–4 Empires humains+IA, plafond galaxy-v1, Fast CI 42594450478) ; #25 trajet réel des missions (`missions[].path`) sur la carte (Fast CI 42595525284) ; #26 création « retardée »/« bloquée » et date de démarrage dans « Mes parties » (Fast CI 42595415688 avant fusion de la recette) |
-| Étapes suivantes | Atelier génération de carte (tailles 100–2000, placement dispersé/regroupé, 10 joueurs + ~30 IA) avec l’utilisateur avant de lever le plafond de 4 Empires ; cloche/notifications, distances entre systèmes, nom d’Empire dans « Mes parties » (contrat de reçu à étendre), abandon de partie ; Orbite/Défense Q30–Q38 à reprioriser |
+| Ajouts (09/11, suite) | Q60 consignée (abandon multi → IA, solo archivée, cloche, nom d’Empire choisi) ; #27 cloche (Fast CI 42598912202) ; #28 nom d’Empire, quitter/archiver, opérations Game `name_empire`/`hand_over_empire`, migration Portal `p0008_game_life` (Fast CI 42599825997, échec puis relance verte : instabilité connue de `Research.test.tsx`) ; #29 distances en sauts (Fast CI 42599976802) |
+| Étapes suivantes | Atelier génération de carte (tailles 100–2000, placement dispersé/regroupé, 10 joueurs + ~30 IA) avec l’utilisateur avant de lever le plafond de 4 Empires ; Orbite/Défense Q30–Q38 à reprioriser ; tests PostgreSQL de #22–#28 seulement en Full CI après fusion master |
 
 ## Reprise rapide — refonte UX (work/ux-redesign)
 
