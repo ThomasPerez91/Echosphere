@@ -48,7 +48,7 @@ def test_persistent_family_is_not_offered_yet():
 
 
 def private(**changes):
-    return body(family="private", humans=2, invite="link", **changes)
+    return body(**{"family": "private", "humans": 2, "invite": "link", **changes})
 
 
 def test_private_multi_needs_two_to_four_humans_an_invite_mode_and_at_most_four_empires():

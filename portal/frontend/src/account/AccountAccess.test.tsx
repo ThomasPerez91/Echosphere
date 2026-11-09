@@ -254,7 +254,7 @@ test('the join page uses the link token once signed in and explains a replaced l
   render(<AccountAccess verificationToken={null} page="join" inviteToken={token} onNavigate={onNavigate} />);
   fireEvent.click(await screen.findByRole('button', { name: 'Rejoindre la partie' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Ce lien n’est plus valable');
-  reply = { ok: true, status: 200, json: async () => ({ status: 'joined' }) } as typeof reply;
+  reply = { ok: true, status: 200, json: async () => ({ status: 'joined' }) } as unknown as typeof reply;
   fireEvent.click(screen.getByRole('button', { name: 'Rejoindre la partie' }));
   await waitFor(() => expect(onNavigate).toHaveBeenCalledWith('/parties'));
   expect(JSON.parse(bodies[0])).toEqual({ token });
