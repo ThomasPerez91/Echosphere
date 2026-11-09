@@ -3,15 +3,17 @@
 import argparse
 import json
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
+from uuid import UUID
 
 from sqlalchemy import exists, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from portal_app.account_security.models import AccountRevocation
+from portal_app.accounts.models import User
 from portal_app.accounts.service import Accounts
 from portal_app.control.models import ControlOutbox, UniverseMembership, UniverseReference
-from portal_app.control.service import digest, enqueue
+from portal_app.control.service import PERMISSIONS, Lobby, digest, enqueue, start_receipt
 from portal_app.control.transport import DeliveryError, Transport
 from portal_app.core.config import Settings
 from portal_app.persistence.database import create_database_engine, create_session_factory
@@ -112,6 +114,32 @@ def accept_receipt(session, accounts, row, receipt):
         ):
             raise DeliveryError("invalid_receipt")
         session.get(UniverseReference, row.universe_id).provisioned = True
+    elif message["kind"] == "start_universe":
+        if not start_receipt(message, result):
+            raise DeliveryError("invalid_receipt")
+        universe = session.get(UniverseReference, row.universe_id, with_for_update=True)
+        if universe.human_empire_id is None:
+            universe.provisioned = True
+            universe.human_empire_id = UUID(result["human_empire_id"])
+            universe.started_at = datetime.fromisoformat(result["started_at"])
+            # The creator gets the human Empire with every permission, through the same
+            # membership/access path as operators (revision, epochs, reconciliation).
+            creator = session.get(User, universe.created_by, with_for_update=True)
+            if creator is not None and creator.status == "active":
+                Lobby(accounts).grant(
+                    session,
+                    creator,
+                    universe,
+                    "active",
+                    [
+                        {
+                            "empire_id": str(universe.human_empire_id),
+                            "permissions": sorted(PERMISSIONS),
+                        }
+                    ],
+                )
+        elif str(universe.human_empire_id) != result["human_empire_id"]:
+            raise DeliveryError("invalid_receipt")
     elif message["kind"] == "set_universe_access":
         reported = result.get("snapshot")
         if (

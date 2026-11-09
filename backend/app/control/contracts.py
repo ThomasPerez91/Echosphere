@@ -80,6 +80,26 @@ class Provision(Wire):
         return self
 
 
+class Start(Wire):
+    """UX-API-02: create and start a SOLO universe in one idempotent operation (one human Empire,
+    0 to 3 AI opponents of known profiles, pinned ruleset). The result names the human Empire so
+    that Portal can grant it to the creator; no other actor identity leaves Game."""
+
+    kind: Literal["start_universe"]
+    universe_id: UUID
+    name: str = Field(min_length=1, max_length=120)
+    seed: str = Field(min_length=1, max_length=200)
+    family: Literal["solo"]
+    ruleset: Literal["v0.9"]
+    profiles: list[Literal["economic_cautious", "expansionist"]] = Field(max_length=3)
+
+    @model_validator(mode="after")
+    def not_blank(self):
+        if not self.name.strip():
+            raise ValueError("Blank name")
+        return self
+
+
 class Access(Wire):
     kind: Literal["set_universe_access"]
     membership_id: UUID
@@ -128,7 +148,7 @@ class Revoke(Wire):
 class Operation(Wire):
     version: StrictInt = Field(ge=1, le=1)
     operation_id: UUID
-    message: Annotated[Provision | Access | Revoke, Field(discriminator="kind")]
+    message: Annotated[Provision | Start | Access | Revoke, Field(discriminator="kind")]
 
 
 def digest(value):

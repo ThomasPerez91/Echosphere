@@ -69,6 +69,11 @@ class Accounts:
                 self.settings.handoff_ip_limit,
                 self.settings.handoff_account_limit,
             )
+        elif action == "universe_create":
+            ip_limit, subject_limit = (
+                self.settings.creation_ip_limit,
+                self.settings.creation_account_limit,
+            )
         elif action == "login_start":
             ip_limit = subject_limit = self.settings.bootstrap_ip_limit
         limits = [

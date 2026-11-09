@@ -24,6 +24,25 @@ async def memberships(request: Request):
     )
 
 
+@router.post("/universes")
+async def create(request: Request):
+    """UX-API-02 self-service SOLO universe: CSRF, session, rate limit, idempotent request_id."""
+    check_origin(request)
+    try:
+        body = await request.json()
+    except ValueError:
+        body = None
+    return response(
+        await run_in_threadpool(
+            Lobby(request.app.state.accounts).create,
+            request.cookies.get(SESSION_COOKIE),
+            request.headers.get("x-csrf-token"),
+            body,
+            peer_address(request),
+        )
+    )
+
+
 @router.post("/universes/{universe_id}/renew")
 async def renew(universe_id: UUID, request: Request):
     check_origin(request)

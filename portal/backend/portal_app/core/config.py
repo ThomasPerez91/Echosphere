@@ -49,6 +49,10 @@ class Settings(BaseSettings):
 
     handoff_ip_limit: int = Field(default=60, ge=1, le=1000)
     handoff_account_limit: int = Field(default=30, ge=1, le=1000)
+    # UX-API-02: self-service universe creation (per hour) and the Game Backend that hosts it.
+    creation_ip_limit: int = Field(default=20, ge=1, le=1000)
+    creation_account_limit: int = Field(default=10, ge=1, le=1000)
+    creation_target: str = Field(default="primary", pattern=r"^[A-Za-z0-9_-]{1,40}$")
     handoff_private_key: Path = Path("/run/portal-handoff/signing.pem")
     handoff_key_id: str = Field(default="local-v1", pattern=r"^[A-Za-z0-9_-]{1,64}$")
     game_public_targets: dict[str, str] = {"primary": "https://game.echosphere.localhost:8443"}

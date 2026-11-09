@@ -7,7 +7,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.dialects.postgresql import insert
 
 from app.ai.models import AIController
-from app.control.contracts import Access, Provision, Revoke, digest
+from app.control.contracts import Access, Provision, Revoke, Start, digest
 from app.control.models import (
     ControlOperation,
     EmpireBinding,
@@ -21,6 +21,7 @@ SERVICE = "portal-control"
 ALLOWED = frozenset(
     (
         "provision_universe",
+        "start_universe",
         "set_universe_access",
         "revoke_sessions",
         "get_operation",
@@ -53,6 +54,13 @@ def snapshot(row):
     return row.snapshot if row else None
 
 
+class _Clock:
+    """Adapter: the scheduler expects an object with now(); Control keeps a plain callable."""
+
+    def __init__(self, now):
+        self.now = now
+
+
 class Control:
     def __init__(self, factory, clock=None):
         self.factory = factory
@@ -76,6 +84,8 @@ class Control:
             message = operation.message
             if isinstance(message, Provision):
                 result = self.provision(session, message)
+            elif isinstance(message, Start):
+                result = self.start(session, message)
             elif isinstance(message, Access):
                 result = self.access(session, message)
             elif isinstance(message, Revoke):
@@ -128,6 +138,40 @@ class Control:
         elif row.name != message.name or row.seed != message.seed:
             raise ControlError("universe_content_conflict")
         return {"status": "applied", "universe_id": str(message.universe_id), "name": message.name}
+
+    def start(self, session, message):
+        """Same atomic bootstrap as the operator CLI, in the operation transaction: the immutable
+        receipt and the started world commit together, a retried delivery replays the receipt."""
+        from app.ai.bootstrap import bootstrap
+        from app.ai.controller import AIDenied
+        from app.colony.rules import load_ruleset
+        from app.simulation.scheduler import IdempotencyConflict
+        from app.simulation.service import TimeEngine
+
+        clock = _Clock(self.clock)
+        try:
+            started = bootstrap(
+                session,
+                TimeEngine(self.factory, clock),
+                message.universe_id,
+                message.name,
+                message.seed,
+                list(message.profiles),
+                clock.now(),
+                rules=load_ruleset(message.ruleset),
+            )
+        except IdempotencyConflict:
+            raise ControlError("universe_content_conflict") from None
+        except AIDenied as error:
+            raise ControlError(str(error.args[0]) if error.args else "start_denied", 409) from None
+        human = next(actor for actor in started["actors"] if actor["profile"] is None)
+        return {
+            "status": "applied",
+            "universe_id": str(message.universe_id),
+            "name": message.name,
+            "human_empire_id": human["empire_id"],
+            "started_at": started["started_at"],
+        }
 
     def access(self, session, message):
         principal = account_lock(session, message.global_user_id)
