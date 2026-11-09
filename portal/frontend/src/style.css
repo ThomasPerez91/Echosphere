@@ -223,3 +223,28 @@ body { margin: 0; background: #030812; }
 /* Q61 galaxy size and AI counts */
 .p-opponent input[type="number"], .p-count select { max-width: 160px; }
 .p-choice small { margin-left: 6px; opacity: .75; }
+
+/* Recette 09/11/2026 (retours utilisateur). */
+/* Login / registration: the illustration covers the viewport under the header, footer included. */
+.p-auth-backdrop { position: fixed; left: 0; right: 0; top: var(--p-head-h); height: calc(100vh - var(--p-head-h)); height: calc(100dvh - var(--p-head-h)); z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(3,8,18,.45), rgba(3,8,18,.7)), url(/assets/img/connexion-illustration.webp) 22% center / cover no-repeat; }
+.p-auth-zone::before { display: none; }
+.p-auth-zone { min-height: calc(100vh - var(--p-head-h) - 140px); }
+@media (min-width: 1100px) {
+  .p-auth-backdrop { background: linear-gradient(90deg, rgba(3,8,18,0) 40%, rgba(3,8,18,.62) 72%), linear-gradient(0deg, rgba(3,8,18,.7), transparent 30%), url(/assets/img/connexion-illustration.webp) 20% center / cover no-repeat; }
+}
+/* Header: a larger logo; every navigation entry gets the button hover and selection effect. */
+.p-app .p-site-head .p-logo img.p-logo-img { height: 48px; }
+@media (min-width: 1100px) {
+  :root { --p-head-h: 84px; }
+  .p-app .p-site-head .p-logo img.p-logo-img { height: 66px; }
+}
+.p-site-nav .p-navbtn { border: 0; transition: background .2s, box-shadow .2s, color .2s; }
+.p-site-nav .p-navbtn:not(.is-pending):hover, .p-site-nav .p-navbtn:not(.is-pending):focus-visible {
+  color: #fff; background: linear-gradient(180deg, rgba(59,227,255,.14), rgba(59,227,255,.04)); box-shadow: inset 0 0 0 1px rgba(59,227,255,.32); }
+.p-site-nav .p-navbtn:not(.is-pending):hover .p-i { color: var(--p-cyan); }
+.p-site-nav .p-navbtn[aria-current] { color: #fff; background: linear-gradient(180deg, rgba(59,227,255,.2), rgba(59,227,255,.06)); box-shadow: inset 0 0 0 1px rgba(59,227,255,.45); }
+.p-site-nav .p-navbtn[aria-current] .p-i { color: var(--p-cyan); }
+/* My games: the statistics strip no longer overlaps the hero buttons. */
+.p-stats { margin-top: 18px; }
+.p-auth-zone, .p-account-zone, .p-games-panel, .p-account, #fonctionnalites, #univers, #actualites { scroll-margin-top: calc(var(--p-head-h) + 12px); }

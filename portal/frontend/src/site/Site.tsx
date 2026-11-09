@@ -34,7 +34,17 @@ export function SiteHeader({ account, page }: { account: SignedIn | null; page: 
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { setOpen(false); setProfile(false); }, [page]);
+  // Public home: the section reached from the navigation is the selected entry (Accueil otherwise).
+  const [here, setHere] = useState<string | null>(null);
+  useEffect(() => { setOpen(false); setProfile(false); setHere(null); }, [page]);
+  useEffect(() => {
+    if (page !== 'home' || !here) return;
+    // Back at the top of the page (after having left it): Accueil is selected again.
+    let left = window.scrollY >= 80;
+    const top = () => { if (window.scrollY >= 80) left = true; else if (left) setHere(null); };
+    window.addEventListener('scroll', top, { passive: true });
+    return () => window.removeEventListener('scroll', top);
+  }, [page, here]);
   useEffect(() => {
     if (!open && !profile) return;
     const close = (event: KeyboardEvent) => { if (event.key === 'Escape') { setOpen(false); setProfile(false); } };
@@ -43,11 +53,13 @@ export function SiteHeader({ account, page }: { account: SignedIn | null; page: 
     return () => { document.removeEventListener('keydown', close); document.removeEventListener('click', outside); };
   }, [open, profile]);
   // Sections of the public home: from another page, go home first, then scroll.
-  const section = (id: string) => { setOpen(false); if (page !== 'home') navigate(paths.home); window.setTimeout(() => scrollToId(id), 30); };
+  const section = (id: string) => { setOpen(false); if (page !== 'home') navigate(paths.home); window.setTimeout(() => { setHere(id); scrollToId(id); }, 30); };
   const link = (icon: IconName, label: string, target: keyof typeof paths) =>
-    <Link to={paths[target]} className="p-navbtn" aria-current={page === target ? 'page' : undefined}><Icon name={icon} />{label}</Link>;
+    <Link to={paths[target]} className="p-navbtn" onClick={() => setHere(null)}
+      aria-current={page === target && !(target === 'home' && here) ? 'page' : undefined}><Icon name={icon} />{label}</Link>;
   const anchor = (icon: IconName, label: string, id: string) =>
-    <button type="button" className="p-navbtn" onClick={() => section(id)}><Icon name={icon} />{label}</button>;
+    <button type="button" className="p-navbtn" onClick={() => section(id)}
+      aria-current={page === 'home' && here === id ? 'location' : undefined}><Icon name={icon} />{label}</button>;
   const soon = (icon: IconName, label: string) =>
     <span className="p-navbtn is-pending" title="Implémentation backend nécessaire"><Icon name={icon} />{label}<small>à venir</small></span>;
 

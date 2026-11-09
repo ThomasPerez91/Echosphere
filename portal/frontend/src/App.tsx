@@ -70,6 +70,8 @@ export default function App({ verificationToken = null, securityLink = null }: {
 
   return <div className="p-app">
     <div className="p-sky" aria-hidden="true" />
+    {/* Login / registration: the illustration fills the viewport under the header, footer included. */}
+    {auth && <div className="p-auth-backdrop" aria-hidden="true" />}
     <a className="p-skip-link" href="#main-content">Aller au contenu</a>
     <SiteHeader account={signedIn ? account : null} page={page} />
     <main id="main-content" tabIndex={-1}>
