@@ -41,6 +41,19 @@ envoyée avec une sonde, jamais par le clic. La carte de commandement devient la
 carte classique reste disponible en un clic (choix mémorisé par navigateur). Les specs Playwright qui
 pilotent la carte classique la sélectionnent explicitement.
 
+## Retours de la recette du 07–08/11/2026 (Portal)
+
+- Connexion et inscription ont chacune leur page (`/connexion`, `/inscription`) ; l’espace joueur se
+  répartit en `/parties`, `/parties/nouvelle` et `/compte`. Les liens à usage unique (confirmation
+  d’adresse, réinitialisation) restent des fragments sur `/`.
+- La double vérification (MFA) et les opérations sensibles sont repliées dans « Sécurité avancée
+  (facultatif) » sur la page Compte, expliquées en mots simples ; à la connexion, le second facteur
+  n’apparaît que si le compte l’utilise (lien « J’ai activé la double vérification » ou réponse
+  `mfa_required` du serveur).
+- « Nouvelle partie » présente les choix (nom, 0 à 3 adversaires IA et leur profil parmi ceux que le
+  serveur connaît) ; la création reste désactivée tant que le Portal ne sait pas créer un univers
+  lui-même (aujourd’hui : procédure opérateur). **Priorité backend n° 1.**
+
 ## Rapports (D-UX-6) et historique des constructions (PR #21)
 
 L’écran Rapports compose côté client un fil daté, filtrable par catégorie (Constructions, Missions,
@@ -62,7 +75,7 @@ Le tableau de bord Empire réutilise les mêmes fonctions d’événements et re
 | Rapports | Cloche d’alertes, rapports non lus, recherche et export du fil ; historique au-delà de ce que conserve la projection Flottes |
 | Colonie | Accélération de construction, Orbite (emplacements orbitaux, routes), Défense (modules), objectifs, population/moral si décidés |
 | Galaxie | Distance entre systèmes, onglet « Données » (ressources, anomalies, historique d’observation), filtres Alliés/Neutres/Hostiles, systèmes hostiles dans la légende, régions, vue « Influence » |
-| Portal | Invitations, actualités, statistiques publiques, catalogue d’univers ouverts, création de partie, Empire / mode / tour par partie, journal d’activité des parties, notifications |
+| Portal | **Création de partie en libre-service (priorité n° 1)**, invitations, actualités, statistiques publiques, catalogue d’univers ouverts, Empire / mode / tour par partie, journal d’activité des parties, notifications |
 
 Ces éléments ne reçoivent aucune valeur inventée : bloc pointillé ambre, « N/D » ou contrôle désactivé.
 

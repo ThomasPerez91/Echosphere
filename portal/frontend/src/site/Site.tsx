@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 import { Icon } from '../theme/Icon';
 import type { IconName } from '../theme/Icon';
+import { Link, navigate, paths } from '../router';
+import type { Page } from '../router';
 
 /** Honest placeholder: the layout of the mockup is kept, no figure or content is invented. */
 export function Pending({ what, compact = false }: { what?: string; compact?: boolean }) {
@@ -18,7 +20,6 @@ export function Logo({ big = false }: { big?: boolean }) {
   </span>;
 }
 
-export type AuthKind = 'login' | 'register';
 export type SignedIn = { email: string; verified: boolean };
 
 function scrollToId(id: string) {
@@ -29,10 +30,11 @@ function scrollToId(id: string) {
 }
 
 /** Sticky site header of the mockup: public navigation, or the player's space once signed in. */
-export function SiteHeader({ account, onAuth }: { account: SignedIn | null; onAuth: (kind: AuthKind) => void }) {
+export function SiteHeader({ account, page }: { account: SignedIn | null; page: Page }) {
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { setOpen(false); setProfile(false); }, [page]);
   useEffect(() => {
     if (!open && !profile) return;
     const close = (event: KeyboardEvent) => { if (event.key === 'Escape') { setOpen(false); setProfile(false); } };
@@ -40,53 +42,55 @@ export function SiteHeader({ account, onAuth }: { account: SignedIn | null; onAu
     document.addEventListener('keydown', close); document.addEventListener('click', outside);
     return () => { document.removeEventListener('keydown', close); document.removeEventListener('click', outside); };
   }, [open, profile]);
-  const go = (id: string) => { setOpen(false); setProfile(false); scrollToId(id); };
-  const auth = (kind: AuthKind) => { setOpen(false); onAuth(kind); };
-  const item = (icon: IconName, label: string, onClick: () => void, current = false) =>
-    <button type="button" className="p-navbtn" aria-current={current ? 'page' : undefined} onClick={onClick}><Icon name={icon} />{label}</button>;
+  // Sections of the public home: from another page, go home first, then scroll.
+  const section = (id: string) => { setOpen(false); if (page !== 'home') navigate(paths.home); window.setTimeout(() => scrollToId(id), 30); };
+  const link = (icon: IconName, label: string, target: keyof typeof paths) =>
+    <Link to={paths[target]} className="p-navbtn" aria-current={page === target ? 'page' : undefined}><Icon name={icon} />{label}</Link>;
+  const anchor = (icon: IconName, label: string, id: string) =>
+    <button type="button" className="p-navbtn" onClick={() => section(id)}><Icon name={icon} />{label}</button>;
   const soon = (icon: IconName, label: string) =>
     <span className="p-navbtn is-pending" title="Implémentation backend nécessaire"><Icon name={icon} />{label}<small>à venir</small></span>;
 
   return <header className="p-site-head">
     <div className="p-wrap">
-      <a className="p-home-link" href="/" aria-label="Echosphere — accueil"><Logo /></a>
+      <Link className="p-home-link" to={account ? paths.games : paths.home} aria-label="Echosphere — accueil"><Logo /></Link>
       <button type="button" className="p-nav-toggle" aria-label="Menu" aria-controls="site-nav" aria-expanded={open} onClick={() => setOpen(value => !value)}>
         <Icon name="menu" /></button>
       <nav className={`p-site-nav${open ? ' p-open' : ''}`} id="site-nav" aria-label="Navigation principale">
         {account ? <>
           <div className="p-nav-main">
-            {item('planet', 'Mes parties', () => go('parties'), true)}
+            {link('planet', 'Mes parties', 'games')}
+            {link('plus', 'Nouvelle partie', 'newGame')}
             {soon('mail', 'Invitations')}
-            {soon('users', 'Communauté')}
-            {item('lock', 'Compte et sécurité', () => go('securite'))}
+            {link('lock', 'Mon compte', 'account')}
           </div>
           <div className="p-nav-sep" />
           <div className="p-head-actions">
             <button type="button" className="p-bell" disabled aria-label="Notifications : implémentation backend nécessaire"><Icon name="bell" /></button>
             <div className="p-profile" ref={profileRef}>
               <button type="button" aria-expanded={profile} aria-haspopup="true" aria-controls="profile-menu" onClick={() => setProfile(value => !value)}>
-                <img src="/assets/img/partie-auralis.webp" alt="" width="36" height="36" />
+                <img src="/assets/img/logo-echosphere-embleme.webp" alt="" width="36" height="36" />
                 <span><b>Commandant</b><small>{account.verified ? 'Adresse vérifiée' : 'Adresse à confirmer'}</small></span>
                 <Icon name="chevdown" />
               </button>
               {profile && <div className="p-pop p-open" id="profile-menu">
-                <button type="button" onClick={() => go('securite')}><Icon name="settings" />Compte et sécurité</button>
-                <span className="p-pop-note">Profil public et niveau : implémentation backend nécessaire.</span>
+                <Link to={paths.account}><Icon name="settings" />Mon compte</Link>
+                <span className="p-pop-note">{account.email}</span>
               </div>}
             </div>
           </div>
         </> : <>
           <div className="p-nav-main">
-            {item('home', 'Accueil', () => go('main-content'), true)}
-            {item('planet', 'Univers', () => go('univers'))}
-            {item('layers', 'Fonctionnalités', () => go('fonctionnalites'))}
+            {link('home', 'Accueil', 'home')}
+            {anchor('planet', 'Univers', 'univers')}
+            {anchor('layers', 'Fonctionnalités', 'fonctionnalites')}
             {soon('users', 'Communauté')}
-            {item('news', 'Actualités', () => go('actualites'))}
+            {anchor('news', 'Actualités', 'actualites')}
           </div>
           <div className="p-nav-sep" />
           <div className="p-head-actions">
-            <button type="button" className="p-btn" onClick={() => auth('login')}><Icon name="user" />Connexion</button>
-            <button type="button" className="p-btn p-btn-glow" onClick={() => auth('register')}><Icon name="userplus" />Inscription</button>
+            <Link to={paths.login} className="p-btn" aria-current={page === 'login' ? 'page' : undefined}><Icon name="user" />Connexion</Link>
+            <Link to={paths.register} className="p-btn p-btn-glow" aria-current={page === 'register' ? 'page' : undefined}><Icon name="userplus" />Inscription</Link>
           </div>
         </>}
       </nav>
@@ -94,7 +98,7 @@ export function SiteHeader({ account, onAuth }: { account: SignedIn | null; onAu
   </header>;
 }
 
-export function HomeHero({ onAuth }: { onAuth: (kind: AuthKind) => void }) {
+export function HomeHero() {
   return <section className="p-hero">
     <div className="p-hero-bg" aria-hidden="true" />
     <div className="p-wrap">
@@ -103,23 +107,30 @@ export function HomeHero({ onAuth }: { onAuth: (kind: AuthKind) => void }) {
       <p>Echosphere est un jeu de stratégie spatiale asynchrone et persistant : développez vos colonies, explorez la galaxie,
         recherchez de nouvelles technologies et commandez vos flottes, à votre rythme.</p>
       <div className="p-cta">
-        <button type="button" className="p-btn p-btn-primary" onClick={() => onAuth('register')}><Icon name="userplus" />Créer un compte<Icon name="arrow" /></button>
-        <button type="button" className="p-btn" onClick={() => onAuth('login')}><Icon name="user" />Se connecter</button>
+        <Link to={paths.register} className="p-btn p-btn-primary"><Icon name="userplus" />Créer un compte<Icon name="arrow" /></Link>
+        <Link to={paths.login} className="p-btn"><Icon name="user" />Se connecter</Link>
       </div>
     </div>
   </section>;
 }
 
-export function DashHero() {
+const heroes = {
+  games: ['Bienvenue, Commandant', 'Retrouvez vos parties et entrez dans vos univers.'],
+  newGame: ['Nouvelle partie', 'Choisissez un nom et vos adversaires : votre univers démarre dès sa création.'],
+  account: ['Mon compte', 'Vos connexions et, si vous le souhaitez, une sécurité renforcée.'],
+} as const;
+
+export function DashHero({ page }: { page: Page }) {
+  const [title, text] = heroes[page === 'newGame' || page === 'account' ? page : 'games'];
   return <section className="p-dash-hero">
     <div className="p-hero-bg" aria-hidden="true" />
     <div className="p-wrap">
-      <h1 tabIndex={-1}>Bienvenue, Commandant</h1>
-      <p>Retrouvez vos parties, entrez dans vos univers et gardez la main sur la sécurité de votre compte.</p>
-      <div className="p-cta">
-        <button type="button" className="p-btn p-btn-primary" disabled title="Implémentation backend nécessaire"><Icon name="plus" />Nouvelle partie<small>à venir</small></button>
+      <h1 tabIndex={-1}>{title}</h1>
+      <p>{text}</p>
+      {page === 'games' && <div className="p-cta">
+        <Link to={paths.newGame} className="p-btn p-btn-primary"><Icon name="plus" />Nouvelle partie</Link>
         <button type="button" className="p-btn" disabled title="Implémentation backend nécessaire"><Icon name="map" />Parcourir les univers<small>à venir</small></button>
-      </div>
+      </div>}
     </div>
   </section>;
 }
@@ -177,12 +188,12 @@ export function HomeSections() {
   </>;
 }
 
-export function JoinBand({ onAuth }: { onAuth: (kind: AuthKind) => void }) {
+export function JoinBand() {
   return <section className="p-join" aria-labelledby="join-title">
     <div className="p-wrap">
       <p className="p-join-text"><Icon name="laurel" /><span id="join-title"><b>Rejoignez les stratèges</b><br />et écrivez votre propre chapitre dans <span className="p-accent">Echosphere.</span></span></p>
       <div className="p-join-stats"><Pending compact what="Statistiques publiques (commandants, univers actifs, colonies fondées)." /></div>
-      <button type="button" className="p-btn p-btn-primary" onClick={() => onAuth('register')}><Icon name="userplus" />Rejoindre Echosphere<Icon name="arrow" /></button>
+      <Link to={paths.register} className="p-btn p-btn-primary"><Icon name="userplus" />Rejoindre Echosphere<Icon name="arrow" /></Link>
     </div>
   </section>;
 }

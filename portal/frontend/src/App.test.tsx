@@ -42,16 +42,20 @@ test('aborts an outstanding request on unmount', () => {
   expect(signal?.aborted).toBe(true);
 });
 
-test('public home: the header asks for the login form, the pending sections show no invented figure', async () => {
+test('public home: login and registration are separate pages reached from the header', async () => {
   vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/api/ready'
     ? { ok: true, json: async () => ({ status: 'ready', service: 'portal' }) }
     : { ok: false, status: 401, json: async () => ({ error: { code: 'authentication_required' } }) })));
   render(<App />);
   expect(screen.getByRole('heading', { level: 1, name: /Conquérez les étoiles/ })).toBeVisible();
-  expect(await screen.findByRole('heading', { name: 'Créer votre compte' })).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Connexion' }));
+  expect(screen.queryByLabelText('Adresse email')).toBeNull(); // forms live on their own pages
+  fireEvent.click(screen.getByRole('link', { name: 'Connexion' }));
+  expect(window.location.pathname).toBe('/connexion');
   expect(await screen.findByRole('button', { name: 'Ouvrir ma session' })).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Inscription' }));
+  expect(screen.getByRole('heading', { level: 1, name: 'Connexion' })).toBeVisible();
+  fireEvent.click(screen.getByRole('link', { name: 'Inscription' }));
+  expect(window.location.pathname).toBe('/inscription');
   expect(await screen.findByRole('button', { name: 'Créer le compte' })).toBeVisible();
+  window.history.replaceState(null, '', '/');
   expect(screen.getAllByText('Implémentation backend nécessaire').length).toBeGreaterThan(0);
 });

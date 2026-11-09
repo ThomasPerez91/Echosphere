@@ -20,7 +20,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 test('automatic bootstrap is a read and explicit refresh is a CSRF protected action', async () => {
   const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => snapshot });
   installFetcher(fetcher);
-  render(<AccountAccess verificationToken={null} />);
+  render(<AccountAccess verificationToken={null} page="account" />);
   expect(await screen.findByText('player@example.org')).toBeVisible();
   expect(fetcher).toHaveBeenCalledTimes(1);
   expect(fetcher.mock.calls[0][0]).toBe('/api/auth/sessions');
@@ -38,12 +38,11 @@ test('login obtains a bound challenge and never puts secrets in browser storage'
     : url.endsWith('/challenge') ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
     : { ok: true, json: async () => snapshot }));
   installFetcher(fetcher);
-  render(<AccountAccess verificationToken={null} />);
-  fireEvent.click(await screen.findByRole('button', { name: 'Se connecter à mon compte' }));
-  fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
+  render(<AccountAccess verificationToken={null} page="login" />);
+  fireEvent.change(await screen.findByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
   fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'Test password for C03 !' } });
   fireEvent.click(screen.getByRole('button', { name: 'Ouvrir ma session' }));
-  expect(await screen.findByText('player@example.org')).toBeVisible();
+  expect(await screen.findByRole('heading', { name: 'Mes parties' })).toBeVisible();
   const calls = vi.mocked(fetcher).mock.calls as unknown as [string, RequestInit][];
   const submitted = calls.find(item => item[0].endsWith('/login'));
   expect(submitted?.[1].headers).toMatchObject({ 'X-CSRF-Token': 'login-proof' });
@@ -55,7 +54,7 @@ test('logout reports pending remote revocation and does not claim universal disc
   const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => snapshot })
     .mockResolvedValueOnce({ ok: true, json: async () => ({ current_session_closed: true, game_revocation: 'pending' }) });
   installFetcher(fetcher);
-  render(<AccountAccess verificationToken={null} />);
+  render(<AccountAccess verificationToken={null} page="account" />);
   fireEvent.click(await screen.findByRole('button', { name: /^Se déconnecter$/ }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Déconnexion des parties en attente');
   expect(screen.queryByText('player@example.org')).not.toBeInTheDocument();
@@ -67,9 +66,8 @@ test('device cap refusal is actionable and does not expose server response conte
     : url.endsWith('/challenge') ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
     : { ok: false, status: 409, json: async () => ({ error: { code: 'device_limit_reached', private: 'never display this' } }) }));
   installFetcher(fetcher);
-  render(<AccountAccess verificationToken={null} />);
-  fireEvent.click(await screen.findByRole('button', { name: 'Se connecter à mon compte' }));
-  fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
+  render(<AccountAccess verificationToken={null} page="login" />);
+  fireEvent.change(await screen.findByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
   fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'Test password for C03 !' } });
   fireEvent.click(screen.getByRole('button', { name: 'Ouvrir ma session' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Fermez une connexion');
@@ -83,7 +81,7 @@ test('another tab rotating authentication reloads proof without replaying the ac
     .mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({}) })
     .mockResolvedValueOnce({ ok: true, json: async () => changed });
   installFetcher(fetcher);
-  render(<AccountAccess verificationToken={null} />);
+  render(<AccountAccess verificationToken={null} page="account" />);
   fireEvent.click(await screen.findByRole('button', { name: 'Actualiser mes connexions' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Vérifiez son état puis réessayez');
   expect(fetcher).toHaveBeenCalledTimes(3);
@@ -106,7 +104,7 @@ test('a delayed bootstrap is aborted on unmount and cannot restore stale UI', as
 test('a failed bootstrap offers read-only retry instead of a false signed-out state', async () => {
   const fetcher = vi.fn().mockRejectedValueOnce(new TypeError('offline'))
     .mockResolvedValueOnce({ ok: true, json: async () => snapshot });
-  installFetcher(fetcher); render(<AccountAccess verificationToken={null} />);
+  installFetcher(fetcher); render(<AccountAccess verificationToken={null} page="account" />);
   fireEvent.click(await screen.findByRole('button', { name: 'Vérifier mon compte' }));
   expect(await screen.findByText('player@example.org')).toBeVisible();
   expect(fetcher.mock.calls.every(call => call[1].method === undefined)).toBe(true);
@@ -133,12 +131,47 @@ test('a normal login drops the previous revocation receipt status from the scree
     : url.endsWith('/sessions') ? { ok: false, status: 401, json: async () => ({}) }
     : url.endsWith('/challenge') ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
     : (loggedIn = true, { ok: true, json: async () => snapshot })));
-  render(<AccountAccess verificationToken={null} />);
+  render(<AccountAccess verificationToken={null} page="account" />);
   expect(await screen.findByText('Déconnexion encore en attente sur certains services Game.')).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Se connecter à mon compte' }));
   fireEvent.change(screen.getByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
   fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'Test password for C03 !' } });
   fireEvent.click(screen.getByRole('button', { name: 'Ouvrir ma session' }));
   expect(await screen.findByText('player@example.org')).toBeVisible();
   await waitFor(() => expect(screen.queryByText('Déconnexion encore en attente sur certains services Game.')).toBeNull());
+});
+
+test('the account page keeps the optional second factor folded away, explained in plain words', async () => {
+  installFetcher(vi.fn().mockResolvedValue({ ok: true, json: async () => snapshot }));
+  render(<AccountAccess verificationToken={null} page="account" />);
+  expect(await screen.findByText('player@example.org')).toBeVisible();
+  const advanced = screen.getByText('Sécurité avancée').closest('details')!;
+  expect(advanced).not.toHaveAttribute('open');
+  expect(screen.getByText(/Vous pouvez jouer sans l’activer/)).not.toBeVisible();
+});
+
+test('login asks for a second factor only when the account uses one', async () => {
+  const fetcher = vi.fn((url: string) => Promise.resolve(url.endsWith('/sessions')
+    ? { ok: false, status: 401, json: async () => ({}) }
+    : url.endsWith('/challenge') ? { ok: true, json: async () => ({ csrf_token: 'login-proof' }) }
+    : { ok: false, status: 401, json: async () => ({ error: { code: 'mfa_required' } }) }));
+  installFetcher(fetcher);
+  render(<AccountAccess verificationToken={null} page="login" />);
+  fireEvent.change(await screen.findByLabelText('Adresse email'), { target: { value: 'player@example.org' } });
+  expect(screen.queryByLabelText('Preuve MFA')).toBeNull();
+  fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'Test password for C03 !' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Ouvrir ma session' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('double vérification');
+  expect(screen.getByLabelText('Preuve MFA')).toBeVisible();
+});
+
+test('signed in, the new game page shows the choices and never pretends to create a universe', async () => {
+  const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => snapshot });
+  installFetcher(fetcher);
+  render(<AccountAccess verificationToken={null} page="new-game" />);
+  expect(await screen.findByRole('heading', { name: 'Nouvelle partie' })).toBeVisible();
+  fireEvent.click(screen.getByLabelText('3'));
+  expect(screen.getAllByRole('combobox')).toHaveLength(3);
+  expect(screen.getByRole('button', { name: 'Créer la partie' })).toBeDisabled();
+  expect(screen.getByText('Implémentation backend nécessaire')).toBeVisible();
+  expect(fetcher.mock.calls.every(call => call[1]?.method === undefined)).toBe(true);
 });
