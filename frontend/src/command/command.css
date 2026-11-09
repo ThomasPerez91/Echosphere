@@ -330,3 +330,7 @@
   color: rgba(59, 227, 255, .14); }
 .cmd-map-frame.is-picking .cmd-map { cursor: crosshair; }
 .cmd-map-frame.is-picking .cmd-system { cursor: crosshair; }
+
+/* Every star of the galaxy as a point (09/11/2026): dim, never interactive. */
+.cmd-far-star { fill: #b9cdea; opacity: .55; }
+.cmd-mini-far { fill: #8fa7c7; opacity: .5; }

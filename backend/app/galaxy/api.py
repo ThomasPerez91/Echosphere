@@ -13,7 +13,13 @@ from app.colony.projection import amounts
 from app.colony.service import catch_up_owned, rules_for
 from app.control.models import EmpireBinding
 from app.galaxy import service, system_view
-from app.galaxy.models import ExplorationMission, ExplorationReport, RouteKnowledge, SystemKnowledge
+from app.galaxy.models import (
+    ExplorationMission,
+    ExplorationReport,
+    GalaxySystem,
+    RouteKnowledge,
+    SystemKnowledge,
+)
 from app.persistence.models import Colony, Empire, Planet
 from app.research import service as research
 from app.simulation.models import ResourceBalance
@@ -161,6 +167,16 @@ class Galaxy(Colonies):
             ],
             "routes": [
                 {"id": str(r.route_id), "a_id": str(r.a_id), "b_id": str(r.b_id)} for r in routes
+            ],
+            # User decision 09/11/2026: every star of the galaxy is visible as a point (position
+            # only: no identity, name, route or content); everything else stays Knowledge.
+            "stars": [
+                [x, y]
+                for x, y in session.execute(
+                    select(GalaxySystem.x, GalaxySystem.y)
+                    .where(GalaxySystem.universe_id == universe_id)
+                    .order_by(GalaxySystem.ordinal)
+                )
             ],
             "sources": sources,
             "options": options,

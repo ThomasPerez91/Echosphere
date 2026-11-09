@@ -1,14 +1,14 @@
 /*
  * Galaxy rendering of the Echosphere mockup (js/galaxy-view.js), driven by real Knowledge only:
  * nebula and star dust as decoration, own territory glow, fog of war away from known systems,
- * known routes, radar sweep and detection waves on the capital, glowing stars by state.
+ * known routes, glowing stars by state (no radar sweep: removed after the 09/11/2026 test).
  * Textures are built once in world coordinates, then every frame only transforms them, so pan
  * and zoom stay cheap. Nothing here has a game meaning beyond what the projection says.
  */
 export type SceneSystem = { id: string; x: number; y: number; state: 'DETECTED' | 'MAPPED' | 'MONITORED'; own: boolean; capital?: boolean; name?: string };
 export type SceneRoute = { a: string; b: string };
 export type SceneFleet = { x: number; y: number; angle: number };
-export type Scene = { systems: SceneSystem[]; routes: SceneRoute[]; fleets?: SceneFleet[] };
+export type Scene = { systems: SceneSystem[]; routes: SceneRoute[]; fleets?: SceneFleet[]; extent?: View };
 export type View = { x: number; y: number; w: number; h: number };
 
 type RGB = [number, number, number];
@@ -67,6 +67,10 @@ export function buildTextures(scene: Scene, margin = 1.6): Textures | null {
   const xs = scene.systems.map(p => p.x), ys = scene.systems.map(p => p.y);
   const box = { x: Math.min(...xs) - s * margin * 2, y: Math.min(...ys) - s * margin * 2, w: 0, h: 0 };
   box.w = Math.max(...xs) + s * margin * 2 - box.x; box.h = Math.max(...ys) + s * margin * 2 - box.y;
+  if (scene.extent) { // the whole galaxy (every star visible): the backdrop covers it too
+    const e = scene.extent, x2 = Math.max(box.x + box.w, e.x + e.w), y2 = Math.max(box.y + box.h, e.y + e.h);
+    box.x = Math.min(box.x, e.x); box.y = Math.min(box.y, e.y); box.w = x2 - box.x; box.h = y2 - box.y;
+  }
   const px = Math.max(box.w, box.h) / 900; // ~900 px on the long side
   const W = Math.ceil(box.w / px), H = Math.ceil(box.h / px);
   // Nebula: decorative noise brighter around known space.
@@ -134,7 +138,7 @@ export function buildTextures(scene: Scene, margin = 1.6): Textures | null {
 
 export type DrawOptions = { labels: boolean; routes: boolean; selected?: string | null; drift?: boolean; stars?: boolean };
 
-/** One frame: textures transformed to the current view, then routes, radar, fleets and stars. */
+/** One frame: textures transformed to the current view, then routes, fleets and stars. */
 export function drawFrame(ctx: CanvasRenderingContext2D, cw: number, ch: number, view: View, scene: Scene, tex: Textures, now: number, o: DrawOptions) {
   const t = now / 1000;
   const scale = Math.min(cw / view.w, ch / view.h);
@@ -159,19 +163,6 @@ export function drawFrame(ctx: CanvasRenderingContext2D, cw: number, ch: number,
       else { ctx.setLineDash([4, 5]); ctx.lineDashOffset = -t * 7; ctx.strokeStyle = rgba(C.known, a.state !== 'DETECTED' && b.state !== 'DETECTED' ? 0.5 : 0.28); ctx.lineWidth = 1; ctx.stroke(); }
     }
     ctx.setLineDash([]); ctx.lineDashOffset = 0;
-  }
-  const capital = scene.systems.find(p => p.capital);
-  if (capital) {
-    const [cx, cy] = W2S(capital.x, capital.y), RR = s * 2.2;
-    if ('createConicGradient' in ctx) {
-      const cg = ctx.createConicGradient(t * 0.55, cx, cy);
-      cg.addColorStop(0, rgba(C.own, 0)); cg.addColorStop(0.86, rgba(C.own, 0)); cg.addColorStop(0.995, rgba(C.own, 0.16)); cg.addColorStop(1, rgba(C.own, 0));
-      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, RR, 0, 6.283); ctx.fill();
-    }
-    for (const off of [0, 1.75]) {
-      const ph = ((t + off) % 3.5) / 3.5;
-      ctx.strokeStyle = rgba(C.own, 0.45 * (1 - ph)); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, 10 + ph * RR, 0, 6.283); ctx.stroke();
-    }
   }
   for (const f of scene.fleets ?? []) {
     const [fx, fy] = W2S(f.x, f.y);

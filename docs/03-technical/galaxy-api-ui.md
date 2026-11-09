@@ -123,3 +123,12 @@ Le GET détail réutilisé lit désormais la Knowledge persistée sous verrou Ex
 catch_up ni avancement de stream** ; DETECTED reste minimal. Détail MAPPED/MONITORED enrichi par
 composition : dates, routes connues, présence propre observée et liens Colony sous colony.read.
 Aucun rapport figé ni API générale Galaxy modifié ; [contrat technique System View](system-view.md).
+
+## Décision utilisateur du 09/11/2026 — étoiles visibles, carte dézoomable
+
+Retour de recette : on doit pouvoir dézoomer sur toute la galaxie et voir ses étoiles, même dans le
+brouillard. La projection Galaxy ajoute `stars` : la position `[x, y]` de chaque système de
+l’univers, **sans identité, nom, route ni contenu** (ordre des ordinaux). Tout le reste (systèmes,
+routes, opportunités, flottes) reste projeté depuis la Knowledge seule. La carte de commandement
+dessine ces étoiles en points non interactifs, ajoute « Voir toute la galaxie » (touche 9), et l’effet
+radar (balayage et ondes autour de la capitale) est retiré.

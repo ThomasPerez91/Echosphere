@@ -69,6 +69,8 @@ export type Projection = {
   permissions: string[];
   systems: KnownSystem[];
   routes: Route[];
+  /** Every star of the galaxy as a bare position (decision 09/11/2026): no identity, no route. */
+  stars?: [number, number][];
   sources: { id: string; name: string; stocks: Amounts }[];
   options: Option[];
   missions: Mission[];
@@ -158,6 +160,7 @@ export function validProjection(value: unknown, empire: string): value is Projec
     // Colony identifiers belong to colony.read: refuse them instead of hiding them.
     (!(value.permissions as string[]).includes("colony.read") && (value.systems as KnownSystem[]).some((s) => s.observation)) ||
     !list(value.routes, route) ||
+    ("stars" in value && !list(value.stars, (p) => Array.isArray(p) && p.length === 2 && p.every((c) => typeof c === "number" && Number.isFinite(c)))) ||
     !list(value.sources, (s) => object(s) && id(s.id) && typeof s.name === "string" && amounts(s.stocks)) ||
     !list(
       value.options,

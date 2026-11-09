@@ -432,3 +432,21 @@ def test_creation_route_requires_origin_json_and_csrf(setup):
         )
         assert answer.status_code == 200 and answer.json()["status"] == "starting"
         assert answer.headers["Cache-Control"] == "no-store"
+
+
+def test_a_receipt_stored_under_another_digest_rule_is_asked_again_by_post(setup):
+    """Recette 09/11/2026: Game once stored receipts under another digest rule; the GET replay
+    of such a receipt must not block the outbox forever: the idempotent POST answers instead."""
+    lobby, user, universe, raw, remote = setup
+    drain(lobby.accounts, remote)
+    member = lobby.set_access(user, universe, "active", [])
+    remote.lose_reply = True
+    assert deliver_one(lobby.accounts, remote)
+    key = next(k for k in remote.receipts if k[1] == member["operation_id"])
+    remote.receipts[key] = dict(remote.receipts[key], request_digest="0" * 64)
+    lobby.accounts.test_clock[0] += timedelta(hours=2)
+    drain(lobby.accounts, remote)
+    with lobby.accounts.factory() as session:
+        row = session.get(ControlOutbox, UUID(member["operation_id"]))
+        assert row.state == "acknowledged" and row.last_error is None
+    assert [m for _, m, _, b in remote.requests[-2:]] == ["GET", "POST"]

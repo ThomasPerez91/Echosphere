@@ -50,8 +50,23 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
   const xs = systems.map((s) => s.x), ys = systems.map((s) => s.y);
   // Room for the legend overlay (top left) and labels (right of each star).
   const pad = { left: 150, right: 180, y: 60 };
+  // Known space (first view, "Recentrer") and the whole galaxy (every star is visible as a point,
+  // decision 09/11/2026; identities and routes stay behind the fog of war).
   const full: View = { x: Math.min(...xs) - pad.left, y: Math.min(...ys) - pad.y,
     w: Math.max(...xs) - Math.min(...xs) + pad.left + pad.right, h: Math.max(...ys) - Math.min(...ys) + 2 * pad.y };
+  const far = useMemo(() => {
+    const known = new Set(systems.map((s) => `${s.x},${s.y}`));
+    return (world.galaxy.stars ?? []).filter(([x, y]) => !known.has(`${x},${y}`));
+  }, [systems, world.galaxy.stars]);
+  const galaxy: View = useMemo(() => {
+    if (!far.length) return full;
+    const ax = [...xs, ...far.map((p) => p[0])], ay = [...ys, ...far.map((p) => p[1])];
+    const x = Math.min(...ax) - pad.left, y = Math.min(...ay) - pad.y;
+    const w = Math.max(...ax) - x + pad.right, h = Math.max(...ay) - y + pad.y;
+    // Same aspect as the known-space view, so zooming out keeps the frame proportions.
+    const ratio = full.h / full.w, cw = Math.max(w, h / ratio), ch = cw * ratio;
+    return { x: x - (cw - w) / 2, y: y - (ch - h) / 2, w: cw, h: ch };
+  }, [far, full.x, full.y, full.w, full.h]); // eslint-disable-line react-hooks/exhaustive-deps
   const [view, setView] = useState<View>(full);
   const drag = useRef<{ x: number; y: number; view: View } | null>(null);
   useEffect(() => {
@@ -65,7 +80,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
   const scene: Scene = useMemo(() => ({
     systems: systems.map((s) => ({ id: s.id, x: s.x, y: s.y, state: s.state, own: !!s.observation?.own_colony_ids.length, capital: s.id === capital })),
     routes: world.galaxy.routes.map((r) => ({ a: r.a_id, b: r.b_id })),
-  }), [systems, world.galaxy.routes, capital]);
+    ...(far.length ? { extent: galaxy } : {}),
+  }), [systems, world.galaxy.routes, capital, far.length, galaxy]);
   const here = new Map<string, number>();
   for (const f of stationed(world)) if (f.system) here.set(f.system.id, (here.get(f.system.id) ?? 0) + 1);
   const own = new Set(systems.filter((s) => s.observation?.own_colony_ids.length).map((s) => s.id));
@@ -77,7 +93,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
   const planned = preview ? (preview.path?.length ? preview.path : [preview.from, preview.to]).map((id) => point(world, id)).filter((p): p is Point => !!p) : [];
   const key = (id: string) => (e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(id); } };
   const zoom = (factor: number) => setView((v) => {
-    const w = Math.min(full.w * 1.5, Math.max(full.w / 4, v.w * factor)), h = w * (full.h / full.w);
+    const w = Math.min(Math.max(full.w * 1.5, galaxy.w * 1.1), Math.max(full.w / 4, v.w * factor)), h = w * (full.h / full.w);
     return { x: v.x + (v.w - w) / 2, y: v.y + (v.h - h) / 2, w, h };
   });
   // Map units per screen pixel: markers, strokes and labels keep a constant on-screen size
@@ -92,7 +108,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
   }, []);
   const rendered = svg.current?.getBoundingClientRect();
   const fitted = rendered?.height ? Math.max(view.w / pixels, view.h / rendered.height) : view.w / pixels;
-  const scale = Math.min(1.6, Math.max(0.35, fitted));
+  // No upper bound: zoomed out over the whole galaxy, markers keep their on-screen size.
+  const scale = Math.max(0.35, fitted);
   const down = (e: PointerEvent<SVGSVGElement>) => {
     if ((e.target as Element).closest(".cmd-system")) return;
     drag.current = { x: e.clientX, y: e.clientY, view };
@@ -112,6 +129,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
     else if (e.key === "+" || e.key === "=") zoom(1 / 1.25);
     else if (e.key === "-") zoom(1.25);
     else if (e.key === "0") setView(full);
+    else if (e.key === "9") setView(galaxy);
   };
 
   const target = selected ? systems.find((s) => s.id === selected) : undefined;
@@ -144,6 +162,9 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
         <ellipse cx={full.x + full.w * .75} cy={full.y + full.h * .7} rx={full.w * .4} ry={full.h * .45} fill="url(#cmd-nebula-b)" />
         {stars.map((s, i) => <circle key={i} cx={s.x} cy={s.y} r={s.r * scale} opacity={s.o} className="cmd-dust" />)}
       </g>}
+      <g aria-hidden="true" className="cmd-far">
+        {far.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={2.2 * scale} className="cmd-far-star" />)}
+      </g>
       {showRoutes && world.galaxy.routes.map((r) => {
         const a = point(world, r.a_id)!, b = point(world, r.b_id)!;
         const partial = [r.a_id, r.b_id].some((id) => systems.find((s) => s.id === id)?.state === "DETECTED");
@@ -215,10 +236,11 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
       </ul>
     </div>
 
-    <svg className="cmd-overlay cmd-minimap" viewBox={`${full.x} ${full.y} ${full.w} ${full.h}`} aria-hidden="true">
+    <svg className="cmd-overlay cmd-minimap" viewBox={`${galaxy.x} ${galaxy.y} ${galaxy.w} ${galaxy.h}`} aria-hidden="true">
+      {far.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={galaxy.w / 160} className="cmd-mini-far" />)}
       {world.galaxy.routes.map((r) => { const a = point(world, r.a_id)!, b = point(world, r.b_id)!;
         return <line key={r.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} className="cmd-mini-route" />; })}
-      {systems.map((s) => <circle key={s.id} cx={s.x} cy={s.y} r={8} className={`cmd-mini-star cmd-system--${own.has(s.id) ? "own" : s.state.toLowerCase()}`} />)}
+      {systems.map((s) => <circle key={s.id} cx={s.x} cy={s.y} r={Math.max(8, galaxy.w / 120)} className={`cmd-mini-star cmd-system--${own.has(s.id) ? "own" : s.state.toLowerCase()}`} />)}
       <rect x={view.x} y={view.y} width={view.w} height={view.h} className="cmd-mini-view" />
     </svg>
 
@@ -227,6 +249,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
 
     <div className="cmd-overlay cmd-zoom" role="group" aria-label="Commandes de la carte">
       <button type="button" className="button" aria-label="Recentrer la carte" onClick={() => setView(full)}>⌖</button>
+      {far.length > 0 && <button type="button" className="button" aria-label="Voir toute la galaxie" title="Toute la galaxie" onClick={() => setView(galaxy)}>◎</button>}
       <button type="button" className="button" aria-label="Zoom arrière" onClick={() => zoom(1.25)}>−</button>
       <button type="button" className="button" aria-label="Zoom avant" onClick={() => zoom(1 / 1.25)}>+</button>
     </div>

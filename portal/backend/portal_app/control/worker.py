@@ -218,6 +218,12 @@ def deliver_one(accounts, transport):
                     receipt = transport.request(
                         row.backend_id, "GET", f"/internal/v1/operations/{row.id}"
                     )
+                    if isinstance(receipt, dict) and receipt.get("request_digest") != (
+                        row.request_digest
+                    ):
+                        # A receipt stored under another digest rule: the idempotent POST lets
+                        # Game compare the content itself and answer with this digest.
+                        receipt = None
                 if receipt is None:
                     receipt = transport.request(
                         row.backend_id, "POST", "/internal/v1/operations", row.envelope
