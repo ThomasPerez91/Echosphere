@@ -49,6 +49,7 @@ test('public home: login and registration are separate pages reached from the he
   render(<App />);
   expect(screen.getByRole('heading', { level: 1, name: /Conquérez les étoiles/ })).toBeVisible();
   expect(screen.queryByLabelText('Adresse email')).toBeNull(); // forms live on their own pages
+  expect(screen.getAllByText('Implémentation backend nécessaire').length).toBeGreaterThan(0);
   fireEvent.click(screen.getByRole('link', { name: 'Connexion' }));
   expect(window.location.pathname).toBe('/connexion');
   expect(await screen.findByRole('button', { name: 'Ouvrir ma session' })).toBeVisible();
@@ -57,5 +58,4 @@ test('public home: login and registration are separate pages reached from the he
   expect(window.location.pathname).toBe('/inscription');
   expect(await screen.findByRole('button', { name: 'Créer le compte' })).toBeVisible();
   window.history.replaceState(null, '', '/');
-  expect(screen.getAllByText('Implémentation backend nécessaire').length).toBeGreaterThan(0);
 });
