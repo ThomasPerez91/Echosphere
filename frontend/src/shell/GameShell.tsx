@@ -6,6 +6,7 @@ import { resourceKeys, resourceLabels, rate } from '../colony/format';
 import { Ico, Pic } from './visual';
 import { asset, compact, estimate, planetImage, resourceIcon } from './assets';
 import { useMedia, useNow } from './useNow';
+import { NotificationBell } from '../notifications/NotificationBell';
 
 export const navigation = [
   { id: 'empire', label: 'Empire', icon: 'empire' },
@@ -100,12 +101,18 @@ export function GameShell({ universe, access, colony, status, destination, href,
         <div className={`d-network d-network--${status}`} role="status" title={readiness[status]}><span className="d-status-dot" aria-hidden="true" />{readiness[status]}</div>
         <button type="button" className="d-icon-btn" aria-label="Messages" aria-expanded={popover === 'messages'}
           onClick={() => setPopover(value => value === 'messages' ? null : 'messages')}><Pic src="icons/ui/ui-messages.svg" size={34} /></button>
-        <button type="button" className="d-icon-btn" aria-label="Notifications" aria-expanded={popover === 'alerts'}
-          onClick={() => setPopover(value => value === 'alerts' ? null : 'alerts')}><Pic src="icons/ui/ui-notifications.svg" size={34} /></button>
-        {popover && popover !== 'profile' && <div className="d-popover" role="dialog" aria-label={popover === 'messages' ? 'Messages' : 'Notifications'}>
+        {universe && active
+          ? <NotificationBell universe={universe} access={access} colony={colony} open={popover === 'alerts'} href={href} onNavigate={onNavigate}
+            onToggle={value => setPopover(value ? 'alerts' : null)} />
+          : <button type="button" className="d-icon-btn" aria-label="Notifications" aria-expanded={popover === 'alerts'}
+            onClick={() => setPopover(value => value === 'alerts' ? null : 'alerts')}><Pic src="icons/ui/ui-notifications.svg" size={34} /></button>}
+        {popover === 'messages' && <div className="d-popover" role="dialog" aria-label="Messages">
           <strong>Implémentation backend nécessaire</strong>
-          <p>{popover === 'messages' ? 'La messagerie entre joueurs n’existe pas encore côté serveur.'
-            : 'Le centre de notifications n’existe pas encore côté serveur. Les alertes de vos colonies et flottes sont sur l’écran Empire.'}</p>
+          <p>La messagerie entre joueurs n’existe pas encore côté serveur.</p>
+          <button type="button" className="d-btn" onClick={() => setPopover(null)}>Fermer</button>
+        </div>}
+        {popover === 'alerts' && !(universe && active) && <div className="d-popover" role="dialog" aria-label="Notifications">
+          <p>Les notifications s’affichent une fois dans une partie.</p>
           <button type="button" className="d-btn" onClick={() => setPopover(null)}>Fermer</button>
         </div>}
       </div>

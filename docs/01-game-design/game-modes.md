@@ -49,6 +49,21 @@ ci-dessus pour SOLO et PRIVATE.
   grand nombre d’Empires est à revoir avec l’utilisateur avant d’activer ces options (Q59 ouverte
   sur ce point, comme la démonstration de charge Q29).
 
+## Décisions utilisateur du 09/11/2026 — vie d’une partie (Q60)
+
+Provenance : réponses explicites de l’utilisateur le 09/11/2026 (questions à choix).
+
+- **Abandon en multi** : l’Empire d’un joueur qui quitte une partie en cours est **repris par une
+  IA** ; la partie continue pour les autres, l’IA joue avec les mêmes règles (aucun bonus, aucune
+  ressource offerte).
+- **Abandon en SOLO** : la partie est **archivée**, pas supprimée : retirée des parties actives,
+  plus jouable, rapports consultables ; aucune donnée effacée.
+- **Notifications en jeu (cloche)** : attaque annoncée, fin de construction et de recherche,
+  missions terminées (arrivée, cartographie, colonisation, retour), diplomatie et contact.
+  Elles ne sont jamais une autorité : chacune renvoie à l’écran qui porte l’état serveur.
+- **Nom d’Empire** : choisi par le joueur à la création et en rejoignant une partie, visible dans
+  « Mes parties ».
+
 ## Compte global, Empire partagé et départ (Q21/Q23)
 
 Un compte global peut participer simultanément à plusieurs univers : User → UniverseMembership →

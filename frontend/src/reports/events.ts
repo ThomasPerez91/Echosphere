@@ -80,4 +80,16 @@ export function relationEvents(rel: RelationsProjection | null): ReportEvent[] {
     text: counterpart(h.counterpart_id), at: h.at }));
 }
 
+const battleFormat = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+/** Q60: an attack announced on one of your worlds, while still pending (dated by its battle). */
+export function alertEvents(f: FleetProjection | null): ReportEvent[] {
+  return (f?.combat?.alerts ?? []).filter(a => a.state === 'pending').map(a => {
+    const system = f?.systems?.find(s => s.id === a.system_id);
+    const world = system?.planets?.find(p => p.id === a.planet_id);
+    return { key: `alert-${a.id}`, category: 'combat' as const, tone: 'red' as Tone, icon: 'icons/evenements/evt-combat.svg', title: 'Attaque annoncée',
+      text: `${world?.name ?? 'Un de vos mondes'}${system?.name ? ` · ${system.name}` : ''} — bataille ${battleFormat.format(new Date(a.battle_at))}`, at: a.battle_at };
+  });
+}
+
 export const newestFirst = (a: ReportEvent, b: ReportEvent) => Date.parse(b.at) - Date.parse(a.at) || a.key.localeCompare(b.key);

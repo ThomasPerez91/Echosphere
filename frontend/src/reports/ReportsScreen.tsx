@@ -94,7 +94,7 @@ export function ReportsScreen({ universe, access, colony }: {
         <PanelHead id="reports-sources" icon="icons/sidebar/nav-empire.svg" title="Sources" />
         <dl className="d-kv">{sources.map(([label, state]) => <div key={label}><dt>{label}</dt><dd>{state}</dd></div>)}</dl>
         <p className="d-note">Les missions, combats et faits de frontière sont ceux que conserve la projection Flottes ; les plus anciens peuvent ne plus y figurer.</p>
-        <Pending compact what="Cloche d’alertes, rapports non lus, recherche et export du fil." />
+        <Pending compact what="Recherche et export du fil." />
       </aside>
     </div>
   </div>;

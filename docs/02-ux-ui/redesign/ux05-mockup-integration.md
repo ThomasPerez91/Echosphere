@@ -72,7 +72,7 @@ Le tableau de bord Empire réutilise les mêmes fonctions d’événements et re
 | --- | --- |
 | Coquille | Messages, notifications, emblème et devise d’Empire, profil |
 | Empire | Classement / puissance, objectifs, diplomatie hors pactes |
-| Rapports | Cloche d’alertes, rapports non lus, recherche et export du fil ; historique au-delà de ce que conserve la projection Flottes |
+| Rapports | Recherche et export du fil (cloche et non-lus livrés le 09/11, Q60) ; historique au-delà de ce que conserve la projection Flottes |
 | Colonie | Accélération de construction, Orbite (emplacements orbitaux, routes), Défense (modules), objectifs, population/moral si décidés |
 | Galaxie | Distance entre systèmes, onglet « Données » (ressources, anomalies, historique d’observation), filtres Alliés/Neutres/Hostiles, systèmes hostiles dans la légende, régions, vue « Influence » |
 | Portal | **Création de partie en libre-service (priorité n° 1)**, invitations, actualités, statistiques publiques, catalogue d’univers ouverts, Empire / mode / tour par partie, journal d’activité des parties, notifications |
@@ -100,3 +100,14 @@ Procédure pas à pas : [recette locale UX05](ux05-recette-locale.md) (branche `
 - Les illustrations de partie du Portal sont choisies de façon stable par identifiant d’univers
   (décoratives) : le Portal ne connaît pas encore l’illustration d’un univers.
 - `missions[].path` (UX-API-01, PR #20) n’est pas encore consommé par le frontend.
+
+## Cloche de notifications (Q60, 09/11/2026)
+
+`frontend/src/notifications/` : la cloche de la barre du haut compose, depuis les mêmes projections
+que Rapports, les attaques annoncées (alertes `pending`), constructions et recherches terminées,
+missions terminées, faits de frontière et diplomatie. Chaque entrée renvoie à l’écran qui porte
+l’état serveur (Flottes, Colonie, Recherche, Relations ou Rapports). Les non-lus sont une commodité
+du navigateur (`localStorage`, par univers et Empire) : à la première visite, l’historique est
+marqué comme vu sauf une attaque encore annoncée ; ouvrir la cloche marque tout comme lu. Relecture
+lente (2 min, onglet visible) pour les faits qui ne viennent pas de nos propres échéances.
+Limite : la cloche relit les projections en plus de l’écran courant (requêtes GET en double).
