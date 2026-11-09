@@ -414,7 +414,7 @@ def test_v010_start_generates_the_requested_map_size_and_enforces_its_empire_cap
         control.apply(SERVICE, message(100, 3, ["expansionist", "economic_cautious"]))
     assert capped.value.code == "invalid_bootstrap_configuration"
     request = message(300, 5, ["expansionist"] * 3)
-    universe = UUID(request["message"]["universe_id"])
+    universe = request.message.universe_id
     result = control.apply(SERVICE, request)["result"]
     assert len(result["human_empire_ids"]) == 5
     with control.factory() as session:

@@ -8,13 +8,13 @@ from sqlalchemy import func, select, text
 
 from app.ai.bootstrap import bootstrap
 from app.colony.rules import load_ruleset
+from app.galaxy import service as galaxy_service
 from app.galaxy.api import Galaxy
 from app.galaxy.generator_v2 import generate_v2
 from app.galaxy.models import (
     GalaxyOpportunity,
     GalaxySystem,
     OpportunityKnowledge,
-    SystemKnowledge,
     UniverseGalaxy,
 )
 from app.galaxy.opportunities import generate_opportunities
@@ -119,18 +119,15 @@ def test_fog_mapping_shows_signatures_only_and_prospection_shows_dated_observed_
         assert system["opportunities"] == {
             "signatures": counts.get(UUID(system["id"]), 0), "known": []
         }
-    # The home zone always holds an ordinary deposit (fairness), so one is prospected here.
+    # Map one deposit's system (as a survey would; the fairness of start zones is a pure test).
     with factory.begin() as session:
-        mapped = {k.system_id for k in session.scalars(select(SystemKnowledge).where(
-            SystemKnowledge.empire_id == empire, SystemKnowledge.state != "DETECTED"))}
         deposit = session.scalars(
             select(GalaxyOpportunity).where(
-                GalaxyOpportunity.universe_id == universe,
-                GalaxyOpportunity.family == "deposit",
-                GalaxyOpportunity.system_id.in_(mapped),
+                GalaxyOpportunity.universe_id == universe, GalaxyOpportunity.family == "deposit"
             ).order_by(GalaxyOpportunity.id)
         ).first()
         assert deposit is not None
+        galaxy_service.map_system(session, universe, empire, deposit.system_id, clock.now())
         session.add(OpportunityKnowledge(
             empire_id=empire, opportunity_id=deposit.id, universe_id=universe,
             observed_at=clock.now(), observed_reserve=deposit.reserve_remaining,
