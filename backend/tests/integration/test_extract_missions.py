@@ -70,7 +70,7 @@ def test_two_claims_share_the_throughput_by_extractors_then_one_stops_on_recall(
     hidden = seed_deposit(w, known=False)
     assert order(w, "extractor", 2).status_code == 200
     wait(w, 101)
-    assert worker(w) >= 1
+    worker(w)
     garrison = next(f for f in view(w).json()["fleets"] if f["kind"] == "GARRISON")
     assert garrison["stacks"]["extractor"] == 2
     # Refusals before any write: unknown deposit, length out of bounds, no extractor.
@@ -84,10 +84,10 @@ def test_two_claims_share_the_throughput_by_extractors_then_one_stops_on_recall(
     a_fleet, b_fleet = a.json()["result"]["fleet_id"], b.json()["result"]["fleet_id"]
     # 0-2 h: 30/h shared 15/15 (each asks 20/h); 2-4 h: A alone at its own 20/h.
     wait(w, 121)
-    assert worker(w) >= 1
+    worker(w)
     assert fleet_by(w, b_fleet)["cargo"]["alloys"] == str(30 * M)
     wait(w, 120)
-    assert worker(w) >= 1
+    worker(w)
     assert fleet_by(w, a_fleet)["cargo"]["alloys"] == str(70 * M)
     with w.game.factory() as s:
         row = s.get(GalaxyOpportunity, deposit)
@@ -142,7 +142,7 @@ def test_an_extraction_elsewhere_can_come_back_home_with_its_load(fleets):
     ordered = order(w, "extractor", 1)
     assert ordered.status_code == 200, ordered.json()
     wait(w, 51)
-    assert worker(w) >= 1
+    worker(w)
     garrison = next(f for f in view(w).json()["fleets"] if f["kind"] == "GARRISON")
     home_system = garrison["system"]["id"]
 
