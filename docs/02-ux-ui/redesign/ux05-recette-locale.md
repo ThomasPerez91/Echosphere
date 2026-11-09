@@ -140,11 +140,33 @@ système choisit, clic droit ou Échap annule et rouvre la fenêtre.
 - « Étudier : <curiosité> » : la flotte doit avoir une sonde **et** une soute (cargo) libre pour
   les Données (sinon refus « soute insuffisante ») ; à la fin, les Données sont dans la soute,
   à décharger sur une colonie ; une deuxième étude de la même curiosité est refusée.
-- L’Extracteur est constructible ; l’extraction elle-même arrive au lot suivant (EXP-02b).
+- « Extraire : <gisement> » (PR #37) : flotte avec au moins un Extracteur et de la soute libre ;
+  durée réglable (1–24 h) et choix « Rester sur place » / « Revenir au point de départ » (carburant
+  aller-retour payé au départ). À la fin, le chargement est en soute ; « Rappeler » pendant
+  l’extraction l’arrête et garde ce qui est extrait. Deux flottes sur le même gisement se partagent
+  le débit au prorata de leurs Extracteurs.
 
 **Rapports**
 - Après une construction terminée : elle apparaît dans Rapports (filtre Constructions), avec la bonne
   heure. Missions terminées, recherche acquise, faits diplomatiques s’y retrouvent aussi.
+
+## 3 bis. Correctifs du 09/11/2026 au soir
+
+- PR #38 (Portail) : fond plein écran sous la navbar en connexion/inscription, logo agrandi, effet
+  bouton sur toutes les entrées de navigation, bandeau de statistiques qui ne chevauche plus les
+  boutons de « Mes parties ».
+- PR #39 (contrôle Portal → Game) : les créations solo restaient « Création bloquée »
+  (`invalid_receipt`) ; après mise à jour, les créations en attente aboutissent d’elles-mêmes au
+  prochain essai du worker de contrôle (environ une minute).
+- La pile de recette porte le nom de projet Compose `echosphere` sur ce poste : elle partage les
+  volumes de la pile conservée. Ne jamais lancer `down -v`.
+
+Lire une création bloquée (lecture seule, base Accounts) :
+
+```bash
+docker compose exec -T portal-postgres psql -U echosphere_accounts -d echosphere_accounts -c \
+  "select created_at, attempts, last_error, envelope->'message'->>'kind' as kind from control_outbox where state = 'pending' order by created_at;"
+```
 
 ## 4. En cas de problème
 
