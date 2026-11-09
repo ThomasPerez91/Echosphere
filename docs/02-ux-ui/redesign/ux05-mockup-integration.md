@@ -118,3 +118,15 @@ Carte de commandement, onglets « Aperçu » et « Routes » : nombre de sauts d
 plus proche, calculé sur les routes connues de l’Empire (le même graphe que le serveur pour ses
 trajets) ; « Ici » pour un système de colonie, « Inconnue » sans route connue. La durée exacte reste
 celle du résumé serveur avant envoi.
+
+## Flottes sur la carte (décision utilisateur du 09/11/2026)
+
+Carte de commandement : un symbole de flotte (chevron + nombre) au-dessus de chaque système où
+stationnent vos flottes ouvre la fenêtre « Flottes à … » (non modale, la carte reste utilisable) :
+composition, état, mission ; pour une flotte d’intervention, « Changer de mission » = protocole de
+premier contact 13B (même commande que l’écran Flottes) ; « Déplacer… » réduit la fenêtre en un
+bandeau en haut à gauche avec le filigrane « Choisir une destination » : un système connu ouvre le
+résumé serveur du déplacement (confirmation explicite, rien n’est envoyé avant) ; clic droit,
+Échap ou « Annuler » restaure la fenêtre. Choisir le système de départ ou un simple signal laisse
+le mode actif avec une explication. Les flottes en route ne sont pas encore dans la fenêtre
+(rappel depuis « Vos flottes »).

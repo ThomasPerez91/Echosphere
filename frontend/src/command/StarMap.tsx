@@ -28,7 +28,7 @@ const stateLabel = { DETECTED: "Détecté", MAPPED: "Cartographié", MONITORED: 
  * the mockup's regions, influence and distances have no game data and are not reproduced.
  * Every system is a real button (Tab, Enter/Space); nothing depends on hover.
  */
-export function StarMap({ world, selected, onSelect, preview, missions, now, filter = "all", showRoutes = true, showNames = true, focus, backdrop = true, menu }: {
+export function StarMap({ world, selected, onSelect, preview, missions, now, filter = "all", showRoutes = true, showNames = true, focus, backdrop = true, menu, onFleets, picking = false, onCancelPick, overlay }: {
   world: World; selected: string | null; onSelect: (id: string) => void; preview: RoutePreview | null;
   missions: MissionView[]; now: number;
   filter?: MapFilter; showRoutes?: boolean; showNames?: boolean;
@@ -38,6 +38,13 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
   backdrop?: boolean;
   /** Context menu anchored next to the selected system (desktop); null keeps it closed. */
   menu?: ReactNode;
+  /** The fleet symbol above a system opens the window of the fleets stationed there. */
+  onFleets?: (system: string) => void;
+  /** Destination picking: watermark on the map; right click (or Escape, handled by the caller) cancels. */
+  picking?: boolean;
+  onCancelPick?: () => void;
+  /** Floating windows drawn over the map (fleet window, destination bar). */
+  overlay?: ReactNode;
 }) {
   const systems = world.galaxy.systems;
   const xs = systems.map((s) => s.x), ys = systems.map((s) => s.y);
@@ -115,7 +122,10 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
     return { left, top, flip: left > rendered.width * 0.6, up: top > rendered.height * 0.5 };
   })() : null;
 
-  return <div className={`cmd-map-frame${backdrop ? " has-backdrop" : ""}`}>
+  return <div className={`cmd-map-frame${backdrop ? " has-backdrop" : ""}${picking ? " is-picking" : ""}`}
+    onContextMenu={picking ? (e) => { e.preventDefault(); onCancelPick?.(); } : undefined}>
+    {picking && <div className="cmd-pick-watermark" aria-hidden="true">Choisir une destination</div>}
+    {overlay}
     {backdrop && <GalaxyCanvas className="cmd-backdrop" scene={scene} view={view} labels={false} routes={false} selected={selected} />}
     <svg ref={svg} className="cmd-map" viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} role="group" tabIndex={0}
       aria-label="Carte de commandement : systèmes connus, vos flottes et vos missions. Flèches pour déplacer, plus et moins pour zoomer, zéro pour recentrer."
@@ -175,8 +185,16 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
             {own.has(s.id) && <><circle r={13} className="cmd-own" /><circle r={9.5} className="cmd-own cmd-own--inner" /></>}
             <circle r={s.state === "DETECTED" ? 4.5 : 6.5} className="cmd-star" />
             {(showNames || selected === s.id) && <text x={15} y={5} className={`cmd-label${big ? " cmd-label--strong" : ""}`}>{name}</text>}
-            {count > 0 && <g className="cmd-fleet-pin" transform="translate(-24 -26)">
-              <rect width={18} height={14} rx={4} /><text x={9} y={10.5} textAnchor="middle">{count}</text></g>}
+            {count > 0 && (onFleets
+              ? <g className="cmd-fleet-pin is-button" transform="translate(-14 -46)" role="button" tabIndex={0}
+                aria-label={`Flottes à ${name} : ${count}`}
+                onClick={(e) => { e.stopPropagation(); onFleets(s.id); }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onFleets(s.id); } }}>
+                <rect width={28} height={18} rx={5} />
+                <path d="M5 13 L10 5 L15 13 L10 10.5 Z" className="cmd-fleet-glyph" />
+                <text x={21} y={13} textAnchor="middle">{count}</text></g>
+              : <g className="cmd-fleet-pin" transform="translate(-24 -26)">
+                <rect width={18} height={14} rx={4} /><text x={9} y={10.5} textAnchor="middle">{count}</text></g>)}
           </g>
         </g>;
       })}

@@ -196,7 +196,58 @@ test("search finds a named known system, tabs show planets and routes, filters o
   const signals = screen.getByRole("button", { name: "Signaux" });
   fireEvent.click(signals);
   expect(signals).toHaveAttribute("aria-pressed", "true");
-  expect(map().getAllByRole("button")).toHaveLength(9);
+  // Filters only dim: the 9 systems stay buttons, plus the 2 fleet symbols (Aube, Vesta).
+  expect(map().getAllByRole("button")).toHaveLength(11);
+  expect(map().getAllByRole("button", { name: /^Flottes à / })).toHaveLength(2);
+});
+
+test("09/11: the fleet symbol above a system opens its fleets; Déplacer picks a destination on the map, Escape restores the window", async () => {
+  render(<Harness />);
+  fireEvent.click(map().getByRole("button", { name: /^Flottes à Aube : 3$/ }));
+  const win = () => within(screen.getByRole("dialog", { name: "Flottes à Aube" }));
+  expect(win().getByText(/2 Frégate, 2 Intercepteur/)).toBeVisible();
+  expect(win().getByText(/défense de la colonie/)).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Que voulez-vous faire ?" })).toBeVisible(); // the system is not selected
+  fireEvent.click(win().getByRole("button", { name: "Déplacer… Escadre Héliade" }));
+  expect(screen.getByText("Choisissez une destination sur la carte")).toBeVisible();
+  expect(screen.queryByRole("dialog", { name: "Flottes à Aube" })).toBeNull();
+  // Escape cancels the picking and puts the window back.
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.getByRole("dialog", { name: "Flottes à Aube" })).toBeVisible();
+  expect(screen.queryByText("Choisissez une destination sur la carte")).toBeNull();
+  // A right click on the map cancels as well.
+  fireEvent.click(win().getByRole("button", { name: "Déplacer… Escadre Héliade" }));
+  fireEvent.contextMenu(screen.getByRole("group", { name: /Carte de commandement/ }));
+  expect(screen.getByRole("dialog", { name: "Flottes à Aube" })).toBeVisible();
+  // Picking the fleet's own system keeps the picking; another known system opens the server summary.
+  fireEvent.click(win().getByRole("button", { name: "Déplacer… Escadre Héliade" }));
+  fireEvent.click(map().getByRole("button", { name: /^Aube/ }));
+  expect(screen.getByText(/Escadre Héliade est déjà à Aube/)).toBeVisible();
+  fireEvent.click(map().getByRole("button", { name: "Lyra" }));
+  const p = planner("Déplacer une flotte");
+  expect(p.getAllByText("Escadre Héliade")[0]).toBeVisible();
+  await waitFor(() => expect(p.getByRole("button", { name: /Confirmer : déplacer une flotte/ })).toBeEnabled());
+  expect(screen.queryByText("Choisissez une destination sur la carte")).toBeNull();
+});
+
+test("09/11: a stationed task fleet changes its first-contact mission from the fleet window", async () => {
+  const calls: [string, string | null][] = [];
+  function Frontier() {
+    const [world] = useState<World>(() => ({ fleets: { ...fleetFixture(), frontier: { protocols: ["SURVEILLANCE", "AMBUSH"], detections: [], encounters: [] } }, galaxy: galaxyFixture() }));
+    const api = useMemo(() => ({ ...fixtureApi(() => world, () => undefined, () => now, { latencyMs: 0 }),
+      protocol: async (id: string, value: string | null) => { calls.push([id, value]); return true; } }), [world]);
+    return <div className="cmd-root"><CommandMap world={world} api={api as MissionApi} now={now} /></div>;
+  }
+  render(<Frontier />);
+  fireEvent.click(map().getByRole("button", { name: /^Flottes à Aube/ }));
+  const win = within(screen.getByRole("dialog", { name: "Flottes à Aube" }));
+  // Garrisons have no protocol; the two task fleets do.
+  expect(win.getAllByRole("combobox", { name: "Changer de mission" })).toHaveLength(2);
+  fireEvent.change(win.getAllByRole("combobox", { name: "Changer de mission" })[0], { target: { value: "AMBUSH" } });
+  fireEvent.click(win.getAllByRole("button", { name: "Appliquer" })[0]);
+  expect(await win.findByText("Mission changée.")).toBeVisible();
+  expect(calls).toHaveLength(1);
+  expect(calls[0][1]).toBe("AMBUSH");
 });
 
 test("EXP-01: the Données tab shows unexplained signatures and the dated details of a prospected deposit", () => {

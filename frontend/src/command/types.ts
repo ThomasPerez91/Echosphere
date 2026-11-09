@@ -1,4 +1,4 @@
-import type { MissionView, Plan, Quote } from "../fleet/api";
+import type { MissionView, Plan, Protocol, Quote } from "../fleet/api";
 
 /** Server quote; `path` exists only once UX-API-01 ships (optional, validated twice before use). */
 export type CommandQuote = Quote; // `path` is optional on Quote until UX-API-01 ships
@@ -15,4 +15,6 @@ export type MissionApi = {
   preview(plan: Plan, signal: AbortSignal): Promise<CommandQuote>;
   launch(plan: Plan, quote: CommandQuote): Promise<LaunchResult | null>;
   recall(mission: MissionView): Promise<boolean>;
+  /** 13B: change the first-contact protocol of a stationed task fleet (absent where unsupported). */
+  protocol?(fleetId: string, protocol: Protocol | null): Promise<boolean>;
 };

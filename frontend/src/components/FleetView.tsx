@@ -7,6 +7,7 @@ import type { CombatReport, FleetProjection, Frontier, MissionKind, MissionView,
 import { duration, exactUnits, resourceKeys, resourceLabels, time, units } from "../colony/format";
 import { Badge, Button, EmptyState, Panel } from "./ui";
 import { message } from "../fleet/messages";
+import { protocols } from "../fleet/protocols";
 
 const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation", ATTACK: "Attaque", PROSPECT: "Prospection", STUDY: "Étude" };
 const outcomeLabels: Record<string, string> = {
@@ -15,16 +16,6 @@ const outcomeLabels: Record<string, string> = {
   voided_by_pact: "Bataille annulée par un pacte",
 };
 /** 13B: four distinct postures, described by what they do and never do (Q57). */
-const protocols: Record<Protocol, { label: string; help: string; tone: "neutral" | "accent" | "warning" | "danger" }> = {
-  SURVEILLANCE: { label: "Surveillance", tone: "accent",
-    help: "Détecte les flottes étrangères qui entrent dans le système et vous alerte. N’attaque jamais ; se défend si elle est attaquée." },
-  AMBUSH: { label: "Embuscade", tone: "warning",
-    help: "Détecte, puis attaque seulement un Empire connu qui a commis un acte hostile contre vous depuis moins de 72 h. Jamais un inconnu, jamais sous pacte." },
-  INTERCEPTION: { label: "Interception", tone: "danger",
-    help: "Attaque toute flotte étrangère militaire détectée à son entrée, même inconnue ou plus forte. Posture très agressive ; un pacte actif l’empêche." },
-  FRIENDLY_CONTACT: { label: "Contact amical", tone: "neutral",
-    help: "Se présente volontairement aux flottes détectées (identité, système, date). N’attaque jamais ; se replie si une force hostile entre dans le système." },
-};
 const engagementLabels: Record<string, string> = {
   victory: "Victoire", defeat: "Défaite", mutual_destruction: "Destruction mutuelle",
 };

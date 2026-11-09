@@ -78,6 +78,11 @@ export function LiveCommandMap({ universe, enabled, csrf, onSessionLost, onEcono
       const result = await latest.current.fleets.run(`/missions/${m.id}/recall`, {}, m.id);
       return !!result;
     },
+    // Same endpoint and idempotency signature as the Fleets screen (13B protocols).
+    async protocol(fleetId, protocol) {
+      const result = await latest.current.fleets.run(`/${fleetId}/protocol`, { protocol }, JSON.stringify([fleetId, protocol]));
+      return !!result;
+    },
   }), [universe]);
 
   if (!enabled) return null;
