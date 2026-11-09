@@ -196,7 +196,9 @@ test("search finds a named known system, tabs show planets and routes, filters o
   const signals = screen.getByRole("button", { name: "Signaux" });
   fireEvent.click(signals);
   expect(signals).toHaveAttribute("aria-pressed", "true");
-  expect(map().getAllByRole("button")).toHaveLength(9);
+  // Filters only dim: the 9 systems stay buttons, plus the 2 fleet symbols (Aube, Vesta).
+  expect(map().getAllByRole("button")).toHaveLength(11);
+  expect(map().getAllByRole("button", { name: /^Flottes à / })).toHaveLength(2);
 });
 
 test("09/11: the fleet symbol above a system opens its fleets; Déplacer picks a destination on the map, Escape restores the window", async () => {
