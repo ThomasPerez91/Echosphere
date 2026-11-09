@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { validFleets } from "../fleet/api";
 import { validProjection } from "../galaxy/api";
 import { fleetFixture, galaxyFixture, ids, quoteFixture, SERVER_TIME } from "../prototype/fixtures";
-import { defaultUnits, eligibleFleets, engageable, fleetLines, missionPosition, offers, recallable, serverPath, systemName } from "./model";
+import { defaultUnits, eligibleFleets, engageable, fleetLines, missionPosition, missionRoute, missionRouteLabel, offers, point, recallable, serverPath, systemName } from "./model";
 import type { World } from "./model";
 
 const world = (): World => ({ fleets: fleetFixture(), galaxy: galaxyFixture() });
@@ -71,8 +71,45 @@ test("a moving fleet is drawn along the server path between its dates (display e
   const q = quoteFixture(ids.home, "DEPLOY", ids.lyra, { frigate: 2 }, null, SERVER_TIME);
   if ("error" in q) throw new Error(q.error);
   const half = { ...m, origin: { id: ids.home, state: "MONITORED" as const }, destination: { id: ids.lyra, state: "MAPPED" as const },
-    started_at: SERVER_TIME, travel_arrival_at: q.travel_arrival_at };
-  expect(missionPosition(w, half, (Date.parse(SERVER_TIME) + Date.parse(q.travel_arrival_at)) / 2, q.path)).toEqual({ x: 120, y: -60 });
+    started_at: SERVER_TIME, travel_arrival_at: q.travel_arrival_at, path: q.path, hops: q.hops };
+  expect(missionPosition(w, half, (Date.parse(SERVER_TIME) + Date.parse(q.travel_arrival_at)) / 2)).toEqual({ x: 120, y: -60 });
+  expect(missionRoute(w, half)?.kind).toBe("server");
+  expect(missionRouteLabel(half, missionRoute(w, half)!)).toBe("Trajet de la mission");
+});
+
+test("UX-API-01: a path system missing from the map falls back to the estimated departure–destination segment", () => {
+  const w = world();
+  const m = { ...w.fleets.missions![0], origin: { id: ids.home, state: "MONITORED" as const },
+    destination: { id: ids.lyra, state: "MAPPED" as const }, hops: 2,
+    path: [ids.home, "00000000-0000-4000-8000-0000000000ff", ids.lyra] };
+  const route = missionRoute(w, m)!;
+  expect(route.kind).toBe("estimated");
+  expect(route.points).toEqual([point(w, ids.home), point(w, ids.lyra)]);
+  expect(missionRouteLabel(m, route)).toMatch(/estimé/);
+  expect(missionPosition(w, m, Date.parse(m.started_at))).toEqual(point(w, ids.home));
+});
+
+test("UX-API-01: a 0-hop mission stays on its system, without a line", () => {
+  const w = world();
+  const m = { ...w.fleets.missions![0], origin: { id: ids.home, state: "MONITORED" as const },
+    destination: { id: ids.home, state: "MONITORED" as const }, hops: 0, path: [ids.home] };
+  expect(missionRoute(w, m)).toEqual({ kind: "server", points: [point(w, ids.home)] });
+  expect(missionPosition(w, m, Date.parse(m.started_at) + 1000)).toEqual(point(w, ids.home));
+});
+
+test("UX-API-01: a return mirrors the outbound path and says so", () => {
+  const w = world();
+  const q = quoteFixture(ids.home, "DEPLOY", ids.lyra, { frigate: 2 }, null, SERVER_TIME);
+  if ("error" in q) throw new Error(q.error);
+  const m = { ...w.fleets.missions![0], status: "returning" as const, origin: { id: ids.home, state: "MONITORED" as const },
+    destination: { id: ids.lyra, state: "MAPPED" as const }, path: q.path, hops: q.hops, started_at: SERVER_TIME,
+    travel_arrival_at: q.travel_arrival_at, due_at: q.travel_arrival_at, recalled_at: null,
+    return_at: new Date(2 * Date.parse(q.travel_arrival_at) - Date.parse(SERVER_TIME)).toISOString() };
+  const route = missionRoute(w, m)!;
+  expect(missionRouteLabel(m, route)).toBe("Retour estimé en miroir de l’aller");
+  // Leaving the destination at due_at, home at return_at.
+  expect(missionPosition(w, m, Date.parse(m.due_at))).toEqual(point(w, ids.lyra));
+  expect(missionPosition(w, m, Date.parse(m.return_at!) + 1)).toEqual(point(w, ids.home));
 });
 
 test("D-UX-4/5 defaults: one probe, exactly one colonizer, the task fleet for a move, nothing for an attack or from a garrison", () => {

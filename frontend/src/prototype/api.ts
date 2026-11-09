@@ -48,7 +48,7 @@ export function fixtureApi(world: () => World, update: (w: World) => void, now: 
       const missionId = id("61000000", sequence);
       const mission: MissionView = {
         id: missionId, fleet_id: fleetId, kind: plan.kind, status: "active", origin: source.system, destination: ref(quote.destination_id),
-        hops: quote.hops, stacks: plan.units, cargo: { alloys: "0", flux: "0", data: "0" }, cost: quote.cost,
+        hops: quote.hops, ...(quote.path ? { path: quote.path } : {}), stacks: plan.units, cargo: { alloys: "0", flux: "0", data: "0" }, cost: quote.cost,
         started_at: started, travel_arrival_at: arrival, due_at: quote.kind === "ATTACK" && quote.battle_at ? quote.battle_at : quote.due_at,
         recalled_at: null, return_at: null, completed_at: null, payer_colony_id: quote.payer_colony_id, target_planet: null, report: null,
         ...(plan.kind === "ATTACK" && quote.battle_at ? { attack: { engagement_id: id("63000000", sequence), battle_at: quote.battle_at, state: "pending" as const } } : {}),

@@ -106,6 +106,19 @@ test("a ruleset without Fleets is explained, never filled with fake ships", asyn
   expect(screen.queryByText(/Garnison/)).not.toBeInTheDocument();
 });
 
+test("UX-API-01: missions[].path is kept only from origin to destination in hops + 1 systems", () => {
+  const withPath = (path: unknown) => {
+    const value = fleets([{ ...surveying(), path } as never]);
+    expect(validFleets(value, empire)).toBe(true);
+    return value.missions![0].path;
+  };
+  expect(withPath([origin, near])).toEqual([origin, near]);
+  expect(withPath([near, origin])).toBeUndefined(); // reversed
+  expect(withPath([origin])).toBeUndefined(); // wrong length for 1 hop
+  expect(withPath([origin, "not-a-uuid"])).toBeUndefined();
+  expect(withPath("nope")).toBeUndefined();
+});
+
 test("validator refuses Colony data without colony.read and named DETECTED signals", async () => {
   expect(validFleets(fleets(), empire)).toBe(true);
   expect(validFleets(fleets(undefined, ["fleet.read"]), empire)).toBe(false);

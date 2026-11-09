@@ -33,7 +33,6 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   const [step, setStep] = useState<PlannerStep>("fleet");
   const [quote, setQuote] = useState<QuoteState>({ status: "idle" });
   const [notice, setNotice] = useState<string | null>(null);
-  const [paths, setPaths] = useState<Record<string, string[] | undefined>>({});
   const [filter, setFilter] = useState<MapFilter>("all");
   const [showRoutes, setShowRoutes] = useState(true);
   const [showNames, setShowNames] = useState(true);
@@ -123,7 +122,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
       return;
     }
     const m = line.mission;
-    const p = m ? missionPosition(world, m, now, paths[m.id]) : null;
+    const p = m ? missionPosition(world, m, now) : null;
     if (p) {
       setFocus({ ...p, key: Date.now() });
       setNotice(`Carte centrée sur la position estimée de ${line.name} (estimation visuelle entre ses dates de départ et d’arrivée, pas une position transmise par le serveur).`);
@@ -135,7 +134,6 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
     setBusy(true);
     const result = await api.launch(plan, ready).finally(() => setBusy(false));
     if (!result) { setFailed(true); return; }
-    if (result.missionId && path) setPaths((p) => ({ ...p, [result.missionId!]: path }));
     const label = `${actionLabels[plan.kind]} confirmé : ${fleet.name} part vers ${systemName(world, ready.destination_id)} (${ready.hops} saut${ready.hops > 1 ? "s" : ""}).`;
     setIntent(null);
     setSelected(null); // back to the map; the mission appears from the re-read projections
@@ -204,7 +202,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
             Régions<span className="cmd-switch-track" aria-hidden="true"><span /></span></button>
         </div>
       </div>
-      <StarMap world={world} selected={selected} onSelect={select} missions={missions} now={now} paths={paths}
+      <StarMap world={world} selected={selected} onSelect={select} missions={missions} now={now}
         filter={filter} showRoutes={showRoutes} showNames={showNames} focus={focus} backdrop={backdrop} menu={menu}
         preview={intent && fleet?.system && selected && step === "summary" ? { from: fleet.system.id, to: ready?.destination_id ?? selected, path } : null} />
       <details className="cmd-list">

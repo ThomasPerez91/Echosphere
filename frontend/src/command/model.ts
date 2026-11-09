@@ -120,14 +120,37 @@ const progressOf = (m: MissionView, now: number) => {
 };
 
 /**
- * Where to draw a moving fleet: a purely visual estimate from the server's dates, along the server
- * path when there is one, otherwise on the origin–destination segment. A returning fleet goes back
- * from the point it had reached (recall) or from the destination.
+ * The line of a mission on the map. `server`: the systems served in `missions[].path`, all
+ * present on this map (0 hop = one point, no line). Otherwise `estimated`: departure and
+ * destination joined directly, the real route being unknown here.
  */
-export function missionPosition(w: World, m: MissionView, now: number, path?: string[]): Point | null {
-  const nodes = (path?.length ? path : [m.origin?.id, m.destination?.id]).map((id) => (id ? point(w, id) : null));
-  if (nodes.some((n) => !n) || nodes.length < 2) return null;
-  const pts = nodes as Point[];
+export type MissionRoute = { points: Point[]; kind: "server" | "estimated" };
+
+export function missionRoute(w: World, m: MissionView): MissionRoute | null {
+  const served = m.path?.map((id) => point(w, id));
+  if (served?.length && served.every(Boolean)) return { points: served as Point[], kind: "server" };
+  const ends = [m.origin?.id, m.destination?.id].map((id) => (id ? point(w, id) : null));
+  if (ends.some((n) => !n)) return null;
+  const pts = ends as Point[];
+  return { points: pts[0].x === pts[1].x && pts[0].y === pts[1].y ? [pts[0]] : pts, kind: "estimated" };
+}
+
+/** Accessible label of a mission line; a return always mirrors the outbound route (engine v0.9). */
+export function missionRouteLabel(m: MissionView, route: MissionRoute) {
+  if (m.status === "returning") return route.kind === "server" ? "Retour estimé en miroir de l’aller" : "Retour estimé en miroir de l’aller (tracé direct, trajet réel inconnu)";
+  return route.kind === "server" ? "Trajet de la mission" : "Départ et destination de la mission (tracé estimé, trajet réel inconnu)";
+}
+
+/**
+ * Where to draw a moving fleet: a purely visual estimate from the server's dates, along the
+ * route above. A returning fleet goes back from the point it had reached (recall) or from the
+ * destination.
+ */
+export function missionPosition(w: World, m: MissionView, now: number): Point | null {
+  const route = missionRoute(w, m);
+  if (!route) return null;
+  const pts = route.points;
+  if (pts.length === 1) return pts[0];
   let ratio = progressOf(m, now);
   if (m.status === "returning") {
     const reached = m.recalled_at

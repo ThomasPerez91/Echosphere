@@ -303,3 +303,5 @@
 }
 /* Keep the selected system's map under the sticky top bar (and resource strip) when scrolled into view. */
 .cmd-map, .cmd-map-panel { scroll-margin-top: 120px; }
+/* UX-API-01: real route unknown on this map, departure and destination joined directly. */
+.cmd-mission-path--estimate { opacity: .55; }
