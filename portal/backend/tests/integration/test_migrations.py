@@ -26,7 +26,7 @@ def test_independent_accounts_history_roundtrip():
         command.check(config)
         with engine.connect() as connection:
             assert connection.scalar(text("SELECT version_num FROM portal_alembic_version")) == (
-                "p0008_game_life"
+                "p0009_deleted_games"
             )
             assert connection.scalar(text("SHOW timezone")) == "UTC"
         assert set(inspect(engine).get_table_names()) == {
