@@ -5,7 +5,9 @@ type Membership = { membership_id: string; universe_id: string; name: string; de
   applied_status: string | null; delivery_state: 'pending' | 'applied'; expired: boolean;
   valid_until: string; last_checked_at: string | null; entry_available: boolean; entry_url?: string | null };
 export type LobbySnapshot = Projection;
-type Projection = { memberships: Membership[]; revocations: { scope: string; state: string; created_at: string }[] };
+/** UX-API-02: universes this account created that Game has not started/granted yet. */
+type Creation = { universe_id: string; name: string; created_at: string; state: 'starting' };
+type Projection = { memberships: Membership[]; creations?: Creation[]; revocations: { scope: string; state: string; created_at: string }[] };
 
 function validEntry(value: string, universe: string) {
   try {
@@ -38,10 +40,20 @@ export function Lobby({ csrf, onExpired, onSnapshot }: { csrf: string; onExpired
         && typeof item.valid_until === 'string' && (item.last_checked_at === null || typeof item.last_checked_at === 'string')
         && typeof item.entry_available === 'boolean'
         && (!item.entry_available || (typeof item.entry_url === 'string' && validEntry(item.entry_url, item.universe_id))))
+      || ('creations' in body && (!Array.isArray(body.creations) || !body.creations.every(item => item && typeof item.universe_id === 'string'
+        && typeof item.name === 'string' && typeof item.created_at === 'string' && item.state === 'starting')))
       || !body.revocations.every(item => item && ['account', 'device'].includes(item.scope)
         && ['pending', 'acknowledged'].includes(item.state) && typeof item.created_at === 'string')) throw new Error('projection');
     if (active.current && !signal.aborted) { setSnapshot(body as Projection); onSnapshot?.(body as Projection); setError(''); }
   }
+  // While a created universe is starting, re-read quietly (a read never extends idle or rights).
+  const starting = snapshot?.creations?.length ?? 0;
+  useEffect(() => {
+    if (!starting) return;
+    const timer = window.setInterval(() => { void read(AbortSignal.timeout(10000)).catch(() => undefined); }, 4000);
+    return () => window.clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starting]);
   async function refresh() {
     if (busy) return;
     const request = new AbortController(); controller.current = request;
@@ -73,7 +85,17 @@ export function Lobby({ csrf, onExpired, onSnapshot }: { csrf: string; onExpired
     <div className="p-p-head"><h2 id="lobby-title"><Icon name="planet" />Mes parties</h2>
       <div className="p-tools"><button type="button" className="p-btn p-btn-sm" disabled={busy} onClick={() => { void refresh(); }}>Actualiser mes parties</button></div></div>
     {!snapshot && !error && <p className="p-empty" role="status">Chargement des participations…</p>}
-    {snapshot && snapshot.memberships.length === 0 && <p className="p-empty">Aucune participation à un univers. Aucune partie de démonstration n’est créée automatiquement.</p>}
+    {!!snapshot?.creations?.length && <div className="p-games">{snapshot.creations.map(item =>
+      <article key={item.universe_id} className="p-game p-game--starting" aria-busy="true">
+        <img className="p-g-img" src={universeImage(item.universe_id)} alt="" width="640" height="360" loading="lazy" />
+        <div className="p-g-body">
+          <div className="p-g-title"><span className="p-g-emb"><Icon name="orbit" /></span><h3><span>{item.name}</span></h3></div>
+          <div className="p-g-tags"><span className="p-chip"><Icon name="clock" />Création en cours</span></div>
+          <p className="p-g-status">Le serveur de jeu prépare votre univers : galaxie, colonie de départ et adversaires.</p>
+          <p className="p-g-note">La partie apparaîtra ici, prête à jouer, dans quelques instants.</p>
+        </div>
+      </article>)}</div>}
+    {snapshot && snapshot.memberships.length === 0 && !snapshot.creations?.length && <p className="p-empty">Aucune participation à un univers. Aucune partie de démonstration n’est créée automatiquement.</p>}
     {!!snapshot?.memberships.length && <div className="p-games">{snapshot.memberships.map(item => {
       const live = item.desired_status === 'active' && item.delivery_state === 'applied' && !item.expired;
       const chip = item.delivery_state === 'pending' ? 'En attente' : item.desired_status === 'suspended' ? 'Suspendue' : item.desired_status === 'revoked' ? 'Révoquée' : item.expired ? 'À renouveler' : 'En cours';

@@ -171,7 +171,7 @@ export function AccountAccess({ verificationToken, onSession, page = 'register',
     <div className="p-dash-grid">
       <div className="p-games-col">
         <Lobby csrf={state.csrf_token} onSnapshot={setLobby} onExpired={expired} />
-        {lobby && lobby.memberships.length === 0 && <section className="p-panel p-first-game" aria-labelledby="first-game-title">
+        {lobby && lobby.memberships.length === 0 && !lobby.creations?.length && <section className="p-panel p-first-game" aria-labelledby="first-game-title">
           <div className="p-tab-pad"><h2 id="first-game-title">Aucune partie pour l’instant</h2>
             <p>Créez votre premier univers : vous y commencez avec une colonie, face à des Empires dirigés par l’IA.</p>
             <Link to={paths.newGame} className="p-btn p-btn-primary">Créer ma première partie</Link></div>
@@ -217,7 +217,7 @@ export function AccountAccess({ verificationToken, onSession, page = 'register',
     {notice && <p role="alert">{notice}</p>}
     {!mfaRecovering && !recovering && <RevocationStatus key={receiptVersion} />}
     {codes.length > 0 && <section className="panel"><h2>Vos dix codes de secours</h2><p>Conservez ces codes en lieu sûr. Ils ne seront plus consultables après fermeture de cet écran ; chaque code sert une seule fois.</p><pre className="recovery-codes">{codes.join('\n')}</pre><button type="button" onClick={() => setCodes([])}>Masquer les codes</button></section>}
-    {state ? (page === 'account' ? account : page === 'new-game' ? <NewGame /> : games) : <>
+    {state ? (page === 'account' ? account : page === 'new-game' ? <NewGame csrf={state.csrf_token} onExpired={expired} onCreated={() => onNavigate?.(paths.games)} /> : games) : <>
       {(page === 'games' || page === 'new-game' || page === 'account') && !mfaRecovering && !recovering && <p className="p-auth-note">Connectez-vous pour accéder à cette page.</p>}
       {mfaRecovering ? <MfaRecovery onBack={() => setMfaRecovering(false)} onOutcome={mfaOutcome} /> : recovering ? <ResetRequestForm onBack={() => { setRecovering(false); setLoginMode(true); }} /> : loginMode ? <LoginForm onLogin={value => {
         // Login deleted the previous receipt server-side; never keep showing its stale status.
