@@ -378,6 +378,8 @@ class Lobby:
                 options = universe.start_request or {}
                 item["family"] = options.get("family", "operator")
                 item["creator"] = universe.created_by == user.id
+                if universe.started_at is not None:
+                    item["started_at"] = wire_time(universe.started_at)
                 if options.get("family") == "private":
                     item["seats_total"] = options.get("humans", 1)
                     item["seats_taken"] = len(taken_seats(session, universe))

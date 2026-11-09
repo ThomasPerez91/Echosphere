@@ -47,6 +47,10 @@ contrôle non livré de l’univers (`creation_state`) :
 L’outbox reste « au moins une fois » : un refus continue d’être réessayé avec recul, il n’est jamais
 abandonné en silence. Aucun corps de réponse distant n’est exposé, seulement l’état.
 
+Chaque participation à un univers démarré porte aussi `started_at` (date du reçu Game) : « Mes
+parties » affiche mode, joueurs et date de démarrage ; le nom d’Empire reste affiché en jeu
+seulement (le Portal ne connaît que l’identifiant de la place).
+
 ## Limites connues
 
 - Les IA ne jouent que si le processus `ai-worker` tourne (profil Compose `ai`) ; sans lui, leurs

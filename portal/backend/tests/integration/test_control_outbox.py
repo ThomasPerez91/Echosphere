@@ -382,6 +382,7 @@ def test_self_service_solo_creation_grants_the_human_empire_to_its_creator(setup
     (member,) = projection["memberships"]
     assert member["universe_id"] == created["universe_id"]
     assert member["delivery_state"] == "applied" and member["desired_status"] == "active"
+    assert member["family"] == "solo" and member["started_at"].startswith("2026-11-09T09:00:00")
     with lobby.accounts.factory() as session:
         universe = session.get(UniverseReference, UUID(created["universe_id"]))
         row = session.scalar(select(UniverseMembership))

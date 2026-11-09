@@ -5,7 +5,7 @@ type Membership = { membership_id: string; universe_id: string; name: string; de
   applied_status: string | null; delivery_state: 'pending' | 'applied'; expired: boolean;
   valid_until: string; last_checked_at: string | null; entry_available: boolean; entry_url?: string | null;
   /** UX-API-02/03: family, seats and, for the creator of a multi game, its invitations. */
-  family?: string; creator?: boolean; seats_total?: number; seats_taken?: number; invite_mode?: 'link' | 'email';
+  family?: string; creator?: boolean; started_at?: string; seats_total?: number; seats_taken?: number; invite_mode?: 'link' | 'email';
   sent_invitations?: { id: string; email: string; state: string; expires_at: string }[] };
 export type ReceivedInvitation = { id: string; universe_id: string; name: string; expires_at: string };
 export type LobbySnapshot = Projection;
@@ -59,7 +59,7 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
         && (!item.entry_available || (typeof item.entry_url === 'string' && validEntry(item.entry_url, item.universe_id))))
       || ('invitations' in body && (!Array.isArray(body.invitations) || !body.invitations.every(item => item && typeof item.id === 'string'
         && typeof item.universe_id === 'string' && typeof item.name === 'string' && typeof item.expires_at === 'string')))
-      || !body.memberships.every(item => (item.seats_total === undefined || (Number.isInteger(item.seats_total) && Number.isInteger(item.seats_taken)))
+      || !body.memberships.every(item => (item.started_at === undefined || typeof item.started_at === 'string') && (item.seats_total === undefined || (Number.isInteger(item.seats_total) && Number.isInteger(item.seats_taken)))
         && (item.invite_mode === undefined || ['link', 'email'].includes(item.invite_mode))
         && (item.sent_invitations === undefined || (Array.isArray(item.sent_invitations) && item.sent_invitations.every(
           (sent: unknown) => !!sent && typeof sent === 'object' && typeof (sent as { id?: unknown }).id === 'string'))))
@@ -135,14 +135,14 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
           <div className="p-g-tags"><span className={`p-chip${live ? ' p-live' : ''}`}><Icon name="play" />{chip}</span></div>
           <p className="p-g-status">{item.delivery_state === 'pending' ? 'Confirmation de Game en attente' : item.desired_status === 'suspended' ? 'Participation suspendue' : item.desired_status === 'revoked' ? 'Accès révoqué' : item.expired ? 'Confirmation d’accès expirée' : 'Participation confirmée par Game'}</p>
           <dl className="p-g-info">
-            <div><dt><Icon name="flag" />Empire :</dt><dd className="p-na" title="Implémentation backend nécessaire">N/D</dd></div>
+            {item.started_at && <div><dt><Icon name="flag" />Démarrée le :</dt><dd><time dateTime={item.started_at}>{new Date(item.started_at).toLocaleString('fr-FR')}</time></dd></div>}
             <div><dt><Icon name="layers" />Mode :</dt>{item.family === 'solo' ? <dd>Solo</dd> : item.family === 'private' ? <dd>Multijoueur</dd>
               : <dd className="p-na" title="Implémentation backend nécessaire">N/D</dd>}</div>
             {item.seats_total !== undefined && <div><dt><Icon name="users" />Joueurs :</dt><dd>{item.seats_taken} / {item.seats_total}</dd></div>}
             {item.last_checked_at && <div><dt><Icon name="clock" />Dernière confirmation :</dt><dd><time dateTime={item.last_checked_at}>{new Date(item.last_checked_at).toLocaleString('fr-FR')}</time></dd></div>}
             <div><dt><Icon name="calendar" />Droits valables jusqu’au :</dt><dd><time dateTime={item.valid_until}>{new Date(item.valid_until).toLocaleString('fr-FR')}</time></dd></div>
           </dl>
-          <p className="p-g-note">Nom d’Empire et tour de jeu : implémentation backend nécessaire.</p>
+          <p className="p-g-note">Le nom de votre Empire et l’avancement de la partie s’affichent en jeu.</p>
           {item.creator && item.invite_mode && <InvitePanel csrf={csrf} item={item} onChanged={() => { void read(AbortSignal.timeout(10000)).catch(() => undefined); }} />}
           <div className="p-g-act">
             {!error && item.entry_available && item.entry_url ? <a className="p-btn p-btn-glow" href={item.entry_url} referrerPolicy="no-referrer"><Icon name="play" />Entrer dans cet univers</a>

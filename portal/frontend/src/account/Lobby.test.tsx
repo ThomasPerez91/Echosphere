@@ -55,3 +55,13 @@ test('acknowledged entry navigates by link and explicit confirmation waits for G
   expect(fetcher.mock.calls[1][0]).toBe(`/api/lobby/universes/${universe}/renew`);
   expect(fetcher.mock.calls[1][1].headers['X-CSRF-Token']).toBe('csrf');
 });
+
+test('a started game shows its mode, players and start date', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok({ revocations: [], memberships: [{ ...member, delivery_state: 'applied',
+    applied_status: 'active', family: 'private', creator: false, seats_total: 3, seats_taken: 2, started_at: '2026-11-09T09:00:00Z' }] })));
+  render(<Lobby csrf="csrf" />);
+  expect(await screen.findByText('Multijoueur')).toBeVisible();
+  expect(screen.getByText('2 / 3')).toBeVisible();
+  expect(screen.getByText('Démarrée le :')).toBeVisible();
+  expect(document.body.textContent).not.toContain('N/D');
+});
