@@ -128,7 +128,8 @@ def test_an_extraction_elsewhere_can_come_back_home_with_its_load(fleets):
             observed_at=w.game.clock(), observed_reserve=deposit.reserve_remaining,
         ))
         deposit_id = deposit.id
-    assert order(w, "extractor", 1).status_code == 200
+    ordered = order(w, "extractor", 1)
+    assert ordered.status_code == 200, ordered.json()
     wait(w, 51)
     assert worker(w) >= 1
     garrison = next(f for f in view(w).json()["fleets"] if f["kind"] == "GARRISON")

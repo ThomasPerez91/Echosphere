@@ -563,7 +563,9 @@ class Fleets(Colonies):
                 key=ns + body.idempotency_key,
                 at=at,
             )
-            return {"mission_id": str(mission.id), "return_at": mission.return_at.isoformat()}
+            # EXP-02b: a stopped extraction that stays has no way back.
+            back = mission.return_at.isoformat() if mission.return_at else None
+            return {"mission_id": str(mission.id), "return_at": back}
 
         return self.act(raw, universe_id, empire_id, ("fleet.command",), run)
 
