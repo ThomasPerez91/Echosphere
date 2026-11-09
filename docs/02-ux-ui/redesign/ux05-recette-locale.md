@@ -3,7 +3,7 @@
 **Statut : procédure à exécuter par l’utilisateur (WSL2 + Docker), non encore exécutée.**
 Elle valide en univers réel les écrans de la PR #19 avec les backends des PR #20 (trajet des
 missions), #21 (historique des constructions) et #22 (création de partie). Rien n’est fusionné : la branche
-`recette/ux-weekend` réunit ces PR pour ce test seulement (aucune PR, aucune CI dédiée ;
+`recette/ux-weekend` réunit ces PR (puis #24 multi, #25 trajet des missions, #26 état de création) pour ce test seulement (aucune PR, aucune CI dédiée ;
 chacune des trois têtes a sa Fast CI verte).
 
 ## 0. Ce qu’il faut
@@ -40,6 +40,21 @@ Ne jamais lancer `down -v` dans le dossier de la pile conservée.
    secondes (le temps que le worker de contrôle livre au jeu puis accorde votre Empire).
 3. Si la partie reste « Création en cours » plus d’une minute :
    `docker compose logs --tail=100 portal-control-worker game-control` et envoyer la sortie.
+
+**Multijoueur (PR #24, jusqu’à 4 Empires humains + IA pour l’instant).** Deux comptes suffisent :
+une deuxième adresse quelconque (Mailpit reçoit tout), dans une fenêtre de navigation privée.
+
+4. Compte A : « Nouvelle partie » → « Multijoueur », 2 joueurs, « Lien à partager » (ou « Invitation
+   par email », au choix, pas les deux), « Créer la partie ».
+5. Lien : dans la carte de la partie, « Générer un lien d’invitation », « Copier le lien », puis l’ouvrir dans la fenêtre du
+   compte B (connecté) → « Rejoindre la partie » → la partie apparaît dans « Mes parties » de B.
+   Email : saisir l’adresse de B, le message arrive dans Mailpit ; B le voit aussi dans « Mes
+   parties » (« Accepter » / « Refuser »).
+6. Vérifier : « Joueurs : 2 / 2 », un nouveau lien ou une nouvelle invitation est refusé (« Toutes les
+   places sont prises »), chacun entre dans l’univers avec son propre Empire.
+
+Une création qui n’aboutit pas s’affiche « Création retardée » (jeu injoignable, renvoi automatique)
+ou « Création bloquée » (refus du jeu) au lieu de rester « Création en cours » (PR #26).
 
 Les IA ne jouent que si `ai-worker` tourne (`docker compose --profile ai up -d ai-worker`, étape 1).
 
@@ -85,6 +100,8 @@ mode appareil, 390 px) et au clavier (Tab, Entrée, Échap).
 - Cartographier un signal avec la sonde ; déplacer une flotte ; coloniser un monde libre ;
   préparer une attaque (résumé serveur) ; rappeler une mission. Après chaque envoi : flotte sur la
   carte et dans « Vos flottes », pas de double envoi si vous cliquez deux fois.
+- Flotte en route sur plusieurs sauts : la ligne suit les systèmes réellement traversés (PR #25) ;
+  après un rappel, le libellé indique « Retour estimé en miroir de l’aller ».
 - La « Carte classique » reste accessible et fonctionne.
 
 **Rapports**
