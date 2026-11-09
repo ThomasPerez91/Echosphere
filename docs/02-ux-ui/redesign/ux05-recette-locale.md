@@ -158,6 +158,12 @@ système choisit, clic droit ou Échap annule et rouvre la fenêtre.
 - PR #39 (contrôle Portal → Game) : les créations solo restaient « Création bloquée »
   (`invalid_receipt`) ; après mise à jour, les créations en attente aboutissent d’elles-mêmes au
   prochain essai du worker de contrôle (environ une minute).
+- PR #41 : cartes « Mes parties » réorganisées (nom et état sur l’illustration, informations alignées,
+  état coloré) ; **Supprimer** une partie solo ou une création bloquée (confirmation en deux temps,
+  accès révoqué, migration Portal p0009) ; « Prolonger l’accès » remplace « Confirmer de nouveaux
+  droits » et n’apparaît que lorsque l’accès (fenêtre de quelques heures) se termine ; carte : toutes
+  les étoiles visibles, « Voir toute la galaxie », effet radar retiré ; les créations bloquées
+  avant #39 aboutissent.
 - La pile de recette porte le nom de projet Compose `echosphere` sur ce poste : elle partage les
   volumes de la pile conservée. Ne jamais lancer `down -v`.
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../theme/Icon';
-import { EmpireName, LeaveGame } from './GameLife';
+import { DeleteGame, EmpireName, LeaveGame } from './GameLife';
 
 type Membership = { membership_id: string; universe_id: string; name: string; desired_status: string;
   applied_status: string | null; delivery_state: 'pending' | 'applied'; expired: boolean;
@@ -123,13 +123,13 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
       <div className="p-tools"><button type="button" className="p-btn p-btn-sm" disabled={busy} onClick={() => { void refresh(); }}>Actualiser mes parties</button></div></div>
     {!snapshot && !error && <p className="p-empty" role="status">Chargement des participations…</p>}
     {!!snapshot?.creations?.length && <div className="p-games">{snapshot.creations.map(item =>
-      <article key={item.universe_id} className={`p-game p-game--${item.state}`} aria-busy={item.state !== 'refused'}>
-        <img className="p-g-img" src={universeImage(item.universe_id)} alt="" width="640" height="360" loading="lazy" />
+      <article key={item.universe_id} className={`p-game p-game--${item.state === 'refused' ? 'error' : 'wait'}`} aria-busy={item.state !== 'refused'}>
+        <GameHead universe={item.universe_id} name={item.name} chip={CREATION_LABELS[item.state].chip} icon="clock" />
         <div className="p-g-body">
-          <div className="p-g-title"><span className="p-g-emb"><Icon name="orbit" /></span><h3><span>{item.name}</span></h3></div>
-          <div className="p-g-tags"><span className="p-chip"><Icon name="clock" />{CREATION_LABELS[item.state].chip}</span></div>
-          <p className="p-g-status" role={item.state === 'starting' ? undefined : 'status'}>{CREATION_LABELS[item.state].status}</p>
+          <p className={`p-g-status p-g-status--${item.state === 'refused' ? 'error' : 'wait'}`} role={item.state === 'starting' ? undefined : 'status'}>{CREATION_LABELS[item.state].status}</p>
           <p className="p-g-note">{CREATION_LABELS[item.state].note}</p>
+          {item.state !== 'starting' && <div className="p-g-act"><div className="p-g-more">
+            <DeleteGame csrf={csrf} universe={item.universe_id} name={item.name} started={false} onChanged={reread} /></div></div>}
         </div>
       </article>)}</div>}
     {snapshot && current.length === 0 && !snapshot.creations?.length && <p className="p-empty">Aucune participation à un univers. Aucune partie de démonstration n’est créée automatiquement.</p>}
@@ -137,30 +137,36 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
       const live = item.desired_status === 'active' && item.delivery_state === 'applied' && !item.expired;
       const chip = item.delivery_state === 'pending' ? 'En attente' : item.desired_status === 'suspended' ? 'Suspendue' : item.desired_status === 'revoked' ? 'Révoquée' : item.expired ? 'À renouveler' : item.archived ? 'Archivée' : 'En cours';
       const playable = item.desired_status === 'active' && !item.archived;
-      return <article key={item.membership_id} className="p-game membership">
-        <img className="p-g-img" src={universeImage(item.universe_id)} alt="" width="640" height="360" loading="lazy" />
+      const tone = live && !item.archived ? 'ok' : item.desired_status === 'revoked' ? 'error' : 'wait';
+      // Game access is confirmed for a few hours at a time; offered when it is ending or over.
+      const ending = Date.parse(item.valid_until) - Date.now() < 3600_000;
+      return <article key={item.membership_id} className={`p-game membership p-game--${tone}`}>
+        <GameHead universe={item.universe_id} name={item.name} chip={chip} icon="play" live={live} />
         <div className="p-g-body">
-          <div className="p-g-title"><span className="p-g-emb"><Icon name="orbit" /></span><h3><span>{item.name}</span></h3></div>
-          <div className="p-g-tags"><span className={`p-chip${live ? ' p-live' : ''}`}><Icon name="play" />{chip}</span></div>
-          <p className="p-g-status">{item.delivery_state === 'pending' ? 'Confirmation de Game en attente' : item.desired_status === 'suspended' ? 'Participation suspendue' : item.desired_status === 'revoked' ? 'Accès révoqué' : item.expired ? 'Confirmation d’accès expirée' : item.archived ? 'Partie archivée : consultation seule' : 'Participation confirmée par Game'}</p>
+          <p className={`p-g-status p-g-status--${tone}`}>{item.delivery_state === 'pending' ? 'Confirmation de Game en attente' : item.desired_status === 'suspended' ? 'Participation suspendue' : item.desired_status === 'revoked' ? 'Accès révoqué' : item.expired ? 'Confirmation d’accès expirée' : item.archived ? 'Partie archivée : consultation seule' : 'Participation confirmée par Game'}</p>
           <dl className="p-g-info">
             {item.empire_name !== undefined && <div><dt><Icon name="flag" />Empire :</dt><EmpireName csrf={csrf} universe={item.universe_id}
               current={item.empire_name} canRename={playable && item.delivery_state === 'applied'} onChanged={reread} /></div>}
-            {item.started_at && <div><dt><Icon name="flag" />Démarrée le :</dt><dd><time dateTime={item.started_at}>{new Date(item.started_at).toLocaleString('fr-FR')}</time></dd></div>}
+            {item.started_at && <div><dt><Icon name="flag" />Démarrée le :</dt><dd><time dateTime={item.started_at}>{new Date(item.started_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</time></dd></div>}
             <div><dt><Icon name="layers" />Mode :</dt>{item.family === 'solo' ? <dd>Solo</dd> : item.family === 'private' ? <dd>Multijoueur</dd>
               : <dd className="p-na" title="Implémentation backend nécessaire">N/D</dd>}</div>
             {item.seats_total !== undefined && <div><dt><Icon name="users" />Joueurs :</dt><dd>{item.seats_taken} / {item.seats_total}</dd></div>}
-            {item.last_checked_at && <div><dt><Icon name="clock" />Dernière confirmation :</dt><dd><time dateTime={item.last_checked_at}>{new Date(item.last_checked_at).toLocaleString('fr-FR')}</time></dd></div>}
-            <div><dt><Icon name="calendar" />Droits valables jusqu’au :</dt><dd><time dateTime={item.valid_until}>{new Date(item.valid_until).toLocaleString('fr-FR')}</time></dd></div>
+            {item.last_checked_at && <div><dt><Icon name="clock" />Confirmé le :</dt><dd><time dateTime={item.last_checked_at}>{new Date(item.last_checked_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</time></dd></div>}
+            <div><dt><Icon name="calendar" />Accès jusqu’au :</dt><dd><time dateTime={item.valid_until}>{new Date(item.valid_until).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</time></dd></div>
           </dl>
           {item.creator && item.invite_mode && playable && <InvitePanel csrf={csrf} item={item} onChanged={reread} />}
           <div className="p-g-act">
             {!error && item.entry_available && item.entry_url ? <a className="p-btn p-btn-glow" href={item.entry_url} referrerPolicy="no-referrer"><Icon name="play" />{item.archived ? 'Consulter cet univers' : 'Entrer dans cet univers'}</a>
               : <p className="p-g-note">L’entrée requiert une adresse vérifiée et un accès actif confirmé par Game.</p>}
-            {item.desired_status === 'active' && item.delivery_state === 'applied' && <button type="button" className="p-btn p-btn-sm" disabled={busy}
-              onClick={() => { void renew(item.universe_id); }}>Confirmer de nouveaux droits pour cette partie</button>}
-            {playable && item.delivery_state === 'applied' && (item.family === 'solo' && item.creator || item.family === 'private') &&
-              <LeaveGame csrf={csrf} universe={item.universe_id} name={item.name} family={item.family as 'solo' | 'private'} onChanged={reread} />}
+            <div className="p-g-more">
+              {item.desired_status === 'active' && item.delivery_state === 'applied' && (item.expired || ending) && <button type="button" className="p-btn p-btn-sm" disabled={busy}
+                title="L’accès au serveur de jeu est confirmé pour quelques heures ; prolongez-le pour entrer de nouveau."
+                onClick={() => { void renew(item.universe_id); }}>Prolonger l’accès</button>}
+              {playable && item.delivery_state === 'applied' && (item.family === 'solo' && item.creator || item.family === 'private') &&
+                <LeaveGame csrf={csrf} universe={item.universe_id} name={item.name} family={item.family as 'solo' | 'private'} onChanged={reread} />}
+              {item.creator && item.family !== 'private' &&
+                <DeleteGame csrf={csrf} universe={item.universe_id} name={item.name} started onChanged={reread} />}
+            </div>
           </div>
         </div>
       </article>; })}</div>}
@@ -171,6 +177,18 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
     </p>)}</div>}
     {error && <p className="p-empty form-error" role="alert">{error}</p>}
   </section>;
+}
+
+/** Card header: illustration with the name and the state over its lower edge. */
+function GameHead({ universe, name, chip, icon, live = false }: { universe: string; name: string; chip: string; icon: 'clock' | 'play'; live?: boolean }) {
+  return <div className="p-g-head">
+    <img className="p-g-img" src={universeImage(universe)} alt="" width="640" height="360" loading="lazy" />
+    <span className={`p-chip p-g-chip${live ? ' p-live' : ''}`}><Icon name={icon} />{chip}</span>
+    <div className="p-g-over">
+      <span className="p-g-emb" aria-hidden="true"><Icon name="orbit" /></span>
+      <h3><span>{name}</span></h3>
+    </div>
+  </div>;
 }
 
 const images = ['partie-auralis', 'partie-orion', 'partie-nyx'];

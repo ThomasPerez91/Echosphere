@@ -4,6 +4,7 @@ const errors: Record<string, string> = {
   invalid_empire_name: 'Le nom d’Empire doit compter 2 à 40 caractères visibles.',
   rename_unavailable: 'Le nom ne peut plus être changé dans cette partie.',
   leave_unavailable: 'Cette partie ne peut pas être quittée depuis le Portal.',
+  delete_unavailable: 'Une partie multijoueur ne se supprime pas : quittez-la, les autres joueurs continuent.',
   csrf_denied: 'Votre connexion a changé. Rechargez la page puis réessayez.',
 };
 
@@ -73,6 +74,30 @@ export function LeaveGame({ csrf, universe, name, family, onChanged }: {
       : 'Votre Empire sera repris par une IA qui suit les mêmes règles ; vous ne pourrez plus y revenir. Les autres joueurs continuent.'}</p>
     <button type="button" className="p-btn p-btn-sm p-btn-danger" disabled={busy} onClick={() => { void leave(); }}>
       {solo ? 'Confirmer l’archivage' : 'Confirmer : quitter la partie'}</button>
+    <button type="button" className="text-button" onClick={() => setConfirming(false)}>Annuler</button>
+    {message && <p role="alert" className="form-error">{message}</p>}
+  </div>;
+}
+
+/** Recette 09/11/2026: the creator deletes a solo game, or a creation that never started.
+ * Confirmed in place; the game leaves every list and its access is revoked. */
+export function DeleteGame({ csrf, universe, name, started, onChanged }: {
+  csrf: string; universe: string; name: string; started: boolean; onChanged: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const remove = async () => {
+    if (busy) return; setBusy(true); setMessage('');
+    try { await post(`/api/lobby/universes/${encodeURIComponent(universe)}/delete`, csrf, {}); setConfirming(false); onChanged(); }
+    catch (failure) { setMessage(errors[(failure as Error).message] ?? 'Suppression non confirmée. Réessayez.'); }
+    finally { setBusy(false); }
+  };
+  if (!confirming) return <button type="button" className="p-btn p-btn-sm p-btn-quiet-danger" onClick={() => setConfirming(true)}>Supprimer</button>;
+  return <div className="p-leave" role="group" aria-label={`Supprimer ${name}`}>
+    <p>{started ? 'La partie disparaîtra de vos listes et vous n’y aurez plus accès. Cette action est définitive.'
+      : 'Cette création disparaîtra de vos listes ; si le serveur la démarre plus tard, elle restera inaccessible.'}</p>
+    <button type="button" className="p-btn p-btn-sm p-btn-danger" disabled={busy} onClick={() => { void remove(); }}>Confirmer la suppression</button>
     <button type="button" className="text-button" onClick={() => setConfirming(false)}>Annuler</button>
     {message && <p role="alert" className="form-error">{message}</p>}
   </div>;

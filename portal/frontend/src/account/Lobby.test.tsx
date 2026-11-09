@@ -49,7 +49,7 @@ test('acknowledged entry navigates by link and explicit confirmation waits for G
   vi.stubGlobal('fetch', fetcher); render(<Lobby csrf="csrf" />);
   expect(await screen.findByRole('link', { name: 'Entrer dans cet univers' })).toHaveAttribute('href', entry.entry_url);
   expect(fetcher).toHaveBeenCalledOnce();
-  fireEvent.click(screen.getByRole('button', { name: 'Confirmer de nouveaux droits pour cette partie' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Prolonger l’accès' }));
   expect(await screen.findByText('Confirmation de Game en attente')).toBeVisible();
   expect(screen.queryByRole('link', { name: 'Entrer dans cet univers' })).not.toBeInTheDocument();
   expect(fetcher.mock.calls[1][0]).toBe(`/api/lobby/universes/${universe}/renew`);
@@ -104,4 +104,18 @@ test('Q60: an archived solo game is only consultable', async () => {
   expect(await screen.findByText('Partie archivée : consultation seule')).toBeVisible();
   expect(screen.getByRole('link', { name: 'Consulter cet univers' })).toBeVisible();
   expect(screen.queryByRole('button', { name: /Archiver|Renommer/ })).toBeNull();
+});
+
+test('a blocked creation can be deleted in two steps', async () => {
+  const universe = 'e2a64223-2319-4d91-a381-e6b24551e191';
+  const fetcher = vi.fn()
+    .mockResolvedValueOnce(ok({ memberships: [], revocations: [], creations: [{ universe_id: universe, name: 'Shadowsun', created_at: '2026-11-09T18:07:35Z', state: 'refused' }] }))
+    .mockResolvedValueOnce(ok({ status: 'deleted' }))
+    .mockResolvedValueOnce(ok({ memberships: [], revocations: [], creations: [] }));
+  vi.stubGlobal('fetch', fetcher); render(<Lobby csrf="csrf" />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Supprimer' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmer la suppression' }));
+  await waitFor(() => expect(screen.queryByText('Shadowsun')).not.toBeInTheDocument());
+  expect(fetcher.mock.calls[1][0]).toBe(`/api/lobby/universes/${universe}/delete`);
+  expect(fetcher.mock.calls[1][1].headers['X-CSRF-Token']).toBe('csrf');
 });

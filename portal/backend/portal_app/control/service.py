@@ -330,7 +330,10 @@ class Lobby:
             rows = session.execute(
                 select(UniverseMembership, UniverseReference)
                 .join(UniverseReference, UniverseReference.id == UniverseMembership.universe_id)
-                .where(UniverseMembership.user_id == user.id)
+                .where(
+                    UniverseMembership.user_id == user.id,
+                    UniverseReference.deleted_at.is_(None),
+                )
                 .order_by(UniverseReference.created_at, UniverseReference.id)
             ).all()
             memberships = []
@@ -457,7 +460,10 @@ class Lobby:
                 }
                 for universe in session.scalars(
                     select(UniverseReference)
-                    .where(UniverseReference.created_by == user.id)
+                    .where(
+                        UniverseReference.created_by == user.id,
+                        UniverseReference.deleted_at.is_(None),
+                    )
                     .order_by(UniverseReference.created_at, UniverseReference.id)
                 )
                 # Started universes appear as memberships once access is granted.

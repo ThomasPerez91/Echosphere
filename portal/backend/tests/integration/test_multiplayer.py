@@ -228,3 +228,44 @@ def test_archiving_a_solo_game_keeps_it_readable_only(world):
     with pytest.raises(PublicError) as renamed:
         life.rename(creator, csrf(creator), universe, "Trop tard")
     assert renamed.value.code == "rename_unavailable"
+
+
+def test_deleting_a_solo_game_or_a_blocked_creation_removes_it_from_the_lists(world):
+    """Recette 09/11/2026: the creator deletes a solo game (access revoked) or a creation that
+    never started (no access is granted if Game starts it later); a multi game is never deleted."""
+    from portal_app.control.life import GameLife
+
+    accounts, remote, lobby, _, creator = world
+    life = GameLife(accounts)
+    body = {"request_id": str(uuid4()), "name": "Solo", "family": "solo", "profiles": []}
+    played = lobby.create(creator, csrf(creator), body, "peer")["universe_id"]
+    drain(accounts, remote)
+    assert life.delete(creator, csrf(creator), played) == {"status": "deleted"}
+    assert life.delete(creator, csrf(creator), played) == {"status": "deleted"}  # replay
+    with accounts.factory() as session:
+        member = session.scalar(select(UniverseMembership).where(
+            UniverseMembership.universe_id == UUID(played)))
+        assert member.desired_status == "revoked" and member.bindings == []
+    # A creation deleted before Game answered: started later, it is never granted nor shown.
+    body = dict(body, request_id=str(uuid4()), name="Bloquée")
+    blocked = lobby.create(creator, csrf(creator), body, "peer")["universe_id"]
+    assert any(c["universe_id"] == blocked for c in lobby.read(creator)["creations"])
+    assert life.delete(creator, csrf(creator), blocked) == {"status": "deleted"}
+    drain(accounts, remote)
+    view = lobby.read(creator)
+    shown = {m["universe_id"] for m in view["memberships"]} | {
+        c["universe_id"] for c in view["creations"]}
+    assert played not in shown and blocked not in shown
+    with accounts.factory() as session:
+        assert session.scalar(select(func.count()).select_from(UniverseMembership).where(
+            UniverseMembership.universe_id == UUID(blocked))) == 0
+    # Someone else's game, or a started multi game: refused.
+    friend = player(accounts, "friend@example.org")
+    with pytest.raises(PublicError) as other:
+        life.delete(friend, csrf(friend), blocked)
+    assert other.value.code == "universe_not_found"
+    shared = multi(lobby, creator, 2, "link")
+    drain(accounts, remote)
+    with pytest.raises(PublicError) as refused:
+        life.delete(creator, csrf(creator), shared)
+    assert refused.value.code == "delete_unavailable"

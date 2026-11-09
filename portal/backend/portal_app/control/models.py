@@ -55,6 +55,8 @@ class UniverseReference(Base):
     seats: Mapped[list | None] = mapped_column(JSONB)
     # Q60: a solo game archived by its player; seats handed over to an AI when a player left.
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Recette 09/11/2026: removed from its creator's list (solo game or creation not started).
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     left_seats: Mapped[list | None] = mapped_column(JSONB)
 
 

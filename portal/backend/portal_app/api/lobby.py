@@ -120,6 +120,14 @@ async def empire_name(universe_id: UUID, request: Request):
         body.get("name")))
 
 
+@router.post("/universes/{universe_id}/delete")
+async def delete(universe_id: UUID, request: Request):
+    """Remove my solo game, or my creation that never started, from my list (access revoked)."""
+    await _json(request)
+    return response(await run_in_threadpool(
+        GameLife(request.app.state.accounts).delete, *_proofs(request), universe_id))
+
+
 @router.post("/universes/{universe_id}/leave")
 async def leave(universe_id: UUID, request: Request):
     """Q60: archive my solo game, or leave a multi game (my Empire goes on under an AI)."""

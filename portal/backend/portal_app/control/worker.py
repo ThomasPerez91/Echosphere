@@ -131,7 +131,8 @@ def accept_receipt(session, accounts, row, receipt):
             universe.started_at = datetime.fromisoformat(result["started_at"])
             # The creator gets the first seat with every permission, through the same
             # membership/access path as operators (revision, epochs, reconciliation).
-            if creator is not None and creator.status == "active":
+            # A creation deleted while starting stays out of reach: no access is granted.
+            if creator is not None and creator.status == "active" and universe.deleted_at is None:
                 granted = Lobby(accounts).grant(
                     session,
                     creator,

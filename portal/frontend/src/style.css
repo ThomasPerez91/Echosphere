@@ -248,3 +248,33 @@ body { margin: 0; background: #030812; }
 /* My games: the statistics strip no longer overlaps the hero buttons. */
 .p-stats { margin-top: 18px; }
 .p-auth-zone, .p-account-zone, .p-games-panel, .p-account, #fonctionnalites, #univers, #actualites { scroll-margin-top: calc(var(--p-head-h) + 12px); }
+
+/* Game cards (recette 09/11/2026): name and state over the illustration, aligned facts,
+   status coloured by tone, secondary actions grouped under the main one. */
+.p-game { position: relative; }
+.p-game--error { border-color: rgba(255, 107, 125, .55); }
+.p-g-head { position: relative; }
+.p-g-head .p-g-img { display: block; aspect-ratio: 16 / 7; }
+.p-g-over { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 10px; padding: 18px 12px 10px;
+  background: linear-gradient(180deg, rgba(4,10,22,0), rgba(4,10,22,.92) 55%); }
+.p-g-over .p-g-emb { width: 38px; height: 38px; }
+.p-g-over .p-g-emb .p-i { width: 22px; height: 22px; }
+.p-game .p-g-over h3 { flex: 1; min-width: 0; padding: 0; margin: 0; font: 600 18px/1.2 var(--p-font); }
+.p-g-over h3 span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p-g-chip { position: absolute; top: 10px; right: 10px; font-size: 12px; background: rgba(4,10,22,.82); backdrop-filter: blur(4px); }
+.p-game .p-g-body { margin-top: 0; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.p-g-status { text-align: left !important; margin: 0 !important; }
+.p-g-status--ok { color: var(--p-green) !important; }
+.p-g-status--wait { color: var(--p-amber) !important; }
+.p-g-status--error { color: #ff8f9b !important; }
+.p-g-info > div { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 2px 12px; padding: 6px 0; border-top: 1px solid var(--p-line); }
+.p-g-info > div:first-child { border-top: 0; }
+.p-g-info dt { white-space: nowrap; }
+.p-g-info dd { margin-left: auto; text-align: right; }
+.p-game .p-g-act { display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding-top: 6px; grid-template-columns: none; }
+.p-g-act > .p-btn-glow { width: 100%; justify-content: center; }
+.p-g-more { display: flex; flex-wrap: wrap; gap: 8px; }
+.p-g-more:empty { display: none; }
+.p-g-more .p-btn { flex: 1 1 auto; justify-content: center; }
+.p-btn-quiet-danger { color: #ffb3bc; border-color: rgba(255,107,125,.4); }
+.p-btn-quiet-danger:hover { border-color: rgba(255,107,125,.8); color: #fff; }

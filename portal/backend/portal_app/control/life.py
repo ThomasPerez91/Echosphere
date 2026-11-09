@@ -135,3 +135,35 @@ class GameLife:
                 universe_id=universe.id,
             )
             return {"status": "left"}
+
+    def delete(self, raw, proof, universe_id):
+        """Recette 09/11/2026: the creator removes a solo game, or a creation that never started,
+        from the lists. Access to Game is revoked; nothing is shown again. A multi game is left
+        (its other players go on), never deleted."""
+        check_csrf(raw, proof)
+        with self.accounts.factory.begin() as session:
+            user = self._member(session, raw)
+            try:
+                identifier = UUID(str(universe_id))
+            except ValueError:
+                raise PublicError("universe_not_found", 404) from None
+            universe = session.get(UniverseReference, identifier, with_for_update=True)
+            if universe is None or universe.created_by != user.id:
+                raise PublicError("universe_not_found", 404)
+            if universe.deleted_at is not None:
+                return {"status": "deleted"}
+            family = (universe.start_request or {}).get("family")
+            if family == "private" and universe.human_empire_id is not None:
+                raise PublicError("delete_unavailable", 409)
+            member = session.scalar(
+                select(UniverseMembership)
+                .where(
+                    UniverseMembership.user_id == user.id,
+                    UniverseMembership.universe_id == identifier,
+                )
+                .with_for_update()
+            )
+            if member is not None and member.desired_status != "revoked":
+                Lobby(self.accounts).grant(session, user, universe, "revoked", [])
+            universe.deleted_at = self.accounts.clock()
+            return {"status": "deleted"}
