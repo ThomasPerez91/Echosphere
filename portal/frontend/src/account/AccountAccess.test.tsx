@@ -207,3 +207,55 @@ test('a lost creation answer is retried with the same request id', async () => {
   await waitFor(() => expect(ids).toHaveLength(2));
   expect(ids[0]).toBe(ids[1]);
 });
+
+test('a multiplayer game sends humans and the invitation mode, within four Empires', async () => {
+  const posted: string[] = [];
+  installFetcher((url: string, options?: RequestInit) => {
+    if (url === '/api/lobby/universes') { posted.push(options!.body as string); return Promise.resolve({ ok: true, status: 200, json: async () => ({ universe_id: 'u', status: 'starting' }) }); }
+    return Promise.resolve({ ok: true, json: async () => snapshot });
+  });
+  render(<AccountAccess verificationToken={null} page="new-game" />);
+  fireEvent.change(await screen.findByLabelText('Nom de l’univers'), { target: { value: 'Coalition' } });
+  fireEvent.click(screen.getByLabelText('Multijoueur'));
+  fireEvent.click(screen.getByLabelText('3 joueurs'));
+  expect(screen.queryByLabelText('2')).toBeNull(); // 3 humans + 2 AI would exceed four Empires
+  fireEvent.click(screen.getByLabelText('Invitation par email'));
+  fireEvent.click(screen.getByRole('button', { name: 'Créer la partie' }));
+  await waitFor(() => expect(posted).toHaveLength(1));
+  expect(JSON.parse(posted[0])).toMatchObject({ family: 'private', humans: 3, invite: 'email', profiles: ['economic_cautious'] });
+});
+
+test('a received email invitation is accepted from the games page, then the lobby is re-read', async () => {
+  let accepted = false;
+  const lobbyReads: number[] = [];
+  vi.stubGlobal('fetch', (url: string, options?: RequestInit) => Promise.resolve(
+    url === '/api/auth/revocation-status' ? { ok: false, status: 404, json: async () => ({ error: { code: 'receipt_expired' } }) }
+    : url === '/api/lobby/memberships' ? (lobbyReads.push(1), { ok: true, json: async () => ({ memberships: [], revocations: [], creations: [],
+      invitations: accepted ? [] : [{ id: 'inv-1', universe_id: 'u', name: 'Coalition', expires_at: '2026-11-16T09:00:00Z' }] }) })
+    : url === '/api/lobby/invitations/accept' ? (accepted = JSON.parse(options!.body as string).invitation_id === 'inv-1', { ok: true, status: 200, json: async () => ({ status: 'joined' }) })
+    : { ok: true, json: async () => snapshot }));
+  render(<AccountAccess verificationToken={null} page="games" />);
+  expect(await screen.findByText('Coalition')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Accepter' }));
+  await waitFor(() => expect(accepted).toBe(true));
+  await waitFor(() => expect(screen.queryByText('Coalition')).toBeNull());
+  expect(lobbyReads.length).toBeGreaterThanOrEqual(2);
+});
+
+test('the join page uses the link token once signed in and explains a replaced link', async () => {
+  const bodies: string[] = [];
+  let reply = { ok: false, status: 404, json: async () => ({ error: { code: 'invitation_not_found' } }) };
+  installFetcher((url: string, options?: RequestInit) => {
+    if (url === '/api/lobby/invitations/accept') { bodies.push(options!.body as string); return Promise.resolve(reply); }
+    return Promise.resolve({ ok: true, json: async () => snapshot });
+  });
+  const onNavigate = vi.fn();
+  const token = 'a'.repeat(43);
+  render(<AccountAccess verificationToken={null} page="join" inviteToken={token} onNavigate={onNavigate} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Rejoindre la partie' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ce lien n’est plus valable');
+  reply = { ok: true, status: 200, json: async () => ({ status: 'joined' }) } as typeof reply;
+  fireEvent.click(screen.getByRole('button', { name: 'Rejoindre la partie' }));
+  await waitFor(() => expect(onNavigate).toHaveBeenCalledWith('/parties'));
+  expect(JSON.parse(bodies[0])).toEqual({ token });
+});

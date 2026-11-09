@@ -55,3 +55,43 @@ liste dès que la participation existe.
   `backend/tests/integration/test_control.py` (démarrage, rejeu, conflits),
   `portal/backend/tests/integration/test_control_outbox.py` (création, rejeu, accès du créateur,
   route HTTP) et `test_migrations.py` (tête `p0006_creation`). Recette Compose à faire.
+
+## UX-API-03 — Parties multijoueurs (PRIVATE) et invitations
+
+**Statut : implémenté sur `work/multi-private` (PR Draft vers `recette/ux-weekend`), non fusionné ;
+tests PostgreSQL écrits, exécutés seulement par la Full CI après fusion.** Décisions : Q59.
+
+- **Création** : `family: "private"` avec `humans` (2 à 4) et `invite` (`"link"` ou `"email"`, choisi
+  une fois par le créateur) ; humains + IA ≤ 4 tant que la galaxie est `galaxy-v1` (4 points de
+  départ maximum, vérifiés par ses règles). Les 10 joueurs et ~30 IA de Q59 attendent la future
+  génération de carte (tailles, placement). Erreur `too_many_empires` au-delà.
+- **Game** : `start_universe` accepte `family: "private"` et `humans` ; le démarrage atomique crée
+  un Empire humain par place sur les premiers points de départ, puis les IA. Le reçu ajoute
+  `human_empire_ids` (ordre des places, celle du créateur en premier). Les reçus SOLO existants ne
+  changent pas (`humans` absent de l’intention quand il vaut 1).
+- **Places** : Portal mémorise les places (`universe_references.seats`) ; le créateur reçoit la
+  première. Une place libre est un Empire humain sans participation ; il évolue comme un Empire
+  dormant jusqu’à l’arrivée de son joueur.
+- **Lien** : `POST /api/lobby/universes/{id}/invite-link` (créateur) renvoie une fois
+  `https://…/rejoindre#invite=<jeton>` ; seul le condensat du jeton est stocké, l’ancien lien est
+  révoqué ; valable 7 jours, réutilisable jusqu’à ce que les places soient prises.
+- **Email** : `POST /api/lobby/universes/{id}/invitations {"email"}` (créateur, limite horaire) ;
+  invitation liée à une adresse, à usage unique, 7 jours ; jamais plus d’invitations ouvertes que de
+  places libres ; envoi par le worker email (charge utile chiffrée, annulé si l’invitation n’est plus
+  ouverte). Retrait : `POST /api/lobby/invitations/{id}/revoke`.
+- **Rejoindre** : `POST /api/lobby/invitations/accept` avec `{"token"}` (page `/rejoindre`) ou
+  `{"invitation_id"}` (invitation email listée dans « Mes parties ») ; refus `/decline`. Sous le
+  verrou du compte puis de l’univers, la première place libre est accordée par le chemin
+  membership/accès habituel (17 permissions). Codes : `invitation_not_found`,
+  `invitation_other_account`, `game_starting`, `game_full` ; déjà membre → `member`.
+- **Lobby** : chaque participation indique `family`, `creator`, `seats_total`/`seats_taken` et, pour
+  le créateur, `invite_mode` et les invitations email envoyées ; `invitations` liste celles reçues.
+
+Limites : pas de nom d’affichage des joueurs ni de liste des membres ; pas de départ/expulsion ;
+un joueur qui s’inscrit depuis le lien doit rouvrir le lien après la confirmation de son adresse.
+Migration Accounts `p0007_invitations`.
+
+Vérifications UX-API-03 : tests purs Game `test_control_contract.py` (4/4) exécutés en session,
+Ruff Game/Portal ; tests purs Portal et Vitest via Fast CI ; **non exécutés** :
+`backend/tests/integration/test_control.py` (multi), `portal/backend/tests/integration/test_multiplayer.py`,
+`test_migrations.py` (tête `p0007_invitations`) — Full CI après fusion ; recette Compose à faire.

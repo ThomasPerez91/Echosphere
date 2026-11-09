@@ -3,11 +3,15 @@ import { Icon } from '../theme/Icon';
 
 type Membership = { membership_id: string; universe_id: string; name: string; desired_status: string;
   applied_status: string | null; delivery_state: 'pending' | 'applied'; expired: boolean;
-  valid_until: string; last_checked_at: string | null; entry_available: boolean; entry_url?: string | null };
+  valid_until: string; last_checked_at: string | null; entry_available: boolean; entry_url?: string | null;
+  /** UX-API-02/03: family, seats and, for the creator of a multi game, its invitations. */
+  family?: string; creator?: boolean; seats_total?: number; seats_taken?: number; invite_mode?: 'link' | 'email';
+  sent_invitations?: { id: string; email: string; state: string; expires_at: string }[] };
+export type ReceivedInvitation = { id: string; universe_id: string; name: string; expires_at: string };
 export type LobbySnapshot = Projection;
 /** UX-API-02: universes this account created that Game has not started/granted yet. */
 type Creation = { universe_id: string; name: string; created_at: string; state: 'starting' };
-type Projection = { memberships: Membership[]; creations?: Creation[]; revocations: { scope: string; state: string; created_at: string }[] };
+type Projection = { memberships: Membership[]; creations?: Creation[]; invitations?: ReceivedInvitation[]; revocations: { scope: string; state: string; created_at: string }[] };
 
 function validEntry(value: string, universe: string) {
   try {
@@ -17,7 +21,11 @@ function validEntry(value: string, universe: string) {
   } catch { return false; }
 }
 
-export function Lobby({ csrf, onExpired, onSnapshot }: { csrf: string; onExpired?: () => void; onSnapshot?: (snapshot: LobbySnapshot) => void }) {
+export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
+  csrf: string; onExpired?: () => void; onSnapshot?: (snapshot: LobbySnapshot) => void;
+  /** Bumped by the page after an action elsewhere (an accepted invitation) to re-read the lobby. */
+  version?: number;
+}) {
   const [snapshot, setSnapshot] = useState<Projection | null>(null);
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   const active = useRef(false); const controller = useRef<AbortController | null>(null);
@@ -40,12 +48,23 @@ export function Lobby({ csrf, onExpired, onSnapshot }: { csrf: string; onExpired
         && typeof item.valid_until === 'string' && (item.last_checked_at === null || typeof item.last_checked_at === 'string')
         && typeof item.entry_available === 'boolean'
         && (!item.entry_available || (typeof item.entry_url === 'string' && validEntry(item.entry_url, item.universe_id))))
+      || ('invitations' in body && (!Array.isArray(body.invitations) || !body.invitations.every(item => item && typeof item.id === 'string'
+        && typeof item.universe_id === 'string' && typeof item.name === 'string' && typeof item.expires_at === 'string')))
+      || !body.memberships.every(item => (item.seats_total === undefined || (Number.isInteger(item.seats_total) && Number.isInteger(item.seats_taken)))
+        && (item.invite_mode === undefined || ['link', 'email'].includes(item.invite_mode))
+        && (item.sent_invitations === undefined || (Array.isArray(item.sent_invitations) && item.sent_invitations.every(
+          (sent: unknown) => !!sent && typeof sent === 'object' && typeof (sent as { id?: unknown }).id === 'string'))))
       || ('creations' in body && (!Array.isArray(body.creations) || !body.creations.every(item => item && typeof item.universe_id === 'string'
         && typeof item.name === 'string' && typeof item.created_at === 'string' && item.state === 'starting')))
       || !body.revocations.every(item => item && ['account', 'device'].includes(item.scope)
         && ['pending', 'acknowledged'].includes(item.state) && typeof item.created_at === 'string')) throw new Error('projection');
     if (active.current && !signal.aborted) { setSnapshot(body as Projection); onSnapshot?.(body as Projection); setError(''); }
   }
+  useEffect(() => {
+    if (!version) return;
+    void read(AbortSignal.timeout(10000)).catch(() => undefined);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version]);
   // While a created universe is starting, re-read quietly (a read never extends idle or rights).
   const starting = snapshot?.creations?.length ?? 0;
   useEffect(() => {
@@ -107,11 +126,14 @@ export function Lobby({ csrf, onExpired, onSnapshot }: { csrf: string; onExpired
           <p className="p-g-status">{item.delivery_state === 'pending' ? 'Confirmation de Game en attente' : item.desired_status === 'suspended' ? 'Participation suspendue' : item.desired_status === 'revoked' ? 'Accès révoqué' : item.expired ? 'Confirmation d’accès expirée' : 'Participation confirmée par Game'}</p>
           <dl className="p-g-info">
             <div><dt><Icon name="flag" />Empire :</dt><dd className="p-na" title="Implémentation backend nécessaire">N/D</dd></div>
-            <div><dt><Icon name="layers" />Mode :</dt><dd className="p-na" title="Implémentation backend nécessaire">N/D</dd></div>
+            <div><dt><Icon name="layers" />Mode :</dt>{item.family === 'solo' ? <dd>Solo</dd> : item.family === 'private' ? <dd>Multijoueur</dd>
+              : <dd className="p-na" title="Implémentation backend nécessaire">N/D</dd>}</div>
+            {item.seats_total !== undefined && <div><dt><Icon name="users" />Joueurs :</dt><dd>{item.seats_taken} / {item.seats_total}</dd></div>}
             {item.last_checked_at && <div><dt><Icon name="clock" />Dernière confirmation :</dt><dd><time dateTime={item.last_checked_at}>{new Date(item.last_checked_at).toLocaleString('fr-FR')}</time></dd></div>}
             <div><dt><Icon name="calendar" />Droits valables jusqu’au :</dt><dd><time dateTime={item.valid_until}>{new Date(item.valid_until).toLocaleString('fr-FR')}</time></dd></div>
           </dl>
-          <p className="p-g-note">Empire, mode et tour de jeu : implémentation backend nécessaire.</p>
+          <p className="p-g-note">Nom d’Empire et tour de jeu : implémentation backend nécessaire.</p>
+          {item.creator && item.invite_mode && <InvitePanel csrf={csrf} item={item} onChanged={() => { void read(AbortSignal.timeout(10000)).catch(() => undefined); }} />}
           <div className="p-g-act">
             {!error && item.entry_available && item.entry_url ? <a className="p-btn p-btn-glow" href={item.entry_url} referrerPolicy="no-referrer"><Icon name="play" />Entrer dans cet univers</a>
               : <p className="p-g-note">L’entrée requiert une adresse vérifiée et un accès actif confirmé par Game.</p>}
@@ -133,4 +155,57 @@ function universeImage(id: string) {
   let hash = 0;
   for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   return `/assets/img/${images[hash % images.length]}.webp`;
+}
+
+const inviteErrors: Record<string, string> = {
+  game_full: 'Toutes les places sont prises ou promises.', already_invited: 'Cette adresse a déjà une invitation en cours.',
+  invitation_self: 'Vous êtes déjà dans cette partie.', invalid_request: 'Adresse email invalide.',
+};
+
+/** Creator of a multi game: share one link, or invite addresses one by one (Q59, mode fixed at creation). */
+function InvitePanel({ csrf, item, onChanged }: { csrf: string; item: Membership; onChanged: () => void }) {
+  const [link, setLink] = useState('');
+  const [email, setEmail] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const full = (item.seats_taken ?? 0) >= (item.seats_total ?? 0);
+  async function post(path: string, body: object) {
+    const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+      body: JSON.stringify(body), signal: AbortSignal.timeout(10000) });
+    const data: unknown = await response.json().catch(() => null);
+    const code = data && typeof data === 'object' && 'error' in data && data.error && typeof data.error === 'object' && 'code' in data.error ? String(data.error.code) : '';
+    if (!response.ok) throw new Error(code || 'request');
+    return data as Record<string, unknown>;
+  }
+  async function run(action: () => Promise<void>) {
+    if (busy) return; setBusy(true); setMessage('');
+    try { await action(); } catch (error) { setMessage(inviteErrors[(error as Error).message] ?? 'Action non confirmée. Réessayez.'); }
+    finally { setBusy(false); }
+  }
+  const copy = () => { void navigator.clipboard?.writeText(link).then(() => setMessage('Lien copié.'), () => setMessage('Copiez le lien manuellement.')); };
+  return <div className="p-invite" aria-label={`Inviter des joueurs dans ${item.name}`} role="group">
+    <h4>Inviter des joueurs</h4>
+    {full ? <p className="p-g-note">Toutes les places sont prises.</p> : item.invite_mode === 'link' ? <>
+      <p className="p-g-note">Partagez ce lien : chaque personne connectée qui l’ouvre prend une place libre. Un nouveau lien remplace l’ancien.</p>
+      <button type="button" className="p-btn p-btn-sm" disabled={busy} onClick={() => { void run(async () => {
+        const data = await post(`/api/lobby/universes/${encodeURIComponent(item.universe_id)}/invite-link`, {});
+        if (typeof data.url === 'string') setLink(data.url);
+      }); }}>{link ? 'Générer un nouveau lien' : 'Générer un lien d’invitation'}</button>
+      {link && <div className="p-invite-link"><label className="visually-hidden" htmlFor={`link-${item.universe_id}`}>Lien d’invitation</label>
+        <input id={`link-${item.universe_id}`} readOnly value={link} onFocus={event => event.currentTarget.select()} />
+        <button type="button" className="p-btn p-btn-sm" onClick={copy}>Copier le lien</button></div>}
+    </> : <form onSubmit={event => { event.preventDefault(); void run(async () => {
+      await post(`/api/lobby/universes/${encodeURIComponent(item.universe_id)}/invitations`, { email });
+      setEmail(''); setMessage('Invitation envoyée.'); onChanged();
+    }); }}>
+      <label>Adresse email du joueur<input type="email" required maxLength={320} value={email} onChange={event => setEmail(event.target.value)} /></label>
+      <button type="submit" className="p-btn p-btn-sm" disabled={busy}>Envoyer l’invitation</button>
+    </form>}
+    {!!item.sent_invitations?.length && <ul className="p-sent">{item.sent_invitations.map(sent => <li key={sent.id}>
+      <span>{sent.email}</span><span className="p-chip">{({ open: 'En attente', accepted: 'Acceptée', declined: 'Refusée', revoked: 'Retirée' } as Record<string, string>)[sent.state] ?? sent.state}</span>
+      {sent.state === 'open' && <button type="button" className="text-button" disabled={busy} onClick={() => { void run(async () => {
+        await post(`/api/lobby/invitations/${encodeURIComponent(sent.id)}/revoke`, {}); onChanged(); }); }}>Retirer</button>}
+    </li>)}</ul>}
+    {message && <p className="p-g-note" role="status">{message}</p>}
+  </div>;
 }

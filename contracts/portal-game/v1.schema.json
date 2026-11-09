@@ -212,7 +212,7 @@
     },
     "Start": {
       "additionalProperties": false,
-      "description": "UX-API-02: create and start a SOLO universe in one idempotent operation (one human Empire,\n0 to 3 AI opponents of known profiles, pinned ruleset). The result names the human Empire so\nthat Portal can grant it to the creator; no other actor identity leaves Game.",
+      "description": "UX-API-02/03: create and start a universe in one idempotent operation: SOLO (one human\nEmpire) or PRIVATE multi (2 to 4 human Empires, Q59), 0 to 3 AI opponents of known profiles,\nat most four Empires in galaxy-v1, pinned ruleset. The result lists the human Empires (seats)\nso that Portal can grant them; no AI actor identity leaves Game.",
       "properties": {
         "kind": {
           "const": "start_universe",
@@ -237,9 +237,19 @@
           "type": "string"
         },
         "family": {
-          "const": "solo",
+          "enum": [
+            "solo",
+            "private"
+          ],
           "title": "Family",
           "type": "string"
+        },
+        "humans": {
+          "default": 1,
+          "maximum": 4,
+          "minimum": 1,
+          "title": "Humans",
+          "type": "integer"
         },
         "ruleset": {
           "const": "v0.9",

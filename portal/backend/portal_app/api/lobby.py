@@ -7,6 +7,7 @@ from starlette.concurrency import run_in_threadpool
 
 from portal_app.api.accounts import check_origin, peer_address
 from portal_app.api.sessions import bootstrap, response
+from portal_app.control.invitations import Invitations
 from portal_app.control.service import Lobby
 from portal_app.handoff.service import Handoff
 from portal_app.sessions.service import SESSION_COOKIE
@@ -55,3 +56,55 @@ async def renew(universe_id: UUID, request: Request):
             peer_address(request),
         )
     )
+
+
+async def _json(request):
+    check_origin(request)
+    try:
+        body = await request.json()
+    except ValueError:
+        body = None
+    return body if isinstance(body, dict) else {}
+
+
+def _proofs(request):
+    return request.cookies.get(SESSION_COOKIE), request.headers.get("x-csrf-token")
+
+
+@router.post("/universes/{universe_id}/invite-link")
+async def invite_link(universe_id: UUID, request: Request):
+    """UX-API-03: new shareable link (the previous one stops working); creator only."""
+    await _json(request)
+    return response(await run_in_threadpool(
+        Invitations(request.app.state.accounts).link, *_proofs(request), universe_id))
+
+
+@router.post("/universes/{universe_id}/invitations")
+async def invite_email(universe_id: UUID, request: Request):
+    body = await _json(request)
+    return response(await run_in_threadpool(
+        Invitations(request.app.state.accounts).send, *_proofs(request), universe_id,
+        body.get("email"), peer_address(request)))
+
+
+@router.post("/invitations/{invitation_id}/revoke")
+async def invite_revoke(invitation_id: UUID, request: Request):
+    await _json(request)
+    return response(await run_in_threadpool(
+        Invitations(request.app.state.accounts).revoke, *_proofs(request), invitation_id))
+
+
+@router.post("/invitations/accept")
+async def invite_accept(request: Request):
+    """Join with {"token"} (link or email link) or {"invitation_id"} (email, from the lobby)."""
+    body = await _json(request)
+    return response(await run_in_threadpool(
+        Invitations(request.app.state.accounts).accept, *_proofs(request),
+        body.get("token"), body.get("invitation_id")))
+
+
+@router.post("/invitations/{invitation_id}/decline")
+async def invite_decline(invitation_id: UUID, request: Request):
+    await _json(request)
+    return response(await run_in_threadpool(
+        Invitations(request.app.state.accounts).decline, *_proofs(request), invitation_id))

@@ -118,10 +118,11 @@ const heroes = {
   games: ['Bienvenue, Commandant', 'Retrouvez vos parties et entrez dans vos univers.'],
   newGame: ['Nouvelle partie', 'Choisissez un nom et vos adversaires : votre univers démarre dès sa création.'],
   account: ['Mon compte', 'Vos connexions et, si vous le souhaitez, une sécurité renforcée.'],
+  join: ['Rejoindre une partie', 'Une invitation vous attend : prenez votre place dans l’univers.'],
 } as const;
 
 export function DashHero({ page }: { page: Page }) {
-  const [title, text] = heroes[page === 'newGame' || page === 'account' ? page : 'games'];
+  const [title, text] = heroes[page === 'newGame' || page === 'account' || page === 'join' ? page : 'games'];
   return <section className="p-dash-hero">
     <div className="p-hero-bg" aria-hidden="true" />
     <div className="p-wrap">

@@ -159,19 +159,23 @@ class Control:
                 list(message.profiles),
                 clock.now(),
                 rules=load_ruleset(message.ruleset),
+                humans=message.humans,
             )
         except IdempotencyConflict:
             raise ControlError("universe_content_conflict") from None
         except AIDenied as error:
             raise ControlError(str(error.args[0]) if error.args else "start_denied", 409) from None
-        human = next(actor for actor in started["actors"] if actor["profile"] is None)
-        return {
+        seats = [actor["empire_id"] for actor in started["actors"] if actor["profile"] is None]
+        result = {
             "status": "applied",
             "universe_id": str(message.universe_id),
             "name": message.name,
-            "human_empire_id": human["empire_id"],
+            "human_empire_id": seats[0],
             "started_at": started["started_at"],
         }
+        if message.family != "solo":
+            result["human_empire_ids"] = seats  # seat order = starting-site order
+        return result
 
     def access(self, session, message):
         principal = account_lock(session, message.global_user_id)

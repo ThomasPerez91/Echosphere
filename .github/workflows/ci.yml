@@ -18,6 +18,8 @@ on:
       # Temporary (03/11/2026): UX and additive UX backend PRs target the unmerged 13B branch (PR #17).
       # Fast CI only, same jobs. Remove once #17 is merged and these PRs are rebased on master.
       - work/step-13b-first-contact
+      # Temporary (09/11/2026): lots built on the integrated recipe base (PR #23).
+      - recette/ux-weekend
     types:
       - opened
       - synchronize

@@ -14,16 +14,28 @@ import './theme/portail.css';
 
 const titles: Record<string, string> = {
   home: 'Echosphere', login: 'Connexion — Echosphere', register: 'Inscription — Echosphere', games: 'Mes parties — Echosphere',
-  newGame: 'Nouvelle partie — Echosphere', account: 'Mon compte — Echosphere', missing: 'Page introuvable — Echosphere',
+  newGame: 'Nouvelle partie — Echosphere', account: 'Mon compte — Echosphere', join: 'Rejoindre une partie — Echosphere',
+  missing: 'Page introuvable — Echosphere',
 };
+
+function consumeInvite() {
+  const value = new URLSearchParams(window.location.hash.slice(1)).get('invite');
+  if (value === null) return null;
+  window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  return /^[A-Za-z0-9_-]{40,64}$/.test(value) ? value : null;
+}
 
 export default function App({ verificationToken = null, securityLink = null }: { verificationToken?: string | null; securityLink?: SecurityLink | null }) {
   const [security, setSecurity] = useState(securityLink);
   const [token, setToken] = useState(verificationToken);
   const [account, setAccount] = useState<SignedIn | null>(null);
   const page = pageOf(usePath());
+  // UX-API-03: an invitation link carries its token in the fragment; it stays in memory only.
+  const [invite, setInvite] = useState<string | null>(() => consumeInvite());
   useEffect(() => {
     const read = () => {
+      const invited = consumeInvite();
+      if (invited) setInvite(invited);
       const next = consumeVerificationFragment();
       const sensitive = consumeSecurityFragment();
       if (next) { setToken(next); setSecurity(null); }
@@ -72,12 +84,12 @@ export default function App({ verificationToken = null, securityLink = null }: {
           <div className={auth ? 'p-panel p-glow p-auth-card p-forms' : 'p-forms p-dash'}>
             {auth && <div className="p-auth-intro">
               <h1 className="p-auth-title" tabIndex={-1}><img src="/assets/img/logo-echosphere-embleme.webp" alt="" width="48" height="48" />
-                {flow ? 'Votre compte' : view === 'register' ? 'Inscription' : 'Connexion'}</h1>
+                {flow ? 'Votre compte' : view === 'register' ? 'Inscription' : view === 'join' ? 'Rejoindre une partie' : 'Connexion'}</h1>
               <span className="p-rule" aria-hidden="true" />
               <p className="p-lead">{view === 'register' && !flow ? <>Un compte <span className="p-accent">Echosphere</span>, plusieurs univers. Le jeu continue de progresser à son propre rythme.</>
                 : <>Bon retour, Commandant. Vos univers vous attendent.</>}</p></div>}
             {security ? <RecoveryForm key={security.kind === 'alert' ? 'alert' : security.token} link={security} onBack={() => { setSecurity(null); navigate(paths.login); }} />
-              : <AccountAccess key={token ?? 'public'} verificationToken={token} onSession={setAccount} page={view} onNavigate={path => navigate(path)} />}
+              : <AccountAccess key={token ?? 'public'} verificationToken={token} onSession={setAccount} page={view} onNavigate={path => navigate(path)} inviteToken={invite} />}
           </div>
         </section>
         {!signedIn && !auth && page === 'home' && <HomeSections />}

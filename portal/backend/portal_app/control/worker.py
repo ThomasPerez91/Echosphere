@@ -115,16 +115,22 @@ def accept_receipt(session, accounts, row, receipt):
             raise DeliveryError("invalid_receipt")
         session.get(UniverseReference, row.universe_id).provisioned = True
     elif message["kind"] == "start_universe":
-        if not start_receipt(message, result):
+        seats = start_receipt(message, result)
+        if seats is None:
             raise DeliveryError("invalid_receipt")
+        # Same lock order as browser requests (account, then universe): never a deadlock cycle.
+        created_by = session.scalar(
+            select(UniverseReference.created_by).where(UniverseReference.id == row.universe_id)
+        )
+        creator = session.get(User, created_by, with_for_update=True) if created_by else None
         universe = session.get(UniverseReference, row.universe_id, with_for_update=True)
         if universe.human_empire_id is None:
             universe.provisioned = True
             universe.human_empire_id = UUID(result["human_empire_id"])
+            universe.seats = seats
             universe.started_at = datetime.fromisoformat(result["started_at"])
-            # The creator gets the human Empire with every permission, through the same
+            # The creator gets the first seat with every permission, through the same
             # membership/access path as operators (revision, epochs, reconciliation).
-            creator = session.get(User, universe.created_by, with_for_update=True)
             if creator is not None and creator.status == "active":
                 Lobby(accounts).grant(
                     session,

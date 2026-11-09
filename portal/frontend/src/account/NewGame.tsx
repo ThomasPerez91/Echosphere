@@ -12,6 +12,7 @@ const profiles = {
 type Profile = keyof typeof profiles;
 
 const errors: Record<string, string> = {
+  too_many_empires: 'La carte actuelle accueille au plus 4 Empires (joueurs et IA).',
   invalid_creation: 'Vérifiez le nom (3 à 60 caractères) et les adversaires.',
   family_unavailable: 'Ce type de partie n’est pas encore disponible.',
   creation_request_conflict: 'Cette demande a déjà été envoyée avec d’autres choix. Rechargez la page.',
@@ -32,6 +33,14 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
   const fresh = () => { requestId.current = crypto.randomUUID(); };
   const [opponents, setOpponents] = useState<Profile[]>(['economic_cautious', 'expansionist']);
   const setCount = (count: number) => setOpponents(current => Array.from({ length: count }, (_, i) => current[i] ?? (i % 2 ? 'expansionist' : 'economic_cautious')));
+  // UX-API-03 (Q59): multi = 2 to 4 humans; galaxy-v1 starts at most four Empires in total.
+  const [family, setFamily] = useState<'solo' | 'private'>('solo');
+  const [humans, setHumans] = useState(2);
+  const [invite, setInvite] = useState<'link' | 'email'>('link');
+  const players = family === 'solo' ? 1 : humans;
+  const maxOpponents = Math.min(3, 4 - players);
+  const chooseFamily = (next: 'solo' | 'private') => { setFamily(next); fresh(); if (next === 'private') setCount(Math.min(opponents.length, 4 - humans)); };
+  const chooseHumans = (next: number) => { setHumans(next); fresh(); setCount(Math.min(opponents.length, 4 - next)); };
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,7 +51,9 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
     try {
       const response = await fetch('/api/lobby/universes', { method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-        body: JSON.stringify({ request_id: requestId.current, name: trimmed, family: 'solo', profiles: opponents }),
+        body: JSON.stringify(family === 'solo'
+          ? { request_id: requestId.current, name: trimmed, family, profiles: opponents }
+          : { request_id: requestId.current, name: trimmed, family, profiles: opponents, humans, invite }),
         signal: AbortSignal.timeout(10000) });
       if (response.status === 401) { onExpired?.(); return; }
       if (response.status === 404) { setError('Ce serveur ne sait pas encore créer de partie (mise à jour du Portal nécessaire).'); return; }
@@ -67,9 +78,30 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
       <p id="name-help" className="p-account-help">Entre 3 et 60 caractères. Il apparaîtra dans « Mes parties » et en haut de l’écran de jeu.</p>
 
       <fieldset>
+        <legend>Type de partie</legend>
+        <div className="p-choice-row" role="radiogroup" aria-label="Type de partie">
+          {([['solo', 'Solo'], ['private', 'Multijoueur']] as const).map(([id, label]) => <label key={id} className={`p-choice${family === id ? ' is-on' : ''}`}>
+            <input type="radio" name="family" checked={family === id} onChange={() => chooseFamily(id)} />{label}</label>)}
+        </div>
+        {family === 'private' && <>
+          <p className="p-account-help">Vous invitez vos amis ; chacun dirige son propre Empire. Alliances, coopération ou trahison se décident en jeu.</p>
+          <div className="p-choice-row" role="radiogroup" aria-label="Nombre de joueurs humains">
+            {[2, 3, 4].map(count => <label key={count} className={`p-choice${humans === count ? ' is-on' : ''}`}>
+              <input type="radio" name="humans" checked={humans === count} onChange={() => chooseHumans(count)} />{count} joueurs</label>)}
+          </div>
+          <p className="p-account-help">Jusqu’à 10 joueurs avec les futures tailles de carte ; la carte actuelle accueille 4 Empires au total.</p>
+          <div className="p-choice-row" role="radiogroup" aria-label="Mode d’invitation">
+            {([['link', 'Lien à partager'], ['email', 'Invitation par email']] as const).map(([id, label]) => <label key={id} className={`p-choice${invite === id ? ' is-on' : ''}`}>
+              <input type="radio" name="invite" checked={invite === id} onChange={() => { setInvite(id); fresh(); }} />{label}</label>)}
+          </div>
+          <p className="p-account-help">{invite === 'link' ? 'Après la création, générez un lien dans « Mes parties » et envoyez-le à vos amis.' : 'Après la création, saisissez l’adresse email de chaque joueur dans « Mes parties ».'}</p>
+        </>}
+      </fieldset>
+
+      <fieldset>
         <legend>Adversaires dirigés par l’IA</legend>
         <div className="p-choice-row" role="radiogroup" aria-label="Nombre d’adversaires">
-          {[0, 1, 2, 3].map(count => <label key={count} className={`p-choice${opponents.length === count ? ' is-on' : ''}`}>
+          {[0, 1, 2, 3].filter(count => count <= maxOpponents).map(count => <label key={count} className={`p-choice${opponents.length === count ? ' is-on' : ''}`}>
             <input type="radio" name="opponents" checked={opponents.length === count} onChange={() => { setCount(count); fresh(); }} />{count === 0 ? 'Aucun' : count}
           </label>)}
         </div>
@@ -84,14 +116,10 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
 
       <div className="p-new-game-facts">
         <p><Icon name="infinity" /><span><b>Univers persistant</b> : il continue d’avancer quand vous n’êtes pas connecté.</span></p>
-        <p><Icon name="planet" /><span><b>Départ</b> : une colonie de départ, des systèmes à découvrir autour de vous.</span></p>
+        <p><Icon name="planet" /><span><b>Départ</b> : une colonie de départ par Empire, des systèmes à découvrir autour de vous.</span></p>
         <p><Icon name="clock" /><span><b>Début</b> : immédiat, dès la création.</span></p>
       </div>
 
-      <div className="p-family-row">
-        <span className="p-chip p-live">Solo</span>
-        <span className="p-chip" title="Implémentation backend nécessaire">Multijoueur — à venir (invitation par lien ou email, jusqu’à 10 joueurs)</span>
-      </div>
       <Pending compact what="Taille de carte et placement des Empires : options à venir. Aujourd’hui, carte standard." />
       <button type="submit" className="p-btn p-btn-primary" disabled={pending}>
         <Icon name="rocket" />{pending ? 'Création…' : 'Créer la partie'}</button>

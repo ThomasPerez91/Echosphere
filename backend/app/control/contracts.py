@@ -81,15 +81,17 @@ class Provision(Wire):
 
 
 class Start(Wire):
-    """UX-API-02: create and start a SOLO universe in one idempotent operation (one human Empire,
-    0 to 3 AI opponents of known profiles, pinned ruleset). The result names the human Empire so
-    that Portal can grant it to the creator; no other actor identity leaves Game."""
+    """UX-API-02/03: create and start a universe in one idempotent operation: SOLO (one human
+    Empire) or PRIVATE multi (2 to 4 human Empires, Q59), 0 to 3 AI opponents of known profiles,
+    at most four Empires in galaxy-v1, pinned ruleset. The result lists the human Empires (seats)
+    so that Portal can grant them; no AI actor identity leaves Game."""
 
     kind: Literal["start_universe"]
     universe_id: UUID
     name: str = Field(min_length=1, max_length=120)
     seed: str = Field(min_length=1, max_length=200)
-    family: Literal["solo"]
+    family: Literal["solo", "private"]
+    humans: StrictInt = Field(default=1, ge=1, le=4)
     ruleset: Literal["v0.9"]
     profiles: list[Literal["economic_cautious", "expansionist"]] = Field(max_length=3)
 
@@ -97,6 +99,10 @@ class Start(Wire):
     def not_blank(self):
         if not self.name.strip():
             raise ValueError("Blank name")
+        if (self.family == "solo") != (self.humans == 1):
+            raise ValueError("Solo means exactly one human Empire")
+        if self.humans + len(self.profiles) > 4:
+            raise ValueError("galaxy-v1 offers at most four starting sites")
         return self
 
 

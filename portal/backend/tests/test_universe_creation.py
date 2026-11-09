@@ -41,11 +41,34 @@ def test_invalid_or_browser_chosen_fields_are_refused(changes):
         creation_request(body(**changes))
 
 
-def test_multiplayer_and_persistent_families_are_not_offered_yet():
-    for family in ("private", "persistent"):
-        with pytest.raises(PublicError) as refused:
-            creation_request(body(family=family))
-        assert refused.value.code == "family_unavailable"
+def test_persistent_family_is_not_offered_yet():
+    with pytest.raises(PublicError) as refused:
+        creation_request(body(family="persistent"))
+    assert refused.value.code == "family_unavailable"
+
+
+def private(**changes):
+    return body(family="private", humans=2, invite="link", **changes)
+
+
+def test_private_multi_needs_two_to_four_humans_an_invite_mode_and_at_most_four_empires():
+    wanted = creation_request(private())
+    assert (wanted["humans"], wanted["invite"], wanted["family"]) == (2, "link", "private")
+    assert creation_request(private(humans=4, profiles=[], invite="email"))["humans"] == 4
+    for broken in (
+        private(humans=1),
+        private(humans=5, profiles=[]),
+        private(humans=True),
+        private(humans="2"),
+        private(invite="both"),
+        body(family="private"),  # humans and invite are required
+        body(humans=2),  # solo takes neither
+    ):
+        with pytest.raises(PublicError):
+            creation_request(broken)
+    with pytest.raises(PublicError) as crowded:
+        creation_request(private(humans=3, profiles=["expansionist", "expansionist"]))
+    assert crowded.value.code == "too_many_empires"
 
 
 def test_start_receipt_must_name_this_universe_and_a_human_empire():
@@ -61,3 +84,24 @@ def test_start_receipt_must_name_this_universe_and_a_human_empire():
         {key: value for key, value in good.items() if key != "started_at"},
     ):
         assert not start_receipt(message, broken)
+
+
+def test_private_receipt_lists_one_distinct_seat_per_human_creator_first():
+    message = {"universe_id": UNIVERSE, "name": "Orion", "humans": 2}
+    other = "44444444-4444-4444-8444-444444444444"
+    good = {"status": "applied", "universe_id": UNIVERSE, "name": "Orion",
+            "human_empire_id": EMPIRE, "human_empire_ids": [EMPIRE, other],
+            "started_at": "2026-11-09T09:00:00+00:00"}
+    assert start_receipt(message, good) == [EMPIRE, other]
+    for seats in ([EMPIRE], [other, EMPIRE], [EMPIRE, EMPIRE], [EMPIRE, "x"]):
+        assert start_receipt(message, {**good, "human_empire_ids": seats}) is None
+    solo = {"universe_id": UNIVERSE, "name": "Orion"}
+    assert start_receipt(solo, {**good, "human_empire_ids": [EMPIRE]}) is None
+
+
+def test_link_tokens_have_a_fixed_shape_before_any_lookup():
+    from portal_app.control.invitations import invite_token
+
+    assert invite_token("a" * 43) and invite_token("A-b_c" * 9)
+    for value in ("short", "a" * 65, "a" * 42 + "!", None, 43):
+        assert not invite_token(value)
