@@ -111,7 +111,8 @@
   "dossiers": {
     "per_100_systems": 3,
     "clues": 3,
-    "reward_data": 2000
+    "reward_data": 2000,
+    "reveal_hops": 3
   },
   "starting_zone_radius": 2,
   "starting_zone_deposits": 1,

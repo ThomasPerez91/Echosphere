@@ -73,6 +73,10 @@ class Dossiers(StrictModel):
     per_100_systems: Annotated[int, Field(strict=True, ge=0, le=20)]
     clues: Annotated[int, Field(strict=True, ge=2, le=6)]
     reward_data: Positive
+    # v0.12 (A4, EXP-02c): completing a dossier pays `reward_data` into the hold and reveals
+    # (DETECTED) the systems with a remarkable opportunity within these hops of its clues.
+    reveal_hops: Annotated[int, Field(strict=True, ge=1, le=6)] | None = None
+    serialize_extensions = omit_unset_extensions("reveal_hops")
 
 
 class Operations(StrictModel):

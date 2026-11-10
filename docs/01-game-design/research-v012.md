@@ -1,4 +1,4 @@
-# Ruleset v0.12 — paliers de recherche III et IV, score de relation
+# Ruleset v0.12 — paliers de recherche III et IV, score de relation, dossiers
 
 **Statut : implémenté sur la branche de recette le 10/11/2026 à la demande de l’utilisateur
 (« plus de technologies ») ; valeurs d’équilibrage provisoires, à valider en recette.** Les
@@ -48,4 +48,17 @@ L’**évaluation** montre seulement les dernières forces militaires de l’aut
 un de vos rapports de combat (survivants, puissance et coque d’après les règles), avec leur date ;
 sans combat, les forces restent inconnues. Les accords de recherche et commerciaux restent à
 concevoir (mécanique d’échange à décider).
+
+## Dossiers de découverte complets (A4, EXP-02c — même ruleset)
+
+L’étude qui complète un dossier (tous ses indices étudiés par l’Empire) charge en soute la
+récompense du dossier (2 000 Données, provisoire) et **révèle** (DETECTED, sans nom ni structure)
+les systèmes portant une opportunité remarquable à 3 routes au plus des indices. Le plan d’étude
+vérifie que la soute peut porter les Données de la curiosité **et** la récompense : une étude ne
+perd jamais une partie de son résultat. Le rapport de mission donne la récompense et les systèmes
+révélés ; la vue Rapports le classe en Recherche.
+
+L’exploitation contestée (attaque d’une opération d’extraction, extracteurs sans escorte
+destructibles, défense locale obligatoire) reste à faire : elle étend la résolution des combats
+à une cible « opération » et demande ses propres tests de concurrence.
 

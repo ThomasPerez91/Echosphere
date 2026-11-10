@@ -91,7 +91,9 @@ export type MissionView = {
   payer_colony_id: string | null;
   target_planet: { id: string; name: string } | null;
   attack?: AttackState | null;
-  report: { observed_at: string; processed_at: string; result: { kind: string; outcome?: string; reason?: string; colony_id?: string | null; destroyed?: boolean } } | null;
+  report: { observed_at: string; processed_at: string; result: { kind: string; outcome?: string; reason?: string; colony_id?: string | null; destroyed?: boolean;
+    /** STUDY: dossier progress; v0.12 adds the completion reward and the revealed systems. */
+    dossier?: { index: number; clues: number; studied: number; complete?: boolean; reward_data?: string; revealed?: string[] } } } | null;
 };
 /** Defender view before a battle: target and instant only, never the attacker or its force. */
 export type CombatAlert = { id: string; planet_id: string; system_id: string; battle_at: string; state: "pending" | "cancelled" };

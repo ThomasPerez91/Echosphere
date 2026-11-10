@@ -38,6 +38,12 @@ export function missionEvents(f: FleetProjection | null): ReportEvent[] {
     if (m.kind === 'ATTACK') return { ...base, category: 'mission', tone: 'red', icon: 'icons/evenements/evt-combat.svg', title: 'Attaque terminée', text: `${fleetName(m.fleet_id)} — ${where}` };
     if (m.kind === 'COLONIZE' && m.report?.result.colony_id) return { ...base, category: 'mission', tone: 'green', icon: 'icons/evenements/evt-nouvelle-colonie.svg', title: 'Nouvelle colonie établie', text: where };
     if (m.kind === 'COLONIZE') return { ...base, category: 'mission', tone: 'amber', icon: 'icons/evenements/evt-nouvelle-colonie.svg', title: 'Colonisation sans fondation', text: `${fleetName(m.fleet_id)} — ${where}` };
+    const dossier = m.report?.result.dossier;
+    if (m.kind === 'STUDY' && dossier?.complete) return { ...base, category: 'research', tone: 'green', icon: 'icons/evenements/evt-decouverte.svg',
+      title: 'Dossier de découverte complété', text: `${Math.floor(Number(dossier.reward_data ?? 0) / 1e6).toLocaleString('fr-FR')} Données en soute · ${dossier.revealed?.length ?? 0} système(s) remarquable(s) révélé(s)`,
+      details: [{ label: 'Indices étudiés', value: `${dossier.studied} / ${dossier.clues}` }, { label: 'Systèmes révélés', value: String(dossier.revealed?.length ?? 0) }] };
+    if (m.kind === 'STUDY' && dossier) return { ...base, category: 'research', tone: 'blue', icon: 'icons/evenements/evt-decouverte.svg',
+      title: 'Curiosité étudiée', text: `${where} · indice ${dossier.studied} / ${dossier.clues} du dossier` };
     if (m.kind === 'SURVEY') return { ...base, category: 'mission', tone: 'blue', icon: 'icons/evenements/evt-decouverte.svg', title: 'Système cartographié', text: where };
     return { ...base, category: 'mission', tone: 'green', icon: 'icons/evenements/evt-flotte-revenue.svg', title: m.recalled_at ? 'Flotte revenue' : 'Flotte arrivée', text: `${fleetName(m.fleet_id)} — ${where}` };
   });
