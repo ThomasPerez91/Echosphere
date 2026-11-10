@@ -18,13 +18,13 @@ Formats : **carré 1024 × 1024** (réduit à 640 × 640 pour les bâtiments, 51
 
 ## 1. Bâtiments v0.11 (`img/batiments/`)
 
-Noms retenus pour éviter les termes d’OGame : **Forge orbitale** (vaisseaux) et **Institut des
-Échos** (recherche).
+Noms retenus (choix de l’utilisateur, 10/11/2026) : **Chantier orbital** (vaisseaux) et **Centre de
+recherche** (technologies).
 
 | Fichier | Prompt (après le style commun) |
 |---|---|
-| `forge-orbitale.webp` | Une forge spatiale accrochée au-dessus d’une planète, immense berceau de construction en arc avec bras robotisés et poutres incandescentes, un vaisseau en cours d’assemblage dans sa cale, étincelles ambrées, halo cyan de la planète en dessous. |
-| `institut-des-echos.webp` | Un institut scientifique sur une colonie planétaire : dôme de verre et tours d’antennes en spirale captant des ondes lumineuses cyan dans le ciel, anneaux de données flottants, petites lumières ambrées aux fenêtres, crépuscule. |
+| `chantier-orbital.webp` | Un chantier spatial en orbite au-dessus d’une planète, immense berceau de construction en arc avec bras robotisés et poutres incandescentes, un vaisseau en cours d’assemblage dans sa cale, étincelles ambrées, halo cyan de la planète en dessous. |
+| `centre-de-recherche.webp` | Un centre de recherche sur une colonie planétaire : dôme de verre et tours d’antennes en spirale captant des ondes lumineuses cyan dans le ciel, anneaux de données flottants, petites lumières ambrées aux fenêtres, crépuscule. |
 
 ## 2. Vaisseaux (`img/vaisseaux/`)
 
