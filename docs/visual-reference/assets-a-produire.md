@@ -76,11 +76,32 @@ sombre et calme pour le titre et le texte, aucune interface ni texte.
 | `banniere-recherche.webp` | Recherche | Intérieur d’un centre de recherche futuriste : grande salle circulaire, hologrammes de molécules et de cartes stellaires flottant au-dessus d’une table lumineuse, silhouettes lointaines de chercheurs anonymes, verrières ouvrant sur une planète. |
 | `banniere-flottes.webp` | Flottes | Hangar orbital immense ouvert sur l’espace, plusieurs vaisseaux élancés alignés sur des berceaux d’amarrage, un vaisseau qui sort par l’ouverture vers une planète bleue, lumières de piste cyan. |
 | `banniere-diplomatie.webp` | Diplomatie | Chambre de négociation en orbite : table en anneau suspendue, projections holographiques de plusieurs emblèmes abstraits (formes géométriques, sans texte), grande baie vitrée sur une nébuleuse, atmosphère solennelle. |
+| `banniere-rapports.webp` | Rapports | Grande station en anneau en orbite, quelques vaisseaux en approche, nébuleuse bleue et planète lointaine, lumière calme de fin de journée. |
 
 Icônes de relation (optionnel, même style que les icônes SVG existantes, à demander séparément) :
 pacte, contact neutre, hostilité, premier contact.
 
-## 6. Plus tard (lots suivants)
+## 6. Vignettes des vues Recherche et Rapports (intégrées en remplacement le 10/11/2026)
+
+Format **16:10, 1024 × 640** (réduit à 512 × 320). Tant qu’un fichier manque, la vue affiche un
+cadre sombre avec l’icône de l’élément.
+
+| Fichier | Usage | Prompt (après le style commun) |
+|---|---|---|
+| `img/domaines/engineering.webp` | Domaine Ingénierie | Complexe industriel orbital la nuit, grues et modules lumineux, reflets ambrés. |
+| `img/domaines/energy.webp` | Domaine Énergie | Anneau de confinement d’énergie cyan au-dessus d’une plaine sombre, arcs maîtrisés. |
+| `img/domaines/computation.webp` | Domaine Calcul | Ville de tours de calcul cristallines bleues, flux de données lumineux. |
+| `img/domaines/xenoscience.webp` | Domaine Xénoscience | Observatoire futuriste aux lentilles intégrées (sans parabole) tourné vers une nébuleuse. |
+| `img/rapports/construction.webp` | Rapport de construction | Drones achevant un bâtiment lumineux sur une colonie. |
+| `img/rapports/mission.webp` | Rapport de mission | Flotte de vaisseaux sortant d’un saut près d’une planète. |
+| `img/rapports/combat.webp` | Rapport de combat | Escarmouche spatiale lointaine, traits d’énergie et explosions discrètes. |
+| `img/rapports/frontier.webp` | Rapport de frontière | Silhouette de vaisseau inconnu dans une brume rouge sombre, alerte. |
+| `img/rapports/research.webp` | Rapport de recherche | Anomalie spirale violette analysée par un faisceau cyan. |
+| `img/rapports/diplomacy.webp` | Rapport de diplomatie | Cité de tours au crépuscule vue depuis l’orbite, ambiance de rencontre. |
+
+Relations : un **emblème par civilisation** viendra avec les emblèmes d’Empire (non décidés côté jeu).
+
+## 7. Plus tard (lots suivants)
 
 Portraits de planètes par type (rocheuse, océanique, glacée, volcanique, gazeuse) pour la Galaxie,
 illustrations d’événements (premier contact, embuscade, extraction contestée).
