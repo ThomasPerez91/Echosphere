@@ -28,7 +28,8 @@ test("StrictMode mount reads only; server state for production, garrison, missio
   const { calls } = setup(base);
   expect(await screen.findByRole("heading", { name: "Production — Nouvelle Aube" })).toBeVisible();
   expect(screen.getByText("Garnison Nouvelle Aube")).toBeVisible();
-  expect(screen.getByText(/Signal détecté — structure inconnue/)).toBeVisible();
+  const moving = screen.getByRole("heading", { name: "Flottes en mission" }).closest("section")!;
+  expect(within(moving).getByText(/Signal détecté — structure inconnue/)).toBeVisible();
   expect(screen.getByRole("heading", { name: "Rapports récents" })).toBeVisible();
   expect(screen.getByText("En fabrication")).toBeVisible();
   expect(calls().every(([, init]) => !init?.method)).toBe(true);
