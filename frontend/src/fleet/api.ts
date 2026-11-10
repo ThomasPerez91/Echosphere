@@ -96,13 +96,14 @@ export type MissionView = {
     dossier?: { index: number; clues: number; studied: number; complete?: boolean; reward_data?: string; revealed?: string[] } } } | null;
 };
 /** Defender view before a battle: target and instant only, never the attacker or its force. */
-export type CombatAlert = { id: string; planet_id: string; system_id: string; battle_at: string; state: "pending" | "cancelled" };
+/** v0.12: an attack announced on an extraction operation targets a deposit (`opportunity_id`), no planet. */
+export type CombatAlert = { id: string; planet_id: string | null; opportunity_id?: string; system_id: string; battle_at: string; state: "pending" | "cancelled" };
 export type CombatSide = { initial: Record<string, number>; losses: Record<string, number>; survivors: Record<string, number> };
 export type CombatOutcome = "attacker_win" | "defender_win" | "mutual_destruction" | "unopposed" | "target_unavailable" | "voided_by_pact";
 /** Dated observation written by the resolution; military compositions only. */
 export type CombatReport = {
   engagement_id: string; role: "attacker" | "defender"; battle_at: string; processed_at: string; outcome: CombatOutcome;
-  target: { planet_id: string; system_id: string };
+  target: { planet_id: string | null; system_id: string; opportunity_id?: string };
   opponent_empire_id?: string; own?: CombatSide; opponent?: CombatSide; rounds?: unknown[];
   /** v0.8: the pact that voided the battle (no composition is ever reported then). */
   pact_id?: string;
@@ -128,6 +129,8 @@ export type FleetProjection = {
   missions?: MissionView[];
   colonization?: Colonization | null;
   combat?: Combat | null;
+  /** v0.12 (EXP-02c): an ATTACK may target a known deposit. */
+  contested?: boolean;
   frontier?: Frontier | null;
   systems?: SystemRef[];
 };
@@ -204,12 +207,13 @@ const tally = (v: unknown) => object(v) && Object.values(v).every((n) => integer
 const side = (v: unknown) => object(v) && tally(v.initial) && tally(v.losses) && tally(v.survivors);
 // An alert carrying anything beyond target, instant and state would leak the attacker: refused.
 const alert = (v: unknown) =>
-  object(v) && exactKeys(v, ["id", "planet_id", "system_id", "battle_at", "state"]) && id(v.id) && id(v.planet_id) &&
+  object(v) && (exactKeys(v, ["id", "planet_id", "system_id", "battle_at", "state"])
+    ? id(v.planet_id) : exactKeys(v, ["id", "planet_id", "opportunity_id", "system_id", "battle_at", "state"]) && v.planet_id === null && id(v.opportunity_id)) && id(v.id) &&
   id(v.system_id) && date(v.battle_at) && ["pending", "cancelled"].includes(String(v.state));
 const OUTCOMES = ["attacker_win", "defender_win", "mutual_destruction", "unopposed", "target_unavailable", "voided_by_pact"];
 const combatReport = (v: unknown) =>
   object(v) && id(v.engagement_id) && ["attacker", "defender"].includes(String(v.role)) && date(v.battle_at) &&
-  date(v.processed_at) && OUTCOMES.includes(String(v.outcome)) && object(v.target) && id(v.target.planet_id) &&
+  date(v.processed_at) && OUTCOMES.includes(String(v.outcome)) && object(v.target) && (id(v.target.planet_id) || (v.target.planet_id === null && id(v.target.opportunity_id))) &&
   id(v.target.system_id) &&
   (v.outcome === "target_unavailable" ? !("opponent_empire_id" in v) && !("opponent" in v)
     // A battle voided by a pact never carries a composition: refused rather than hidden.

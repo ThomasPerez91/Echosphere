@@ -23,7 +23,7 @@ export const kindNames: Record<MissionKind, string> = {
   SURVEY: "Cartographie", DEPLOY: "Déplacement", COLONIZE: "Colonisation", ATTACK: "Attaque", RETURN: "Retour",
   PROSPECT: "Prospection", STUDY: "Étude", EXTRACT: "Extraction",
 };
-export const actionHints: Record<MapAction, string> = {
+export const actionHints: Record<MapAction | "ATTACK_DEPOSIT", string> = {
   SURVEY: "Une sonde se rend sur ce signal et révèle le système (nom, planètes, routes).",
   DEPLOY: "La flotte se rend dans ce système et y reste stationnée.",
   COLONIZE: "Un colonisateur fonde une colonie sur ce monde, si personne ne l’occupe à l’arrivée.",
@@ -31,6 +31,7 @@ export const actionHints: Record<MapAction, string> = {
   PROSPECT: "Une sonde étudie le système en profondeur et révèle ses gisements et curiosités (réserves datées).",
   STUDY: "La flotte étudie cette curiosité une fois pour toutes ; les Données rentrent dans sa soute.",
   EXTRACT: "Les extracteurs exploitent le gisement pendant la durée choisie ; le débit est partagé avec les autres Empires présents.",
+  ATTACK_DEPOSIT: "Vos vaisseaux militaires attaquent l’exploitation étrangère la plus importante du gisement au départ ; ses escortes la défendent, des extracteurs sans escorte sont détruits.",
 };
 
 export const opportunityNames: Record<string, string> = {
@@ -105,6 +106,10 @@ export function offers(w: World, systemId: string): ActionOffer[] {
       if (o.family !== "deposit") continue;
       result.push({ kind: "EXTRACT", label: `${actionLabels.EXTRACT} : ${opportunityNames[o.kind] ?? o.kind}`, hint: actionHints.EXTRACT, opportunity: o.id,
         reason: reasonFor("EXTRACT", "Aucune flotte stationnée avec un extracteur : construisez-en depuis l’écran Flottes.") });
+      // v0.12 (EXP-02c): attacking the extraction operations at work there (none reported first).
+      if (w.fleets.contested && military(w).length && can(w, "combat.attack") && can(w, "combat.read"))
+        result.push({ kind: "ATTACK", label: `${actionLabels.ATTACK} l’exploitation : ${opportunityNames[o.kind] ?? o.kind}`, hint: actionHints.ATTACK_DEPOSIT, opportunity: o.id,
+          reason: reasonFor("ATTACK", "Aucune flotte stationnée avec des vaisseaux militaires.") });
     }
   }
   for (const planet of ref?.planets ?? []) {

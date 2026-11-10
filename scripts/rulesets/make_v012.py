@@ -74,6 +74,7 @@ def main():
     path = TARGET / "opportunities.json"
     opportunities = json.loads(path.read_text())
     opportunities["dossiers"]["reveal_hops"] = 3
+    opportunities["operations"]["contested"] = True
     path.write_text(json.dumps(opportunities, ensure_ascii=False, indent=2) + "\n")
     path = TARGET / "relations.json"
     relations = json.loads(path.read_text())

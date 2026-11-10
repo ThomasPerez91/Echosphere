@@ -377,6 +377,8 @@ def project(session, universe_id, empire_id, permissions, at):
         "colonization": colonization,
         "frontier": frontier_view(session, rules, universe_id, empire_id),
         "combat": combat_view(session, rules, universe_id, empire_id, permissions),
+        # v0.12 (EXP-02c): an ATTACK may target a known deposit.
+        "contested": bool(rules.opportunities and rules.opportunities.operations.contested),
         # Destinations come from Knowledge only; DETECTED signals need galaxy.read (SURVEY).
         "systems": systems_view,
     }

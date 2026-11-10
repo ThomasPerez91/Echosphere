@@ -36,6 +36,15 @@ class CombatEngagement(Record, Base):
             ["target_planet_id", "target_system_id", "universe_id"],
             ["planets.id", "planets.system_id", "planets.universe_id"],
         ),
+        ForeignKeyConstraint(
+            ["target_opportunity_id", "universe_id"],
+            ["galaxy_opportunities.id", "galaxy_opportunities.universe_id"],
+            name="fk_combat_engagements_opportunity",
+        ),
+        # v0.12 (EXP-02c): a planet or a deposit, exactly one.
+        CheckConstraint(
+            "(target_planet_id IS NULL) <> (target_opportunity_id IS NULL)", name="target"
+        ),
         UniqueConstraint("mission_id", name="uq_combat_engagements_mission"),
         UniqueConstraint("id", "universe_id", name="uq_combat_engagements_scope"),
         CheckConstraint("state IN ('pending','resolved','cancelled','blocked')", name="state"),
@@ -75,7 +84,8 @@ class CombatEngagement(Record, Base):
     attacker_empire_id: Mapped[UUID] = mapped_column(Uuid)
     # Internal binding at launch; never projected to the attacker before the battle.
     defender_empire_id: Mapped[UUID | None] = mapped_column(Uuid)
-    target_planet_id: Mapped[UUID] = mapped_column(Uuid)
+    target_planet_id: Mapped[UUID | None] = mapped_column(Uuid)
+    target_opportunity_id: Mapped[UUID | None] = mapped_column(Uuid)
     target_system_id: Mapped[UUID] = mapped_column(Uuid)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     travel_arrival_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

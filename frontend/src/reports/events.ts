@@ -35,6 +35,7 @@ export function missionEvents(f: FleetProjection | null): ReportEvent[] {
     const where = m.destination?.name ?? 'système inconnu';
     const base = { key: `mission-${m.id}`, at: m.completed_at! };
     if (kind === 'INTERCEPTED') return { ...base, category: 'combat', tone: 'red', icon: 'icons/evenements/evt-combat.svg', title: 'Flotte interceptée', text: `${fleetName(m.fleet_id)} — ${where}` };
+    if (m.kind === 'EXTRACT' && m.report?.result.destroyed) return { ...base, category: 'combat', tone: 'red', icon: 'icons/evenements/evt-combat.svg', title: 'Exploitation détruite', text: `${fleetName(m.fleet_id)} — ${where} : extracteurs sans escorte perdus avec leur soute` };
     if (m.kind === 'ATTACK') return { ...base, category: 'mission', tone: 'red', icon: 'icons/evenements/evt-combat.svg', title: 'Attaque terminée', text: `${fleetName(m.fleet_id)} — ${where}` };
     if (m.kind === 'COLONIZE' && m.report?.result.colony_id) return { ...base, category: 'mission', tone: 'green', icon: 'icons/evenements/evt-nouvelle-colonie.svg', title: 'Nouvelle colonie établie', text: where };
     if (m.kind === 'COLONIZE') return { ...base, category: 'mission', tone: 'amber', icon: 'icons/evenements/evt-nouvelle-colonie.svg', title: 'Colonisation sans fondation', text: `${fleetName(m.fleet_id)} — ${where}` };
@@ -65,7 +66,7 @@ export function combatEvents(f: FleetProjection | null): ReportEvent[] {
     return {
       key: `combat-${r.engagement_id}-${r.role}`, category: 'combat' as const, tone: (r.outcome === 'voided_by_pact' ? 'amber' : 'red') as Tone,
       icon: 'icons/evenements/evt-combat.svg', title: r.role === 'attacker' ? 'Rapport de bataille — votre attaque' : 'Rapport de bataille — votre défense',
-      text: `${world?.name ?? 'Monde'}${system?.name ? ` · ${system.name}` : ''} — ${outcomes[r.outcome] ?? 'terminée'}`, at: r.processed_at,
+      text: `${r.target.opportunity_id ? 'Gisement' : world?.name ?? 'Monde'}${system?.name ? ` · ${system.name}` : ''} — ${outcomes[r.outcome] ?? 'terminée'}`, at: r.processed_at,
       details: [
         { label: 'Issue', value: outcomes[r.outcome] ?? 'terminée' },
         { label: 'Bataille', value: new Date(r.battle_at).toLocaleString('fr-FR') },
@@ -111,7 +112,7 @@ export function alertEvents(f: FleetProjection | null): ReportEvent[] {
     const system = f?.systems?.find(s => s.id === a.system_id);
     const world = system?.planets?.find(p => p.id === a.planet_id);
     return { key: `alert-${a.id}`, category: 'combat' as const, tone: 'red' as Tone, icon: 'icons/evenements/evt-combat.svg', title: 'Attaque annoncée',
-      text: `${world?.name ?? 'Un de vos mondes'}${system?.name ? ` · ${system.name}` : ''} — bataille ${battleFormat.format(new Date(a.battle_at))}`, at: a.battle_at };
+      text: `${a.opportunity_id ? 'Votre exploitation' : world?.name ?? 'Un de vos mondes'}${system?.name ? ` · ${system.name}` : ''} — bataille ${battleFormat.format(new Date(a.battle_at))}`, at: a.battle_at };
   });
 }
 

@@ -199,12 +199,19 @@ class FleetMission(Record, Base):
             name="kind",
         ),
         CheckConstraint("status IN ('active','returning','completed')", name="status"),
+        # v0.12 (EXP-02c): an ATTACK targets a planet or a deposit, exactly one of them.
         CheckConstraint(
-            "(kind IN ('COLONIZE','ATTACK')) = (target_planet_id IS NOT NULL)", name="target"
+            "(kind = 'COLONIZE' AND target_planet_id IS NOT NULL) "
+            "OR (kind = 'ATTACK' AND "
+            "(target_planet_id IS NULL) <> (target_opportunity_id IS NULL)) "
+            "OR (kind NOT IN ('COLONIZE','ATTACK') AND target_planet_id IS NULL)",
+            name="target",
         ),
-        # EXP-02: STUDY targets one curiosity of the destination system.
+        # EXP-02: STUDY/EXTRACT target one opportunity of the destination system.
         CheckConstraint(
-            "(kind IN ('STUDY','EXTRACT')) = (target_opportunity_id IS NOT NULL)",
+            "(kind IN ('STUDY','EXTRACT') AND target_opportunity_id IS NOT NULL) "
+            "OR kind = 'ATTACK' "
+            "OR (kind NOT IN ('STUDY','EXTRACT','ATTACK') AND target_opportunity_id IS NULL)",
             name="opportunity",
         ),
         # COLONIZE, ATTACK and the EXP-02 analyses may target the current system: 0 hop.

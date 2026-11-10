@@ -33,6 +33,7 @@ from app.galaxy.models import (
     DepositClaim,
     GalaxyOpportunity,
     GalaxyRoute,
+    OpportunityKnowledge,
     PlanetKnowledge,
     RouteKnowledge,
     SystemKnowledge,
@@ -810,6 +811,52 @@ def plan_attack(session, rules, fleet, destination_id, stacks, target_planet_id)
     return known.system_id, path, round_trip(cost), travel, 0
 
 
+def plan_attack_deposit(session, rules, fleet, destination_id, stacks, opportunity_id):
+    """v0.12 (EXP-02c): an ATTACK on a deposit this Empire knows; same travel and fuel as an
+    attack on a planet of that system."""
+    ops = rules.opportunities.operations if rules.opportunities else None
+    if rules.combat is None or ops is None or not ops.contested:
+        raise FleetError("Unknown mission", "invalid_request")
+    known = session.get(OpportunityKnowledge, (fleet.empire_id, opportunity_id))
+    deposit = session.get(GalaxyOpportunity, opportunity_id)
+    if known is None or deposit is None or deposit.family != "deposit":
+        raise FleetError("Opportunity not found", "opportunity_not_found")
+    if destination_id not in (None, deposit.system_id):
+        raise FleetError("Destination is the deposit's system", "invalid_request")
+    if not stacks or any(c not in rules.combat.classes for c in stacks):
+        raise FleetError("ATTACK engages military units only", "attack_units")
+    if deposit.system_id == fleet.system_id:
+        return deposit.system_id, [], dict(NO_COST), 0, 0
+    path = galaxy.known_path(
+        session, fleet.universe_id, fleet.empire_id, fleet.system_id, deposit.system_id,
+        mapped=True,
+    )
+    cost, travel, _ = rules.fleets.mission_quote(
+        stacks, len(path), rules.colony.speeds["fleet"], False
+    )
+    return deposit.system_id, path, round_trip(cost), travel, 0
+
+
+def deposit_defender(session, empire_id, opportunity_id, at):
+    """Under the deposit row lock: the foreign Empire with the most extractors at work there at
+    launch (ties: lowest id) is bound as the defender; nothing about it is returned."""
+    from app.fleet.extraction import lock_deposit
+
+    lock_deposit(session, opportunity_id)
+    rows = session.execute(
+        select(DepositClaim.empire_id, func.sum(DepositClaim.extractors))
+        .where(
+            DepositClaim.opportunity_id == opportunity_id,
+            DepositClaim.empire_id != empire_id,
+            DepositClaim.active_until > utc(at),
+        )
+        .group_by(DepositClaim.empire_id)
+    ).all()
+    if not rows:
+        return None
+    return sorted(rows, key=lambda r: (-r[1], str(r[0])))[0][0]
+
+
 def battle_time(rules, started_at, travel_arrival_at):
     """Q02: never less than the minimum warning after launch, never before the arrival."""
     return max(
@@ -818,10 +865,14 @@ def battle_time(rules, started_at, travel_arrival_at):
     )
 
 
-def attack_terms(rules, target_planet_id, battle_at):
-    """ATTACK-only snapshot part: target, accepted Combat rules and the battle instant."""
-    return {
-        "target_planet_id": str(target_planet_id),
+def attack_terms(rules, target_planet_id, battle_at, target_opportunity_id=None):
+    """ATTACK-only snapshot part: target, accepted Combat rules and the battle instant
+    (v0.12: a deposit target adds `target_opportunity_id`, the planet is then None)."""
+    terms = {} if target_opportunity_id is None else {
+        "target_opportunity_id": str(target_opportunity_id)
+    }
+    return terms | {
+        "target_planet_id": str(target_planet_id) if target_planet_id else None,
         "combat": rules.combat.model_dump(),
         "battle_at": utc(battle_at).isoformat(),
     }
@@ -844,6 +895,12 @@ def plan_mission(
 ):
     """Server path and quote; the client never chooses routes or costs (EXTRACT: only its
     length in whole hours, bounded by the ruleset)."""
+    if kind == "ATTACK" and target_opportunity_id is not None:
+        if target_planet_id is not None or duration_hours is not None:
+            raise FleetError("Unknown mission", "invalid_request")
+        return plan_attack_deposit(
+            session, rules, fleet, destination_id, stacks, target_opportunity_id
+        )
     if kind in exploitation.ANALYSES:
         if target_planet_id is not None:
             raise FleetError("Unknown mission", "invalid_request")
@@ -995,7 +1052,11 @@ def launch(
         if kind == "ATTACK":
             if moved_cargo or (whole and cargo_of(session, source.id)):
                 raise FleetError("ATTACK carries no cargo", "attack_cargo")
-            defender = check_attack(session, empire_id, target_planet_id, colony_read)
+            defender = (
+                deposit_defender(session, empire_id, target_opportunity_id, at)
+                if target_opportunity_id is not None
+                else check_attack(session, empire_id, target_planet_id, colony_read)
+            )
         origin = source.system_id
         fleet = source if whole else detach(session, rules, source, wanted, moved_cargo)
         catch_up_owned(session, engine, universe_id, empire_id, fleet.home_colony_id, at)
@@ -1019,7 +1080,7 @@ def launch(
         if kind == "COLONIZE":
             snapshot |= colonize_terms(rules, target_planet_id, due, utc(at), mission_id)
         if kind == "ATTACK":
-            snapshot |= attack_terms(rules, target_planet_id, due)
+            snapshot |= attack_terms(rules, target_planet_id, due, target_opportunity_id)
         if kind in ("STUDY", "EXTRACT"):
             snapshot["target_opportunity_id"] = str(target_opportunity_id)
         if kind == "EXTRACT":
@@ -1036,7 +1097,9 @@ def launch(
             destination_id=destination,
             payer_colony_id=fleet.home_colony_id,
             target_planet_id=target_planet_id,
-            target_opportunity_id=target_opportunity_id if kind in ("STUDY", "EXTRACT") else None,
+            target_opportunity_id=target_opportunity_id
+            if kind in ("STUDY", "EXTRACT", "ATTACK")
+            else None,
             idempotency_key=key,
             snapshot=snapshot,
             started_at=utc(at),
@@ -1147,7 +1210,7 @@ def preview(
     if kind == "COLONIZE":
         # The package aboard is chosen at launch; the launch checks it against the minimum.
         check_colonize(session, rules, empire_id, target_planet_id, None, colony_read)
-    if kind == "ATTACK":
+    if kind == "ATTACK" and target_planet_id is not None:
         # Read-only: own target only; a foreign occupant or defence is never consulted.
         owner = session.scalar(select(Colony.empire_id).where(Colony.planet_id == target_planet_id))
         if owner == empire_id:
@@ -1167,7 +1230,9 @@ def preview(
         "due_at": (travel_arrival + timedelta(microseconds=survey)).isoformat(),
         "payer_colony_id": str(source.home_colony_id),
         "affordable": all(estimate[r].stock >= cost[r] for r in cost),
-        "target_planet_id": str(target_planet_id) if kind in ("COLONIZE", "ATTACK") else None,
+        "target_planet_id": str(target_planet_id)
+        if kind in ("COLONIZE", "ATTACK") and target_planet_id
+        else None,
         "package_minimum": rules.colonization.package_minimum() if kind == "COLONIZE" else None,
     }
     if kind == "ATTACK":
@@ -1348,7 +1413,8 @@ def verify_mission_snapshot(session, mission, engaged=None, cargo=None):
     analysis = mission.kind in exploitation.ANALYSES
     keys = (
         COLONIZE_KEYS if colonize
-        else ATTACK_KEYS if attack
+        else ATTACK_KEYS | ({"target_opportunity_id"} if mission.target_opportunity_id else set())
+        if attack
         else STUDY_KEYS if mission.kind == "STUDY"
         else EXTRACT_KEYS if mission.kind == "EXTRACT"
         else SNAPSHOT_KEYS
@@ -1370,6 +1436,11 @@ def verify_mission_snapshot(session, mission, engaged=None, cargo=None):
     stacks = stacks_of(session, fleet.id) if engaged is None else engaged
     # 13B: units destroyed by frontier engagements on the way were part of the launch.
     stacks = frontier_add(stacks, frontier.intercepted_losses(session, mission.id))
+    if mission.kind == "EXTRACT" and engaged is None:
+        # v0.12 (EXP-02c): escorts lost defending the deposit were part of the launch.
+        from app.combat.service import operation_losses
+
+        stacks = frontier_add(stacks, operation_losses(session, mission))
     survey = mission.kind == "SURVEY"
     try:
         if survey and not all(rules.fleets.classes[c].survey for c in stacks):
@@ -1437,7 +1508,9 @@ def verify_mission_snapshot(session, mission, engaged=None, cargo=None):
         if any(carried.get(r, 0) < v for r, v in minimum.items()):
             raise TimelineError("Inconsistent mission snapshot")
     if attack:
-        expected |= attack_terms(rules, mission.target_planet_id, mission.due_at)
+        expected |= attack_terms(
+            rules, mission.target_planet_id, mission.due_at, mission.target_opportunity_id
+        )
     if mission.kind in ("STUDY", "EXTRACT"):
         expected["target_opportunity_id"] = str(mission.target_opportunity_id)
     if mission.kind == "EXTRACT":

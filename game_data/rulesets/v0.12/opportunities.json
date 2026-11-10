@@ -121,6 +121,7 @@
     "extractor_class": "extractor",
     "extraction_per_hour": 20,
     "extract_max_hours": 24,
-    "regeneration_bps_per_day": 1000
+    "regeneration_bps_per_day": 1000,
+    "contested": true
   }
 }

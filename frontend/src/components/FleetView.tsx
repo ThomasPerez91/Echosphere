@@ -494,9 +494,11 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           return <li key={a.id} className="fleet-card combat-alert" role={a.state === "pending" ? "alert" : undefined}>
             <div className="panel-head"><h3>{a.state === "pending" ? "Force hostile en approche" : "Menace levée"}</h3>
               <Badge tone={a.state === "pending" ? "danger" : "neutral"}>{a.state === "pending" ? "En attente" : "Annulée"}</Badge></div>
-            <p>Cible : {world?.name ?? "votre monde"} — {place(system ?? null)}</p>
+            <p>Cible : {a.opportunity_id ? "votre exploitation du gisement" : world?.name ?? "votre monde"} — {place(system ?? null)}</p>
             <p>Bataille : {time(a.battle_at)}</p>
-            <p className="panel-meta">Ni l’attaquant, ni son origine, ni sa force ne sont connus avant la bataille. Seules vos unités militaires stationnées dans ce système à l’échéance combattront.</p>
+            <p className="panel-meta">{a.opportunity_id
+              ? "Ni l’attaquant, ni son origine, ni sa force ne sont connus avant la bataille. Les escortes de vos extractions à l’œuvre et vos flottes stationnées dans ce système défendront ; des extracteurs sans escorte seraient détruits."
+              : "Ni l’attaquant, ni son origine, ni sa force ne sont connus avant la bataille. Seules vos unités militaires stationnées dans ce système à l’échéance combattront."}</p>
           </li>;
         })}</ul>}
       </section>}

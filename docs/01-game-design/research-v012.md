@@ -58,6 +58,18 @@ vérifie que la soute peut porter les Données de la curiosité **et** la récom
 perd jamais une partie de son résultat. Le rapport de mission donne la récompense et les systèmes
 révélés ; la vue Rapports le classe en Recherche.
 
-L’exploitation contestée (attaque d’une opération d’extraction, extracteurs sans escorte
-destructibles, défense locale obligatoire) reste à faire : elle étend la résolution des combats
-à une cible « opération » et demande ses propres tests de concurrence.
+## Exploitation contestée (A1, D5 amendée — même ruleset)
+
+- Une **ATTACK peut viser un gisement** connu de l’Empire (prospecté), avec les mêmes règles de
+  trajet, de carburant aller-retour et de préavis qu’une attaque de planète.
+- Le **défenseur est lié au lancement**, sous le verrou du gisement : l’Empire étranger qui y a le
+  plus d’extracteurs au travail à cet instant (égalité : plus petit identifiant). Rien n’en est
+  dit à l’attaquant ; si personne n’exploite le gisement, la cible est vide à la bataille.
+- À la bataille, défendent les vaisseaux militaires **stationnés** du défenseur dans le système
+  et les **escortes** de ses extractions en cours sur ce gisement. Si le défenseur n’a plus de
+  vaisseau militaire (victoire de l’attaquant ou aucune défense), ses opérations d’extraction sont
+  **détruites** : la revendication se clôt à la bataille, la soute est perdue, la flotte disparaît
+  et son propriétaire reçoit un rapport « Exploitation détruite ». Une extraction qui a gagné
+  continue et se termine normalement (ses escortes perdues sont comptées dans la vérification).
+- Un pacte couvrant la bataille l’annule, comme pour une planète. La bataille est un acte hostile
+  daté et crée les contacts, comme les autres combats.

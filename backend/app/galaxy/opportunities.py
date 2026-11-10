@@ -88,7 +88,10 @@ class Operations(StrictModel):
     extract_max_hours: Positive
     # v0.11 (user decision 10/11/2026): reserves grow back, a share of the total per day.
     regeneration_bps_per_day: Annotated[int, Field(strict=True, gt=0, le=10000)] | None = None
-    serialize_extensions = omit_unset_extensions("regeneration_bps_per_day")
+    # v0.12 (EXP-02c, A1): an ATTACK may target a deposit; the extraction operations of the
+    # Empire bound at launch defend it, unescorted extractors are destroyed when it falls.
+    contested: Literal[True] | None = None
+    serialize_extensions = omit_unset_extensions("regeneration_bps_per_day", "contested")
 
 
 class OpportunityRules(StrictModel):

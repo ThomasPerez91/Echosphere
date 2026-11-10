@@ -156,6 +156,29 @@ def resolve_engagement(session, engagement, processed_at):
             units = military(fleet_service.stacks_of(session, row.id), k.classes)
             if units:
                 defenders[str(row.id)] = units
+    operations = []
+    if engagement.target_opportunity_id is not None and engagement.defender_empire_id is not None:
+        # v0.12 (EXP-02c): the defender's extraction operations at work on the deposit at
+        # battle_at; their escorts fight, the operation falls with them.
+        operations = list(
+            session.scalars(
+                select(FleetMission)
+                .where(
+                    FleetMission.universe_id == engagement.universe_id,
+                    FleetMission.empire_id == engagement.defender_empire_id,
+                    FleetMission.kind == "EXTRACT",
+                    FleetMission.status == "active",
+                    FleetMission.target_opportunity_id == engagement.target_opportunity_id,
+                    FleetMission.travel_arrival_at <= at,
+                    FleetMission.due_at > at,
+                )
+                .order_by(FleetMission.fleet_id)
+            )
+        )
+        for op in operations:
+            units = military(fleet_service.stacks_of(session, op.fleet_id), k.classes)
+            if units:
+                defenders[str(op.fleet_id)] = units
     total = {c: sum(u.get(c, 0) for u in defenders.values()) for c in k.classes}
     spec = combat = pact = relation = None
     if rules.relations is not None and engagement.defender_empire_id is not None:
@@ -181,9 +204,11 @@ def resolve_engagement(session, engagement, processed_at):
         outcome = combat["outcome"]
         attacker_left = military(combat["survivors"]["attacker"], k.classes)
     target = {
-        "planet_id": str(engagement.target_planet_id),
+        "planet_id": str(engagement.target_planet_id) if engagement.target_planet_id else None,
         "system_id": str(engagement.target_system_id),
     }
+    if engagement.target_opportunity_id is not None:
+        target["opportunity_id"] = str(engagement.target_opportunity_id)
     engagement.snapshot = {
         "ruleset": rules.version,
         "combat_version": k.combat_version,
@@ -213,7 +238,16 @@ def resolve_engagement(session, engagement, processed_at):
         if row.kind == "TASK" and not any(left.values()):
             frontier.end_protocol(session, row, at)
             row.status, row.system_id = "DESTROYED", None
+    destroyed = []
+    if combat is not None and outcome in ("attacker_win", "unopposed"):
+        # D5 amended (v0.12): an operation left without escort is destroyed with its hold.
+        for op in operations:
+            destroy_operation(session, rules, op, engagement, at, processed_at)
+            destroyed.append(str(op.fleet_id))
     engagement.result = {"outcome": outcome, "combat": combat, "defender_losses": allocation}
+    if engagement.target_opportunity_id is not None:
+        engagement.result["operations"] = [str(op.fleet_id) for op in operations]
+        engagement.result["destroyed_operations"] = destroyed
     engagement.state, engagement.processed_at = "resolved", utc(processed_at)
     engagement.error_code = engagement.retry_at = None
     base = {"outcome": outcome, "target": target}
@@ -304,6 +338,41 @@ def resolve_engagement(session, engagement, processed_at):
     session.flush()
     release_fences(session, engagement, processed_at)
     return outcome
+
+
+def destroy_operation(session, rules, mission, engagement, at, processed_at):
+    """The extraction ends at battle_at: its claim closes (the credit is lost with the hold),
+    its pending end is cancelled, the fleet and its ships are destroyed, the owner is told."""
+    from app.fleet import extraction
+    from app.simulation.models import ScheduledEvent
+
+    extraction.close_claim(session, rules, mission, at)
+    for event in session.scalars(
+        select(ScheduledEvent).where(
+            ScheduledEvent.idempotency_key == f"fleet-arrival:{mission.id}",
+            ScheduledEvent.status == "pending",
+        )
+    ):
+        event.status, event.completed_at, event.error_code = "completed", at, "destroyed"
+    fleet = session.get(Fleet, mission.fleet_id, populate_existing=True)
+    fleet_service.set_stacks(session, fleet.id, {})
+    fleet_service.set_cargo(session, fleet.id, {})
+    fleet.status, fleet.system_id, fleet.active_mission_id = "DESTROYED", None, None
+    mission.status, mission.completed_at = "completed", at
+    session.add(
+        fleet_report(
+            mission,
+            at,
+            processed_at,
+            {
+                "kind": "EXTRACT",
+                "destroyed": True,
+                "engagement_id": str(engagement.id),
+                "opportunity_id": str(mission.target_opportunity_id),
+            },
+        )
+    )
+    session.flush()
 
 
 def fleet_report(mission, observed_at, processed_at, result):
