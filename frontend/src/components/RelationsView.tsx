@@ -3,6 +3,11 @@ import { useRelations } from "../hooks/useRelations";
 import type { HistoryEntry, Relation, RelationAction } from "../relations/api";
 import { duration, time } from "../colony/format";
 import { Badge, Button, EmptyState, Panel } from "./ui";
+import { Kpis, Thumb, ViewHero } from "../shell/view";
+import { PanelHead, Pending, Pic } from "../shell/visual";
+
+const hero = <ViewHero crumb="Relations" title="Relations diplomatiques" banner="banniere-diplomatie"
+  text="Gérez vos relations avec les civilisations rencontrées, négociez des pactes et suivez l’évolution des contacts dans la galaxie." />;
 
 const messages: Record<string, string> = {
   propose: "Proposition de pacte envoyée.",
@@ -69,11 +74,11 @@ export function RelationsView({ universe, enabled, csrf, onSessionLost }: {
   const [confirm, setConfirm] = useState<string | null>(null);
   const p = relations.projection;
 
-  if (relations.phase === "loading" || relations.phase === "idle") return <Panel title="Relations"><p role="status">Lecture de vos relations…</p></Panel>;
-  if (relations.phase === "unavailable") return <Panel title="Relations indisponibles dans cette partie">
-    <p>Les règles de cette partie n’incluent pas les relations entre civilisations.</p></Panel>;
-  if (relations.phase === "empty") return <Panel title="Aucun Empire"><EmptyState title="Aucune relation accessible">Votre accès ne comprend aucun Empire avec le droit de lecture des relations.</EmptyState></Panel>;
-  if (!p) return <Panel title="Relations indisponibles"><p role="alert">{message(relations.error ?? "unavailable")}</p><Button onClick={relations.refresh}>Réessayer</Button></Panel>;
+  if (relations.phase === "loading" || relations.phase === "idle") return <div className="d-page">{hero}<Panel title="Relations"><p role="status">Lecture de vos relations…</p></Panel></div>;
+  if (relations.phase === "unavailable") return <div className="d-page">{hero}<Panel title="Relations indisponibles dans cette partie">
+    <p>Les règles de cette partie n’incluent pas les relations entre civilisations.</p></Panel></div>;
+  if (relations.phase === "empty") return <div className="d-page">{hero}<Panel title="Aucun Empire"><EmptyState title="Aucune relation accessible">Votre accès ne comprend aucun Empire avec le droit de lecture des relations.</EmptyState></Panel></div>;
+  if (!p) return <div className="d-page">{hero}<Panel title="Relations indisponibles"><p role="alert">{message(relations.error ?? "unavailable")}</p><Button onClick={relations.refresh}>Réessayer</Button></Panel></div>;
 
   const names = Object.fromEntries(p.relations.map((r) => [r.empire.id, r.empire.name]));
   const received = p.relations.filter((r) => r.proposal?.direction === "received");
@@ -83,7 +88,18 @@ export function RelationsView({ universe, enabled, csrf, onSessionLost }: {
     await relations.run(r.empire.id, action);
   };
 
-  return <div className="fleet-screen relations-screen">
+  const pacts = p.relations.filter((r) => r.pact);
+  return <div className="fleet-screen relations-screen d-page d-relations">
+    {hero}
+    <Kpis label="Diplomatie" items={[
+      { icon: "icons/sidebar/nav-relations.svg", value: p.relations.length, label: "Civilisations connues" },
+      { icon: "icons/evenements/evt-contact-diplomatique.svg", value: pacts.length, label: "Pactes en vigueur" },
+      { icon: "icons/ui/ui-messages.svg", value: received.length, label: "Propositions reçues" },
+      { icon: "icons/ui/ui-alerte.svg", value: ending.length, label: "Ruptures notifiées" },
+    ]} />
+    <nav className="d-rel-tabs" aria-label="Sections de la diplomatie">
+      <a href="#contacts-title" className="d-tab is-current">Civilisations</a><a href="#relation-pacts-title" className="d-tab">Accords</a>
+      <a href="#relations-history-title" className="d-tab">Historique</a></nav>
     <div className="colony-toolbar">
       {relations.empires.length > 1 ? <label className="galaxy-field">Empire
         <select value={relations.selectedEmpire} disabled={relations.pending} onChange={(e) => relations.select(e.target.value)}>
@@ -103,6 +119,7 @@ export function RelationsView({ universe, enabled, csrf, onSessionLost }: {
         {ending.map((r) => <li key={`n-${r.empire.id}`}><strong>{r.empire.name}</strong> a notifié la rupture du pacte · fin {time(r.pact!.notice!.ends_at)}</li>)}
       </ul>
     </section>}
+    <div className="d-view-grid d-rel-grid">
     <section className="panel" aria-labelledby="contacts-title">
       <div className="panel-head"><h2 id="contacts-title">Civilisations connues</h2><span className="panel-meta">{p.relations.length}</span></div>
       <p className="panel-meta">Un pacte de non-agression annule toute bataille entre signataires à l’heure de la bataille. Il ne partage aucune information. Proposition valable {duration(String(p.terms.proposal_ttl_seconds * 1e6))} · préavis de rupture {duration(String(p.terms.notice_seconds * 1e6))} · après un refus, {duration(String(p.terms.refusal_cooldown_seconds * 1e6))} avant de reproposer.</p>
@@ -110,7 +127,8 @@ export function RelationsView({ universe, enabled, csrf, onSessionLost }: {
         : <ul className="fleet-list">{p.relations.map((r) => {
           const s = status(r);
           return <li key={r.empire.id} className="fleet-card" aria-labelledby={`relation-${r.empire.id}`}>
-            <div className="panel-head"><h3 id={`relation-${r.empire.id}`}>{r.empire.name}</h3><Badge tone={s.tone}>{s.label}</Badge></div>
+            <div className="d-fl-card-top"><Thumb src={null} icon="icons/sidebar/nav-relations.svg" />
+              <div className="panel-head"><h3 id={`relation-${r.empire.id}`}>{r.empire.name}</h3><Badge tone={s.tone}>{s.label}</Badge></div></div>
             <Facts r={r} />
             {r.actions.length > 0 && <div className="relation-actions">
               {r.actions.map((a) => a === "terminate" ? (confirm === r.empire.id
@@ -126,11 +144,27 @@ export function RelationsView({ universe, enabled, csrf, onSessionLost }: {
           </li>;
         })}</ul>}
     </section>
-    <section className="panel" aria-labelledby="relations-history-title"><h2 id="relations-history-title">Historique</h2>
-      {p.history.length === 0 ? <p>Aucune négociation.</p> : <ol className="fleet-reports">{p.history.map((h) =>
-        <li key={h.id}><strong>{historyLabels[h.kind][h.actor === "self" ? 0 : 1]}</strong> — {names[h.counterpart_id] ?? "Empire"}
-          <p className="panel-meta">{time(h.at)}{h.kind === "proposed" && h.expires_at ? ` · expiration ${time(h.expires_at)}` : ""}{h.kind === "notice" && h.ends_at ? ` · fin du pacte ${time(h.ends_at)}` : ""}</p>
-        </li>)}</ol>}
-    </section>
+    <div className="d-stack">
+      <section className="d-card d-panel" aria-labelledby="relation-pacts-title">
+        <PanelHead id="relation-pacts-title" icon="icons/evenements/evt-contact-diplomatique.svg" title={`Accords en vigueur (${pacts.length})`} />
+        {pacts.length === 0 ? <p className="d-note">Aucun pacte en vigueur.</p> : <ul className="d-rows">{pacts.map((r) =>
+          <li key={r.empire.id} className="d-row"><Pic src="icons/evenements/evt-contact-diplomatique.svg" size={32} />
+            <span className="d-row-main"><strong>Pacte de non-agression</strong><span>{r.empire.name} · depuis {time(r.pact!.accepted_at)}</span></span>
+            <span className="d-row-side"><b className={r.pact!.notice ? "d-tone-amber" : "d-tone-green"}>{r.pact!.notice ? "Préavis" : "Actif"}</b>
+              {r.pact!.notice && <span>fin {time(r.pact!.notice.ends_at)}</span>}</span></li>)}</ul>}
+        <Pending compact what="Accords de recherche et accords commerciaux." />
+      </section>
+      <section className="d-card d-panel" aria-labelledby="relation-profile-title">
+        <PanelHead id="relation-profile-title" icon="icons/actions/action-info.svg" title="Profil et évaluation" />
+        <Pending compact what="Score de relation, éthique, orientation, puissance estimée et évaluation des civilisations." />
+      </section>
+      <section className="panel" aria-labelledby="relations-history-title"><h2 id="relations-history-title">Historique</h2>
+        {p.history.length === 0 ? <p>Aucune négociation.</p> : <ol className="fleet-reports d-rel-timeline">{p.history.map((h) =>
+          <li key={h.id}><strong>{historyLabels[h.kind][h.actor === "self" ? 0 : 1]}</strong> — {names[h.counterpart_id] ?? "Empire"}
+            <p className="panel-meta">{time(h.at)}{h.kind === "proposed" && h.expires_at ? ` · expiration ${time(h.expires_at)}` : ""}{h.kind === "notice" && h.ends_at ? ` · fin du pacte ${time(h.ends_at)}` : ""}</p>
+          </li>)}</ol>}
+      </section>
+    </div>
+    </div>
   </div>;
 }

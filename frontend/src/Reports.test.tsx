@@ -35,15 +35,16 @@ test('completed constructions are listed from the server, older pages follow the
   const fetch = setup((url) => url.includes('before_sequence=3')
     ? json(page([entry(2, 'data_node', 2), entry(3, 'extraction_complex')], null)) // a replayed entry is not shown twice
     : json(page([entry(5, 'flux_reactor', 3), entry(4), entry(3, 'extraction_complex')], '3')));
-  expect(await screen.findByText('Réacteur de Flux — niveau 3')).toBeVisible();
-  expect(screen.getByRole('heading', { level: 1, name: 'La mémoire de votre empire.' })).toBeVisible();
+  const list = await screen.findByLabelText('Rapports');
+  expect(within(list).getByText('Réacteur de Flux — niveau 3')).toBeVisible();
+  expect(screen.getByRole('heading', { level: 1, name: 'Rapports' })).toBeVisible();
   const reads = fetch.mock.calls.filter(([url]) => String(url).includes('/construction-history'));
   expect(reads[0][0]).toBe(`/api/game/${universe}/colonies/${colonyId}/construction-history`);
   expect(reads[0][1]?.headers).toEqual({ 'X-Game-Request': 'bootstrap' });
   fireEvent.click(screen.getByRole('button', { name: 'Afficher des constructions plus anciennes' }));
-  expect(await screen.findByText('Nœud de données — niveau 2')).toBeVisible();
+  expect(await within(screen.getByLabelText('Rapports')).findByText('Nœud de données — niveau 2')).toBeVisible();
   expect(fetch.mock.calls.some(([url]) => String(url).endsWith('construction-history?before_sequence=3'))).toBe(true);
-  expect(screen.getAllByText('Complexe d’extraction construit')).toHaveLength(2); // orders 3 and 4, no duplicate of 3
+  expect(within(screen.getByLabelText('Rapports')).getAllByText('Complexe d’extraction construit')).toHaveLength(2); // orders 3 and 4, no duplicate of 3
   expect(screen.queryByRole('button', { name: 'Afficher des constructions plus anciennes' })).toBeNull();
   // Reading never sends a command.
   expect(fetch.mock.calls.every(([, init]) => !init?.method || init.method === 'GET')).toBe(true);

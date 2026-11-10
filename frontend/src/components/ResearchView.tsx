@@ -10,10 +10,12 @@ import {
   time,
 } from "../colony/format";
 import { Badge, Button, Panel } from "./ui";
+import { Kpis, Thumb, ViewHero, domainImage, technologyImage } from "../shell/view";
+import { Bar, PanelHead, Pending } from "../shell/visual";
 
 const domains = [
   ["engineering", "Ingénierie", "⬡"],
-  ["energy", "Énergétique", "ϟ"],
+  ["energy", "Énergie", "ϟ"],
   ["computation", "Calcul", "⌘"],
   ["xenoscience", "Xénoscience", "✧"],
 ];
@@ -113,6 +115,7 @@ export function ResearchView({
   const research = useResearch(universe, enabled, csrf, onSessionLost);
   const p = research.projection;
   const [source, setSource] = useState("");
+  const [domain, setDomain] = useState("engineering");
   const [selection, setSelection] = useState<{
     technology?: Technology;
     order?: Order;
@@ -141,7 +144,9 @@ export function ResearchView({
         BigInt(financing.stocks[r]) >= BigInt(selection.technology!.cost[r]),
     );
   return (
-    <div className="research-screen">
+    <div className="research-screen d-page d-research">
+      <ViewHero crumb="Recherche" title="Recherche scientifique" banner="banniere-recherche"
+        text="Développez les technologies de votre Empire : une recherche active et une suivante, financées par la colonie de votre choix." />
       <div className="colony-toolbar">
         <label>
           Empire de recherche{" "}
@@ -188,43 +193,38 @@ export function ResearchView({
               "Action refusée. Les données ont été actualisées."}
         </p>
       )}
-      {p && (
+      {p && (() => {
+        const acquiredIds = new Set(p.acquired.map((a) => a.technology_id));
+        const active = p.queue.find((o) => o.status === "active") ?? null;
+        const domainOf = (id: string) => p.technologies.find((t) => t.id === id)?.domain;
+        const tree = p.technologies.filter((t) => t.domain === domain).sort((x, y) => x.tier - y.tier);
+        const domainLabel = domains.find(([id]) => id === domain)?.[1] ?? domain;
+        return (
         <>
-          <p>
-            Portée : Empire {p.empire.name} · {p.ruleset_version} · 1 active + 1
-            suivante maximum
-          </p>
-          <div className="research-domains">
-            {domains.map(([id, label, symbol]) => (
-              <div className="resource-card" key={id}>
-                <span className="resource-symbol" aria-hidden="true">
-                  {symbol}
-                </span>
-                <div>
-                  <h2>{label}</h2>
-                  <p>
-                    {
-                      p.acquired.filter(
-                        (a) =>
-                          p.technologies.find((t) => t.id === a.technology_id)
-                            ?.domain === id,
-                      ).length
-                    }{" "}
-                    / {p.technologies.filter((t) => t.domain === id).length}{" "}
-                    acquises
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="research-layout">
-            <Panel title="File de recherche">
+          <Kpis label="Recherche de l’Empire" items={[
+            { icon: "icons/sidebar/nav-recherche.svg", value: `${p.queue.filter((o) => o.status === "active").length} / 1`, label: "Recherche active", note: `${p.queue.length} / 2 dans la file`, bar: active ? 100 : 0 },
+            { icon: "icons/evenements/evt-recherche-terminee.svg", value: `${p.acquired.length} / ${p.technologies.length}`, label: "Technologies acquises", bar: p.technologies.length ? p.acquired.length / p.technologies.length * 100 : 0 },
+            { icon: "icons/actions/action-info.svg", value: domains.length, label: "Domaines de recherche", note: `Empire ${p.empire.name} · ${p.ruleset_version}` },
+          ]} />
+          <div className="d-view-grid d-rs-grid">
+            <div className="d-stack">
+              <section className="d-card d-panel" aria-labelledby="research-active-title">
+                <PanelHead id="research-active-title" icon="icons/sidebar/nav-recherche.svg" title="Recherche en cours" />
+                {active ? <div className="d-rs-active">
+                  <Thumb src={technologyImage(active.technology_id)} icon="icons/sidebar/nav-recherche.svg" />
+                  <div><strong>{active.name}</strong><span>{domains.find(([id]) => id === domainOf(active.technology_id))?.[1]}</span></div>
+                </div> : <p className="d-note">Aucune recherche active : choisissez une technologie dans l’arbre.</p>}
+              </section>
+              <Panel title="File de recherche">
               <p>
                 Coût et durée figés dès l’acceptation, même pour la suivante.
               </p>
               {p.queue.length === 0 && <p>Aucune recherche en cours.</p>}
-              {p.queue.map((o) => (
+              {p.queue.map((o, index) => (
                 <article key={o.id} className="research-order">
+                  <span className="d-rs-rank" aria-hidden="true">{index + 1}</span>
+                  <Thumb src={technologyImage(o.technology_id)} icon="icons/sidebar/nav-recherche.svg" />
+                  <div className="d-rs-order-main">
                   <Badge tone={o.status === "blocked" ? "warning" : "accent"}>
                     {o.status === "active"
                       ? "Active"
@@ -267,6 +267,7 @@ export function ResearchView({
                   >
                     Annuler {o.name}
                   </Button>
+                  </div>
                 </article>
               ))}
               {research.awaiting && (
@@ -274,8 +275,7 @@ export function ResearchView({
                   Échéance atteinte, confirmation serveur attendue. Actualisez.
                 </p>
               )}
-            </Panel>
-            <div>
+              </Panel>
               <Panel title="Financement">
                 <label>
                   Colonie payeuse{" "}
@@ -303,63 +303,83 @@ export function ResearchView({
                   démarrage de la suivante.
                 </p>
               </Panel>
-              {domains.map(([id, label]) => (
-                <Panel title={label} key={id}>
-                  {p.technologies
-                    .filter((t) => t.domain === id)
-                    .map((t) => {
-                      const known = p.acquired.some(
-                        (a) => a.technology_id === t.id,
-                      );
-                      return (
-                        <article className="research-tech" key={t.id}>
-                          <h3>
-                            {t.name}{" "}
-                            {known && <Badge tone="accent">Acquise</Badge>}
-                          </h3>
-                          <p>
-                            −{t.reduction_bps / 100} % net : {effects[t.effect]}
-                            . {t.tier === 2 && "Remplace le palier I."}
-                          </p>
-                          <p>
-                            Prérequis :{" "}
-                            {t.requires
-                              .map(
-                                (r) =>
-                                  p.technologies.find((tech) => tech.id === r)
-                                    ?.name ?? r,
-                              )
-                              .join(", ") || "aucun"}
-                          </p>
-                          <AmountsView value={t.cost} />
-                          <p>
-                            Durée effective : {duration(t.duration_us)} · base{" "}
-                            {duration(t.base_duration_us)}
-                          </p>
-                          <Button
-                            disabled={
-                              !t.available || !financing || !!research.pending
-                            }
-                            onClick={(e) => {
-                              trigger.current = e.currentTarget;
-                              setSelection({ technology: t });
-                            }}
-                          >
-                            {p.queue.length ? "Programmer" : "Rechercher"}{" "}
-                            {t.name}
-                          </Button>
-                          {t.reason && !known && (
-                            <p>{reasons[t.reason] ?? "Indisponible"}</p>
-                          )}
-                        </article>
-                      );
-                    })}
-                </Panel>
-              ))}
+            </div>
+            <div className="d-stack">
+              <section className="d-card d-panel" aria-labelledby="research-domains-title">
+                <PanelHead id="research-domains-title" icon="icons/actions/action-info.svg" title="Domaines de recherche" />
+                <div className="d-rs-domains" role="group" aria-label="Choisir un domaine">
+                  {domains.map(([id, label]) => {
+                    const total = p.technologies.filter((t) => t.domain === id).length;
+                    const done = p.technologies.filter((t) => t.domain === id && acquiredIds.has(t.id)).length;
+                    return <button type="button" key={id} className={`d-rs-domain${domain === id ? " is-current" : ""}`} aria-pressed={domain === id} onClick={() => setDomain(id)}>
+                      <Thumb src={domainImage(id)} icon="icons/sidebar/nav-recherche.svg" className="d-thumb--wide" />
+                      <strong>{label}</strong><span>{done} / {total} acquises</span>
+                      <Bar value={total ? done / total * 100 : 0} />
+                    </button>;
+                  })}
+                </div>
+              </section>
+              <section className="d-card d-panel" aria-labelledby="research-tree-title">
+                <PanelHead id="research-tree-title" icon="icons/actions/action-ameliorer.svg" title={`Arbre de recherche — ${domainLabel}`} />
+                <ol className="d-rs-tree">
+                  {tree.map((t) => {
+                    const known = acquiredIds.has(t.id);
+                    const state = known ? "known" : t.available ? "open" : "locked";
+                    return (
+                      <li className={`research-tech d-rs-node d-rs-node--${state}`} key={t.id}>
+                        <Thumb src={technologyImage(t.id)} icon={known ? "icons/evenements/evt-recherche-terminee.svg" : t.available ? "icons/sidebar/nav-recherche.svg" : "icons/actions/action-verrouille.svg"} className="d-thumb--wide" />
+                        <h3>
+                          {t.name}{" "}
+                          {known && <Badge tone="accent">Acquise</Badge>}
+                        </h3>
+                        <p>
+                          −{t.reduction_bps / 100} % net : {effects[t.effect]}
+                          . {t.tier === 2 && "Remplace le palier I."}
+                        </p>
+                        <p>
+                          Prérequis :{" "}
+                          {t.requires
+                            .map(
+                              (r) =>
+                                p.technologies.find((tech) => tech.id === r)
+                                  ?.name ?? r,
+                            )
+                            .join(", ") || "aucun"}
+                        </p>
+                        <AmountsView value={t.cost} />
+                        <p>
+                          Durée effective : {duration(t.duration_us)} · base{" "}
+                          {duration(t.base_duration_us)}
+                        </p>
+                        {!known && <Button
+                          disabled={
+                            !t.available || !financing || !!research.pending
+                          }
+                          onClick={(e) => {
+                            trigger.current = e.currentTarget;
+                            setSelection({ technology: t });
+                          }}
+                        >
+                          {p.queue.length ? "Programmer" : "Rechercher"}{" "}
+                          {t.name}
+                        </Button>}
+                        {t.reason && !known && (
+                          <p className="d-rs-reason">{reasons[t.reason] ?? "Indisponible"}</p>
+                        )}
+                      </li>
+                    );
+                  })}
+                  <li className="d-rs-node d-rs-node--future" aria-label="Technologies suivantes">
+                    <Thumb src={null} icon="icons/actions/action-verrouille.svg" className="d-thumb--wide" />
+                    <Pending compact what="Paliers suivants de ce domaine." />
+                  </li>
+                </ol>
+              </section>
             </div>
           </div>
         </>
-      )}
+        );
+      })()}
       <dialog
         ref={dialog}
         className="research-dialog"

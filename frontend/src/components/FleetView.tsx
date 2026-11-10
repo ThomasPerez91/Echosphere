@@ -8,6 +8,8 @@ import { duration, exactUnits, infrastructureLabel, resourceKeys, resourceLabels
 import { Badge, Button, EmptyState, Panel } from "./ui";
 import { message } from "../fleet/messages";
 import { protocols } from "../fleet/protocols";
+import { Kpis, Thumb, ViewHero, shipImage } from "../shell/view";
+import { Bar, PanelHead, Pending } from "../shell/visual";
 
 const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation", ATTACK: "Attaque", PROSPECT: "Prospection", STUDY: "Étude", EXTRACT: "Extraction" };
 const outcomeLabels: Record<string, string> = {
@@ -140,8 +142,16 @@ function unitStart(o: ShipOrder) {
   return new Date(start + (due - start) * (n - 1) / n).toISOString();
 }
 
-export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyChanged, target }: {
-  universe: string; enabled: boolean; csrf?: string; onSessionLost: () => void; onEconomyChanged?: () => void;
+/** Main class of a fleet (most units) for its illustration. */
+const mainClass = (stacks: Record<string, number>) => Object.entries(stacks).sort(([, a], [, b]) => b - a)[0]?.[0] ?? "probe";
+const count = (stacks: Record<string, number>) => Object.values(stacks).reduce((a, b) => a + b, 0);
+const hero = (galaxy?: string) => <ViewHero crumb="Flottes" title="Flottes" banner="banniere-flottes"
+  text="Gestion des forces, missions et opérations dans la galaxie ; déplacements et échéances calculés par le serveur.">
+  {galaxy && <a className="d-btn d-btn-ghost" href={galaxy}>Carte de commandement <span aria-hidden="true">→</span></a>}
+</ViewHero>;
+
+export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyChanged, target, galaxyHref }: {
+  universe: string; enabled: boolean; csrf?: string; onSessionLost: () => void; onEconomyChanged?: () => void; galaxyHref?: string;
   target?: { empire: string; system: string; planet?: string; action?: "colonize" | "attack" };
 }) {
   const fleets = useFleets(universe, enabled, csrf, onSessionLost, target?.empire);
@@ -149,6 +159,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [order, setOrder] = useState<Record<string, { ship: string; quantity: number }>>({});
   const [protocolChoice, setProtocolChoice] = useState<Record<string, Protocol | "">>({});
+  const [focus, setFocus] = useState<string | null>(null);
   const box = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const prefilled = useRef(false);
@@ -300,15 +311,43 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     }
   }
 
-  if (fleets.phase === "loading" || fleets.phase === "idle") return <Panel title="Flottes"><p role="status">Lecture de vos flottes…</p></Panel>;
-  if (fleets.phase === "empty") return <Panel title="Aucun Empire"><EmptyState title="Aucune flotte accessible">Votre accès ne comprend aucun Empire avec le droit de lecture des flottes.</EmptyState></Panel>;
-  if (!p) return <Panel title="Flottes indisponibles"><p role="alert">{message(fleets.error ?? "unavailable")}</p><Button onClick={fleets.refresh}>Réessayer</Button></Panel>;
+  if (fleets.phase === "loading" || fleets.phase === "idle") return <div className="d-page">{hero(galaxyHref)}<Panel title="Flottes"><p role="status">Lecture de vos flottes…</p></Panel></div>;
+  if (fleets.phase === "empty") return <div className="d-page">{hero(galaxyHref)}<Panel title="Aucun Empire"><EmptyState title="Aucune flotte accessible">Votre accès ne comprend aucun Empire avec le droit de lecture des flottes.</EmptyState></Panel></div>;
+  if (!p) return <div className="d-page">{hero(galaxyHref)}<Panel title="Flottes indisponibles"><p role="alert">{message(fleets.error ?? "unavailable")}</p><Button onClick={fleets.refresh}>Réessayer</Button></Panel></div>;
 
   const server = Date.parse(p.server_time) + (Date.now() - fleets.receivedAt);
   const fleetName = (fid: string) => p.fleets?.find((f) => f.id === fid)?.name ?? "Flotte";
   const current = dialog && "fleet" in dialog ? p.fleets?.find((f) => f.id === dialog.fleet) : undefined;
 
-  return <div className="fleet-screen">
+  const allFleets = p.available ? p.fleets! : [];
+  const ships = allFleets.reduce((n, f) => n + count(f.stacks), 0);
+  const building = p.available ? p.colonies!.reduce((n, c) => n + c.orders.length, 0) : 0;
+  const threats = (p.combat?.alerts ?? []).filter((a) => a.state === "pending").length;
+  const focused = allFleets.find((f) => f.id === focus) ?? null;
+  const focusMission = focused?.mission_id ? p.missions?.find((m) => m.id === focused.mission_id) ?? null : null;
+  // Where the fleets are: stationed in a system, or heading to a destination.
+  const positions = new Map<string, { name: string; here: number; heading: number }>();
+  for (const f of stationed) {
+    const key = f.system?.id ?? "?", row = positions.get(key) ?? { name: place(f.system), here: 0, heading: 0 };
+    row.here += 1; positions.set(key, row);
+  }
+  for (const m of moving) {
+    const key = m.destination?.id ?? m.origin?.id ?? "?", row = positions.get(key) ?? { name: place(m.destination ?? m.origin), here: 0, heading: 0 };
+    row.heading += 1; positions.set(key, row);
+  }
+  const totals: Record<string, number> = {};
+  for (const f of (focused ? [focused] : allFleets)) for (const [c, n] of Object.entries(f.stacks)) totals[c] = (totals[c] ?? 0) + n;
+  const biggest = Math.max(1, ...Object.values(totals));
+
+  return <div className="fleet-screen d-page d-fleets">
+    {hero(galaxyHref)}
+    {p.available && <Kpis label="Vos forces" items={[
+      { icon: "icons/stats/stat-flottes.svg", value: allFleets.filter((f) => f.kind === "TASK").length, label: "Flottes opérationnelles" },
+      { icon: "icons/sidebar/nav-flottes.svg", value: ships, label: "Vaisseaux" },
+      { icon: "icons/actions/action-lancer.svg", value: moving.length, label: "Missions en cours" },
+      { icon: "icons/actions/action-construire.svg", value: building, label: "Commandes en production" },
+      { icon: "icons/ui/ui-alerte.svg", value: threats, label: "Menaces annoncées" },
+    ]} />}
     <div className="colony-toolbar">
       {fleets.empires.length > 1 ? <label className="galaxy-field">Empire
         <select value={fleets.selectedEmpire} disabled={fleets.pending} onChange={(e) => fleets.select(e.target.value)}>
@@ -324,46 +363,15 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
     </div>
     {!p.available ? <Panel title="Flottes indisponibles dans cette partie">
       <p>Les règles de cette partie n’incluent pas de flottes ; l’exploration y passe par l’expédition abstraite de la Galaxie.</p></Panel> : <>
-      {p.colonies!.map((colony) => {
-        const choice = order[colony.id] ?? { ship: Object.keys(p.catalogue!)[0], quantity: 1 };
-        const ship = p.catalogue![choice.ship];
-        // The colonizer price is Empire-wide and progressive: show the current server quote.
-        const colonizer = choice.ship === p.colonization?.colonizer_class;
-        const unitCost = colonizer && p.colonization?.colonizer_quote ? p.colonization.colonizer_quote.cost : ship.cost;
-        return <section key={colony.id} className="panel fleet-production" aria-labelledby={`production-${colony.id}`}>
-          <div className="panel-head"><h2 id={`production-${colony.id}`}>Production — {colony.name}</h2>
-            <span className="panel-meta">{colony.orders.length} / {p.queue_limit} ordres</span></div>
-          <p className="panel-meta">Capacité de fabrication de base de la colonie : aucun secteur ni emplacement orbital utilisé. Le lot entier apparaît dans la garnison à la fin.</p>
-          {can("fleet.build") && <form className="fleet-order" onSubmit={async (e) => {
-            e.preventDefault();
-            const quantity = colonizer ? 1 : choice.quantity;
-            const result = await fleets.run("/orders", { colony_id: colony.id, ship_class: choice.ship, quantity }, JSON.stringify([colony.id, choice.ship, quantity]));
-            if (result) onEconomyChanged?.();
-          }}>
-            <label className="galaxy-field">Classe
-              <select value={choice.ship} onChange={(e) => setOrder({ ...order, [colony.id]: { ...choice, ship: e.target.value } })}>
-                {Object.entries(p.catalogue!).map(([key, c]) => <option key={key} value={key}>{c.name}{p.combat?.classes.includes(key) ? " (militaire)" : ""}</option>)}
-              </select></label>
-            <Counter label="Quantité" value={colonizer ? 1 : choice.quantity} max={colonizer ? 1 : p.max_quantity!} onChange={(n) => setOrder({ ...order, [colony.id]: { ...choice, quantity: Math.max(1, n) } })} />
-            <p className="fleet-unit">{colonizer ? "Prix serveur actuel" : "Par unité"} : {resourceKeys.map((k) => `${units(unitCost[k])} ${resourceLabels[k]}`).join(" · ")} · {duration(ship.build_us)} de fabrication · {units(ship.cargo)} de cargo{ship.survey ? " · cartographie" : ""}{p.combat?.classes.includes(choice.ship) ? " · militaire" : ""}</p>
-            {!!ship.requires?.length && <p className="fleet-unit">Nécessite : {ship.requires.map((r) => `${infrastructureLabel(r.infrastructure_type)} niveau ${r.level}`).join(", ")} dans la colonie.</p>}
-            {colonizer && p.colonization?.colonizer_quote && <p className="panel-meta">Coût progressif : rang {p.colonization.colonizer_quote.rank} (colonies, colonisateurs et ordres en cours), ×{p.colonization.colonizer_quote.multiplier_bps / 10000}. Recalculé et figé par le serveur à la confirmation.</p>}
-            <Button className="button--primary" type="submit" disabled={fleets.pending || colony.orders.length >= p.queue_limit!}>Commander</Button>
-          </form>}
-          {colony.orders.length === 0 ? <p>Aucune production en cours.</p> : <ol className="fleet-list">{colony.orders.map((o) =>
-            <li key={o.id} className="fleet-card"><div className="panel-head"><strong>{o.quantity} × {p.catalogue![o.ship_class]?.name ?? o.ship_class}</strong>
-              <Badge tone={o.status === "active" ? "accent" : "neutral"}>{o.status === "active" ? "En fabrication" : "En attente"}</Badge></div>
-              {o.quantity > 1 && <p className="fleet-unit">{o.delivered ?? 0} / {o.quantity} livrée{(o.delivered ?? 0) > 1 ? "s" : ""} · les unités sortent une à une</p>}
-              {o.status === "active" && o.started_at && o.due_at && <Clock start={unitStart(o)} end={o.due_at} serverTime={p.server_time} receivedAt={fleets.receivedAt} label={o.quantity > 1 ? "Avancement de l’unité en fabrication" : "Avancement estimé de la production"} />}
-              {o.cancel && <Button onClick={(e) => open({ mode: "cancel", order: o }, e)} disabled={fleets.pending}>Annuler…</Button>}
-            </li>)}</ol>}
-        </section>;
-      })}
+      <div className="d-view-grid d-fl-grid">
+        <div className="d-stack d-fl-col">
       <section className="panel" aria-labelledby="stationed-title"><div className="panel-head"><h2 id="stationed-title">Flottes stationnées</h2>
         <span className="panel-meta">{stationed.length}</span></div>
         {stationed.length === 0 ? <p>Aucune flotte stationnée. Fabriquez une sonde pour commencer à cartographier.</p> :
-          <ul className="fleet-list">{stationed.map((f) => <li key={f.id} className="fleet-card">
-            <div className="panel-head"><h3>{f.name}</h3><Badge tone={f.kind === "GARRISON" ? "accent" : "neutral"}>{f.kind === "GARRISON" ? "Garnison" : "Opérationnelle"}</Badge></div>
+          <ul className="fleet-list">{stationed.map((f) => <li key={f.id} className={`fleet-card${focus === f.id ? " is-current" : ""}`}>
+            <div className="d-fl-card-top"><Thumb src={shipImage(mainClass(f.stacks))} icon="icons/sidebar/nav-flottes.svg" />
+              <div className="panel-head"><h3>{f.name}</h3><Badge tone={f.kind === "GARRISON" ? "accent" : "neutral"}>{f.kind === "GARRISON" ? "Garnison" : "Opérationnelle"}</Badge></div>
+              <button type="button" className="d-link-btn" aria-pressed={focus === f.id} aria-label={`Détails de ${f.name}`} onClick={() => setFocus(focus === f.id ? null : f.id)}>Détails</button></div>
             <p>Stationnée : {place(f.system)}</p>
             <Composition stacks={f.stacks} p={p} />
             <p className="panel-meta">Cargo : <Cargo cargo={f.cargo} /> · capacité {units(f.capacity)}</p>
@@ -402,6 +410,15 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
             </div>}
           </li>)}</ul>}
       </section>
+        </div>
+        <div className="d-stack d-fl-col">
+        <section className="d-card d-panel" aria-labelledby="positions-title">
+          <PanelHead id="positions-title" icon="icons/sidebar/nav-galaxie.svg" title="Position des flottes"
+            more={galaxyHref ? { href: galaxyHref, label: "Ouvrir la carte" } : null} />
+          {positions.size === 0 ? <p className="d-note">Aucune flotte dans la galaxie.</p> : <ul className="d-rows">{[...positions.entries()].map(([key, row]) =>
+            <li key={key} className="d-row"><span className="d-pos-dot" aria-hidden="true" /><span className="d-row-main"><strong>{row.name}</strong>
+              <span>{row.here ? `${row.here} flotte${row.here > 1 ? "s" : ""} stationnée${row.here > 1 ? "s" : ""}` : ""}{row.here && row.heading ? " · " : ""}{row.heading ? `${row.heading} en approche` : ""}</span></span></li>)}</ul>}
+        </section>
       <section className="panel" aria-labelledby="moving-title"><div className="panel-head"><h2 id="moving-title">Flottes en mission</h2>
         <span className="panel-meta">{moving.length}</span></div>
         {moving.length === 0 ? <p>Aucune flotte en mission.</p> : <ul className="fleet-list">{moving.map((m) => {
@@ -414,9 +431,11 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           // ATTACK: recall until battle_at; EXTRACT until its end (stops it); others while travelling.
           const recallable = m.status === "active" && m.kind !== "RETURN" &&
             server < Date.parse(attack || m.kind === "EXTRACT" ? m.due_at : m.travel_arrival_at) && (!attack || m.attack?.state === "pending");
-          return <li key={m.id} className="fleet-card">
-            <div className="panel-head"><h3>{fleetName(m.fleet_id)}</h3>
-              <Badge tone={attack ? "warning" : "accent"}>{badge}</Badge></div>
+          return <li key={m.id} className={`fleet-card${focus === m.fleet_id ? " is-current" : ""}`}>
+            <div className="d-fl-card-top"><Thumb src={shipImage(mainClass(m.stacks))} icon="icons/actions/action-lancer.svg" />
+              <div className="panel-head"><h3>{fleetName(m.fleet_id)}</h3>
+                <Badge tone={attack ? "warning" : "accent"}>{badge}</Badge></div>
+              <button type="button" className="d-link-btn" aria-pressed={focus === m.fleet_id} aria-label={`Détails de ${fleetName(m.fleet_id)}`} onClick={() => setFocus(focus === m.fleet_id ? null : m.fleet_id)}>Détails</button></div>
             <p>{place(m.origin)} → {place(m.destination)}{m.target_planet ? ` · monde ${m.target_planet.name}` : ""} · {m.hops} saut(s)</p>
             <Composition stacks={m.stacks} p={p} />
             <dl className="fleet-dates">
@@ -433,6 +452,29 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           </li>;
         })}</ul>}
       </section>
+        </div>
+        <div className="d-stack d-fl-col">
+        <section className="d-card d-panel d-fl-detail" aria-labelledby="fleet-detail-title">
+          {focused ? <>
+            <PanelHead id="fleet-detail-title" icon="icons/stats/stat-flottes.svg" title={focused.name}>
+              <button type="button" className="d-btn" onClick={() => setFocus(null)}>Vue d’ensemble</button></PanelHead>
+            <Thumb src={shipImage(mainClass(focused.stacks))} icon="icons/sidebar/nav-flottes.svg" className="d-thumb--wide" />
+            <dl className="d-fl-facts">
+              <div><dt>Vaisseaux</dt><dd>{count(focused.stacks)}</dd></div>
+              <div><dt>Cargo</dt><dd>{units(focused.capacity)}</dd></div>
+              <div><dt>Statut</dt><dd>{focused.status === "MOVING" ? "En mission" : focused.kind === "GARRISON" ? "Garnison" : "Stationnée"}</dd></div>
+            </dl>
+            <h3 className="d-fl-sub">Mission actuelle</h3>
+            {focusMission ? <p>{kindLabels[focusMission.kind]} : {place(focusMission.origin)} → {place(focusMission.destination)} · arrivée {time(focusMission.travel_arrival_at)}</p>
+              : <p className="d-note">Stationnée : {place(focused.system)}</p>}
+            {focused.protocol !== undefined && <p>Protocole : {focused.protocol ? protocols[focused.protocol].label : "aucun"}</p>}
+          </> : <PanelHead id="fleet-detail-title" icon="icons/stats/stat-flottes.svg" title="Composition de l’Empire" />}
+          <h3 className="d-fl-sub">Composition</h3>
+          {Object.keys(totals).length === 0 ? <p className="d-note">Aucun vaisseau.</p> : <ul className="d-fl-comp">{Object.entries(totals).sort(([, a], [, b]) => b - a).map(([c, n]) =>
+            <li key={c}><span>{p.catalogue?.[c]?.name ?? c}</span><Bar value={n / biggest * 100} /><b>{n}</b></li>)}</ul>}
+          <Pending compact what="Puissance, bouclier et vitesse par flotte." />
+          {!focused && <p className="d-note">Choisissez « Détails » sur une flotte pour l’afficher ici.</p>}
+        </section>
       {p.combat?.alerts && <section className="panel" aria-labelledby="alerts-title"><div className="panel-head"><h2 id="alerts-title">Menaces annoncées</h2>
         <span className="panel-meta">{p.combat.alerts.filter((a) => a.state === "pending").length}</span></div>
         {p.combat.alerts.length === 0 ? <p>Aucune force hostile annoncée.</p> : <ul className="fleet-list">{p.combat.alerts.map((a) => {
@@ -447,6 +489,46 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           </li>;
         })}</ul>}
       </section>}
+        </div>
+      </div>
+      <div className="d-fl-prod">
+      {p.colonies!.map((colony) => {
+        const choice = order[colony.id] ?? { ship: Object.keys(p.catalogue!)[0], quantity: 1 };
+        const ship = p.catalogue![choice.ship];
+        // The colonizer price is Empire-wide and progressive: show the current server quote.
+        const colonizer = choice.ship === p.colonization?.colonizer_class;
+        const unitCost = colonizer && p.colonization?.colonizer_quote ? p.colonization.colonizer_quote.cost : ship.cost;
+        return <section key={colony.id} className="panel fleet-production" aria-labelledby={`production-${colony.id}`}>
+          <div className="panel-head"><h2 id={`production-${colony.id}`}>Production — {colony.name}</h2>
+            <span className="panel-meta">{colony.orders.length} / {p.queue_limit} ordres</span></div>
+          <p className="panel-meta">Les vaisseaux sortent du Chantier orbital un par un et rejoignent aussitôt la garnison.</p>
+          {can("fleet.build") && <form className="fleet-order" onSubmit={async (e) => {
+            e.preventDefault();
+            const quantity = colonizer ? 1 : choice.quantity;
+            const result = await fleets.run("/orders", { colony_id: colony.id, ship_class: choice.ship, quantity }, JSON.stringify([colony.id, choice.ship, quantity]));
+            if (result) onEconomyChanged?.();
+          }}>
+            <label className="galaxy-field">Classe
+              <select value={choice.ship} onChange={(e) => setOrder({ ...order, [colony.id]: { ...choice, ship: e.target.value } })}>
+                {Object.entries(p.catalogue!).map(([key, c]) => <option key={key} value={key}>{c.name}{p.combat?.classes.includes(key) ? " (militaire)" : ""}</option>)}
+              </select></label>
+            <Counter label="Quantité" value={colonizer ? 1 : choice.quantity} max={colonizer ? 1 : p.max_quantity!} onChange={(n) => setOrder({ ...order, [colony.id]: { ...choice, quantity: Math.max(1, n) } })} />
+            <p className="fleet-unit">{colonizer ? "Prix serveur actuel" : "Par unité"} : {resourceKeys.map((k) => `${units(unitCost[k])} ${resourceLabels[k]}`).join(" · ")} · {duration(ship.build_us)} de fabrication · {units(ship.cargo)} de cargo{ship.survey ? " · cartographie" : ""}{p.combat?.classes.includes(choice.ship) ? " · militaire" : ""}</p>
+            {!!ship.requires?.length && <p className="fleet-unit">Nécessite : {ship.requires.map((r) => `${infrastructureLabel(r.infrastructure_type)} niveau ${r.level}`).join(", ")} dans la colonie.</p>}
+            {colonizer && p.colonization?.colonizer_quote && <p className="panel-meta">Coût progressif : rang {p.colonization.colonizer_quote.rank} (colonies, colonisateurs et ordres en cours), ×{p.colonization.colonizer_quote.multiplier_bps / 10000}. Recalculé et figé par le serveur à la confirmation.</p>}
+            <Button className="button--primary" type="submit" disabled={fleets.pending || colony.orders.length >= p.queue_limit!}>Commander</Button>
+          </form>}
+          {colony.orders.length === 0 ? <p>Aucune production en cours.</p> : <ol className="fleet-list">{colony.orders.map((o) =>
+            <li key={o.id} className="fleet-card"><div className="panel-head"><strong>{o.quantity} × {p.catalogue![o.ship_class]?.name ?? o.ship_class}</strong>
+              <Badge tone={o.status === "active" ? "accent" : "neutral"}>{o.status === "active" ? "En fabrication" : "En attente"}</Badge></div>
+              {o.quantity > 1 && <p className="fleet-unit">{o.delivered ?? 0} / {o.quantity} livrée{(o.delivered ?? 0) > 1 ? "s" : ""} · les unités sortent une à une</p>}
+              {o.status === "active" && o.started_at && o.due_at && <Clock start={unitStart(o)} end={o.due_at} serverTime={p.server_time} receivedAt={fleets.receivedAt} label={o.quantity > 1 ? "Avancement de l’unité en fabrication" : "Avancement estimé de la production"} />}
+              {o.cancel && <Button onClick={(e) => open({ mode: "cancel", order: o }, e)} disabled={fleets.pending}>Annuler…</Button>}
+            </li>)}</ol>}
+        </section>;
+      })}
+      </div>
+      <div className="d-view-grid d-fl-more">
       {p.combat?.reports && <section className="panel" aria-labelledby="combat-reports-title"><h2 id="combat-reports-title">Rapports de combat</h2>
         {p.combat.reports.length === 0 ? <p>Aucun rapport de combat.</p> : <ul className="fleet-reports">{p.combat.reports.map((r) => {
           const system = p.systems!.find((s) => s.id === r.target.system_id);
@@ -467,6 +549,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           <p className="panel-meta">Observé à l’échéance {time(m.report!.observed_at)} · traité par le serveur {time(m.report!.processed_at)}</p>
         </li>)}</ul>}
       </section>
+      </div>
     </>}
     <dialog ref={box} className="research-dialog" aria-labelledby="fleet-dialog-title" onClose={() => { if (dialog) close(); }}>
       {dialog && <form method="dialog" onSubmit={submit}>

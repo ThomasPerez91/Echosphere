@@ -6,6 +6,8 @@ import { useResearch } from '../hooks/useResearch';
 import { useRelations } from '../hooks/useRelations';
 import { useConstructionHistory } from '../hooks/useConstructionHistory';
 import { PanelHead, Pending, Pic } from '../shell/visual';
+import { Kpis, Thumb, ViewHero, reportImage } from '../shell/view';
+import type { Kpi } from '../shell/view';
 import { categoryLabels, combatEvents, constructionEvents, frontierEvents, missionEvents, newestFirst, relationEvents, researchEvents } from './events';
 import type { Category, ReportEvent } from './events';
 
@@ -29,6 +31,7 @@ export function ReportsScreen({ universe, access, colony }: {
   const relations = useRelations(universe, enabled, csrf, access.retry);
   const history = useConstructionHistory(universe, colony.colonies, enabled, access.retry);
   const [filter, setFilter] = useState<'all' | Category>('all');
+  const [chosen, setChosen] = useState<string | null>(null);
   const f = fleets.projection?.available ? fleets.projection : null;
 
   const events = useMemo(() => [
@@ -54,16 +57,23 @@ export function ReportsScreen({ universe, access, colony }: {
     ['Diplomatie', relations.projection ? 'À jour' : relations.phase === 'error' || relations.phase === 'empty' || relations.phase === 'unavailable' ? 'Indisponible' : 'Lecture…'],
   ];
 
-  return <div className="d-page d-reports">
-    <section className="d-hero d-scope d-hero--reports">
-      <div className="d-hero-text">
-        <h1 tabIndex={-1}>La mémoire de <span>votre empire.</span></h1>
-        <p>Constructions terminées, missions, batailles, frontière, recherches et diplomatie, datés par le serveur.</p>
-      </div>
-    </section>
+  const selected = shown.find(e => e.key === chosen) ?? shown[0] ?? null;
+  const kpis: Kpi[] = [
+    { icon: 'icons/sidebar/nav-rapports.svg', value: events.length, label: 'Rapports datés' },
+    { icon: 'icons/evenements/evt-flotte-revenue.svg', value: count('mission'), label: 'Missions' },
+    { icon: 'icons/evenements/evt-combat.svg', value: count('combat') + count('frontier'), label: 'Combats et frontière' },
+    { icon: 'icons/evenements/evt-construction-terminee.svg', value: count('construction'), label: 'Constructions' },
+    { icon: 'icons/evenements/evt-recherche-terminee.svg', value: count('research'), label: 'Recherches' },
+    { icon: 'icons/evenements/evt-contact-diplomatique.svg', value: count('diplomacy'), label: 'Événements diplomatiques' },
+  ];
 
-    <div className="d-panels d-scope">
-      <section className="d-card d-panel d-span-8" aria-labelledby="reports-feed">
+  return <div className="d-page d-reports">
+    <ViewHero crumb="Rapports" title="Rapports" banner="banniere-rapports"
+      text="Journal des événements de votre Empire : constructions, missions, batailles, frontière, recherches et diplomatie, datés par le serveur." />
+    <Kpis items={kpis} label="Rapports par catégorie" />
+
+    <div className="d-view-grid d-rep-grid d-scope">
+      <section className="d-card d-panel" aria-labelledby="reports-feed">
         <PanelHead id="reports-feed" icon="icons/sidebar/nav-rapports.svg" title="Fil des rapports">
           <button type="button" className="d-btn" onClick={refresh} disabled={history.busy}>Actualiser</button>
         </PanelHead>
@@ -74,14 +84,17 @@ export function ReportsScreen({ universe, access, colony }: {
         </div>
         {loading ? <p className="d-muted" role="status">Lecture des rapports…</p>
           : !shown.length ? <p className="d-empty">{filter === 'all' ? 'Aucun rapport daté par le serveur pour le moment.' : `Aucun rapport « ${categoryLabels[filter]} » pour le moment.`}</p>
-          : days.map(([day, list]) => <section key={day} className="d-report-day" aria-label={day}>
+          : <div className="d-report-list" aria-label="Rapports">{days.map(([day, list]) => <section key={day} className="d-report-day" aria-label={day}>
             <h2 className="d-report-date">{day}</h2>
-            <ol className="d-timeline">{list.map(e => <li key={e.key} className={`d-${e.tone}`}>
-              <Pic src={e.icon} size={30} />
-              <div><strong>{e.title}</strong><span>{e.text}</span></div>
-              <time dateTime={e.at} title={new Date(e.at).toLocaleString('fr-FR')}>{hourFormat.format(new Date(e.at))}</time>
+            <ol className="d-rows">{list.map(e => <li key={e.key} className={`d-row d-${e.tone}${selected?.key === e.key ? ' is-current' : ''}`}>
+              <button type="button" className="d-row-btn" aria-pressed={selected?.key === e.key} onClick={() => setChosen(e.key)}>
+                <Thumb src={reportImage(e.category)} icon={e.icon} />
+                <span className="d-row-main"><strong>{e.title}</strong><span>{e.text}</span></span>
+                <span className="d-row-side"><time dateTime={e.at} title={new Date(e.at).toLocaleString('fr-FR')}>{hourFormat.format(new Date(e.at))}</time>
+                  <span>{categoryLabels[e.category]}</span></span>
+              </button>
             </li>)}</ol>
-          </section>)}
+          </section>)}</div>}
         {history.hasMore && (filter === 'all' || filter === 'construction') &&
           <button type="button" className="d-btn d-more-btn" disabled={history.busy} onClick={history.more}>Afficher des constructions plus anciennes</button>}
         {history.unavailable > 0 && <Pending compact what={history.unavailable === colony.colonies.length
@@ -90,12 +103,26 @@ export function ReportsScreen({ universe, access, colony }: {
         {history.failed > 0 && <p className="d-note" role="alert">Une partie de l’historique des constructions n’a pas pu être lue. Réessayez avec « Actualiser ».</p>}
       </section>
 
-      <aside className="d-card d-panel d-span-4" aria-labelledby="reports-sources">
-        <PanelHead id="reports-sources" icon="icons/sidebar/nav-empire.svg" title="Sources" />
-        <dl className="d-kv">{sources.map(([label, state]) => <div key={label}><dt>{label}</dt><dd>{state}</dd></div>)}</dl>
-        <p className="d-note">Les missions, combats et faits de frontière sont ceux que conserve la projection Flottes ; les plus anciens peuvent ne plus y figurer.</p>
-        <Pending compact what="Recherche et export du fil." />
-      </aside>
+      <div className="d-stack">
+        <section className="d-card d-panel d-rep-detail" aria-labelledby="report-detail" aria-live="polite">
+          {selected ? <>
+            <header className="d-rep-head"><Pic src={selected.icon} size={40} />
+              <div><h2 id="report-detail">{selected.title}</h2><p>{selected.text}</p></div>
+              <time dateTime={selected.at}>{new Date(selected.at).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</time></header>
+            <Thumb src={reportImage(selected.category)} icon={selected.icon} className="d-thumb--wide" />
+            <dl className="d-kv"><div><dt>Catégorie</dt><dd>{categoryLabels[selected.category]}</dd></div>
+              <div><dt>Date serveur</dt><dd>{new Date(selected.at).toLocaleString('fr-FR')}</dd></div></dl>
+            <Pending compact what="Détail complet du rapport (déroulé, trajet, chronologie) : seul le résumé daté est transmis aujourd’hui." />
+          </> : <><h2 id="report-detail" className="d-rep-empty">Aucun rapport sélectionné</h2>
+            <p className="d-note">Les rapports apparaissent ici dès que le serveur les date.</p></>}
+        </section>
+        <aside className="d-card d-panel" aria-labelledby="reports-sources">
+          <PanelHead id="reports-sources" icon="icons/sidebar/nav-empire.svg" title="Sources" />
+          <dl className="d-kv">{sources.map(([label, state]) => <div key={label}><dt>{label}</dt><dd>{state}</dd></div>)}</dl>
+          <p className="d-note">Les missions, combats et faits de frontière sont ceux que conserve la projection Flottes ; les plus anciens peuvent ne plus y figurer.</p>
+          <Pending compact what="Recherche et export du fil." />
+        </aside>
+      </div>
     </div>
   </div>;
 }
