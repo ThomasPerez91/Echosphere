@@ -61,4 +61,3 @@ révélés ; la vue Rapports le classe en Recherche.
 L’exploitation contestée (attaque d’une opération d’extraction, extracteurs sans escorte
 destructibles, défense locale obligatoire) reste à faire : elle étend la résolution des combats
 à une cible « opération » et demande ses propres tests de concurrence.
-

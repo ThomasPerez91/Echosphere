@@ -2,6 +2,8 @@
 and reveals (DETECTED) the remarkable systems of the region; the plan checks room for both."""
 
 # ruff: noqa: F811
+from uuid import UUID
+
 import pytest
 from sqlalchemy import select
 from test_colony_api import Clock, game  # noqa: F401
@@ -98,8 +100,11 @@ def test_completing_a_dossier_pays_its_reward_and_reveals_the_region(fleets):
     )
     dossier = mission["report"]["result"]["dossier"]
     assert dossier["complete"] is True and dossier["studied"] == dossier["clues"] == 2
-    assert dossier["reward_data"] == str(reward) and dossier["revealed"] == [str(far)]
+    assert dossier["reward_data"] == str(reward) and str(far) in dossier["revealed"]
     fleet = next(f for f in projection["fleets"] if f["id"] == mission["fleet_id"])
     assert fleet["cargo"]["data"] == str(100 * MICRO_UNITS + reward)
     with w.game.factory() as s:
-        assert s.get(SystemKnowledge, (w.empire, far)).state == "DETECTED"
+        # Every revealed system is a remarkable one, now DETECTED (the generated world may hold
+        # other remarkable opportunities in the same region).
+        for system in dossier["revealed"]:
+            assert s.get(SystemKnowledge, (w.empire, UUID(system))).state == "DETECTED"
