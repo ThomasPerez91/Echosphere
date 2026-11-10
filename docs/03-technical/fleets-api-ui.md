@@ -106,4 +106,3 @@ l’univers, arrondie au supérieur comme `mission_quote`) et, pour les classes 
 `attack` des règles de combat. La vue Flottes en tire la puissance et la coque cumulées d’une flotte
 et la durée d’un saut au rythme de sa classe la plus lente ; ce sont des lectures des règles, jamais
 une prévision de combat.
-
