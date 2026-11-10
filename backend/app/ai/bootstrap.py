@@ -1,4 +1,7 @@
-"""Explicit, atomic Game bootstrap. Never imports a recipe or manufactures strategic units."""
+"""Explicit, atomic Game bootstrap. Never imports a recipe or manufactures strategic units,
+except the explicit test game (sandbox) whose human Empire starts almost finished."""
+
+from uuid import UUID
 
 from sqlalchemy import select, text
 
@@ -27,7 +30,18 @@ def pinned(rules):
 
 
 def bootstrap(
-    session, engine, universe_id, name, seed, profiles, at, *, rules=None, humans=1, size=None
+    session,
+    engine,
+    universe_id,
+    name,
+    seed,
+    profiles,
+    at,
+    *,
+    rules=None,
+    humans=1,
+    size=None,
+    sandbox=False,
 ):
     """`rules` permits explicit injected test timings, never runtime defaults from fixtures.
     `humans` human Empires (multi, Q59) take the first starting sites, then the AI profiles.
@@ -65,6 +79,11 @@ def bootstrap(
         request["humans"] = humans
     if v2:
         request["size"] = size
+    if sandbox:
+        # Test game (recette 10/11/2026): solo, galaxy-v2 only; omitted otherwise.
+        if humans != 1 or not v2:
+            raise AIDenied("invalid_bootstrap_configuration")
+        request["sandbox"] = True
     session.execute(
         text("SELECT pg_advisory_xact_lock(:key)"),
         {"key": int.from_bytes(universe_id.bytes[:8], signed=True)},
@@ -76,12 +95,13 @@ def bootstrap(
         return existing.result
     universe = session.get(Universe, universe_id)
     if universe is None:
-        universe = Universe(id=universe_id, name=name, seed=seed)
+        universe = Universe(id=universe_id, name=name, seed=seed, sandbox=sandbox)
         session.add(universe)
         session.flush()
     if (
         universe.name != name
         or universe.seed != seed
+        or universe.sandbox != sandbox
         or session.get(UniverseEconomy, universe_id) is not None
         or session.scalar(select(Empire.id).where(Empire.universe_id == universe_id).limit(1))
     ):
@@ -132,6 +152,14 @@ def bootstrap(
                 "site_ordinal": index,
             }
         )
+    if sandbox:
+        from app.sandbox.service import prepare
+
+        for actor in actors:
+            if actor["profile"] is None:
+                prepare(
+                    session, universe_id, UUID(actor["empire_id"]), UUID(actor["colony_id"]), at
+                )
     result = {"universe_id": str(universe_id), "started_at": utc(at).isoformat(), "actors": actors}
     session.add(
         AIBootstrap(

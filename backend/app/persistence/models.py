@@ -4,6 +4,7 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -43,6 +44,8 @@ class Universe(Record, Base):
 
     name: Mapped[str] = mapped_column(String(120))
     seed: Mapped[str] = mapped_column(String(200))
+    # Test game (recette 10/11/2026): sandbox tools (grants, instant completion) are allowed.
+    sandbox: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
 
 
 class Empire(Record, Base):

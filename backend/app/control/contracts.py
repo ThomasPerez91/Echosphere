@@ -6,7 +6,15 @@ from datetime import UTC
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StrictInt, model_validator
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictInt,
+    model_validator,
+)
 
 PERMISSIONS = frozenset(
     (
@@ -97,6 +105,9 @@ class Start(Wire):
     ruleset: Literal["v0.10", "v0.11"]
     size: Literal[100, 300, 500, 1000, 2000] = 100
     profiles: list[Literal["economic_cautious", "expansionist"]] = Field(max_length=30)
+    # Test game (recette 10/11/2026): solo only, almost finished world plus sandbox tools.
+    # Omitted when false so every earlier envelope keeps its digest (exclude_unset).
+    sandbox: StrictBool = False
 
     @model_validator(mode="after")
     def not_blank(self):
@@ -104,6 +115,8 @@ class Start(Wire):
             raise ValueError("Blank name")
         if (self.family == "solo") != (self.humans == 1):
             raise ValueError("Solo means exactly one human Empire")
+        if self.sandbox and self.family != "solo":
+            raise ValueError("A test game is a solo game")
         if self.humans + len(self.profiles) > 40:
             raise ValueError("galaxy-v2 offers at most forty starting sites")
         return self

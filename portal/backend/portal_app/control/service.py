@@ -64,7 +64,8 @@ def creation_request(body):
         raise PublicError("family_unavailable", 422)
     # Q60: the creator may name their Empire; optional so earlier clients keep working.
     # Q61: the map size is optional (100 systems by default).
-    optional = {"empire_name", "size"}
+    # Test game (recette 10/11/2026): optional, solo only, refused in production by `create`.
+    optional = {"empire_name", "size", "sandbox"}
     if set(body) - optional != (base if family == "solo" else base | {"humans", "invite"}):
         raise PublicError("invalid_creation")
     humans = 1 if family == "solo" else body["humans"]
@@ -97,6 +98,11 @@ def creation_request(body):
     }
     if family == "private":
         wanted.update(humans=humans, invite=body["invite"])
+    if "sandbox" in body:
+        if type(body["sandbox"]) is not bool or (body["sandbox"] and family != "solo"):
+            raise PublicError("invalid_creation")
+        if body["sandbox"]:
+            wanted["sandbox"] = True
     if "empire_name" in body:
         from portal_app.control.life import empire_name
 
@@ -220,6 +226,8 @@ class Lobby:
         target = self.accounts.settings.creation_target
         if target not in self.accounts.settings.control_targets:
             raise PublicError("creation_unavailable", 503)
+        if wanted.get("sandbox") and self.accounts.settings.production:
+            raise PublicError("sandbox_unavailable", 403)
         with self.accounts.factory.begin() as session:
             _, user = Sessions(self.accounts).locked(session, raw)
             existing = session.scalar(
@@ -234,6 +242,8 @@ class Lobby:
                 options.update(humans=wanted["humans"], invite=wanted["invite"])
             if "empire_name" in wanted:
                 options["empire_name"] = wanted["empire_name"]
+            if wanted.get("sandbox"):
+                options["sandbox"] = True
             if existing is not None:
                 if existing.name != wanted["name"] or existing.start_request != options:
                     raise PublicError("creation_request_conflict", 409)
@@ -261,6 +271,8 @@ class Lobby:
             }
             if wanted["family"] == "private":
                 message["humans"] = wanted["humans"]
+            if wanted.get("sandbox"):
+                message["sandbox"] = True
             enqueue(session, target, message, now, universe_id=identifier)
             return {"universe_id": str(identifier), "status": "starting"}
 
@@ -402,6 +414,7 @@ class Lobby:
                 universe = references[UUID(item["universe_id"])]
                 options = universe.start_request or {}
                 item["family"] = options.get("family", "operator")
+                item["sandbox"] = bool(options.get("sandbox"))
                 item["creator"] = universe.created_by == user.id
                 if universe.started_at is not None:
                     item["started_at"] = wire_time(universe.started_at)

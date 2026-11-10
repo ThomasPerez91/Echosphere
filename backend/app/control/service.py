@@ -173,6 +173,7 @@ class Control:
                 rules=load_ruleset(message.ruleset),
                 humans=message.humans,
                 size=message.size,
+                sandbox=message.sandbox,
             )
         except IdempotencyConflict:
             raise ControlError("universe_content_conflict") from None

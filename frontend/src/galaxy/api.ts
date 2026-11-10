@@ -61,6 +61,7 @@ export type Option = {
   duration_us: string;
   reason: string | null;
 };
+export type Presence = { empire: number; system_id: string; planet_id: string };
 export type Projection = {
   server_time: string;
   /** Pinned exploration means: abstract expedition (v0.3) or probe Fleet SURVEY (v0.4+). */
@@ -71,6 +72,8 @@ export type Projection = {
   routes: Route[];
   /** Every star of the galaxy as a bare position (decision 09/11/2026): no identity, no route. */
   stars?: [number, number][];
+  /** Test game only: every foreign Colony with an anonymous Empire number (never a name). */
+  sandbox?: { presences: Presence[] };
   sources: { id: string; name: string; stocks: Amounts }[];
   options: Option[];
   missions: Mission[];
@@ -161,6 +164,7 @@ export function validProjection(value: unknown, empire: string): value is Projec
     (!(value.permissions as string[]).includes("colony.read") && (value.systems as KnownSystem[]).some((s) => s.observation)) ||
     !list(value.routes, route) ||
     ("stars" in value && !list(value.stars, (p) => Array.isArray(p) && p.length === 2 && p.every((c) => typeof c === "number" && Number.isFinite(c)))) ||
+    ("sandbox" in value && !(object(value.sandbox) && list(value.sandbox.presences, (p) => object(p) && integer(p.empire) && id(p.system_id) && id(p.planet_id)))) ||
     !list(value.sources, (s) => object(s) && id(s.id) && typeof s.name === "string" && amounts(s.stocks)) ||
     !list(
       value.options,

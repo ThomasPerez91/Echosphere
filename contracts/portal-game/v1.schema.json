@@ -354,6 +354,11 @@
           "maxItems": 30,
           "title": "Profiles",
           "type": "array"
+        },
+        "sandbox": {
+          "default": false,
+          "title": "Sandbox",
+          "type": "boolean"
         }
       },
       "required": [

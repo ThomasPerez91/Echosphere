@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { onSandboxChange } from "../sandbox/api";
 import { ApiError, listEmpires, readGalaxy, startExpedition } from "../galaxy/api";
 import type { Empire, Expedition, Projection } from "../galaxy/api";
 
@@ -212,6 +213,8 @@ export function useGalaxy(
     [read],
   );
 
+  // Test game: a sandbox grant or completion rereads every open view at once.
+  useEffect(() => onSandboxChange(() => { late.current = 0; void read(); }), [read]);
   return {
     ...state,
     selectedEmpire,

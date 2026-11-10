@@ -175,6 +175,15 @@ système choisit, clic droit ou Échap annule et rouvre la fenêtre.
   grisés avec « Débloqué par … » ; plafond de niveau selon la planète.
 - Flottes (10/11) : une commande de plusieurs vaisseaux livre les unités une à une (« 2 / 5
   livrées ») ; v0.11 : les gisements se régénèrent (10 % par jour). Migration Game 0019.
+- **Partie de test** (10/11, migration Game 0020) : dans « Nouvelle partie », type **Test** (solo,
+  refusé si le Portal tourne en production). La partie démarre presque terminée : les sept bâtiments
+  au niveau 10, toutes les technologies acquises, toute la galaxie cartographiée avec ses routes, une
+  garnison avec chaque classe de vaisseau, 250 000 de chaque ressource. Les Empires adverses sont
+  visibles sur la carte (anneau « Empire inconnu n ») mais restent inconnus des Relations (aucun
+  contact). En jeu, le bouton **TEST** de la barre du haut ouvre les outils : fixer les stocks d’une
+  colonie (plafonnés par son stockage) ou « Remplir au maximum », ajouter des vaisseaux en garnison,
+  « Tout terminer maintenant » (constructions, recherches et commandes de vaisseaux, files comprises).
+  Les trajets de flotte gardent leur durée normale.
 - La pile de recette porte le nom de projet Compose `echosphere` sur ce poste : elle partage les
   volumes de la pile conservée. Ne jamais lancer `down -v`.
 

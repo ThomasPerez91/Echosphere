@@ -1,6 +1,6 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-11-09. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-11-10. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
 ## Reprise rapide — base de recette intégrée (recette/ux-weekend)
 
@@ -16,6 +16,8 @@ Mise à jour : 2026-11-09. [Contexte](context.md), [passation](docs/06-handoff/R
 | Ajouts (09/11, soir) | #32 job CI PostgreSQL temporaire sur les PR vers la recette (validé) ; #34 flottes sur la carte (fenêtre, choix de destination) ; chaîne EXP v0.10 intégrée en `cdf277e` : #30 conception EXP-00, #31 EXP-01a (générateur d’opportunités), #33 galaxie v2 (tailles 100–2 000, impasses/goulots, plafonds Q61, création Portal/Game en v0.10), #35 EXP-01b (opportunités en base, onglet « Données »), #36 EXP-02a (PROSPECT/STUDY, Extracteur). CI de #36 sur `cdf277e` : 6 jobs verts dont backend avec PostgreSQL, 642 tests (job 129219981014) |
 | Recette ce soir | [Procédure](docs/02-ux-ui/redesign/ux05-recette-locale.md) étapes 10–11 et sections « Flottes sur la carte » / « Opportunités » ; migrations Game 0015–0016 additives ; les univers déjà créés restent sur leur ruleset |
 | Intégré ensuite | #37 EXP-02b EXTRACT (+ retour automatique validé le 09/11), CI verte 651 tests (`78e7a40`) ; #38 retours Portail (`02110db`) ; #39 digest des reçus de contrôle : créations solo bloquées en `invalid_receipt` (Game hachait ses valeurs par défaut) |
+| Intégré (10/11) | #43 COL-11 (ruleset v0.11 : bâtiments clés uniques, Chantier orbital, Centre de recherche, plafond de niveau) ; #44 livraison des vaisseaux une à une et régénération des gisements (migration 0019), CI verte sur `eb94851`, recette avancée à `eb94851` |
+| En cours (10/11) | `work/sandbox-game` : **partie de test** demandée par l’utilisateur (Portal `sandbox` solo hors production ; Game : monde presque terminé au démarrage, routes `/game/{u}/sandbox/{empire}` ressources/vaisseaux/terminer maintenant, Empires adverses visibles sans contact, migration 0020) ; tests PostgreSQL `test_sandbox.py` en CI seulement |
 | En cours | Recette utilisateur du 09/11 au soir ; prochain lot EXP-02c (exploitation contestée) après retours |
 | Étapes suivantes | Atelier génération de carte (tailles 100–2000, placement dispersé/regroupé, 10 joueurs + ~30 IA) avec l’utilisateur avant de lever le plafond de 4 Empires ; Orbite/Défense Q30–Q38 à reprioriser ; tests PostgreSQL de #22–#28 seulement en Full CI après fusion master |
 

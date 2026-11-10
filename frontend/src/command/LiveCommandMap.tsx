@@ -44,7 +44,7 @@ export function LiveCommandMap({ universe, enabled, csrf, onSessionLost, onEcono
   useEffect(() => { if (empire) onEmpireChange?.(empire); }, [empire, onEmpireChange]);
 
   const world: World | null = useMemo(() => (g && f && f.available && f.empire.id === g.empire.id
-    ? { galaxy: { systems: g.systems, routes: g.routes, stars: g.stars }, fleets: f } : null), [g, f]);
+    ? { galaxy: { systems: g.systems, routes: g.routes, stars: g.stars, presences: g.sandbox?.presences }, fleets: f } : null), [g, f]);
 
   // Server clock: the Fleet projection's server_time advanced by the local time since reception.
   const [tick, setTick] = useState(() => Date.now());

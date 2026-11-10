@@ -26,6 +26,7 @@ from app.simulation.service import TimeEngine
 router = APIRouter(prefix="/game/{universe_id}/colonies")
 
 STATUS = {
+    "sandbox_unavailable": 404,
     "invalid_colony_name": 422,
     "system_not_found": 404,
     "opportunity_not_found": 404,

@@ -137,3 +137,21 @@
 .d-notif-new a { background: rgba(59, 227, 255, .07); }
 .d-notif-new b::after { content: "Nouveau"; margin-left: 8px; padding: 1px 6px; border-radius: 6px; vertical-align: 1px;
   font: 600 10px/1.5 inherit; letter-spacing: .04em; text-transform: uppercase; color: #04121f; background: var(--d-cyan, #3be3ff); }
+
+/* Test game tools (sandbox, recette 10/11/2026). */
+.d-sandbox-btn { width: auto; padding: 0 10px; height: 30px; border: 1px solid rgba(255, 190, 92, .55); border-radius: 8px;
+  color: var(--d-amber); font: 600 11.5px/1 var(--d-font); letter-spacing: .08em; text-transform: uppercase; background: rgba(60, 38, 8, .35); cursor: pointer; }
+.d-sandbox-btn[aria-expanded="true"] { background: rgba(255, 190, 92, .18); }
+.d-popover--sandbox { width: min(380px, 94vw); max-height: min(78vh, 640px); overflow: auto; }
+.d-sb-block { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--d-line-2); border-radius: 10px; background: rgba(8, 20, 38, .6); }
+.d-sb-title { color: var(--d-text); font-weight: 600; font-size: 12.5px; }
+.d-sb-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.d-sb-grid--2 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.d-sb-grid label, .d-sb-row { display: grid; gap: 4px; color: var(--d-muted); font-size: 11.5px; }
+.d-sb-grid input, .d-sb-grid select, .d-sb-row select { min-width: 0; height: 34px; padding: 0 8px; border: 1px solid var(--d-line-2); border-radius: 8px;
+  background: #07111f; color: var(--d-text); font: inherit; font-size: 13px; }
+.d-sb-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.d-popover .d-btn.d-btn-primary { border-color: rgba(255, 190, 92, .7); background: rgba(90, 58, 12, .55); color: #ffe7bf; }
+.d-sb-feedback { padding: 8px 10px; border-radius: 8px; }
+.d-sb-feedback--ok { color: #bff3d6 !important; background: rgba(28, 90, 60, .35); }
+.d-sb-feedback--error { color: #ffd0c4 !important; background: rgba(110, 36, 24, .4); }

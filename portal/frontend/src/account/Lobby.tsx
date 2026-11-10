@@ -6,7 +6,7 @@ type Membership = { membership_id: string; universe_id: string; name: string; de
   applied_status: string | null; delivery_state: 'pending' | 'applied'; expired: boolean;
   valid_until: string; last_checked_at: string | null; entry_available: boolean; entry_url?: string | null;
   /** UX-API-02/03: family, seats and, for the creator of a multi game, its invitations. */
-  family?: string; creator?: boolean; started_at?: string;
+  family?: string; creator?: boolean; started_at?: string; sandbox?: boolean;
   /** Q60: chosen Empire name, archived solo game, multi game left by this player. */
   empire_name?: string | null; archived?: boolean; left?: boolean; seats_total?: number; seats_taken?: number; invite_mode?: 'link' | 'email';
   sent_invitations?: { id: string; email: string; state: string; expires_at: string }[] };
@@ -148,7 +148,7 @@ export function Lobby({ csrf, onExpired, onSnapshot, version = 0 }: {
             {item.empire_name !== undefined && <div><dt><Icon name="flag" />Empire :</dt><EmpireName csrf={csrf} universe={item.universe_id}
               current={item.empire_name} canRename={playable && item.delivery_state === 'applied'} onChanged={reread} /></div>}
             {item.started_at && <div><dt><Icon name="flag" />Démarrée le :</dt><dd><time dateTime={item.started_at}>{new Date(item.started_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</time></dd></div>}
-            <div><dt><Icon name="layers" />Mode :</dt>{item.family === 'solo' ? <dd>Solo</dd> : item.family === 'private' ? <dd>Multijoueur</dd>
+            <div><dt><Icon name="layers" />Mode :</dt>{item.sandbox ? <dd>Test</dd> : item.family === 'solo' ? <dd>Solo</dd> : item.family === 'private' ? <dd>Multijoueur</dd>
               : <dd className="p-na" title="Implémentation backend nécessaire">N/D</dd>}</div>
             {item.seats_total !== undefined && <div><dt><Icon name="users" />Joueurs :</dt><dd>{item.seats_taken} / {item.seats_total}</dd></div>}
             {item.last_checked_at && <div><dt><Icon name="clock" />Confirmé le :</dt><dd><time dateTime={item.last_checked_at}>{new Date(item.last_checked_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</time></dd></div>}

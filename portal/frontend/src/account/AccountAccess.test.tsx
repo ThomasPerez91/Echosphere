@@ -235,6 +235,24 @@ test('a multiplayer game sends humans, the galaxy size and the invitation mode, 
   expect(body.profiles).toHaveLength(30); // 1 cautious + 29 expansionists, 40 Empires
 });
 
+test('a test game is a solo game sent with the sandbox flag', async () => {
+  const posted: string[] = [];
+  installFetcher((url: string, options?: RequestInit) => {
+    if (url === '/api/lobby/universes') { posted.push(options!.body as string); return Promise.resolve({ ok: true, status: 200, json: async () => ({ universe_id: 'u', status: 'starting' }) }); }
+    return Promise.resolve({ ok: true, json: async () => snapshot });
+  });
+  render(<AccountAccess verificationToken={null} page="new-game" />);
+  fireEvent.change(await screen.findByLabelText('Nom de l’univers'), { target: { value: 'Banc d’essai' } });
+  fireEvent.click(screen.getByLabelText('Test'));
+  expect(screen.getByText(/tout est débloqué/)).toBeVisible();
+  expect(screen.queryByLabelText('Joueurs humains')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Créer la partie' }));
+  await waitFor(() => expect(posted).toHaveLength(1));
+  const body = JSON.parse(posted[0]);
+  expect(body).toMatchObject({ family: 'solo', sandbox: true, size: 100 });
+  expect(body).not.toHaveProperty('humans');
+});
+
 test('a received email invitation is accepted from the games page, then the lobby is re-read', async () => {
   let accepted = false;
   const lobbyReads: number[] = [];

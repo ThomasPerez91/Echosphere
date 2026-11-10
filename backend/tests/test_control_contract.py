@@ -120,3 +120,26 @@ def test_empire_names_are_visible_text_and_a_hand_over_names_a_known_profile():
     for extra in [{"profile": "aggressive"}, {"profile": "expansionist", "resources": {}}]:
         with pytest.raises(ValidationError):
             operation({"kind": "hand_over_empire", **extra})
+
+
+def test_a_test_game_is_a_solo_start_and_leaves_earlier_digests_unchanged():
+    message = {
+        "kind": "start_universe",
+        "universe_id": "00000000-0000-4000-8000-000000000002",
+        "name": "Banc d'essai",
+        "seed": "seed",
+        "family": "solo",
+        "ruleset": "v0.11",
+        "profiles": [],
+    }
+    envelope = {"version": 1, "operation_id": "00000000-0000-4000-8000-000000000003"}
+    plain = Operation.model_validate({**envelope, "message": message})
+    assert "sandbox" not in plain.model_dump(mode="json", exclude_unset=True)["message"]
+    test = Operation.model_validate({**envelope, "message": {**message, "sandbox": True}})
+    assert test.message.sandbox is True
+    for broken in (
+        {**message, "sandbox": "yes"},
+        {**message, "sandbox": True, "family": "private", "humans": 2},
+    ):
+        with pytest.raises(ValidationError):
+            Operation.model_validate({**envelope, "message": broken})

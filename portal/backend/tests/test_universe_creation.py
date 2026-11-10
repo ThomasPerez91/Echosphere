@@ -50,6 +50,15 @@ def test_persistent_family_is_not_offered_yet():
     assert refused.value.code == "family_unavailable"
 
 
+def test_a_test_game_is_an_optional_solo_choice():
+    assert creation_request(body(sandbox=True))["sandbox"] is True
+    assert "sandbox" not in creation_request(body(sandbox=False))
+    assert "sandbox" not in creation_request(body())
+    for broken in (body(sandbox="yes"), body(sandbox=1), private(sandbox=True)):
+        with pytest.raises(PublicError):
+            creation_request(broken)
+
+
 def private(**changes):
     return body(**{"family": "private", "humans": 2, "invite": "link", **changes})
 

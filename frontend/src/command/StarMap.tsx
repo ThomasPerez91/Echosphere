@@ -58,6 +58,15 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
     const known = new Set(systems.map((s) => `${s.x},${s.y}`));
     return (world.galaxy.stars ?? []).filter(([x, y]) => !known.has(`${x},${y}`));
   }, [systems, world.galaxy.stars]);
+  // Test game: foreign Colonies per system, by anonymous Empire number (still unknown Empires).
+  const foreign = useMemo(() => {
+    const map = new Map<string, number[]>();
+    for (const p of world.galaxy.presences ?? []) {
+      const list = map.get(p.system_id) ?? [];
+      if (!list.includes(p.empire)) map.set(p.system_id, [...list, p.empire]);
+    }
+    return map;
+  }, [world.galaxy.presences]);
   const galaxy: View = useMemo(() => {
     if (!far.length) return full;
     const ax = [...xs, ...far.map((p) => p[0])], ay = [...ys, ...far.map((p) => p[1])];
@@ -193,7 +202,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
       {systems.map((s) => {
         const name = systemName(world, s.id);
         const count = here.get(s.id) ?? 0;
-        const label = `${name}${s.state === "DETECTED" ? " (position approximative)" : ""}${own.has(s.id) ? ", votre colonie" : ""}${count ? `, ${count} flotte(s) stationnée(s)` : ""}`;
+        const others = foreign.get(s.id) ?? [];
+        const label = `${name}${s.state === "DETECTED" ? " (position approximative)" : ""}${own.has(s.id) ? ", votre colonie" : ""}${others.length ? `, ${others.map((n) => `Empire inconnu ${n}`).join(", ")}` : ""}${count ? `, ${count} flotte(s) stationnée(s)` : ""}`;
         const state = own.has(s.id) ? "own" : s.state.toLowerCase();
         const big = selected === s.id || own.has(s.id);
         return <g key={s.id} role="button" tabIndex={0} aria-pressed={selected === s.id} aria-label={label}
@@ -204,6 +214,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
             <circle r={big ? 36 : 22} fill="url(#cmd-glow)" className="cmd-halo" />
             {selected === s.id && <circle r={18} className="cmd-selection" />}
             {own.has(s.id) && <><circle r={13} className="cmd-own" /><circle r={9.5} className="cmd-own cmd-own--inner" /></>}
+            {others.map((n, i) => <circle key={n} r={13 + i * 4} className="cmd-foreign" style={{ stroke: foreignColor(n) }}>
+              <title>{`Empire inconnu ${n}`}</title></circle>)}
             <circle r={s.state === "DETECTED" ? 4.5 : 6.5} className="cmd-star" />
             {(showNames || selected === s.id) && <text x={15} y={5} className={`cmd-label${big ? " cmd-label--strong" : ""}`}>{name}</text>}
             {count > 0 && (onFleets
@@ -229,6 +241,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
         <li><span className="cmd-swatch cmd-swatch--mapped" />{stateLabel.MAPPED}</li>
         <li><span className="cmd-swatch cmd-swatch--monitored" />{stateLabel.MONITORED}</li>
         <li><span className="cmd-swatch cmd-swatch--own" />Votre colonie</li>
+        {foreign.size > 0 && <li><span className="cmd-swatch cmd-swatch--foreign" />Empire inconnu (partie de test)</li>}
         <li><span className="cmd-swatch cmd-swatch--fleet" />Vos flottes</li>
         <li><span className="cmd-swatch cmd-swatch--mission" />Mission en cours</li>
         <li><span className="cmd-swatch cmd-swatch--route" />Route hyperespace</li>
@@ -254,4 +267,9 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
       <button type="button" className="button" aria-label="Zoom avant" onClick={() => zoom(1 / 1.25)}>+</button>
     </div>
   </div>;
+}
+
+/** Distinct, stable hue per anonymous Empire number (test game). */
+export function foreignColor(n: number) {
+  return `hsl(${(n * 67 + 8) % 360} 85% 62%)`;
 }

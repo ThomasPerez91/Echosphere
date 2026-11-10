@@ -39,7 +39,9 @@ export const opportunityNames: Record<string, string> = {
   artificial_signal: "Signal artificiel",
 };
 
-export type World = { fleets: FleetProjection; galaxy: { systems: KnownSystem[]; routes: Route[]; stars?: [number, number][] } };
+export type World = { fleets: FleetProjection; galaxy: { systems: KnownSystem[]; routes: Route[]; stars?: [number, number][];
+  /** Test game only: foreign Colonies by anonymous Empire number. */
+  presences?: { empire: number; system_id: string }[] } };
 
 const can = (w: World, right: string) => w.fleets.permissions.includes(right);
 export const stationed = (w: World) => (w.fleets.fleets ?? []).filter((f) => f.status === "STATIONED");

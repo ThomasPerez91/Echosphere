@@ -7,6 +7,7 @@ import { Ico, Pic } from './visual';
 import { asset, compact, estimate, planetImage, resourceIcon } from './assets';
 import { useMedia, useNow } from './useNow';
 import { NotificationBell } from '../notifications/NotificationBell';
+import { SandboxPanel } from '../sandbox/SandboxPanel';
 
 export const navigation = [
   { id: 'empire', label: 'Empire', icon: 'empire' },
@@ -31,7 +32,7 @@ export function GameShell({ universe, access, colony, status, destination, href,
   status: Readiness; destination: string; href: (section: string) => string; onNavigate: () => void; children: ReactNode;
 }) {
   const [drawer, setDrawer] = useState(false);
-  const [popover, setPopover] = useState<'messages' | 'alerts' | 'profile' | null>(null);
+  const [popover, setPopover] = useState<'messages' | 'alerts' | 'profile' | 'sandbox' | null>(null);
   const openButton = useRef<HTMLButtonElement>(null);
   const moreButton = useRef<HTMLButtonElement>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
@@ -100,6 +101,8 @@ export function GameShell({ universe, access, colony, status, destination, href,
       <div className="d-top-actions">
         {/* Recette 09/11/2026: only a lost connection is shown in the bar; the state stays readable. */}
         <div className={`d-network d-network--${status}${status === 'unavailable' ? '' : ' visually-hidden'}`} role="status" title={readiness[status]}><span className="d-status-dot" aria-hidden="true" />{readiness[status]}</div>
+        {universe && projection && <SandboxPanel universe={universe} empire={projection.colony.empire.id} csrf={session?.csrf_token}
+          open={popover === 'sandbox'} onToggle={value => setPopover(value ? 'sandbox' : null)} />}
         <button type="button" className="d-icon-btn" aria-label="Messages" aria-expanded={popover === 'messages'}
           onClick={() => setPopover(value => value === 'messages' ? null : 'messages')}><Pic src="icons/ui/ui-messages.svg" size={34} /></button>
         {universe && active

@@ -20,10 +20,33 @@ from app.galaxy.models import (
     RouteKnowledge,
     SystemKnowledge,
 )
-from app.persistence.models import Colony, Empire, Planet
+from app.persistence.models import Colony, Empire, Planet, Universe
 from app.research import service as research
 from app.simulation.models import ResourceBalance
 from app.simulation.scheduler import lock_stream
+
+
+def sandbox_presences(session, universe_id, empire_id):
+    """Test game only (recette 10/11/2026): every foreign Colony is shown on the map with an
+    anonymous Empire number, never its name or a contact; Relations still knows nothing."""
+    universe = session.get(Universe, universe_id)
+    if universe is None or not universe.sandbox:
+        return {}
+    rows = session.execute(
+        select(Colony.empire_id, Planet.system_id, Colony.planet_id)
+        .join(Planet, Planet.id == Colony.planet_id)
+        .where(Colony.universe_id == universe_id, Colony.empire_id != empire_id)
+        .order_by(Colony.empire_id, Colony.planet_id)
+    ).all()
+    tags = {e: n for n, e in enumerate(sorted({r[0] for r in rows}, key=str), start=1)}
+    return {
+        "sandbox": {
+            "presences": [
+                {"empire": tags[e], "system_id": str(s), "planet_id": str(p)} for e, s, p in rows
+            ]
+        }
+    }
+
 
 router = APIRouter(prefix="/game/{universe_id}")
 
@@ -182,6 +205,7 @@ class Galaxy(Colonies):
                     .order_by(GalaxySystem.ordinal)
                 )
             ],
+            **sandbox_presences(session, universe_id, empire_id),
             "sources": sources,
             "options": options,
             "missions": self.missions_projection(session, universe_id, empire_id, permissions)

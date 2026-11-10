@@ -25,6 +25,7 @@ const errors: Record<string, string> = {
   family_unavailable: 'Ce type de partie n’est pas encore disponible.',
   creation_request_conflict: 'Cette demande a déjà été envoyée avec d’autres choix. Rechargez la page.',
   creation_unavailable: 'La création de partie est indisponible pour le moment.',
+  sandbox_unavailable: 'Les parties de test ne sont pas proposées sur ce serveur.',
   csrf_denied: 'Votre connexion a changé. Rechargez la page puis réessayez.',
 };
 
@@ -44,10 +45,10 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
   // Q61: galaxy size; players + AI never exceed its Empire cap.
   const [size, setSize] = useState(100);
   const [counts, setCounts] = useState<Record<Profile, number>>({ economic_cautious: 1, expansionist: 1 });
-  const [family, setFamily] = useState<'solo' | 'private'>('solo');
+  const [family, setFamily] = useState<'solo' | 'private' | 'test'>('solo');
   const [humans, setHumans] = useState(2);
   const [invite, setInvite] = useState<'link' | 'email'>('link');
-  const players = family === 'solo' ? 1 : humans;
+  const players = family === 'private' ? humans : 1;
   const cap = capOf(size);
   const maxAi = Math.max(0, Math.min(MAX_AI, cap - players));
   const opponents = PROFILE_ORDER.flatMap(id => Array.from({ length: counts[id] }, () => id));
@@ -57,16 +58,16 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
     return { economic_cautious: first, expansionist: Math.min(current.expansionist, room - first) };
   });
   const roomFor = (nextSize: number, nextPlayers: number) => Math.max(0, Math.min(MAX_AI, capOf(nextSize) - nextPlayers));
-  const chooseFamily = (next: 'solo' | 'private') => {
+  const chooseFamily = (next: 'solo' | 'private' | 'test') => {
     setFamily(next); fresh();
-    const nextPlayers = next === 'solo' ? 1 : Math.min(humans, Math.min(MAX_HUMANS, cap));
+    const nextPlayers = next !== 'private' ? 1 : Math.min(humans, Math.min(MAX_HUMANS, cap));
     if (next === 'private') setHumans(nextPlayers);
     fit(roomFor(size, nextPlayers));
   };
   const chooseHumans = (next: number) => { setHumans(next); fresh(); fit(roomFor(size, next)); };
   const chooseSize = (next: number) => {
     setSize(next); fresh();
-    const nextPlayers = family === 'solo' ? 1 : Math.min(humans, Math.min(MAX_HUMANS, capOf(next)));
+    const nextPlayers = family !== 'private' ? 1 : Math.min(humans, Math.min(MAX_HUMANS, capOf(next)));
     if (family === 'private') setHumans(nextPlayers);
     fit(roomFor(next, nextPlayers));
   };
@@ -88,9 +89,10 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
     try {
       const response = await fetch('/api/lobby/universes', { method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-        body: JSON.stringify(family === 'solo'
-          ? { request_id: requestId.current, name: trimmed, family, size, profiles: opponents, ...named }
-          : { request_id: requestId.current, name: trimmed, family, size, profiles: opponents, humans, invite, ...named }),
+        body: JSON.stringify(family === 'private'
+          ? { request_id: requestId.current, name: trimmed, family, size, profiles: opponents, humans, invite, ...named }
+          // Test game: a solo game whose world starts almost finished, with the sandbox tools.
+          : { request_id: requestId.current, name: trimmed, family: 'solo', size, profiles: opponents, ...named, ...(family === 'test' ? { sandbox: true } : {}) }),
         signal: AbortSignal.timeout(10000) });
       if (response.status === 401) { onExpired?.(); return; }
       if (response.status === 404) { setError('Ce serveur ne sait pas encore créer de partie (mise à jour du Portal nécessaire).'); return; }
@@ -131,9 +133,10 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
       <fieldset>
         <legend>Type de partie</legend>
         <div className="p-choice-row" role="radiogroup" aria-label="Type de partie">
-          {([['solo', 'Solo'], ['private', 'Multijoueur']] as const).map(([id, label]) => <label key={id} className={`p-choice${family === id ? ' is-on' : ''}`}>
+          {([['solo', 'Solo'], ['private', 'Multijoueur'], ['test', 'Test']] as const).map(([id, label]) => <label key={id} className={`p-choice${family === id ? ' is-on' : ''}`}>
             <input type="radio" name="family" checked={family === id} onChange={() => chooseFamily(id)} />{label}</label>)}
         </div>
+        {family === 'test' && <p className="p-account-help">Partie de test, solo : tout est débloqué (bâtiments niveau 10, technologies, galaxie entièrement cartographiée, Empires adverses visibles mais toujours inconnus) et un panneau « Test » en jeu permet de se donner des ressources et des vaisseaux et de terminer immédiatement constructions, recherches et chantiers.</p>}
         {family === 'private' && <>
           <p className="p-account-help">Vous invitez vos amis ; chacun dirige son propre Empire. Alliances, coopération ou trahison se décident en jeu.</p>
           <label className="p-count">Joueurs humains

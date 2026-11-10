@@ -334,3 +334,6 @@
 /* Every star of the galaxy as a point (09/11/2026): dim, never interactive. */
 .cmd-far-star { fill: #b9cdea; opacity: .55; }
 .cmd-mini-far { fill: #8fa7c7; opacity: .5; }
+/* Test game: foreign Colony ring per anonymous Empire (colour set inline). */
+.cmd-foreign { fill: none; stroke-width: 2; stroke-dasharray: 3 2.5; }
+.cmd-swatch--foreign { border: 2px dashed hsl(75 85% 62%); }
