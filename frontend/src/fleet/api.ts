@@ -8,6 +8,8 @@ export type KnownPlanet = { id: string; name: string; sector_capacity: number; o
 export type SystemRef = { id: string; state: "DETECTED" | "MAPPED" | "MONITORED"; name?: string; planets?: KnownPlanet[] };
 export type ShipClass = {
   name: string;
+  /** COL-11: Chantier orbital (or other) levels of the building colony; empty before v0.11. */
+  requires?: { infrastructure_type: string; level: number }[];
   cost: Amounts;
   build_us: string;
   hop_seconds: number;

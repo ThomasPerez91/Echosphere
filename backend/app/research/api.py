@@ -10,7 +10,7 @@ from app.access.http import cookie_name
 from app.access.service import AccessError
 from app.colony.api import Colonies, Empty, bootstrap, call, command
 from app.colony.projection import amounts, iso
-from app.colony.service import catch_up_owned
+from app.colony.service import catch_up_owned, rules_for
 from app.control.models import EmpireBinding
 from app.persistence.models import Colony, Empire, Planet
 from app.research import service as research
@@ -89,6 +89,8 @@ class Research(Colonies):
         known = research.acquired(session, empire_id)
         queue = research.pending(session, empire_id)
         source_ids = {c.id for c in sources}
+        rules = rules_for(session, universe_id)
+        best = research.facility_level(session, rules, source_ids)
         options = []
         for key, tech in cat.technologies.items():
             snap = research.quote(session, universe_id, empire_id, key, "")
@@ -97,6 +99,8 @@ class Research(Colonies):
                 reason = None if "research.start" in permissions else "permission_denied"
                 if not sources:
                     reason = "funding_unavailable"
+                elif best is not None and best < rules.research.facility.level(tech.tier):
+                    reason = "research_center_required"
             except research.ResearchError as exc:
                 reason = exc.code
             options.append(

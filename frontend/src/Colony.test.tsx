@@ -70,8 +70,8 @@ test('real server projection renders without any mutation, even under StrictMode
   expect(screen.queryByLabelText('Stocks de la colonie')).not.toBeInTheDocument();
   expect(screen.getAllByText('+120/h').length).toBeGreaterThan(0);
   expect(screen.getByRole('button', { name: 'Construire Nœud de données' })).toBeEnabled();
-  expect(screen.getByRole('button', { name: 'Construire Complexe industriel' })).toBeDisabled();
-  expect(screen.getByText('Cette infrastructure est limitée à un exemplaire par colonie.')).toBeVisible();
+  // A unique building already present is not offered again (it is listed with the buildings).
+  expect(screen.queryByRole('button', { name: 'Construire Complexe industriel' })).not.toBeInTheDocument();
   expect(posts(fetcher)).toHaveLength(0);
   expect(fetcher.mock.calls.filter(call => call[1]?.method === 'POST')).toHaveLength(0);
 });

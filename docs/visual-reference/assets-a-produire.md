@@ -14,26 +14,23 @@ règle de jeu.
 > personnage reconnaissable, aucune référence à une licence existante. Cadrage centré, sujet lisible
 > en petit format, fond sombre dégradé sans éléments parasites.
 
-Formats : **carré 1024 × 1024** (réduit à 640 × 640 pour les bâtiments, 512 × 512 pour le reste).
+Formats : **carré 1024 × 1024** (réduit à 512 × 512).
 
-## 1. Bâtiments v0.11 (`img/batiments/`)
+## 1. Bâtiments v0.11
 
-Noms retenus (choix de l’utilisateur, 10/11/2026) : **Chantier orbital** (vaisseaux) et **Centre de
-recherche** (technologies).
-
-| Fichier | Prompt (après le style commun) |
-|---|---|
-| `chantier-orbital.webp` | Un chantier spatial en orbite au-dessus d’une planète, immense berceau de construction en arc avec bras robotisés et poutres incandescentes, un vaisseau en cours d’assemblage dans sa cale, étincelles ambrées, halo cyan de la planète en dessous. |
-| `centre-de-recherche.webp` | Un centre de recherche sur une colonie planétaire : dôme de verre et tours d’antennes en spirale captant des ondes lumineuses cyan dans le ciel, anneaux de données flottants, petites lumières ambrées aux fenêtres, crépuscule. |
+Rien à produire : le **Chantier orbital** utilise `img/batiments/anneau-amarrage.webp` et le
+**Centre de recherche** `img/batiments/laboratoire-avance.webp`, déjà présents.
 
 ## 2. Vaisseaux (`img/vaisseaux/`)
 
 Vue de trois quarts, vaisseau seul sur fond spatial sombre, même famille de design (coques claires
-gris perle, liserés cyan, réacteurs bleus).
+gris perle, liserés cyan, réacteurs bleus). **Design futuriste épuré : aucune parabole, aucune
+grande antenne ni panneau solaire apparent** ; capteurs et émetteurs intégrés à la coque
+(lentilles, bandes lumineuses).
 
 | Fichier | Classe | Prompt |
 |---|---|---|
-| `sonde.webp` | Sonde | Petite sonde d’exploration élancée, grandes antennes et capteurs en éventail, un faisceau de balayage cyan fin devant elle. |
+| `sonde.webp` | Sonde | Petite sonde d’exploration élancée en forme de goutte, capteurs intégrés en lentilles lumineuses sur la proue, un faisceau de balayage cyan fin devant elle, aucune parabole. |
 | `cargo-leger.webp` | Cargo léger | Cargo compact et trapu, modules de soute rectangulaires accrochés à une épine centrale, feux de position ambrés. |
 | `extracteur.webp` | Extracteur | Vaisseau minier industriel aux bras foreurs repliés, tambour de collecte et réservoirs, poussière d’astéroïde lumineuse autour. |
 | `colonisateur.webp` | Colonisateur | Grand vaisseau arche, anneau d’habitat rotatif et serres lumineuses, silhouette douce et rassurante. |

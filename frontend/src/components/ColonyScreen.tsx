@@ -216,7 +216,9 @@ function Infrastructures({ colony, data, server, stocks }: { colony: Colony; dat
   const upgrades = data.options.filter(option => option.action === 'upgrade');
   const canBuild = data.permissions.includes('colony.construct');
   // Available constructions first; unavailable ones stay visible, greyed, after them.
-  const ordered = [...builds].sort((a, b) => Number(b.available) - Number(a.available));
+  // A unique building already built (or queued) lives in the list above, not here (COL-11).
+  const ordered = builds.filter(option => option.reason !== 'unique_limit')
+    .sort((a, b) => Number(b.available) - Number(a.available));
   return <div className="d-tabpanel">
     <Queue colony={colony} projection={data} server={server} />
     <section className="d-card d-panel" aria-labelledby="built-title">

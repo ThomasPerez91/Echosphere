@@ -4,7 +4,7 @@ import { useFleets } from "../hooks/useFleets";
 import { ApiError, previewMission } from "../fleet/api";
 import type { Amounts } from "../colony/api";
 import type { CombatReport, FleetProjection, Frontier, MissionKind, MissionView, Protocol, Quote, ShipOrder } from "../fleet/api";
-import { duration, exactUnits, resourceKeys, resourceLabels, time, units } from "../colony/format";
+import { duration, exactUnits, infrastructureLabel, resourceKeys, resourceLabels, time, units } from "../colony/format";
 import { Badge, Button, EmptyState, Panel } from "./ui";
 import { message } from "../fleet/messages";
 import { protocols } from "../fleet/protocols";
@@ -339,6 +339,7 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
               </select></label>
             <Counter label="Quantité" value={colonizer ? 1 : choice.quantity} max={colonizer ? 1 : p.max_quantity!} onChange={(n) => setOrder({ ...order, [colony.id]: { ...choice, quantity: Math.max(1, n) } })} />
             <p className="fleet-unit">{colonizer ? "Prix serveur actuel" : "Par unité"} : {resourceKeys.map((k) => `${units(unitCost[k])} ${resourceLabels[k]}`).join(" · ")} · {duration(ship.build_us)} de fabrication · {units(ship.cargo)} de cargo{ship.survey ? " · cartographie" : ""}{p.combat?.classes.includes(choice.ship) ? " · militaire" : ""}</p>
+            {!!ship.requires?.length && <p className="fleet-unit">Nécessite : {ship.requires.map((r) => `${infrastructureLabel(r.infrastructure_type)} niveau ${r.level}`).join(", ")} dans la colonie.</p>}
             {colonizer && p.colonization?.colonizer_quote && <p className="panel-meta">Coût progressif : rang {p.colonization.colonizer_quote.rank} (colonies, colonisateurs et ordres en cours), ×{p.colonization.colonizer_quote.multiplier_bps / 10000}. Recalculé et figé par le serveur à la confirmation.</p>}
             <Button className="button--primary" type="submit" disabled={fleets.pending || colony.orders.length >= p.queue_limit!}>Commander</Button>
           </form>}

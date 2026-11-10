@@ -335,6 +335,11 @@ def project(session, universe_id, empire_id, permissions, at):
                 "flux_per_hop": ship.flux_per_hop,
                 "cargo": str(f.cargo_capacity({key: 1})),
                 "survey": ship.survey,
+                # COL-11 (v0.11): building levels of the building colony that unlock the class.
+                "requires": [
+                    {"infrastructure_type": kind, "level": level}
+                    for kind, level in sorted(ship.requires.items())
+                ],
             }
             for key, ship in f.classes.items()
         },
