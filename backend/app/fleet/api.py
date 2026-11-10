@@ -22,10 +22,12 @@ from app.combat import service as combat
 from app.control.models import EmpireBinding
 from app.fleet import service
 from app.fleet.models import Fleet, FleetMission, FleetReport, ShipOrder
+from app.fleet.service import ship_bonus
 from app.frontier import service as frontier
 from app.galaxy import service as galaxy
 from app.galaxy.models import PlanetKnowledge, SystemKnowledge
 from app.persistence.models import Colony, Empire, Planet
+from app.research.service import discounted
 from app.simulation.scheduler import lock_stream
 
 
@@ -335,14 +337,23 @@ def project(session, universe_id, empire_id, permissions, at):
             ref["planets"] = known_planets(session, empire_id, k.system_id, owned)
         systems_view.append(ref)
     # Effective fleet speed is a ratio of time: durations are multiplied by its inverse.
+    bonus = ship_bonus(session, empire_id)
     ratio = rules.colony.speeds["fleet"]
     speed = Ratio(numerator=ratio.denominator, denominator=ratio.numerator)
     return base | {
         "catalogue": {
             key: {
                 "name": ship.name,
-                "cost": amounts(f.order_quote(key, 1)[0]),
-                "build_us": str(f.order_quote(key, 1)[1]),
+                # v0.12: price and build time with the Empire's research effects (new orders).
+                "cost": amounts(
+                    {
+                        r: discounted(v, bonus.get("ship_cost", 0))
+                        for r, v in f.order_quote(key, 1)[0].items()
+                    }
+                ),
+                "build_us": str(
+                    max(1, discounted(f.order_quote(key, 1)[1], bonus.get("ship_duration", 0)))
+                ),
                 "hop_seconds": ship.hop_seconds,
                 # Travel time of one hop at this universe's fleet speed (recette 10/11/2026).
                 "hop_us": str(speed.apply(ship.hop_seconds * 1_000_000, ceiling=True)),

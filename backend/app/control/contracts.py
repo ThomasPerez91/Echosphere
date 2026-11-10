@@ -102,7 +102,7 @@ class Start(Wire):
     seed: str = Field(min_length=1, max_length=200)
     family: Literal["solo", "private"]
     humans: StrictInt = Field(default=1, ge=1, le=10)
-    ruleset: Literal["v0.10", "v0.11"]
+    ruleset: Literal["v0.10", "v0.11", "v0.12"]
     size: Literal[100, 300, 500, 1000, 2000] = 100
     profiles: list[Literal["economic_cautious", "expansionist"]] = Field(max_length=30)
     # Test game (recette 10/11/2026): solo only, almost finished world plus sandbox tools.

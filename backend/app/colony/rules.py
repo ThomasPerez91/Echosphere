@@ -136,12 +136,25 @@ class Quote(StrictModel):
 class Technology(StrictModel):
     name: str = Field(min_length=1, max_length=120)
     domain: Literal["engineering", "energy", "computation", "xenoscience"]
-    tier: Literal[1, 2]
+    # Tiers III and IV exist from v0.12 (recette 10/11/2026).
+    tier: Literal[1, 2, 3, 4]
     requires: list[str]
     cost: dict[str, Nonnegative]
     duration_seconds: Positive
-    effect: Literal["colony_alloys", "colony_flux", "research_duration", "research_data"]
+    # v0.12: ship_cost, ship_duration (Chantier orbital orders), colony_duration (constructions).
+    effect: Literal[
+        "colony_alloys",
+        "colony_flux",
+        "research_duration",
+        "research_data",
+        "ship_cost",
+        "ship_duration",
+        "colony_duration",
+    ]
     reduction_bps: Annotated[int, Field(strict=True, ge=0, lt=10000)]
+
+
+V012_EFFECTS = {"ship_cost", "ship_duration", "colony_duration"}
 
 
 class Facility(StrictModel):
@@ -149,7 +162,7 @@ class Facility(StrictModel):
     technology tier (Institut des Échos)."""
 
     kind: str
-    levels: dict[Literal["1", "2"], Positive]
+    levels: dict[Literal["1", "2", "3", "4"], Positive]
 
     def level(self, tier: int) -> int:
         return self.levels[str(tier)]
@@ -332,8 +345,13 @@ class Ruleset(StrictModel):
             raise ValueError("Level cap and research facility exist from v0.11 only")
         if self.research is not None and self.research.facility is not None:
             f = self.research.facility
-            if f.kind not in self.catalogue.infrastructures or set(f.levels) != {"1", "2"}:
+            tiers = {str(t.tier) for t in self.research.technologies.values()}
+            if f.kind not in self.catalogue.infrastructures or set(f.levels) != tiers:
                 raise ValueError("Research facility must be a known infrastructure for each tier")
+        if self.research is not None and not since(self.version, "v0.12"):
+            for tech in self.research.technologies.values():
+                if tech.tier > 2 or tech.effect in V012_EFFECTS:
+                    raise ValueError("Research tiers III-IV and their effects exist from v0.12")
         if self.fleets is not None:
             for ship in self.fleets.classes.values():
                 if ship.requires and not gated:
@@ -467,7 +485,7 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
             extensions += ("ai", "combat", "relations")
         if version == "v0.9":
             extensions += ("ai", "combat", "relations", "frontier")
-        if version in {"v0.10", "v0.11"}:
+        if version in {"v0.10", "v0.11", "v0.12"}:
             extensions += ("ai", "combat", "relations", "frontier", "opportunities")
         for name in extensions:
             parts[name] = json.loads(

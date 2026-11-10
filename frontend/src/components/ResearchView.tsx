@@ -11,7 +11,7 @@ import {
 } from "../colony/format";
 import { Badge, Button, Panel } from "./ui";
 import { Kpis, Thumb, ViewHero, domainImage, technologyImage } from "../shell/view";
-import { Bar, PanelHead, Pending } from "../shell/visual";
+import { Bar, PanelHead } from "../shell/visual";
 
 const domains = [
   ["engineering", "Ingénierie", "⬡"],
@@ -24,6 +24,9 @@ const effects: Record<string, string> = {
   colony_flux: "coût Flux des nouveaux ordres Colony",
   research_duration: "durée des nouveaux ordres Research",
   research_data: "coût Données des nouveaux ordres Research",
+  ship_cost: "coût des nouvelles commandes de vaisseaux",
+  ship_duration: "durée des nouvelles commandes de vaisseaux",
+  colony_duration: "durée de base des nouvelles constructions",
 };
 const reasons: Record<string, string> = {
   technology_duplicate: "Déjà acquise ou réservée",
@@ -333,8 +336,8 @@ export function ResearchView({
                           {known && <Badge tone="accent">Acquise</Badge>}
                         </h3>
                         <p>
-                          −{t.reduction_bps / 100} % net : {effects[t.effect]}
-                          . {t.tier === 2 && "Remplace le palier I."}
+                          −{t.reduction_bps / 100} % net : {effects[t.effect] ?? t.effect}
+                          .{" "}{tree.some((o) => o.tier < t.tier && o.effect === t.effect) && "Remplace le palier précédent."}
                         </p>
                         <p>
                           Prérequis :{" "}
@@ -369,10 +372,6 @@ export function ResearchView({
                       </li>
                     );
                   })}
-                  <li className="d-rs-node d-rs-node--future" aria-label="Technologies suivantes">
-                    <Thumb src={null} icon="icons/actions/action-verrouille.svg" className="d-thumb--wide" />
-                    <Pending compact what="Paliers suivants de ce domaine." />
-                  </li>
                 </ol>
               </section>
             </div>

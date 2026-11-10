@@ -169,9 +169,28 @@ def check_unlocked(session, rules, colony_id, ship_class):
         raise FleetError("Shipyard level too low for this class", "shipyard_required")
 
 
-def snapshot_order(rules, ship_class, quantity, rank=None):
-    """Accepted batch price; a colonizer's progressive price is fixed here, never recomputed."""
+SHIP_EFFECTS = ("ship_cost", "ship_duration")
+
+
+def ship_bonus(session, empire_id):
+    """v0.12 research effects on Chantier orbital orders; empty without them."""
+    from app.research.service import bonuses
+
+    found = bonuses(session, empire_id)
+    return {k: found[k] for k in SHIP_EFFECTS if found.get(k)}
+
+
+def snapshot_order(rules, ship_class, quantity, rank=None, bonus=None):
+    """Accepted batch price; a colonizer's progressive price is fixed here, never recomputed.
+    `bonus` (v0.12 research effects) is frozen in the snapshot, so a later technology never
+    changes an accepted order."""
+    from app.research.service import discounted
+
     cost, duration = rules.fleets.order_quote(ship_class, quantity)
+    bonus = {k: v for k, v in (bonus or {}).items() if v}
+    if bonus:
+        cost = {r: discounted(v, bonus.get("ship_cost", 0)) for r, v in cost.items()}
+        duration = max(1, discounted(duration, bonus.get("ship_duration", 0)))
     snapshot = {
         "version": rules.version,
         "engagement": rules.fleets.engagement_version,
@@ -184,6 +203,8 @@ def snapshot_order(rules, ship_class, quantity, rank=None):
         # One unit after another: unit n is out at started + duration x n / quantity.
         "delivery": "unit",
     }
+    if bonus:
+        snapshot["bonus_bps"] = dict(sorted(bonus.items()))
     if is_colonizer(rules, ship_class):
         if quantity > rules.colonization.colonizer_max_quantity or rank is None:
             raise ValueError("Colonizer orders hold one unit at a known rank")
@@ -200,7 +221,9 @@ def colonizer_quote(session, rules, empire_id):
     if rules.colonization is None:
         return None
     rank = colonizer_rank(session, rules, empire_id)
-    snapshot = snapshot_order(rules, rules.colonization.colonizer_class, 1, rank)
+    snapshot = snapshot_order(
+        rules, rules.colonization.colonizer_class, 1, rank, ship_bonus(session, empire_id)
+    )
     return {"rank": rank, "multiplier_bps": snapshot["multiplier_bps"], "cost": snapshot["cost"]}
 
 
@@ -272,7 +295,9 @@ def order_ships(
                 if is_colonizer(rules, ship_class)
                 else None
             )
-            snapshot = snapshot_order(rules, ship_class, quantity, rank)
+            snapshot = snapshot_order(
+                rules, ship_class, quantity, rank, ship_bonus(session, empire_id)
+            )
         except ValueError:
             raise FleetError("Unknown class or invalid quantity", "invalid_request") from None
         check_unlocked(session, rules, colony_id, ship_class)
@@ -406,7 +431,11 @@ def complete_order(session, event):
         return
     rules = rules_for(session, order.universe_id)
     expected = snapshot_order(
-        rules, order.ship_class, order.quantity, order.snapshot.get("colonizer_rank")
+        rules,
+        order.ship_class,
+        order.quantity,
+        order.snapshot.get("colonizer_rank"),
+        order.snapshot.get("bonus_bps"),
     )
     unit = order.snapshot.get("delivery") == "unit"
     if not unit:

@@ -1,0 +1,7 @@
+{
+  "version": "v0.12",
+  "relations_version": "relations-v1",
+  "proposal_ttl_seconds": 259200,
+  "refusal_cooldown_seconds": 86400,
+  "notice_seconds": 86400
+}

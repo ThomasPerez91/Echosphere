@@ -368,6 +368,7 @@ def collect(session, controller, rules, at):
                     fleet.colonizer_rank(session, rules, e)
                     if body["ship"] == rules.colonization.colonizer_class
                     else None,
+                    fleet.ship_bonus(session, e),
                 )
                 cost, duration = dict(q["cost"]), q["duration_us"]
                 if sum(o.colony_id == UUID(payer) for o in queued) >= rules.fleets.queue_limit:

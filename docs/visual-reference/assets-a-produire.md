@@ -52,6 +52,14 @@ Illustration symbolique d’un concept (objet ou scène), pas d’interface ni d
 | `calcul-scientifique-2.webp` | Calcul scientifique II | Salle de cristaux de calcul en cercle autour d’un noyau holographique de données. |
 | `protocoles-analyse-1.webp` | Protocoles d’analyse I | Scanner scrutant un fragment d’artefact flottant, faisceau cyan et symboles abstraits sans texte. |
 | `protocoles-analyse-2.webp` | Protocoles d’analyse II | Plusieurs artefacts reliés par des faisceaux d’analyse révélant une carte d’étoiles abstraite. |
+| `fabrication-modulaire-3.webp` | Fabrication modulaire III | Usine orbitale géante assemblant des structures entières, essaims de drones, lumière ambrée. |
+| `fabrication-modulaire-4.webp` | Assemblage orbital | Coque de vaisseau en cours d’assemblage dans un berceau orbital, bras robotisés et étincelles. |
+| `gestion-energetique-3.webp` | Gestion énergétique III | Sphère de confinement énorme, rubans d’énergie cyan parfaitement ordonnés. |
+| `gestion-energetique-4.webp` | Chaînes de propulsion | Réacteurs de vaisseau alignés en banc d’essai, flammes bleues intenses et maîtrisées. |
+| `calcul-scientifique-3.webp` | Calcul scientifique III | Noyau de calcul suspendu, milliers de filaments lumineux convergeant vers lui. |
+| `calcul-scientifique-4.webp` | Planification prédictive | Hologramme d’une colonie se construisant en accéléré au-dessus d’une table lumineuse. |
+| `protocoles-analyse-3.webp` | Protocoles d’analyse III | Artefact ancien ouvert en couches lumineuses analysées par plusieurs faisceaux. |
+| `protocoles-analyse-4.webp` | Résonance des échos | Ondes concentriques dorées et cyan se répondant entre deux artefacts flottants. |
 
 ## 4. Opportunités de la galaxie (`img/opportunites/`)
 

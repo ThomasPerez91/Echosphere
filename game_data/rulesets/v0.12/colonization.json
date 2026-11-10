@@ -1,0 +1,14 @@
+{
+  "version": "v0.12",
+  "colonization_version": "colonize-v1",
+  "colonizer_class": "colonizer",
+  "colonizer_max_quantity": 1,
+  "cost_step_bps": 5000,
+  "max_colonies": 12,
+  "max_active_missions": 1,
+  "minimum_package": {
+    "alloys": 500,
+    "flux": 250,
+    "data": 50
+  }
+}

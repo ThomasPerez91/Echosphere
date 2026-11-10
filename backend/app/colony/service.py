@@ -182,7 +182,14 @@ def construction_quote(rules, state, kind, level):
         cost[resource] = discounted(
             cost[resource], state.research_bonuses.get(f"colony_{resource}", 0)
         )
-    return quote.model_copy(update={"cost": cost})
+    update = {"cost": cost}
+    if state.research_bonuses.get("colony_duration"):
+        # v0.12 (Planification prédictive): base duration of new orders, before speeds and the
+        # industrial bonus; frozen in the order snapshot like the cost.
+        update["base_duration_us"] = max(
+            1, discounted(quote.base_duration_us, state.research_bonuses["colony_duration"])
+        )
+    return quote.model_copy(update=update)
 
 
 def plan_order(

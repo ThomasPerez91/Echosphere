@@ -35,7 +35,7 @@ def started(game, sandbox=True):
         "name": "Partie de test",
         "seed": "sandbox-seed",
         "family": "solo",
-        "ruleset": "v0.11",
+        "ruleset": "v0.12",
         "size": 100,
         "profiles": ["expansionist"],
     }
@@ -98,7 +98,7 @@ def test_a_test_game_starts_almost_finished_and_other_empires_stay_unknown(game)
     with game.factory() as s:
         assert s.scalar(
             select(func.count()).where(AcquiredTechnology.empire_id == w.empire)
-        ) == 8
+        ) == 16  # v0.12: four tiers in four domains
         systems = s.scalar(
             select(func.count()).where(GalaxySystem.universe_id == w.universe)
         )
