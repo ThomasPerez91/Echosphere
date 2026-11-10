@@ -41,6 +41,6 @@ def test_five_probes_come_out_every_twenty_minutes_not_all_after_a_hundred(fleet
     cost = rules.classes["probe"].cost["alloys"] * 1_000_000 * 5
     expected = cost * 3 // 5 * rules.refund_active_bps // 10000
     assert refunded.json()["result"]["refunded"]["alloys"] == str(expected)
-    w.advance(minutes=120)
+    w.advance(minutes=60)  # more than the 3 remaining units would take (session still valid)
     worker(w)
     assert probes(w) == 2

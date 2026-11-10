@@ -65,7 +65,22 @@ Illustration symbolique d’un concept (objet ou scène), pas d’interface ni d
 | `structure-inconnue.webp` | Structure d’origine inconnue | Monolithe géométrique impossible flottant dans le vide, arêtes parfaites, lueur intérieure. |
 | `signal-artificiel.webp` | Signal artificiel | Balise isolée émettant des pulsations concentriques régulières dans l’espace sombre. |
 
-## 5. Plus tard (lots suivants)
+## 5. Vues Recherche, Flottes, Diplomatie (`img/vues/`)
+
+Bannières d’en-tête comme celle de la Colonie (`img/colonie/hero-kareth.webp`) : **format large
+2172 × 724** (générer en 1792 × 1024 puis recadrer au centre), sujet sur la droite, partie gauche plus
+sombre et calme pour le titre et le texte, aucune interface ni texte.
+
+| Fichier | Vue | Prompt (après le style commun) |
+|---|---|---|
+| `banniere-recherche.webp` | Recherche | Intérieur d’un centre de recherche futuriste : grande salle circulaire, hologrammes de molécules et de cartes stellaires flottant au-dessus d’une table lumineuse, silhouettes lointaines de chercheurs anonymes, verrières ouvrant sur une planète. |
+| `banniere-flottes.webp` | Flottes | Hangar orbital immense ouvert sur l’espace, plusieurs vaisseaux élancés alignés sur des berceaux d’amarrage, un vaisseau qui sort par l’ouverture vers une planète bleue, lumières de piste cyan. |
+| `banniere-diplomatie.webp` | Diplomatie | Chambre de négociation en orbite : table en anneau suspendue, projections holographiques de plusieurs emblèmes abstraits (formes géométriques, sans texte), grande baie vitrée sur une nébuleuse, atmosphère solennelle. |
+
+Icônes de relation (optionnel, même style que les icônes SVG existantes, à demander séparément) :
+pacte, contact neutre, hostilité, premier contact.
+
+## 6. Plus tard (lots suivants)
 
 Portraits de planètes par type (rocheuse, océanique, glacée, volcanique, gazeuse) pour la Galaxie,
 illustrations d’événements (premier contact, embuscade, extraction contestée).
