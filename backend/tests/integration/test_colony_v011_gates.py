@@ -10,7 +10,7 @@ from test_fleet import FULL, fleets, order, view, worker  # noqa: F401
 from test_research import send
 
 from app.colony.models import ColonyInfrastructure
-from app.colony.service import ColonyError, colony_state, plan_order, rules_for
+from app.colony.service import ColonyError, colony_state, plan_order, refresh_effects, rules_for
 from app.persistence.models import Colony
 
 pytestmark = pytest.mark.integration
@@ -43,6 +43,9 @@ def set_level(w, kind, level, sector):
                                        sector_index=sector, infrastructure_type=kind, level=level))
         else:
             row.infrastructure_type, row.level = kind, level
+        s.flush()
+        # Test world set-up: rates and capacity follow the buildings, as a completion would.
+        refresh_effects(s, w.colony, rules_for(s, w.universe))
 
 
 def test_a_v011_colony_unlocks_ships_and_research_in_a_guided_order(fleets):
