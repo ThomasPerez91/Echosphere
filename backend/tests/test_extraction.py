@@ -62,3 +62,22 @@ def test_fill_is_deterministic_and_never_gives_more_than_supply():
     claims = [Claim(k, n, 0, T0, T0) for k, n in [("b", 1), ("a", 1), ("c", 1)]]
     given = fill(10, claims, {"a": 10, "b": 10, "c": 10})
     assert sum(given.values()) <= 10 and given == {"b": 3, "a": 3, "c": 3}
+
+
+def test_reserves_regenerate_up_to_their_total_even_without_any_claim():
+    """v0.11 (10/11/2026): 10 % of the total per day, capped; extraction meanwhile still works."""
+    from app.fleet.sharing import regenerate
+
+    day = 24 * 3600 * 10**6
+    assert regenerate(500 * M, 1000 * M, 1000, 0, day) == (600 * M, 0)
+    assert regenerate(950 * M, 1000 * M, 1000, 0, day) == (1000 * M, 0)
+    half, rest = regenerate(0, 3, 1000, 0, day)  # 0.3 micro-unit: kept, never lost
+    assert half == 0 and rest > 0
+    assert regenerate(*[0, 3, 1000, rest, 3 * day])[0] == 1
+    credits, extracted, reserve, _, _ = settle(
+        30 * M, 0, 0, 20 * M, [claim("a", 1, 1000, 24, 48)], at(0), at(48),
+        total=1000 * M, regeneration_bps=1000, regen_remainder=0,
+    )
+    # Day 1: +100 alone; day 2: +100 trickling in while the claim takes what grows back.
+    assert extracted == credits["a"] and 0 < extracted <= 200 * M
+    assert reserve == 200 * M - extracted

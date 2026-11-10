@@ -21,6 +21,8 @@ export type ShipOrder = {
   id: string;
   ship_class: string;
   quantity: number;
+  /** Units already in the garrison (one-by-one delivery, 10/11/2026); absent before. */
+  delivered?: number;
   status: "queued" | "active";
   accepted_at: string;
   started_at: string | null;

@@ -340,6 +340,12 @@ class Ruleset(StrictModel):
                     raise ValueError("Ship prerequisites exist from v0.11 only")
                 if not set(ship.requires) <= self.catalogue.infrastructures.keys():
                     raise ValueError("Unknown infrastructure in ship prerequisites")
+        if (
+            self.opportunities is not None
+            and self.opportunities.operations.regeneration_bps_per_day is not None
+            and not gated
+        ):
+            raise ValueError("Deposit regeneration exists from v0.11 only")
         # EXP-01 opportunities exist from v0.10 only; v0.1-v0.9 stay strictly unchanged.
         if since(self.version, "v0.10"):
             if self.opportunities is None or self.opportunities.version != self.version:

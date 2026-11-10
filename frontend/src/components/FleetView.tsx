@@ -133,6 +133,13 @@ function FrontierPanel({ frontier, p }: { frontier: Frontier; p: FleetProjection
   </section>;
 }
 
+/** Start of the unit being built: units n come out at started + total x n / quantity. */
+function unitStart(o: ShipOrder) {
+  const n = (o.delivered ?? 0) + 1, start = Date.parse(o.started_at!), due = Date.parse(o.due_at!);
+  if (o.delivered === undefined || o.quantity === 1) return o.started_at!;
+  return new Date(start + (due - start) * (n - 1) / n).toISOString();
+}
+
 export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyChanged, target }: {
   universe: string; enabled: boolean; csrf?: string; onSessionLost: () => void; onEconomyChanged?: () => void;
   target?: { empire: string; system: string; planet?: string; action?: "colonize" | "attack" };
@@ -346,7 +353,8 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           {colony.orders.length === 0 ? <p>Aucune production en cours.</p> : <ol className="fleet-list">{colony.orders.map((o) =>
             <li key={o.id} className="fleet-card"><div className="panel-head"><strong>{o.quantity} × {p.catalogue![o.ship_class]?.name ?? o.ship_class}</strong>
               <Badge tone={o.status === "active" ? "accent" : "neutral"}>{o.status === "active" ? "En fabrication" : "En attente"}</Badge></div>
-              {o.status === "active" && o.started_at && o.due_at && <Clock start={o.started_at} end={o.due_at} serverTime={p.server_time} receivedAt={fleets.receivedAt} label="Avancement estimé de la production" />}
+              {o.quantity > 1 && <p className="fleet-unit">{o.delivered ?? 0} / {o.quantity} livrée{(o.delivered ?? 0) > 1 ? "s" : ""} · les unités sortent une à une</p>}
+              {o.status === "active" && o.started_at && o.due_at && <Clock start={unitStart(o)} end={o.due_at} serverTime={p.server_time} receivedAt={fleets.receivedAt} label={o.quantity > 1 ? "Avancement de l’unité en fabrication" : "Avancement estimé de la production"} />}
               {o.cancel && <Button onClick={(e) => open({ mode: "cancel", order: o }, e)} disabled={fleets.pending}>Annuler…</Button>}
             </li>)}</ol>}
         </section>;

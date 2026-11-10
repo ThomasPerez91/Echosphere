@@ -181,6 +181,8 @@ def snapshot_order(rules, ship_class, quantity, rank=None):
         "duration_us": duration,
         "refund_queued_bps": rules.fleets.refund_queued_bps,
         "refund_active_bps": rules.fleets.refund_active_bps,
+        # One unit after another: unit n is out at started + duration x n / quantity.
+        "delivery": "unit",
     }
     if is_colonizer(rules, ship_class):
         if quantity > rules.colonization.colonizer_max_quantity or rank is None:
@@ -202,6 +204,20 @@ def colonizer_quote(session, rules, empire_id):
     return {"rank": rank, "multiplier_bps": snapshot["multiplier_bps"], "cost": snapshot["cost"]}
 
 
+def unit_due(order, n):
+    """Due date of the n-th unit (unit delivery), or of the whole batch (older orders)."""
+    total = order.snapshot["duration_us"]
+    if order.snapshot.get("delivery") != "unit":
+        return order.started_at + timedelta(microseconds=total)
+    return order.started_at + timedelta(microseconds=total * n // order.quantity)
+
+
+def unit_event_key(order):
+    """Event of the unit being built: the first keeps the historical key."""
+    base = f"ship-order:{order.id}"
+    return base if not order.delivered else f"{base}:{order.delivered + 1}"
+
+
 def activate_next(session, state, colony_id, at):
     if session.scalar(
         select(ShipOrder.id).where(ShipOrder.colony_id == colony_id, ShipOrder.status == "active")
@@ -215,7 +231,7 @@ def activate_next(session, state, colony_id, at):
     if following is None:
         return
     following.status, following.started_at = "active", utc(at)
-    following.due_at = utc(at) + timedelta(microseconds=following.snapshot["duration_us"])
+    following.due_at = unit_due(following, 1)
     session.flush()
     schedule(
         session,
@@ -294,9 +310,11 @@ def order_ships(
 
 
 def refund_plan(order):
+    """Undelivered units only: a cancelled order keeps the units already out."""
     snap = order.snapshot
     bps = snap["refund_active_bps"] if order.status == "active" else snap["refund_queued_bps"]
-    return {r: value * bps // 10000 for r, value in snap["cost"].items()}
+    left = order.quantity - (order.delivered or 0)
+    return {r: value * left // order.quantity * bps // 10000 for r, value in snap["cost"].items()}
 
 
 def cancel_preview(session, order, at):
@@ -334,7 +352,7 @@ def cancel_order(session, engine, universe_id, empire_id, order_id, *, at):
             event = session.scalar(
                 select(ScheduledEvent).where(
                     ScheduledEvent.stream_id == state.stream_id,
-                    ScheduledEvent.idempotency_key == f"ship-order:{order.id}",
+                    ScheduledEvent.idempotency_key == unit_event_key(order),
                 )
             )
             if event is None or event.status != "pending":
@@ -379,27 +397,54 @@ def complete_order(session, event):
     if order is None or order.universe_id != event.universe_id:
         raise TimelineError("Order outside event universe")
     state = galaxy.state_for(session, order.universe_id, order.empire_id)
-    if state.stream_id != event.stream_id or event.idempotency_key != f"ship-order:{order.id}":
+    base = f"ship-order:{order.id}"
+    if state.stream_id != event.stream_id or event.idempotency_key not in (
+        base, f"{base}:{(order.delivered or 0) + 1}"
+    ):
         raise TimelineError("Order outside event stream")
     if order.status == "completed":
         return
     rules = rules_for(session, order.universe_id)
+    expected = snapshot_order(
+        rules, order.ship_class, order.quantity, order.snapshot.get("colonizer_rank")
+    )
+    unit = order.snapshot.get("delivery") == "unit"
+    if not unit:
+        expected.pop("delivery")  # accepted before unit delivery: one whole batch
+    n = (order.delivered or 0) + 1
     if (
         order.status != "active"
         or order.due_at != event.due_at
-        or order.snapshot
-        != snapshot_order(
-            rules, order.ship_class, order.quantity, order.snapshot.get("colonizer_rank")
-        )
-        or order.due_at - order.started_at != timedelta(microseconds=order.snapshot["duration_us"])
+        or order.snapshot != expected
+        or order.due_at != unit_due(order, n if unit else 1)
     ):
         raise TimelineError("Inconsistent production snapshot/deadline")
     garrison = garrison_for(session, session.get(Colony, order.colony_id))
-    # Atomic batch: the whole quantity appears at once, never a partial delivery.
-    add_units(session, garrison.id, {order.ship_class: order.quantity})
-    order.status, order.completed_at = "completed", event.due_at
+    if not unit:
+        add_units(session, garrison.id, {order.ship_class: order.quantity})
+        order.status, order.completed_at = "completed", event.due_at
+        session.flush()
+        activate_next(session, state, order.colony_id, event.due_at)
+        return
+    # Unit delivery (10/11/2026): one more unit in the garrison, the next one scheduled.
+    add_units(session, garrison.id, {order.ship_class: 1})
+    order.delivered = n
+    if n == order.quantity:
+        order.status, order.completed_at = "completed", event.due_at
+        session.flush()
+        activate_next(session, state, order.colony_id, event.due_at)
+        return
+    order.due_at = unit_due(order, n + 1)
     session.flush()
-    activate_next(session, state, order.colony_id, event.due_at)
+    schedule(
+        session,
+        state.stream_id,
+        order.universe_id,
+        key=f"{base}:{n + 1}",
+        kind="SHIP_ORDER_COMPLETE",
+        due_at=order.due_at,
+        payload={"order_id": str(order.id)},
+    )
 
 
 # --- Fleet composition and cargo ---------------------------------------------------------------

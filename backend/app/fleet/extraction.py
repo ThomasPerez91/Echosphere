@@ -54,10 +54,15 @@ def settle_deposit(session, rules, deposit, until):
         for r in rows
     ]
     rate = rules.opportunities.operations.extraction_per_hour * MICRO_UNITS
-    credits, _, reserve, remainder = settle(
+    regeneration = rules.opportunities.operations.regeneration_bps_per_day
+    result = settle(
         deposit.throughput_per_hour, deposit.reserve_remaining, deposit.settle_remainder, rate,
-        claims, deposit.settled_at, until,
+        claims, deposit.settled_at, until, total=deposit.reserve_total,
+        regeneration_bps=regeneration, regen_remainder=deposit.regen_remainder,
     )
+    credits, _, reserve, remainder = result[:4]
+    if regeneration:
+        deposit.regen_remainder = result[4]
     for r in rows:
         r.credited += credits[str(r.mission_id)]
     deposit.reserve_remaining, deposit.settle_remainder = reserve, remainder

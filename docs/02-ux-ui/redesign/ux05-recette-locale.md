@@ -173,6 +173,8 @@ système choisit, clic droit ou Échap annule et rouvre la fenêtre.
   premières améliorations en minutes ; Chantier orbital (← industriel 2) requis pour les vaisseaux,
   Centre de recherche (← nœud 3) pour la recherche ; bâtiments clés uniques ; bâtiments verrouillés
   grisés avec « Débloqué par … » ; plafond de niveau selon la planète.
+- Flottes (10/11) : une commande de plusieurs vaisseaux livre les unités une à une (« 2 / 5
+  livrées ») ; v0.11 : les gisements se régénèrent (10 % par jour). Migration Game 0019.
 - La pile de recette porte le nom de projet Compose `echosphere` sur ce poste : elle partage les
   volumes de la pile conservée. Ne jamais lancer `down -v`.
 

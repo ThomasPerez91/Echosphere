@@ -215,8 +215,9 @@ def test_batch_production_reaches_garrison_by_worker_only_and_activates_next(fle
     assert spent == {"alloys": (240 + 200 + 80) * M, "flux": (120 + 60 + 40) * M, "data": 180 * M}
     with w.game.factory() as s:
         first = s.scalar(select(ShipOrder).where(ShipOrder.status == "active"))
-        due = first.due_at
-        assert due - first.started_at == timedelta(minutes=60)  # 3 × 20 min, no speed applied
+        # One unit every 20 min (10/11/2026), the batch done after 3 × 20 min, no speed applied.
+        assert first.due_at - first.started_at == timedelta(minutes=20)
+        due = first.started_at + timedelta(minutes=60)
     w.advance(minutes=61)
     # A projection never progresses the Empire Operations timeline.
     for _ in range(2):
@@ -224,7 +225,7 @@ def test_batch_production_reaches_garrison_by_worker_only_and_activates_next(fle
         assert read(w).status_code == 200
     with w.game.factory() as s:
         assert s.scalar(select(ShipOrder.status).where(ShipOrder.id == first.id)) == "active"
-    assert worker(w) == 1
+    assert worker(w) == 3  # one event per unit
     assert worker(w) == 0  # exactly once
     home = garrison(w)
     assert home["stacks"] == {"probe": 3} and home["status"] == "STATIONED"

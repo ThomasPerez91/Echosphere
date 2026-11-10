@@ -101,6 +101,11 @@ def main():
         d["facility"] = {"kind": "research_center", "levels": {"1": 1, "2": 3}}
     update("research", research)
 
+    def opportunities(d):
+        # User decision 10/11/2026: deposits regenerate (10 % of their total per day).
+        d["operations"]["regeneration_bps_per_day"] = 1000
+    update("opportunities", opportunities)
+
     def ai(d):
         d["unlocks"] = {"orbital_shipyard": 700, "research_center": 600}
     update("ai", ai)

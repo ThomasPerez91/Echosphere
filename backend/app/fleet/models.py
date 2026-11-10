@@ -44,6 +44,7 @@ class ShipOrder(Record, Base):
         UniqueConstraint("empire_id", "idempotency_key", name="uq_ship_order_key"),
         UniqueConstraint("colony_id", "sequence", name="uq_ship_order_sequence"),
         CheckConstraint("quantity > 0 AND sequence > 0", name="quantity"),
+        CheckConstraint("delivered >= 0 AND delivered <= quantity", name="delivered"),
         CheckConstraint("status IN ('queued','active','completed','cancelled')", name="status"),
         CheckConstraint(
             "status <> 'queued' OR (started_at IS NULL AND due_at IS NULL)", name="queued"
@@ -80,6 +81,9 @@ class ShipOrder(Record, Base):
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # User decision 10/11/2026: units come out one at a time (snapshot "delivery": "unit");
+    # orders accepted before keep their whole-batch delivery (delivered stays 0 until done).
+    delivered: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
 
 class Fleet(Record, Base):

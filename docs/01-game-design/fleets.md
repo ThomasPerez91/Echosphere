@@ -235,3 +235,10 @@ A1–A15 validés comme proposés, avec ces précisions qui font foi :
 Orientation validée le 02/11/2026 (Q57) : flotte stationnée avec protocole de premier contact,
 détection à l'entrée dans un système y compris en transit intermédiaire, repli amical physique.
 Règles canoniques : [présence frontalière et premier contact](first-contact.md). Aucun champ de protocole, mission ou événement de passage avant 13B.
+
+## Décision utilisateur du 10/11/2026 — unités livrées une à une
+
+Une commande de N vaisseaux ne livre plus tout le lot à la fin : l’unité n sort à
+`début + durée totale × n / N` (5 sondes de 20 min : une à 20, 40, 60, 80 et 100 min). Coût et
+durée totale inchangés ; annuler garde les unités déjà sorties et ne rembourse que les autres (taux
+actif ou en file). Les commandes acceptées avant ce changement gardent leur livraison groupée.

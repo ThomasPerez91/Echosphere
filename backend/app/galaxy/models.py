@@ -349,6 +349,8 @@ class GalaxyOpportunity(Record, Base):
     # supply fraction below one micro-unit is kept, never lost (micro-unit x microsecond / h).
     settled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     settle_remainder: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
+    # v0.11: regeneration fraction below one micro-unit (micro-unit x microsecond / day).
+    regen_remainder: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
 
 
 class OpportunityKnowledge(Base):

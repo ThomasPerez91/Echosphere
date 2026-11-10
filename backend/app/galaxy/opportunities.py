@@ -14,6 +14,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.galaxy.generator import StableRandom, adjacency, canonical
+from app.rules_dump import omit_unset_extensions
 from app.simulation.production import RESOURCES
 
 Positive = Annotated[int, Field(strict=True, gt=0, le=10**9)]
@@ -81,6 +82,9 @@ class Operations(StrictModel):
     extractor_class: Key
     extraction_per_hour: Positive
     extract_max_hours: Positive
+    # v0.11 (user decision 10/11/2026): reserves grow back, a share of the total per day.
+    regeneration_bps_per_day: Annotated[int, Field(strict=True, gt=0, le=10000)] | None = None
+    serialize_extensions = omit_unset_extensions("regeneration_bps_per_day")
 
 
 class OpportunityRules(StrictModel):

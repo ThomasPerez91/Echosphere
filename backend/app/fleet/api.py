@@ -215,6 +215,7 @@ def project(session, universe_id, empire_id, permissions, at):
                         "id": str(o.id),
                         "ship_class": o.ship_class,
                         "quantity": o.quantity,
+                        "delivered": o.delivered or 0,
                         "status": o.status,
                         "accepted_at": o.accepted_at.isoformat(),
                         "started_at": o.started_at.isoformat() if o.started_at else None,

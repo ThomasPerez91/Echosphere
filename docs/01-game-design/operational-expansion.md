@@ -203,3 +203,10 @@ combat reste soumis à décision explicite de l’utilisateur.
 [Premier contact 13B](first-contact.md) · [Flottes](fleets.md) · [Combat](combat.md) ·
 [Brouillard](fog-of-war.md) · [Relations](relations.md) · [Modes Q59–Q61](game-modes.md) ·
 [Plan EXP](../05-project/exp-plan.md) · [Registre](../05-project/open-questions.md)
+
+## Décision utilisateur du 10/11/2026 — régénération des gisements
+
+Les réserves des gisements se régénèrent avec le temps pour rester des points stratégiques : en
+v0.11, 10 % de la réserve totale par jour (`operations.regeneration_bps_per_day`), jamais au-delà du
+total. La régénération est réglée en même temps que l’extraction, sous le verrou du gisement, en
+µ-unités entières avec reste conservé ; une prospection observe la réserve à jour.
