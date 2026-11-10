@@ -147,6 +147,18 @@ test('read-only access shows the colony but no command buttons', async () => {
   expect(posts(fetcher)).toHaveLength(0);
 });
 
+test('the closest locked building is named with the levels still missing', async () => {
+  const locked = (kind: string, requires: { infrastructure_type: string; level: number }[]) => ({ ...projection().options[0],
+    infrastructure_type: kind, available: false, reason: 'prerequisites_unmet', requires });
+  setup('colony/infrastructure', { colony: [{ body: projection({ options: [
+    locked('orbital_shipyard', [{ infrastructure_type: 'industrial_complex', level: 2 }]),
+    locked('logistics_center', [{ infrastructure_type: 'extraction_complex', level: 2 }]),
+  ] }) }] });
+  const note = await screen.findByRole('note');
+  expect(note).toHaveTextContent('Prochain déblocage : Centre logistique');
+  expect(note).toHaveTextContent('Complexe d’extraction niveau 2 (actuel 1)');
+});
+
 test('an expired session on a command re-reads the session and shows the lobby path', async () => {
   const fetcher = setup('colony/infrastructure', { command: [{ status: 401, body: { error: { code: 'authentication_required' } } }] });
   fireEvent.click(await screen.findByRole('button', { name: 'Construire Nœud de données' }));

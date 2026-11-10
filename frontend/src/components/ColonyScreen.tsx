@@ -219,8 +219,18 @@ function Infrastructures({ colony, data, server, stocks }: { colony: Colony; dat
   // A unique building already built (or queued) lives in the list above, not here (COL-11).
   const ordered = builds.filter(option => option.reason !== 'unique_limit')
     .sort((a, b) => Number(b.available) - Number(a.available));
+  // Closest locked building: the fewest missing levels among its prerequisites (COL-11 guidance).
+  const levels = new Map<string, number>();
+  for (const row of data.infrastructures) levels.set(row.infrastructure_type, Math.max(levels.get(row.infrastructure_type) ?? 0, row.level));
+  const missing = (option: typeof builds[number]) => (option.requires ?? [])
+    .filter(r => (levels.get(r.infrastructure_type) ?? 0) < r.level);
+  const next = builds.filter(option => option.reason === 'prerequisites_unmet' && missing(option).length)
+    .map(option => ({ option, gap: missing(option).reduce((n, r) => n + r.level - (levels.get(r.infrastructure_type) ?? 0), 0) }))
+    .sort((a, b) => a.gap - b.gap)[0];
   return <div className="d-tabpanel">
     <Queue colony={colony} projection={data} server={server} />
+    {next && <p className="d-next-unlock" role="note"><Ico name="act-verrouille" /><span><strong>Prochain déblocage : {infrastructureLabel(next.option.infrastructure_type)}</strong>{' '}
+      — il faut {missing(next.option).map(r => `${infrastructureLabel(r.infrastructure_type)} niveau ${r.level} (actuel ${levels.get(r.infrastructure_type) ?? 0})`).join(', ')}.</span></p>}
     <section className="d-card d-panel" aria-labelledby="built-title">
       <PanelHead id="built-title" icon="icons/colonie/colonie-secteurs.svg" title="Bâtiments de la colonie"><span className="d-queue-count">{data.sectors.built} / {data.sectors.capacity} secteurs</span></PanelHead>
       {data.infrastructures.length ? <ul className="d-built-list">{data.infrastructures.map(row => <BuiltRow key={row.sector_index} colony={colony} row={row}

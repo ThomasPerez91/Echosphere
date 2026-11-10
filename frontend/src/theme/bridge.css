@@ -311,3 +311,6 @@
   .d-rep-grid > .d-stack { position: sticky; top: calc(var(--d-topbar-h, 84px) + 12px); }
 }
 .d-rep-facts { margin-top: 10px; } .d-rep-facts dd { text-align: right; }
+.d-next-unlock { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid rgba(255, 181, 71, .45); border-radius: 11px;
+  background: linear-gradient(90deg, rgba(90, 58, 12, .4), rgba(8, 20, 38, .5)); color: #ffe2b8; font-size: 13.5px; }
+.d-next-unlock strong { color: var(--d-amber); font-weight: 600; }
