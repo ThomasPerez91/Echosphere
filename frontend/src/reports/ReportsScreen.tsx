@@ -112,7 +112,9 @@ export function ReportsScreen({ universe, access, colony }: {
             <Thumb src={reportImage(selected.category)} icon={selected.icon} className="d-thumb--wide" />
             <dl className="d-kv"><div><dt>Catégorie</dt><dd>{categoryLabels[selected.category]}</dd></div>
               <div><dt>Date serveur</dt><dd>{new Date(selected.at).toLocaleString('fr-FR')}</dd></div></dl>
-            <Pending compact what="Détail complet du rapport (déroulé, trajet, chronologie) : seul le résumé daté est transmis aujourd’hui." />
+            {selected.details?.length ? <dl className="d-kv d-rep-facts">{selected.details.map(d =>
+              <div key={d.label}><dt>{d.label}</dt><dd>{d.value}</dd></div>)}</dl>
+              : <Pending compact what="Détail complet du rapport (déroulé, trajet, chronologie) : seul le résumé daté est transmis aujourd’hui." />}
           </> : <><h2 id="report-detail" className="d-rep-empty">Aucun rapport sélectionné</h2>
             <p className="d-note">Les rapports apparaissent ici dès que le serveur les date.</p></>}
         </section>

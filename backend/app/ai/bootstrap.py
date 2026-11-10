@@ -106,6 +106,10 @@ def bootstrap(
         or session.scalar(select(Empire.id).where(Empire.universe_id == universe_id).limit(1))
     ):
         raise AIDenied("bootstrap_requires_empty_universe")
+    if sandbox:
+        from app.sandbox.service import sandbox_rules
+
+        rules = sandbox_rules(rules)
     configure_universe(session, universe_id, rules)
     if v2:
         # Exactly one starting site per Empire of this game (Équitable placement, Q61).

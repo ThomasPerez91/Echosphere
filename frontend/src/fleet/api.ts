@@ -13,6 +13,11 @@ export type ShipClass = {
   cost: Amounts;
   build_us: string;
   hop_seconds: number;
+  /** One hop at this universe's fleet speed (10/11/2026); absent on older servers. */
+  hop_us?: string;
+  /** Military classes only (combat rules). */
+  hull?: number;
+  attack?: number;
   flux_per_hop: number;
   cargo: string;
   survey: boolean;
@@ -255,7 +260,8 @@ export function validFleets(value: unknown, empire: string): value is FleetProje
   const shapes =
     object(value.catalogue) && Object.values(value.catalogue).every((c) => object(c) && typeof c.name === "string" &&
       amounts(c.cost) && micro(c.build_us) && integer(c.hop_seconds) && integer(c.flux_per_hop) && micro(c.cargo) &&
-      typeof c.survey === "boolean") &&
+      typeof c.survey === "boolean" && (!("hop_us" in c) || micro(c.hop_us)) &&
+      (!("hull" in c) || integer(c.hull)) && (!("attack" in c) || integer(c.attack))) &&
     integer(value.queue_limit) && integer(value.max_quantity) &&
     list(value.colonies, (c) => object(c) && id(c.id) && typeof c.name === "string" && id(c.system_id) && list(c.orders, order)) &&
     list(value.fleets, fleet) && list(value.missions, mission) && list(value.systems, knownSystem) &&

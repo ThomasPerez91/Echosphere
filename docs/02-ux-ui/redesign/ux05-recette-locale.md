@@ -183,7 +183,8 @@ système choisit, clic droit ou Échap annule et rouvre la fenêtre.
   contact). En jeu, le bouton **TEST** de la barre du haut ouvre les outils : fixer les stocks d’une
   colonie (plafonnés par son stockage) ou « Remplir au maximum », ajouter des vaisseaux en garnison,
   « Tout terminer maintenant » (constructions, recherches et commandes de vaisseaux, files comprises).
-  Les trajets de flotte gardent leur durée normale.
+  Les flottes y voyagent **20 fois plus vite** et une attaque peut frapper **10 minutes** après son
+  lancement (24 h en partie normale) : seules ces vitesses d’instance changent, pas le ruleset.
 - La pile de recette porte le nom de projet Compose `echosphere` sur ce poste : elle partage les
   volumes de la pile conservée. Ne jamais lancer `down -v`.
 

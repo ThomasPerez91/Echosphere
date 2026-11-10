@@ -310,3 +310,4 @@
   .d-report-list { max-height: 980px; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; }
   .d-rep-grid > .d-stack { position: sticky; top: calc(var(--d-topbar-h, 84px) + 12px); }
 }
+.d-rep-facts { margin-top: 10px; } .d-rep-facts dd { text-align: right; }

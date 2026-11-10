@@ -98,3 +98,12 @@ stockage partiel, Portal coupé, expiration de session. Résultats et CI dans [p
   implicite.
 - **Flottes `SETTLED` :** une flotte dont le colonisateur a fondé une colonie est exclue des listes,
   comme `MERGED`.
+
+## Compléments de catalogue (recette 10/11/2026)
+
+Chaque classe du catalogue porte aussi `hop_us` (durée d’un saut à la vitesse de flotte de
+l’univers, arrondie au supérieur comme `mission_quote`) et, pour les classes militaires, `hull` et
+`attack` des règles de combat. La vue Flottes en tire la puissance et la coque cumulées d’une flotte
+et la durée d’un saut au rythme de sa classe la plus lente ; ce sont des lectures des règles, jamais
+une prévision de combat.
+

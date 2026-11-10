@@ -13,6 +13,7 @@ from test_game_sessions import apply, enter
 
 from app.access.http import cookie_name
 from app.colony.models import ColonyInfrastructure, ConstructionOrder
+from app.colony.service import rules_for
 from app.fleet.models import Fleet, FleetStack, ShipOrder
 from app.galaxy.models import GalaxySystem, SystemKnowledge
 from app.main import create_app
@@ -110,6 +111,16 @@ def test_a_test_game_starts_almost_finished_and_other_empires_stay_unknown(game)
         ) == 0
         assert s.get(ResourceBalance, (w.colony, "alloys")).stock == 250_000 * M
     assert garrison(w)["cruiser"] == 4 and garrison(w)["probe"] == 10
+    with game.factory() as s:
+        rules = rules_for(s, w.universe)
+    assert rules.colony.speeds["fleet"].numerator == 20
+    assert rules.combat.min_warning_seconds == 600
+    catalogue = w.client.get(
+        f"/game/{w.universe}/fleets/{w.empire}", headers={"X-Game-Request": "bootstrap"}
+    ).json()["catalogue"]
+    probe = rules.fleets.classes["probe"].hop_seconds
+    assert catalogue["probe"]["hop_us"] == str(-(-probe * 1_000_000 // 20))
+    assert catalogue["cruiser"]["attack"] > 0 and "attack" not in catalogue["probe"]
     galaxy = w.client.get(
         f"/game/{w.universe}/galaxy/{w.empire}", headers={"X-Game-Request": "bootstrap"}
     ).json()

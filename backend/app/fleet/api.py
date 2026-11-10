@@ -16,6 +16,7 @@ from app.access.http import cookie_name
 from app.access.service import AccessError
 from app.colony.api import Colonies, bootstrap, call, command
 from app.colony.projection import amounts
+from app.colony.rules import Ratio
 from app.colony.service import rules_for
 from app.combat import service as combat
 from app.control.models import EmpireBinding
@@ -26,6 +27,13 @@ from app.galaxy import service as galaxy
 from app.galaxy.models import PlanetKnowledge, SystemKnowledge
 from app.persistence.models import Colony, Empire, Planet
 from app.simulation.scheduler import lock_stream
+
+
+def combat_stats(rules, key):
+    """Hull and attack of a military class (combat rules), absent for civilian classes."""
+    stats = rules.combat.stats.get(key) if rules.combat else None
+    return {"hull": stats.hull, "attack": stats.attack} if stats else {}
+
 
 router = APIRouter(prefix="/game/{universe_id}/fleets")
 
@@ -326,6 +334,9 @@ def project(session, universe_id, empire_id, permissions, at):
         if x is not None and ref["state"] != "DETECTED":
             ref["planets"] = known_planets(session, empire_id, k.system_id, owned)
         systems_view.append(ref)
+    # Effective fleet speed is a ratio of time: durations are multiplied by its inverse.
+    ratio = rules.colony.speeds["fleet"]
+    speed = Ratio(numerator=ratio.denominator, denominator=ratio.numerator)
     return base | {
         "catalogue": {
             key: {
@@ -333,6 +344,8 @@ def project(session, universe_id, empire_id, permissions, at):
                 "cost": amounts(f.order_quote(key, 1)[0]),
                 "build_us": str(f.order_quote(key, 1)[1]),
                 "hop_seconds": ship.hop_seconds,
+                # Travel time of one hop at this universe's fleet speed (recette 10/11/2026).
+                "hop_us": str(speed.apply(ship.hop_seconds * 1_000_000, ceiling=True)),
                 "flux_per_hop": ship.flux_per_hop,
                 "cargo": str(f.cargo_capacity({key: 1})),
                 "survey": ship.survey,
@@ -342,6 +355,7 @@ def project(session, universe_id, empire_id, permissions, at):
                     for kind, level in sorted(ship.requires.items())
                 ],
             }
+            | combat_stats(rules, key)
             for key, ship in f.classes.items()
         },
         "queue_limit": f.queue_limit,

@@ -1,13 +1,15 @@
 import type { HistoryEntry } from '../colony/api';
 import { infrastructureLabel } from '../colony/format';
-import type { FleetProjection } from '../fleet/api';
+import type { CombatSide, FleetProjection } from '../fleet/api';
 import type { Projection as ResearchProjection } from '../research/api';
 import type { RelationsProjection } from '../relations/api';
 
 export type Category = 'construction' | 'mission' | 'combat' | 'frontier' | 'research' | 'diplomacy';
 export type Tone = 'green' | 'amber' | 'blue' | 'red';
 /** One dated fact reported by the server; never a client-side prediction. */
-export type ReportEvent = { key: string; category: Category; tone: Tone; icon: string; title: string; text: string; at: string; href?: string };
+export type ReportEvent = { key: string; category: Category; tone: Tone; icon: string; title: string; text: string; at: string; href?: string;
+  /** Server facts of the report shown in its detail (compositions, losses…), never computed. */
+  details?: { label: string; value: string }[] };
 
 export const categoryLabels: Record<Category, string> = {
   construction: 'Constructions', mission: 'Missions', combat: 'Combats', frontier: 'Frontière', research: 'Recherche', diplomacy: 'Diplomatie',
@@ -41,7 +43,16 @@ export function missionEvents(f: FleetProjection | null): ReportEvent[] {
   });
 }
 
+const composition = (stacks: Record<string, number>, name: (c: string) => string) =>
+  Object.entries(stacks).filter(([, n]) => n > 0).map(([c, n]) => `${n} ${name(c)}`).join(', ') || 'aucun';
+function side(label: string, s: CombatSide | undefined, name: (c: string) => string) {
+  return s ? [{ label: `${label} — engagées`, value: composition(s.initial, name) },
+    { label: `${label} — pertes`, value: composition(s.losses, name) },
+    { label: `${label} — survivants`, value: composition(s.survivors, name) }] : [];
+}
+
 export function combatEvents(f: FleetProjection | null): ReportEvent[] {
+  const name = (c: string) => f?.catalogue?.[c]?.name ?? c;
   return (f?.combat?.reports ?? []).map(r => {
     const system = f?.systems?.find(s => s.id === r.target.system_id);
     const world = system?.planets?.find(p => p.id === r.target.planet_id);
@@ -49,6 +60,12 @@ export function combatEvents(f: FleetProjection | null): ReportEvent[] {
       key: `combat-${r.engagement_id}-${r.role}`, category: 'combat' as const, tone: (r.outcome === 'voided_by_pact' ? 'amber' : 'red') as Tone,
       icon: 'icons/evenements/evt-combat.svg', title: r.role === 'attacker' ? 'Rapport de bataille — votre attaque' : 'Rapport de bataille — votre défense',
       text: `${world?.name ?? 'Monde'}${system?.name ? ` · ${system.name}` : ''} — ${outcomes[r.outcome] ?? 'terminée'}`, at: r.processed_at,
+      details: [
+        { label: 'Issue', value: outcomes[r.outcome] ?? 'terminée' },
+        { label: 'Bataille', value: new Date(r.battle_at).toLocaleString('fr-FR') },
+        ...side('Vos forces', r.own, name), ...side('Forces adverses', r.opponent, name),
+        ...(Array.isArray(r.rounds) ? [{ label: 'Rounds', value: String(r.rounds.length) }] : []),
+      ],
     };
   });
 }

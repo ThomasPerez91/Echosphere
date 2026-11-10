@@ -9,7 +9,7 @@ import { Badge, Button, EmptyState, Panel } from "./ui";
 import { message } from "../fleet/messages";
 import { protocols } from "../fleet/protocols";
 import { Kpis, Thumb, ViewHero, shipImage } from "../shell/view";
-import { Bar, PanelHead, Pending } from "../shell/visual";
+import { Bar, PanelHead } from "../shell/visual";
 
 const kindLabels: Record<MissionKind, string> = { DEPLOY: "Déploiement", SURVEY: "Cartographie", RETURN: "Retour", COLONIZE: "Colonisation", ATTACK: "Attaque", PROSPECT: "Prospection", STUDY: "Étude", EXTRACT: "Extraction" };
 const outcomeLabels: Record<string, string> = {
@@ -472,7 +472,18 @@ export function FleetView({ universe, enabled, csrf, onSessionLost, onEconomyCha
           <h3 className="d-fl-sub">Composition</h3>
           {Object.keys(totals).length === 0 ? <p className="d-note">Aucun vaisseau.</p> : <ul className="d-fl-comp">{Object.entries(totals).sort(([, a], [, b]) => b - a).map(([c, n]) =>
             <li key={c}><span>{p.catalogue?.[c]?.name ?? c}</span><Bar value={n / biggest * 100} /><b>{n}</b></li>)}</ul>}
-          <Pending compact what="Puissance, bouclier et vitesse par flotte." />
+          {(() => {
+            const classes = Object.keys(totals);
+            const power = classes.reduce((n, c) => n + (p.catalogue?.[c]?.attack ?? 0) * totals[c], 0);
+            const hull = classes.reduce((n, c) => n + (p.catalogue?.[c]?.hull ?? 0) * totals[c], 0);
+            const hops = classes.map((c) => p.catalogue?.[c]?.hop_us).filter((v): v is string => !!v).map(Number);
+            return classes.length > 0 && <dl className="d-fl-facts">
+              <div><dt>Puissance</dt><dd>{power.toLocaleString("fr-FR")}</dd></div>
+              <div><dt>Coque</dt><dd>{hull.toLocaleString("fr-FR")}</dd></div>
+              <div><dt>Par saut</dt><dd>{focused && hops.length ? duration(String(Math.max(...hops))) : "—"}</dd></div>
+            </dl>;
+          })()}
+          <p className="d-note">Puissance et coque : attaque et coque cumulées des vaisseaux militaires ; un saut se fait au rythme du plus lent.</p>
           {!focused && <p className="d-note">Choisissez « Détails » sur une flotte pour l’afficher ici.</p>}
         </section>
       {p.combat?.alerts && <section className="panel" aria-labelledby="alerts-title"><div className="panel-head"><h2 id="alerts-title">Menaces annoncées</h2>

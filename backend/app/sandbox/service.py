@@ -2,6 +2,7 @@
 
 Only a universe created as a test game (`Universe.sandbox`) accepts these commands. They use the
 usual locks and handlers (Operations → Research → Colony), never another stream's lock order:
+- `sandbox_rules` (bootstrap): fleets 20 times faster, attacks 10 minutes after launch.
 - `prepare` (bootstrap): every key building at a high level, every technology acquired, every
   system of the galaxy mapped with its routes, a garrison with every ship class. No contact is
   created: other Empires stay unknown to Relations.
@@ -43,6 +44,24 @@ SHIPS = {
     "cruiser": 4,
 }
 FINISH_LIMIT = 200  # orders completed by one `finish` call, every queue included
+
+
+FLEET_SPEED = 20  # fleets travel 20 times faster in a test game
+WARNING_SECONDS = 600  # an attack can strike 10 minutes after its launch (24 h normally)
+
+
+def sandbox_rules(rules):
+    """Pinned rules of a test game: same ruleset, instance speeds of the test game.
+
+    Only the per-instance fleet speed and the attack warning change; the AI policy, its digest
+    and every other rule stay those of the chosen ruleset."""
+    data = rules.model_dump()
+    data["colony"]["speeds"]["fleet"] = {"numerator": FLEET_SPEED, "denominator": 1}
+    if data.get("combat"):
+        data["combat"]["min_warning_seconds"] = min(
+            data["combat"]["min_warning_seconds"], WARNING_SECONDS
+        )
+    return type(rules).model_validate(data)
 
 
 class SandboxError(ColonyError):
