@@ -20,7 +20,14 @@ export type Relation = {
   /** Hostility is a dated fact per side, never a relation state (Q18). */
   hostility: { by_self_at: string | null; by_counterpart_at: string | null };
   actions: RelationAction[];
+  /** v0.12: score read from the dated facts above (never a rule input). */
+  standing?: Standing;
+  /** v0.12: last military force of this Empire seen in an own combat report. */
+  assessment?: Assessment | null;
 };
+export type StandingLabel = "hostile" | "wary" | "neutral" | "cordial" | "allied";
+export type Standing = { score: number; label: StandingLabel; factors: { kind: string; points: number }[] };
+export type Assessment = { observed_at: string; ships: number; attack: number; hull: number };
 export type HistoryEntry = {
   id: string; at: string; kind: "proposed" | "withdrawn" | "accepted" | "refused" | "notice";
   actor: "self" | "counterpart"; counterpart_id: string;
@@ -68,7 +75,13 @@ const relation = (v: unknown) =>
   ["NO_AGREEMENT", "PACT"].includes(String(v.state)) && pact(v.pact) && (v.state === "PACT") === (v.pact !== null) &&
   proposal(v.proposal) && optionalDate(v.cooldown_until) && object(v.hostility) &&
   optionalDate(v.hostility.by_self_at) && optionalDate(v.hostility.by_counterpart_at) &&
-  list(v.actions, (a) => ACTIONS.includes(String(a)));
+  list(v.actions, (a) => ACTIONS.includes(String(a))) &&
+  (!("standing" in v) || standingOk(v.standing)) && (!("assessment" in v) || assessmentOk(v.assessment));
+const count = (v: unknown) => typeof v === "number" && Number.isSafeInteger(v) && v >= 0;
+const standingOk = (v: unknown) => object(v) && typeof v.score === "number" && Number.isSafeInteger(v.score) &&
+  v.score >= -100 && v.score <= 100 && ["hostile", "wary", "neutral", "cordial", "allied"].includes(String(v.label)) &&
+  list(v.factors, (f) => object(f) && typeof f.kind === "string" && typeof f.points === "number" && Number.isSafeInteger(f.points));
+const assessmentOk = (v: unknown) => v === null || (object(v) && date(v.observed_at) && count(v.ships) && count(v.attack) && count(v.hull));
 const entry = (v: unknown) =>
   object(v) && id(v.id) && date(v.at) && ["proposed", "withdrawn", "accepted", "refused", "notice"].includes(String(v.kind)) &&
   ["self", "counterpart"].includes(String(v.actor)) && id(v.counterpart_id);

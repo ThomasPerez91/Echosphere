@@ -23,7 +23,14 @@ from app.colony.service import ColonyError, rules_for
 from app.galaxy.models import PlanetKnowledge, SystemKnowledge
 from app.persistence.models import Colony, Empire, Planet
 from app.relations.models import RelationContact, RelationEvent, RelationPact, RelationPair
-from app.relations.rules import NO_AGREEMENT, PACT, cooled_down, pair, proposal_open
+from app.relations.rules import (
+    NO_AGREEMENT,
+    PACT,
+    cooled_down,
+    pair,
+    proposal_open,
+    standing,
+)
 from app.simulation.clock import utc
 from app.simulation.scheduler import IdempotencyConflict
 
@@ -506,13 +513,16 @@ def project(session, universe_id, empire_id, at):
         )
         if contact is None and "propose" in view["actions"]:
             view["actions"].remove("propose")  # proposing needs our own contact
-        relations.append(
-            {
-                "empire": {"id": str(other), "name": names.get(other)},
-                "contact": contact_view(session, empire_id, contact),
-                **view,
-            }
-        )
+        entry = {
+            "empire": {"id": str(other), "name": names.get(other)},
+            "contact": contact_view(session, empire_id, contact),
+            **view,
+        }
+        if rules.relations.standing is not None:
+            # v0.12: score read from the facts above, and the last military force observed.
+            entry["standing"] = standing(rules.relations.standing, view, at)
+            entry["assessment"] = assessment(session, rules, universe_id, empire_id, other)
+        relations.append(entry)
     history = session.scalars(
         select(RelationEvent)
         .where(
@@ -548,6 +558,32 @@ def project(session, universe_id, empire_id, at):
             for e in history
         ],
     }
+
+
+def assessment(session, rules, universe_id, empire_id, other):
+    """Last military force of `other` seen by this Empire in its own combat reports (survivors
+    after the battle), with its date; nothing is ever estimated beyond what was observed."""
+    from app.combat.models import CombatReport
+
+    for report in session.scalars(
+        select(CombatReport)
+        .where(CombatReport.universe_id == universe_id, CombatReport.empire_id == empire_id)
+        .order_by(CombatReport.battle_at.desc(), CombatReport.engagement_id)
+        .limit(50)
+    ):
+        result = report.result or {}
+        side = result.get("opponent")
+        if result.get("opponent_empire_id") != str(other) or not side:
+            continue
+        stats = rules.combat.stats if rules.combat else {}
+        survivors = {k: n for k, n in (side.get("survivors") or {}).items() if n}
+        return {
+            "observed_at": report.battle_at.isoformat(),
+            "ships": sum(survivors.values()),
+            "attack": sum(stats[k].attack * n for k, n in survivors.items() if k in stats),
+            "hull": sum(stats[k].hull * n for k, n in survivors.items() if k in stats),
+        }
+    return None
 
 
 def contact_view(session, empire_id, contact):

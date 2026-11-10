@@ -1,4 +1,4 @@
-# Recherche v0.12 — paliers III et IV
+# Ruleset v0.12 — paliers de recherche III et IV, score de relation
 
 **Statut : implémenté sur la branche de recette le 10/11/2026 à la demande de l’utilisateur
 (« plus de technologies ») ; valeurs d’équilibrage provisoires, à valider en recette.** Les
@@ -29,3 +29,23 @@ Coûts : palier III 600/480/1 200 (Alliages/Flux/Données), 20 min ; palier IV 1
   livraison unité par unité même si les technologies changent ensuite.
 - Les effets sur les vaisseaux valent pour toutes les classes et pour l’IA (mêmes services).
 - Fichiers : `game_data/rulesets/v0.12` générés par `scripts/rulesets/make_v012.py` depuis v0.11.
+
+## Relations : score et évaluation (même ruleset)
+
+Le score de relation (−100 à +100) est une **lecture** des faits datés que le serveur connaît
+déjà ; il n’est ni stocké ni utilisé par une règle (pacte, combat et IA ne le lisent pas).
+
+| Fait | Points (provisoires) |
+|---|---|
+| Pacte en vigueur | +40, plus +2 par jour d’ancienneté (au plus +20) |
+| Rupture notifiée | −30 |
+| Proposition de pacte reçue | +10 |
+| Hostilité subie | −50 si elle date de moins de 7 jours, −20 de moins de 30 jours |
+| Hostilité de votre part | −15 si elle date de moins de 7 jours |
+
+Libellés : Hostile (≤ −50), Méfiant (≤ −15), Neutre (≤ 14), Cordial (≤ 49), Allié au-delà.
+L’**évaluation** montre seulement les dernières forces militaires de l’autre Empire observées dans
+un de vos rapports de combat (survivants, puissance et coque d’après les règles), avec leur date ;
+sans combat, les forces restent inconnues. Les accords de recherche et commerciaux restent à
+concevoir (mécanique d’échange à décider).
+

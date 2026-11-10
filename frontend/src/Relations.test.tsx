@@ -105,3 +105,17 @@ test("the client refuses projections that would leak beyond a dated presence", (
   expect(validRelations(relations([neutral({ state: "PACT" })]))).toBe(false);
   expect(validRelations(relations([{ ...allied, empire: { id: stranger, name: "Concorde" } }]))).toBe(true);
 });
+
+test("v0.12: relation score and observed forces come from the server, never computed here", async () => {
+  const scored = { ...allied, standing: { score: 56, label: "allied" as const, factors: [{ kind: "pact", points: 40 }, { kind: "pact_age", points: 16 }] },
+    assessment: { observed_at: "2099-01-01T00:00:00Z", ships: 3, attack: 360, hull: 900 } };
+  const unseen = { ...neutral(), standing: { score: -50, label: "hostile" as const, factors: [{ kind: "hostile_received", points: -50 }] }, assessment: null };
+  setup(base(relations([unseen, scored])));
+  const card = (await screen.findByRole("heading", { name: "Concorde" })).closest("li")!;
+  expect(within(card).getByLabelText("Relation Allié, 56 sur 100")).toBeVisible();
+  const profile = screen.getByRole("heading", { name: "Profil et évaluation" }).closest("section")!;
+  expect(within(profile).getByText("Pacte +40 · Ancienneté du pacte +16")).toBeVisible();
+  expect(within(profile).getByText(/3 vaisseaux militaires, puissance 360, coque 900/)).toBeVisible();
+  expect(within(profile).getByText("Forces inconnues : aucun combat observé.")).toBeVisible();
+  expect(within(profile).getByText("Hostile")).toBeVisible();
+});

@@ -2,7 +2,8 @@
 
 Run from the repository root: python3 scripts/rulesets/make_v012.py
 Balance values are provisional. Tier III strengthens the domain effect (it replaces tier II);
-tier IV opens a new effect and also needs tier II of a neighbour domain.
+tier IV opens a new effect and also needs tier II of a neighbour domain. Relations gain the
+relation score terms (`standing`).
 """
 
 import json
@@ -25,6 +26,22 @@ NEW = {
     "xenoscience_3": ("Protocoles d’analyse III", "research_data", 1500, ["xenoscience_2"]),
     "xenoscience_4": ("Résonance des échos", "research_data", 2500,
                       ["xenoscience_3", "computation_2"]),
+}
+
+
+# Relation score read from dated facts (Relations view), provisional values.
+STANDING = {
+    "pact": 40,
+    "pact_per_day": 2,
+    "pact_max_bonus": 20,
+    "notice": -30,
+    "proposal_received": 10,
+    "hostile_received_recent": -50,
+    "hostile_received_old": -20,
+    "hostile_given_recent": -15,
+    "recent_days": 7,
+    "old_days": 30,
+    "thresholds": [-50, -15, 14, 49],
 }
 
 
@@ -54,6 +71,10 @@ def main():
         }
     research["facility"]["levels"].update({"3": 5, "4": 8})
     path.write_text(json.dumps(research, ensure_ascii=False, indent=2) + "\n")
+    path = TARGET / "relations.json"
+    relations = json.loads(path.read_text())
+    relations["standing"] = STANDING
+    path.write_text(json.dumps(relations, ensure_ascii=False, indent=2) + "\n")
 
 
 if __name__ == "__main__":

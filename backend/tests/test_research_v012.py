@@ -44,3 +44,22 @@ def test_v012_files_are_the_generator_output(tmp_path, monkeypatch):
     for path in (root / "game_data/rulesets/v0.12").glob("*.json"):
         generated = (tmp_path / "v0.12" / path.name).read_text()
         assert json.loads(path.read_text()) == json.loads(generated)
+
+
+def test_relation_standing_reads_dated_facts_only():
+    from datetime import UTC, datetime, timedelta
+
+    from app.relations.rules import standing
+
+    terms = load_ruleset("v0.12").relations.standing
+    at = datetime(2026, 11, 10, tzinfo=UTC)
+    iso = lambda d: (at - timedelta(days=d)).isoformat()  # noqa: E731
+    neutral = standing(terms, {"pact": None, "proposal": None, "hostility": {}}, at)
+    assert neutral == {"score": 0, "label": "neutral", "factors": []}
+    ally = standing(terms, {"pact": {"accepted_at": iso(30), "notice": None}}, at)
+    assert ally["score"] == 60 and ally["label"] == "allied"
+    hit = standing(terms, {"hostility": {"by_counterpart_at": iso(2), "by_self_at": iso(1)}}, at)
+    assert hit["score"] == -65 and hit["label"] == "hostile"
+    old = standing(terms, {"hostility": {"by_counterpart_at": iso(20)}}, at)
+    assert old["score"] == -20 and old["label"] == "wary"
+    assert "standing" not in load_ruleset("v0.11").model_dump()["relations"]

@@ -1,10 +1,26 @@
 import { useState } from "react";
 import { useRelations } from "../hooks/useRelations";
-import type { HistoryEntry, Relation, RelationAction } from "../relations/api";
+import type { HistoryEntry, Relation, RelationAction, Standing, StandingLabel } from "../relations/api";
 import { duration, time } from "../colony/format";
 import { Badge, Button, EmptyState, Panel } from "./ui";
 import { Kpis, Thumb, ViewHero } from "../shell/view";
 import { PanelHead, Pending, Pic } from "../shell/visual";
+
+const standingLabels: Record<StandingLabel, string> = { hostile: "Hostile", wary: "Méfiant", neutral: "Neutre", cordial: "Cordial", allied: "Allié" };
+const standingTone: Record<StandingLabel, string> = { hostile: "d-tone-red", wary: "d-tone-amber", neutral: "d-tone-blue", cordial: "d-tone-green", allied: "d-tone-green" };
+const factorLabels: Record<string, string> = {
+  pact: "Pacte", pact_age: "Ancienneté du pacte", notice: "Rupture notifiée", proposal_received: "Proposition reçue",
+  hostile_received: "Hostilité subie", hostile_given: "Hostilité de votre part",
+};
+
+/** Relation score -100..100 read from dated server facts (v0.12). */
+function StandingMeter({ value }: { value: Standing }) {
+  return <div className={`d-standing d-standing--${value.label}`} aria-label={`Relation ${standingLabels[value.label]}, ${value.score} sur 100`}>
+    <span>Relation</span><b className={standingTone[value.label]}>{value.score > 0 ? "+" : ""}{value.score}</b>
+    <span className="d-standing-track" aria-hidden="true"><i style={{ left: `${(value.score + 100) / 2}%` }} /></span>
+    <span className={standingTone[value.label]}>{standingLabels[value.label]}</span>
+  </div>;
+}
 
 const hero = <ViewHero crumb="Relations" title="Relations diplomatiques" banner="banniere-diplomatie"
   text="Gérez vos relations avec les civilisations rencontrées, négociez des pactes et suivez l’évolution des contacts dans la galaxie." />;
@@ -129,6 +145,7 @@ export function RelationsView({ universe, enabled, csrf, onSessionLost }: {
           return <li key={r.empire.id} className="fleet-card" aria-labelledby={`relation-${r.empire.id}`}>
             <div className="d-fl-card-top"><Thumb src={null} icon="icons/sidebar/nav-relations.svg" />
               <div className="panel-head"><h3 id={`relation-${r.empire.id}`}>{r.empire.name}</h3><Badge tone={s.tone}>{s.label}</Badge></div></div>
+            {r.standing && <StandingMeter value={r.standing} />}
             <Facts r={r} />
             {r.actions.length > 0 && <div className="relation-actions">
               {r.actions.map((a) => a === "terminate" ? (confirm === r.empire.id
@@ -156,7 +173,14 @@ export function RelationsView({ universe, enabled, csrf, onSessionLost }: {
       </section>
       <section className="d-card d-panel" aria-labelledby="relation-profile-title">
         <PanelHead id="relation-profile-title" icon="icons/actions/action-info.svg" title="Profil et évaluation" />
-        <Pending compact what="Score de relation, éthique, orientation, puissance estimée et évaluation des civilisations." />
+        {p.relations.some((r) => r.standing) ? <ul className="d-rows d-rel-assess">{p.relations.map((r) => <li key={r.empire.id} className="d-row">
+          <span className="d-row-main"><strong>{r.empire.name}</strong>
+            <span>{r.standing ? r.standing.factors.map((f) => `${factorLabels[f.kind] ?? f.kind} ${f.points > 0 ? "+" : ""}${f.points}`).join(" · ") || "Aucun fait marquant" : "—"}</span>
+            <span>{r.assessment ? `Forces observées le ${time(r.assessment.observed_at)} : ${r.assessment.ships} vaisseau${r.assessment.ships > 1 ? "x" : ""} militaire${r.assessment.ships > 1 ? "s" : ""}, puissance ${r.assessment.attack.toLocaleString("fr-FR")}, coque ${r.assessment.hull.toLocaleString("fr-FR")}`
+              : "Forces inconnues : aucun combat observé."}</span></span>
+          {r.standing && <span className="d-row-side"><b className={standingTone[r.standing.label]}>{r.standing.score > 0 ? "+" : ""}{r.standing.score}</b><span>{standingLabels[r.standing.label]}</span></span>}
+        </li>)}</ul> : <Pending compact what="Score de relation et évaluation : parties créées en v0.12 seulement." />}
+        <Pending compact what="Éthique, orientation et puissance estimée hors combat." />
       </section>
       <section className="panel" aria-labelledby="relations-history-title"><h2 id="relations-history-title">Historique</h2>
         {p.history.length === 0 ? <p>Aucune négociation.</p> : <ol className="fleet-reports d-rel-timeline">{p.history.map((h) =>
