@@ -175,6 +175,10 @@ système choisit, clic droit ou Échap annule et rouvre la fenêtre.
   grisés avec « Débloqué par … » ; plafond de niveau selon la planète.
 - Flottes (10/11) : une commande de plusieurs vaisseaux livre les unités une à une (« 2 / 5
   livrées ») ; v0.11 : les gisements se régénèrent (10 % par jour). Migration Game 0019.
+- **v0.12** (10/11, migration Game 0021) : nouvelles parties en v0.12 — arbre de Recherche à
+  4 paliers, score de relation et « Profil et évaluation » dans Relations, dossiers de découverte
+  complets (récompense + systèmes révélés), « Attaquer l’exploitation » sur un gisement connu
+  (escortes qui défendent, extracteurs sans escorte détruits).
 - **Partie de test** (10/11, migration Game 0020) : dans « Nouvelle partie », type **Test** (solo,
   refusé si le Portal tourne en production). La partie démarre presque terminée : les sept bâtiments
   au niveau 10, toutes les technologies acquises, toute la galaxie cartographiée avec ses routes, une
