@@ -207,6 +207,10 @@ def plan_order(
     if (current and current[0] != kind) or target_level != (current[1] + 1 if current else 1):
         raise ColonyError("Occupied sector or non-contiguous upgrade", "sector_unavailable")
     rule = rules.catalogue.infrastructures[kind]
+    cap = rules.colony.level_cap
+    if cap is not None and target_level > cap.cap(planet.sector_capacity):
+        # COL-11 (v0.11): the planet size bounds every building's level.
+        raise ColonyError("Planet level cap reached", "level_cap_reached")
     if current is None and rule.max_per_colony is not None:
         if sum(k == kind for k, _ in projected.values()) >= rule.max_per_colony:
             raise ColonyError("Infrastructure uniqueness limit reached", "unique_limit")

@@ -45,5 +45,8 @@ export function ago(date: string, now: number) {
 export const infrastructureImage: Record<string, string> = {
   extraction_complex: 'complexe-extraction', flux_reactor: 'reacteur-flux', data_node: 'noeud-donnees',
   industrial_complex: 'complexe-industriel', logistics_center: 'centre-logistique',
+  // COL-11: temporary illustrations until chantier-orbital.webp / centre-de-recherche.webp exist
+  // (docs/visual-reference/assets-a-produire.md); switch the names once the files are added.
+  orbital_shipyard: 'station-orbitale-primaire', research_center: 'laboratoire-avance',
 };
 export const buildingImage = (kind: string) => asset(`img/batiments/${infrastructureImage[kind] ?? 'centre-de-commandement'}.webp`);

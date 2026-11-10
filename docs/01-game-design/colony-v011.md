@@ -1,7 +1,7 @@
 # Colonie v0.11 — bâtiments par type, emplacements libres, rythme rapide
 
-**Statut : décision utilisateur du 09/11/2026 (principes) ; valeurs chiffrées = proposition
-provisoire à valider en recette ; non implémenté.** Les parties existantes restent sur leur ruleset
+**Statut : décision utilisateur du 09/11/2026 (principes), noms du 10/11/2026 ; première
+implémentation COL-11 (ruleset v0.11) livrée sur la recette ; valeurs provisoires à valider en jeu.** Les parties existantes restent sur leur ruleset
 figé (v0.10) ; seules les nouvelles parties utilisent v0.11.
 
 ## Décisions de l’utilisateur (09/11/2026)
@@ -49,3 +49,27 @@ figé (v0.10) ; seules les nouvelles parties utilisent v0.11.
    affiché), emplacements libres séparés.
 5. Création de partie : v0.11 par défaut ; v0.10 conservée pour les parties existantes.
 Noms (10/11/2026, choix de l’utilisateur) : **Chantier orbital** et **Centre de recherche** ; assets dans [la liste](../visual-reference/assets-a-produire.md).
+
+
+## Implémentation COL-11 (10/11/2026)
+
+- Ruleset **v0.11**, produit par `scripts/rulesets/make_v011.py` (source des valeurs) ; toute
+  nouvelle partie Portal est en v0.11, les parties existantes restent sur leur ruleset.
+- Bâtiments clés uniques (`max_per_colony = 1`) : Complexe industriel, Centre logistique (←
+  extraction 3), **Chantier orbital** `orbital_shipyard` (← industriel 2), **Centre de recherche**
+  `research_center` (← nœud de données 3). Production (extraction, réacteur, nœud) répétable.
+- Simplification de cette première étape : **chaque bâtiment occupe un secteur** ; les secteurs
+  restants sont les emplacements libres de spécialisation. Les emplacements réservés « hors
+  secteurs » restent à décider.
+- Plafond de niveau : `14 + secteurs / 2` (12 secteurs → 20) ; refus `level_cap_reached`.
+- Vaisseaux : niveau de Chantier orbital requis par classe (sonde, cargo 1 ; extracteur,
+  intercepteur 2 ; colonisateur 3 ; frégate 4 ; croiseur 6) ; refus `shipyard_required`.
+- Recherche : Centre de recherche niveau 1 (palier 1) et 3 (palier 2) dans la colonie source ;
+  refus `research_center_required`.
+- Courbes : niveaux 1–10 explicites (coût ×1,35, durée ×1,55, production `base × n × 1,1^(n−1)`),
+  puis coût ×1,35, durée ×1,35, production ×1,15. Bâtiments uniques : coût ×1,45. Départ :
+  extraction, réacteur, nœud niveau 1 ; stocks 800 / 500 / 300. Simulation gloutonne : une action
+  toutes les ~8 min les deux premières heures, ~20 min jusqu’à 12 h (hors vaisseaux et recherche).
+- IA : utilité de déblocage pour le Chantier orbital et le Centre de recherche (`ai.unlocks`).
+- Les champs ajoutés n’apparaissent pas dans les dumps des rulesets antérieurs : les empreintes
+  des parties en cours (IA, reçus de bootstrap) restent identiques.

@@ -14,6 +14,8 @@ const infrastructureLabels: Record<string, string> = {
   data_node: 'Nœud de données',
   industrial_complex: 'Complexe industriel',
   logistics_center: 'Centre logistique',
+  orbital_shipyard: 'Chantier orbital',
+  research_center: 'Centre de recherche',
 };
 export const infrastructureLabel = (kind: string) => infrastructureLabels[kind] ?? kind;
 
@@ -65,6 +67,7 @@ const messages: Record<string, string> = {
   sector_unavailable: 'Aucun secteur disponible pour cette action, ou le niveau demandé ne suit pas le niveau prévu.',
   unique_limit: 'Cette infrastructure est limitée à un exemplaire par colonie.',
   prerequisites_unmet: 'Une infrastructure prérequise doit d’abord être achevée.',
+  level_cap_reached: 'Niveau maximal pour la taille de cette planète.',
   order_completed: 'Cette construction est déjà terminée.',
   order_not_found: 'Cet ordre n’existe plus. La colonie a été actualisée.',
   permission_denied: 'Votre accès à cet Empire ne permet pas cette action.',

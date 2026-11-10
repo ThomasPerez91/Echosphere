@@ -3,6 +3,7 @@ export const messages: Record<string, string> = {
   accepted: "Ordre accepté par le serveur.",
   insufficient_resources: "Ressources insuffisantes dans la colonie concernée.",
   queue_full: "La file de production de cette colonie est pleine (3 ordres).",
+  shipyard_required: "Le Chantier orbital de cette colonie n’a pas le niveau requis pour cette classe.",
   units_unavailable: "Ces unités ne sont plus disponibles dans la flotte.",
   cargo_capacity: "La cargaison dépasserait la capacité d’une flotte.",
   cargo_unavailable: "Cette cargaison n’est plus à bord.",

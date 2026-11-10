@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.rules_dump import omit_unset_extensions
 from app.simulation.production import MAX_AMOUNT, MICRO_UNITS, RESOURCES, amount
 
 Positive = Annotated[int, Field(strict=True, gt=0, le=MAX_AMOUNT)]
@@ -24,6 +25,10 @@ class ShipClass(StrictModel):
     flux_per_hop: Nonnegative
     cargo: Nonnegative
     survey: bool
+    # v0.11 (COL-11): infrastructure levels of the building colony that unlock this class
+    # (the Forge orbitale); empty before v0.11.
+    requires: dict[str, Positive] = Field(default_factory=dict)
+    serialize_extensions = omit_unset_extensions("requires")
 
 
 class FleetRules(StrictModel):

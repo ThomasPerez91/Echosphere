@@ -324,7 +324,10 @@
           "type": "integer"
         },
         "ruleset": {
-          "const": "v0.10",
+          "enum": [
+            "v0.10",
+            "v0.11"
+          ],
           "title": "Ruleset",
           "type": "string"
         },

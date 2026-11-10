@@ -22,8 +22,9 @@ PERMISSIONS = frozenset(("colony.read", "colony.construct", "colony.cancel",
 
 # AI profiles the Game ruleset knows (app.ai.rules.PROFILES); Game validates them again.
 AI_PROFILES = frozenset(("economic_cautious", "expansionist"))
-# A5 (user decision 09/11/2026): every new game is v0.10 (galaxy-v2, opportunities).
-CREATION_RULESET = "v0.10"
+# A5 (09/11/2026), COL-11 (10/11/2026): every new game is v0.11 (galaxy-v2, opportunities,
+# unique key buildings, fast early pace); existing games keep their pinned ruleset.
+CREATION_RULESET = "v0.11"
 
 
 # Q61 caps per map size (galaxy-v2): a pre-check for a clear message; Game's pinned ruleset

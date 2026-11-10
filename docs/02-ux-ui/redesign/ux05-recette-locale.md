@@ -169,6 +169,10 @@ système choisit, clic droit ou Échap annule et rouvre la fenêtre.
   l’en-tête de colonie, **renommer la colonie** (migration Game 0018), jauge de stockage à la place
   de la courbe 24 h, barres de progression fluides, notifications nouvelles marquées « Nouveau »,
   sélecteurs univers/colonie de même taille, état des services caché sauf s’il est indisponible.
+- COL-11 (v0.11, nouvelles parties seulement) : départ avec extraction, réacteur et nœud ;
+  premières améliorations en minutes ; Chantier orbital (← industriel 2) requis pour les vaisseaux,
+  Centre de recherche (← nœud 3) pour la recherche ; bâtiments clés uniques ; bâtiments verrouillés
+  grisés avec « Débloqué par … » ; plafond de niveau selon la planète.
 - La pile de recette porte le nom de projet Compose `echosphere` sur ce poste : elle partage les
   volumes de la pile conservée. Ne jamais lancer `down -v`.
 

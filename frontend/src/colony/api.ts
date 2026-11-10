@@ -15,6 +15,8 @@ export type Order = {
 export type Option = {
   action: 'build' | 'upgrade'; infrastructure_type: string; sector_index: number | null; target_level: number;
   cost: Amounts; base_duration_us: string; estimated_duration_us: string | null; production_per_hour: Amounts;
+  /** COL-11: buildings (and levels) that unlock this one; empty when none. */
+  requires?: { infrastructure_type: string; level: number }[];
   construction_bonus_bps: number; capacity: string | null; available: boolean; reason: string | null;
 };
 export type Projection = {

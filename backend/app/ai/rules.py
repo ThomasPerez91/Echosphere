@@ -6,6 +6,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.rules_dump import omit_unset_extensions
+
 GOALS = ("economy", "research", "exploration", "expansion", "logistics")
 # v0.7 (utility-goals-v2) adds a defensive military goal; never an offensive one.
 GOALS_V2 = (*GOALS, "military")
@@ -155,6 +157,12 @@ class FrontierPolicy(BaseModel):
 class AIRulesV4(AIRulesV3):
     """v0.9 (13B B08): policy v4 = v3 plus frontier protocol choices. v0.8 dumps unchanged."""
 
-    version: Literal["v0.9", "v0.10"]
+    version: Literal["v0.9", "v0.10", "v0.11"]
     policy_version: Literal["utility-goals-v4"]
     frontier: FrontierPolicy
+    # v0.11 (COL-11): utility of buildings that unlock ships or research (Forge orbitale,
+    # Institut des Échos), divided by the target level; empty before v0.11.
+    unlocks: dict[str, Annotated[int, Field(strict=True, gt=0, le=1000)]] = Field(
+        default_factory=dict
+    )
+    serialize_extensions = omit_unset_extensions("unlocks")

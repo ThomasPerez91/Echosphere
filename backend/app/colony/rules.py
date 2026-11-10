@@ -17,6 +17,7 @@ from app.galaxy.generator_v2 import GalaxyRulesV2
 from app.galaxy.opportunities import OpportunityRules
 from app.galaxy.rules import ExplorationRules, GalaxyRules
 from app.relations.rules import RelationsRules
+from app.rules_dump import omit_unset_extensions
 from app.simulation.production import MAX_AMOUNT, MICRO_UNITS, RESOURCES, amount
 
 Positive = Annotated[int, Field(strict=True, gt=0, le=MAX_AMOUNT)]
@@ -25,6 +26,7 @@ Nonnegative = Annotated[int, Field(strict=True, ge=0, le=MAX_AMOUNT)]
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
 
 
 class Ratio(StrictModel):
@@ -93,6 +95,16 @@ class ResourceRules(StrictModel):
     resources: list[str]
 
 
+class LevelCap(StrictModel):
+    """v0.11 (COL-11): highest level of a building on a planet, base + sectors // divisor."""
+
+    base: Positive
+    sectors_divisor: Positive
+
+    def cap(self, sectors: int) -> int:
+        return self.base + sectors // self.sectors_divisor
+
+
 class ColonyRules(StrictModel):
     version: str
     sectors: Positive
@@ -104,6 +116,8 @@ class ColonyRules(StrictModel):
     refund_queued_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
     refund_active_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
     speeds: dict[str, Ratio]
+    level_cap: LevelCap | None = None
+    serialize_extensions = omit_unset_extensions("level_cap")
 
 
 class InfrastructureRules(StrictModel):
@@ -130,12 +144,25 @@ class Technology(StrictModel):
     reduction_bps: Annotated[int, Field(strict=True, ge=0, lt=10000)]
 
 
+class Facility(StrictModel):
+    """v0.11 (COL-11): research starts from a colony holding this building at the level of the
+    technology tier (Institut des Échos)."""
+
+    kind: str
+    levels: dict[Literal["1", "2"], Positive]
+
+    def level(self, tier: int) -> int:
+        return self.levels[str(tier)]
+
+
 class ResearchRules(StrictModel):
     version: str
     queue_limit: Literal[2]
     refund_queued_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
     refund_active_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
     technologies: dict[str, Technology] = Field(min_length=1)
+    facility: Facility | None = None
+    serialize_extensions = omit_unset_extensions("facility")
 
     @model_validator(mode="after")
     def valid_catalogue(self):
@@ -259,6 +286,7 @@ class Ruleset(StrictModel):
             if self.ai is None or self.ai.version != self.version:
                 raise ValueError("Pinned AI configuration required, not an active controller")
             ai_kinds = {*self.ai.producers.values(), self.ai.industry_kind, self.ai.storage_kind}
+            ai_kinds |= set(getattr(self.ai, "unlocks", {}))
             if not ai_kinds <= self.catalogue.infrastructures.keys():
                 raise ValueError("Unknown infrastructure in AI policy")
         elif self.ai is not None:
@@ -296,6 +324,22 @@ class Ruleset(StrictModel):
             self.version, "v0.10"
         ):
             raise ValueError("galaxy-v2 is the generator of v0.10 and later only")
+        # COL-11 (v0.11): level cap, Forge orbitale for ships, Institut des Échos for research.
+        gated = since(self.version, "v0.11")
+        if gated != (self.colony.level_cap is not None) or (
+            self.research is not None and gated != (self.research.facility is not None)
+        ):
+            raise ValueError("Level cap and research facility exist from v0.11 only")
+        if self.research is not None and self.research.facility is not None:
+            f = self.research.facility
+            if f.kind not in self.catalogue.infrastructures or set(f.levels) != {"1", "2"}:
+                raise ValueError("Research facility must be a known infrastructure for each tier")
+        if self.fleets is not None:
+            for ship in self.fleets.classes.values():
+                if ship.requires and not gated:
+                    raise ValueError("Ship prerequisites exist from v0.11 only")
+                if not set(ship.requires) <= self.catalogue.infrastructures.keys():
+                    raise ValueError("Unknown infrastructure in ship prerequisites")
         # EXP-01 opportunities exist from v0.10 only; v0.1-v0.9 stay strictly unchanged.
         if since(self.version, "v0.10"):
             if self.opportunities is None or self.opportunities.version != self.version:
@@ -417,7 +461,7 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
             extensions += ("ai", "combat", "relations")
         if version == "v0.9":
             extensions += ("ai", "combat", "relations", "frontier")
-        if version == "v0.10":
+        if version in {"v0.10", "v0.11"}:
             extensions += ("ai", "combat", "relations", "frontier", "opportunities")
         for name in extensions:
             parts[name] = json.loads(

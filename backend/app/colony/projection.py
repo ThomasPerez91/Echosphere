@@ -72,6 +72,11 @@ def option(rules, state, permissions, bonus, *, action, kind, sector, level) -> 
         ),
         "available": reason is None,
         "reason": reason,
+        # COL-11: what unlocks a locked building, shown greyed with its prerequisites.
+        "requires": [
+            {"infrastructure_type": k, "level": v}
+            for k, v in sorted(rules.catalogue.infrastructures[kind].requires.items())
+        ],
     }
 
 

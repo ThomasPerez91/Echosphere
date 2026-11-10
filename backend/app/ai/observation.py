@@ -360,6 +360,7 @@ def collect(session, controller, rules, at):
                 research.validate_start(session, e, body["technology"], q)
                 cost, duration = dict(q.cost), q.duration_us
             elif operation == "order":
+                fleet.check_unlocked(session, rules, UUID(payer), body["ship"])
                 q = fleet.snapshot_order(
                     rules,
                     body["ship"],
@@ -468,6 +469,8 @@ def collect(session, controller, rules, at):
                 utility = max(0, min(1000, (target - rate) * 1000 // target))
         if kind == cfg.industry_kind:
             utility = cfg.industry_utility // level
+        if kind in getattr(cfg, "unlocks", {}):
+            utility = cfg.unlocks[kind] // level
         if kind == cfg.storage_kind:
             utility = (
                 1000

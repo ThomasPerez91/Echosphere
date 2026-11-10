@@ -22,6 +22,8 @@ const roles: Record<string, string> = {
   data_node: 'Collecte les données utiles à la recherche.',
   industrial_complex: 'Accélère les constructions de la colonie.',
   logistics_center: 'Augmente la capacité de stockage de chaque ressource.',
+  orbital_shipyard: 'Construit les vaisseaux ; chaque niveau débloque de nouvelles classes.',
+  research_center: 'Permet la recherche ; son niveau ouvre les technologies avancées.',
 };
 
 /** Server dates only: an estimate between two readings, never a completion. */
@@ -155,7 +157,9 @@ function OptionCard({ colony, option, free, canBuild, stocks }: { colony: Colony
         aria-label={pending ? 'Envoi…' : option.action === 'build' ? `Construire ${label}` : `Améliorer ${label} niveau ${option.target_level}`}>
         <Ico name={locked ? 'act-verrouille' : option.action === 'build' ? 'act-construire' : 'act-ameliorer'} />
         <span aria-hidden="true">{pending ? 'Envoi…' : locked ? 'Verrouillé' : option.action === 'build' ? 'Construire' : 'Améliorer'}</span></button>}
-      {option.reason && <p id={describe} className="reason">{reasonLabel(option.reason)}</p>}
+      {option.reason && <p id={describe} className="reason">{locked && option.requires?.length
+        ? `Débloqué par : ${option.requires.map(r => `${infrastructureLabel(r.infrastructure_type)} niveau ${r.level}`).join(', ')}.`
+        : reasonLabel(option.reason)}</p>}
     </div>
   </li>;
 }

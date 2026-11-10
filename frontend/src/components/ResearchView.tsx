@@ -27,6 +27,7 @@ const reasons: Record<string, string> = {
   technology_duplicate: "Déjà acquise ou réservée",
   queue_full: "File pleine ou bloquée",
   prerequisites_unmet: "Prérequis non acquis",
+  research_center_required: "Centre de recherche requis dans la colonie (niveau 3 pour les technologies avancées)",
   permission_denied: "Permission manquante",
   funding_unavailable: "Aucune colonie de financement accessible",
   insufficient_resources: "Stocks de financement insuffisants",

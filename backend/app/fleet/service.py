@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import func, literal, select, tuple_
 
 from app.colonization.service import found_colony
+from app.colony.models import ColonyInfrastructure
 from app.colony.service import ColonyError, catch_up_owned, owned_colony, recoverable_refunds
 from app.colony.service import rules_for as ruleset_for
 from app.fleet import exploitation, extraction
@@ -153,6 +154,21 @@ def colonizer_rank(session, rules, empire_id):
     return colonies + units + ordered
 
 
+def check_unlocked(session, rules, colony_id, ship_class):
+    """COL-11 (v0.11): a class is built only by a colony whose Chantier orbital (or any listed
+    infrastructure) has the required level; nothing before v0.11."""
+    required = rules.fleets.classes[ship_class].requires
+    if not required:
+        return
+    levels = {}
+    for row in session.scalars(
+        select(ColonyInfrastructure).where(ColonyInfrastructure.colony_id == colony_id)
+    ):
+        levels[row.infrastructure_type] = max(levels.get(row.infrastructure_type, 0), row.level)
+    if any(levels.get(kind, 0) < level for kind, level in required.items()):
+        raise FleetError("Shipyard level too low for this class", "shipyard_required")
+
+
 def snapshot_order(rules, ship_class, quantity, rank=None):
     """Accepted batch price; a colonizer's progressive price is fixed here, never recomputed."""
     cost, duration = rules.fleets.order_quote(ship_class, quantity)
@@ -243,6 +259,7 @@ def order_ships(
             snapshot = snapshot_order(rules, ship_class, quantity, rank)
         except ValueError:
             raise FleetError("Unknown class or invalid quantity", "invalid_request") from None
+        check_unlocked(session, rules, colony_id, ship_class)
         queued = session.scalar(
             select(func.count())
             .select_from(ShipOrder)
