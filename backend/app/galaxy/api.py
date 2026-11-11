@@ -210,12 +210,21 @@ class Galaxy(Colonies):
             # Shaped galaxy (v0.12): the density it was drawn from, for the backdrop only. Every
             # star is already visible as a point, the layout reveals nothing more.
             **self.layout(session, universe_id),
+            # v0.12: foreign Colonies legitimately known, classed ally/neutral/hostile.
+            **self.foreign(session, universe_id, empire_id, at, permissions),
             "sources": sources,
             "options": options,
             "missions": self.missions_projection(session, universe_id, empire_id, permissions)
             if "exploration.read" in permissions
             else [],
         }
+
+    @staticmethod
+    def foreign(session, universe_id, empire_id, at, permissions):
+        from app.relations.service import foreign_presences
+
+        found = foreign_presences(session, universe_id, empire_id, at, permissions)
+        return {} if found is None else {"foreign": found}
 
     @staticmethod
     def layout(session, universe_id):

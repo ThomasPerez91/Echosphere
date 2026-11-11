@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { validFleets } from "../fleet/api";
 import { validProjection } from "../galaxy/api";
 import { fleetFixture, galaxyFixture, ids, quoteFixture, SERVER_TIME } from "../prototype/fixtures";
-import { defaultUnits, knownHops, eligibleFleets, engageable, fleetLines, missionPosition, missionRoute, missionRouteLabel, offers, point, recallable, serverPath, systemFacts, systemName } from "./model";
+import { defaultUnits, knownHops, eligibleFleets, engageable, fleetLines, missionPosition, missionRoute, missionRouteLabel, offers, point, recallable, occupation, serverPath, systemFacts, systemName, systemRelation } from "./model";
 import type { World } from "./model";
 
 const world = (): World => ({ fleets: fleetFixture(), galaxy: galaxyFixture() });
@@ -183,7 +183,7 @@ test("EXP-02b: a known deposit offers an extraction, explained when no fleet has
 test("fiche rapide: a system's facts come from both projections, occupation never guessed", () => {
   const w = world();
   const vesta = systemFacts(w, ids.vesta);
-  expect(vesta.planets).toEqual([{ id: ids.planetVesta, name: "Vesta II", sectors: 10, orbitals: 2, own: false, colony: null, foreign: null, alert: null }]);
+  expect(vesta.planets).toEqual([{ id: ids.planetVesta, name: "Vesta II", sectors: 10, orbitals: 2, own: false, colony: null, foreign: null, presence: null, alert: null }]);
   expect(vesta.deposits.map((o) => o.kind)).toEqual(["metal_belt"]);
   expect(vesta.curiosities.map((o) => o.kind)).toEqual(["anomaly"]);
   expect(vesta.signatures).toBe(1);
@@ -196,4 +196,21 @@ test("fiche rapide: a system's facts come from both projections, occupation neve
   // Test game: a foreign Colony is named by its anonymous Empire number only.
   const sandbox: World = { ...w, galaxy: { ...w.galaxy, presences: [{ empire: 2, system_id: ids.vesta, planet_id: ids.planetVesta }] } };
   expect(systemFacts(sandbox, ids.vesta).planets[0].foreign).toBe(2);
+});
+
+test("v0.12 map: known foreign Colonies class their system, the most pressing relation first", () => {
+  const w = world();
+  const seen = (relation: "ally" | "neutral" | "hostile" | "unknown", planet: string, system: string) => ({
+    planet_id: planet, system_id: system, observed_at: SERVER_TIME, source: "monitoring" as const, relation,
+    ...(relation === "unknown" ? {} : { empire: { id: "10000000-0000-4000-8000-000000000009", name: "Ligue de Vesta" } }) });
+  const known: World = { ...w, galaxy: { ...w.galaxy, foreign: [seen("ally", ids.planetVesta, ids.vesta), seen("hostile", "40000000-0000-4000-8000-0000000000ff", ids.vesta), seen("unknown", ids.planetLyra, ids.lyra)] } };
+  expect(systemRelation(known, ids.vesta)).toBe("hostile");
+  expect(systemRelation(known, ids.lyra)).toBe("unknown");
+  expect(systemRelation(known, ids.home)).toBeNull();
+  const vesta = systemFacts(known, ids.vesta).planets[0];
+  expect(occupation(vesta)).toEqual({ text: "Ligue de Vesta · Allié", tone: "ally" });
+  expect(occupation(systemFacts(known, ids.lyra).planets[0])).toEqual({ text: "Empire inconnu · Inconnu", tone: "unknown" });
+  expect(occupation(systemFacts(w, ids.lyra).planets[0])).toEqual({ text: "Occupation inconnue", tone: "none" });
+  expect(validProjection({ ...galaxyFixture(), foreign: known.galaxy.foreign }, galaxyFixture().empire.id)).toBe(true);
+  expect(validProjection({ ...galaxyFixture(), foreign: [{ ...seen("unknown", ids.planetLyra, ids.lyra), relation: "ally" }] }, galaxyFixture().empire.id)).toBe(false);
 });

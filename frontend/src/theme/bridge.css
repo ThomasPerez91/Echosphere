@@ -409,3 +409,5 @@
 .d-system .d-kpis { margin: 0; padding: 0; list-style: none; }
 .d-system .d-kpi-body strong { font-size: 19px; overflow-wrap: anywhere; }
 .d-system .d-sys-routes .text-link { display: inline-flex; align-items: center; min-height: 32px; }
+.d-rel-ally, .d-sys-world em.is-ally { color: #3ee08f !important; } .d-rel-neutral, .d-sys-world em.is-neutral { color: #ffc65c !important; }
+.d-rel-hostile, .d-sys-world em.is-hostile { color: #ff6b6b !important; } .d-rel-unknown, .d-sys-world em.is-unknown { color: #9fb3c8 !important; }

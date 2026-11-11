@@ -89,6 +89,8 @@ def main():
     path = TARGET / "relations.json"
     relations = json.loads(path.read_text())
     relations["standing"] = STANDING
+    # Galaxy map classes of known Empires (recette 11/11/2026): ally, neutral, hostile.
+    relations["map"] = {"hostile_days": 7}
     path.write_text(json.dumps(relations, ensure_ascii=False, indent=2) + "\n")
 
 

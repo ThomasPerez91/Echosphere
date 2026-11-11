@@ -434,3 +434,20 @@
 .cmd-page-tools .cmd-search { flex-wrap: nowrap; position: relative; }
 .cmd-page-tools .cmd-search input { flex: 1 1 auto; }
 .cmd-page-tools .cmd-search .cmd-help { position: absolute; left: 0; top: 100%; margin-top: 2px; white-space: nowrap; }
+
+/* Présences étrangères connues (v0.12, 11/11/2026) : anneau selon la relation. */
+.cmd-root { --map-ally: #3ee08f; --map-neutral: #ffc65c; --map-unknown: #9fb3c8; }
+.cmd-rel { fill: none; stroke-width: 2.2; }
+.cmd-rel--ally { stroke: var(--map-ally); }
+.cmd-rel--neutral { stroke: var(--map-neutral); stroke-dasharray: 4 2.5; }
+.cmd-rel--hostile { stroke: var(--map-hostile); filter: drop-shadow(0 0 3px var(--map-hostile)); }
+.cmd-rel--unknown { stroke: var(--map-unknown); stroke-dasharray: 2 3; }
+.cmd-swatch--rel-ally { background: var(--map-ally); box-shadow: 0 0 6px var(--map-ally); }
+.cmd-swatch--rel-neutral { background: var(--map-neutral); box-shadow: 0 0 6px var(--map-neutral); }
+.cmd-filter--ally.is-active { border-color: var(--map-ally); }
+.cmd-filter--neutral.is-active { border-color: var(--map-neutral); }
+.cmd-filter--hostile.is-active { border-color: var(--map-hostile); }
+.cmd-tip-line b.is-ally { color: var(--map-ally); } .cmd-tip-line b.is-neutral { color: var(--map-neutral); }
+.cmd-tip-line b.is-hostile { color: var(--map-hostile); } .cmd-tip-line b.is-unknown { color: var(--map-unknown); }
+.cmd-brief-list em.is-ally { color: var(--map-ally); } .cmd-brief-list em.is-neutral { color: var(--map-neutral); }
+.cmd-brief-list em.is-hostile { color: var(--map-hostile); } .cmd-brief-list em.is-unknown { color: var(--map-unknown); }

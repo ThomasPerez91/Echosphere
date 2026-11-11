@@ -3,11 +3,11 @@ import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from "reac
 import { GalaxyCanvas } from "../galaxy/GalaxyCanvas";
 import type { Scene } from "../galaxy/render";
 import type { MissionView } from "../fleet/api";
-import { missionPosition, missionRoute, missionRouteLabel, point, stationed, systemFacts, systemName } from "./model";
+import { foreignName, missionPosition, missionRoute, missionRouteLabel, point, relationNames, stationed, systemFacts, systemName, systemRelation } from "./model";
 import type { Point, World } from "./model";
 
 export type RoutePreview = { from: string; to: string; path?: string[] };
-export type MapFilter = "all" | "known" | "own" | "fleets" | "signals";
+export type MapFilter = "all" | "known" | "own" | "fleets" | "signals" | "ally" | "neutral" | "hostile";
 type View = { x: number; y: number; w: number; h: number };
 
 /** Deterministic decorative starfield (no game meaning): same picture on every render. */
@@ -44,13 +44,16 @@ function Tip({ world, id, x, y, width, height, foreign }: {
   const f = systemFacts(world, id);
   const own = !!s.observation?.own_colony_ids.length;
   const opportunities = f.deposits.length + f.curiosities.length;
+  const seen = (world.galaxy.foreign ?? []).filter((p) => p.system_id === id);
   const left = x + 250 > width ? x - 18 - 230 : x + 18, top = y + 170 > height ? Math.max(8, y - 170) : y + 14;
   const line = (label: string, value: string, tone?: string) =>
     <div className="cmd-tip-line"><span>{label}</span><b className={tone}>{value}</b></div>;
   return <div className="cmd-tip" aria-hidden="true" style={{ left, top }}>
     <div className="cmd-tip-name"><span className="cmd-dot" style={{ background: known ? tint(id) : "var(--map-detected)" }} />{systemName(world, id)}</div>
     {line("Statut", own ? "Votre colonie" : stateLabel[s.state], own ? "is-own" : undefined)}
-    {line("Contrôle", own ? "Votre Empire" : foreign.length ? foreign.map((n) => `Empire ${n}`).join(", ") : known ? "Inconnu" : "?", foreign.length ? "is-foreign" : undefined)}
+    {line("Contrôle", own ? "Votre Empire" : seen.length ? [...new Set(seen.map(foreignName))].join(", ") : foreign.length ? foreign.map((n) => `Empire ${n}`).join(", ") : known ? "Inconnu" : "?",
+      seen.length ? `is-${systemRelation(world, id)}` : foreign.length ? "is-foreign" : undefined)}
+    {seen.length > 0 && line("Relation", relationNames[systemRelation(world, id)!], `is-${systemRelation(world, id)}`)}
     {line("Planètes", known ? String(f.planets.length) : "?")}
     {line("Opportunités", !known ? "?" : f.signatures === null && !opportunities ? "—" : `${opportunities}${f.signatures ? ` + ${f.signatures} signal${f.signatures > 1 ? "s" : ""}` : ""}`)}
     {line("Vos flottes", String(f.fleets.length))}
@@ -142,7 +145,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
   const visible = (id: string) => {
     const s = systems.find((x) => x.id === id)!;
     return filter === "all" || (filter === "known" && s.state !== "DETECTED") || (filter === "own" && own.has(id))
-      || (filter === "fleets" && here.has(id)) || (filter === "signals" && s.state === "DETECTED");
+      || (filter === "fleets" && here.has(id)) || (filter === "signals" && s.state === "DETECTED")
+      || ((filter === "ally" || filter === "neutral" || filter === "hostile") && systemRelation(world, id) === filter);
   };
   const planned = preview ? (preview.path?.length ? preview.path : [preview.from, preview.to]).map((id) => point(world, id)).filter((p): p is Point => !!p) : [];
   const key = (id: string) => (e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(id); } };
@@ -175,7 +179,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
     if (!showNames || !rendered?.width) return new Set(systems.map((x) => x.id).filter((id) => showNames || id === selected));
     const k = Math.min(rendered.width / view.w, rendered.height / view.h);
     const boxes: [number, number, number, number][] = [];
-    const rank = (id: string) => id === selected ? 0 : own.has(id) ? 1 : foreign.has(id) ? 2 : here.has(id) ? 3 : 4;
+    const rank = (id: string) => id === selected ? 0 : own.has(id) ? 1 : foreign.has(id) || systemRelation(world, id) ? 2 : here.has(id) ? 3 : 4;
     const open = systems.length <= 25 || zr >= 1.6;
     for (const sys of [...systems].sort((a, b) => rank(a.id) - rank(b.id))) {
       if (rank(sys.id) === 4 && !open) continue;
@@ -295,7 +299,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
         const name = systemName(world, s.id);
         const count = here.get(s.id) ?? 0;
         const others = foreign.get(s.id) ?? [];
-        const label = `${name}${s.state === "DETECTED" ? " (position approximative)" : ""}${own.has(s.id) ? ", votre colonie" : ""}${others.length ? `, ${others.map((n) => `Empire inconnu ${n}`).join(", ")}` : ""}${count ? `, ${count} flotte(s) stationnée(s)` : ""}`;
+        const rel = systemRelation(world, s.id);
+        const label = `${name}${s.state === "DETECTED" ? " (position approximative)" : ""}${own.has(s.id) ? ", votre colonie" : ""}${others.length ? `, ${others.map((n) => `Empire inconnu ${n}`).join(", ")}` : ""}${rel ? `, présence étrangère ${relationNames[rel].toLowerCase()}` : ""}${count ? `, ${count} flotte(s) stationnée(s)` : ""}`;
         const state = own.has(s.id) ? "own" : s.state.toLowerCase();
         const big = selected === s.id || own.has(s.id);
         return <g key={s.id} role="button" tabIndex={0} aria-pressed={selected === s.id} aria-label={label}
@@ -310,6 +315,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
             {others.map((n, i) => <circle key={n} r={9 + i * 3} className="cmd-foreign" style={{ stroke: foreignColor(n) }}>
               <title>{`Empire inconnu ${n}`}</title></circle>)}
             {s.state !== "DETECTED" && !own.has(s.id) && <circle r={5.2} className="cmd-ring" />}
+            {!own.has(s.id) && systemRelation(world, s.id) && <circle r={9.5} className={`cmd-rel cmd-rel--${systemRelation(world, s.id)}`}>
+              <title>{`Présence étrangère : ${relationNames[systemRelation(world, s.id)!]}`}</title></circle>}
             <circle r={s.state === "DETECTED" ? 3.6 : 2.6} className="cmd-star" style={s.state === "DETECTED" ? undefined : { fill: tint(s.id) }} />
             {labelled.has(s.id) && <text x={13} y={4} transform={`scale(${1 / kz})`} className={`cmd-label${big ? " cmd-label--strong" : ""}`}>{name}</text>}
             {count > 0 && (onFleets
@@ -339,7 +346,11 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
         <li><span className="cmd-swatch cmd-swatch--fleet" />Vos flottes</li>
         <li><span className="cmd-swatch cmd-swatch--mission" />Mission en cours</li>
         <li><span className="cmd-swatch cmd-swatch--route" />Route hyperespace</li>
-        <li className="cmd-legend-pending" title="Implémentation backend nécessaire"><span className="cmd-swatch cmd-swatch--hostile" />Système hostile <small>(à venir)</small></li>
+        {world.galaxy.foreign ? <>
+          <li><span className="cmd-swatch cmd-swatch--rel-ally" />Présence alliée</li>
+          <li><span className="cmd-swatch cmd-swatch--rel-neutral" />Présence neutre</li>
+          <li><span className="cmd-swatch cmd-swatch--hostile" />Présence hostile</li></>
+          : <li className="cmd-legend-pending" title="Ruleset v0.12 et droit relations.read nécessaires"><span className="cmd-swatch cmd-swatch--hostile" />Système hostile <small>(indisponible)</small></li>}
       </ul>
     </div>}
 

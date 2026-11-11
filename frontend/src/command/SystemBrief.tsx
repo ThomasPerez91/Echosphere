@@ -1,5 +1,5 @@
 import { planetImage } from "../shell/assets";
-import { opportunityNames, systemFacts, systemName } from "./model";
+import { occupation, opportunityNames, systemFacts, systemName } from "./model";
 import type { World } from "./model";
 
 const resourceNames = { alloys: "Alliages", flux: "Flux", data: "Données" } as const;
@@ -27,7 +27,7 @@ export function SystemBrief({ world, system }: { world: World; system: string })
     {f.planets.length > 0 && <ul className="cmd-brief-list" aria-label="Mondes connus">{f.planets.slice(0, 4).map((p) =>
       <li key={p.id}><img src={planetImage(p.id)} alt="" width="26" height="26" />
         <span><strong>{p.name}</strong><small>{p.sectors} secteurs · {p.orbitals} orbitaux</small></span>
-        <em className={p.own ? "is-own" : p.foreign !== null ? "is-foreign" : ""}>{p.own ? "Votre colonie" : p.foreign !== null ? `Empire ${p.foreign}` : "Occupation inconnue"}</em></li>)}
+        <em className={`is-${occupation(p).tone}`}>{occupation(p).text}</em></li>)}
       {f.planets.length > 4 && <li className="cmd-brief-more">+ {plural(f.planets.length - 4, "autre monde", "autres mondes")}</li>}</ul>}
     {(f.deposits.length > 0 || f.curiosities.length > 0) && <ul className="cmd-brief-list cmd-brief-opps" aria-label="Opportunités connues">
       {f.deposits.slice(0, 3).map((o) => <li key={o.id}><span className="cmd-brief-dot is-deposit" aria-hidden="true" />

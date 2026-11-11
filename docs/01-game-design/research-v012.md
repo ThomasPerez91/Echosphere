@@ -73,3 +73,22 @@ révélés ; la vue Rapports le classe en Recherche.
   continue et se termine normalement (ses escortes perdues sont comptées dans la vérification).
 - Un pacte couvrant la bataille l’annule, comme pour une planète. La bataille est un acte hostile
   daté et crée les contacts, comme les autres combats.
+
+## Présences étrangères et classes sur la carte (11/11/2026)
+
+Validé par l’utilisateur le 11/11 (« vasi fait ») : la carte montre les colonies étrangères que
+l’Empire connaît légitimement et classe leur Empire.
+
+- **Sources**, les mêmes que les contacts : une colonie étrangère aujourd’hui dans un système
+  surveillé par une colonie propre (datée de la lecture), et le monde visé par une attaque propre
+  dont le rapport nomme le défenseur (daté de la bataille). Aucun capteur distant, aucune
+  occupation devinée ; un défenseur apprend l’attaquant, pas où sont ses colonies.
+- **Classe** (`relations.map.hostile_days` = 7) : pacte en vigueur → **Allié** ; sinon score
+  Hostile ou fait hostile (d’un côté ou de l’autre) depuis moins de 7 jours → **Hostile** ; sinon
+  score Cordial ou Allié → **Allié** ; sinon **Neutre**. Sans contact : **Inconnu**. C’est une
+  lecture des mêmes faits datés que le score, jamais un nouvel état de jeu.
+- **Portée** : ruleset v0.12 avec `relations.map` (nouvelles parties) et droit `relations.read`
+  (la source combat demande aussi `combat.read`). Projection Galaxie `foreign`, sans migration.
+- **Carte** : anneau vert (allié), ambre (neutre), rouge (hostile) ou gris (inconnu) ; filtres
+  Alliés / Neutres / Hostiles actifs ; légende, infobulle, fiche rapide et vue système affichent
+  l’Empire et sa relation.

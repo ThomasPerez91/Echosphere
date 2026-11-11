@@ -80,6 +80,27 @@ def standing(terms: Standing, view: dict, at: datetime) -> dict:
     }
 
 
+class MapClasses(BaseModel):
+    """v0.12 (recette 11/11/2026): how the galaxy map classes a known Empire. A pact in force
+    makes an ally; otherwise a Hostile score or a hostile fact (either side) within
+    `hostile_days` makes it hostile; a Cordial or Allied score makes an ally; neutral otherwise.
+    A display class read from the same dated facts as the standing, never a new game state."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+    hostile_days: Days
+
+
+def map_class(terms: MapClasses, view: dict, score: dict, at: datetime) -> str:
+    if view.get("state") == PACT:
+        return "ally"
+    hostility = view.get("hostility") or {}
+    window = at - timedelta(days=terms.hostile_days)
+    dates = [datetime.fromisoformat(v) for v in hostility.values() if v]
+    if score["label"] == "hostile" or any(d > window for d in dates):
+        return "hostile"
+    return "ally" if score["label"] in ("cordial", "allied") else "neutral"
+
+
 class RelationsRules(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
     version: str
@@ -88,7 +109,8 @@ class RelationsRules(BaseModel):
     refusal_cooldown_seconds: Seconds
     notice_seconds: Seconds
     standing: Standing | None = None
-    serialize_extensions = omit_unset_extensions("standing")
+    map: MapClasses | None = None
+    serialize_extensions = omit_unset_extensions("standing", "map")
 
     @property
     def proposal_ttl(self) -> timedelta:

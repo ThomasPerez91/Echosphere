@@ -27,6 +27,7 @@ from app.relations.rules import (
     NO_AGREEMENT,
     PACT,
     cooled_down,
+    map_class,
     pair,
     proposal_open,
     standing,
@@ -609,3 +610,87 @@ def contact_view(session, empire_id, contact):
         "last_seen_at": iso(contact.last_seen_at),
         "presence": presence,
     }
+
+
+def foreign_presences(session, universe_id, empire_id, at, permissions):
+    """v0.12 map (recette 11/11/2026): foreign Colonies this Empire legitimately knows, by world,
+    with the class of their Empire (ally, neutral, hostile; unknown without contact).
+
+    Sources are the same as the contacts: a foreign Colony now in a system MONITORED by an own
+    Colony (dated now), and the target world of an own attack whose report names the defender
+    (dated at the battle). Nothing else is revealed: no remote sensor, no occupation guessed.
+    Returns None where the pinned ruleset has no map classes or without relations.read.
+    """
+    rules = rules_for(session, universe_id)
+    if rules.relations is None or rules.relations.map is None:
+        return None
+    if "relations.read" not in permissions:
+        return None
+    at = utc(at)
+    seen = {}
+    monitored = list(
+        session.scalars(
+            select(SystemKnowledge.system_id).where(
+                SystemKnowledge.universe_id == universe_id,
+                SystemKnowledge.empire_id == empire_id,
+                SystemKnowledge.state == "MONITORED",
+            )
+        )
+    )
+    if monitored:
+        for owner, planet_id, system_id in session.execute(
+            select(Colony.empire_id, Colony.planet_id, Planet.system_id)
+            .join(Planet, Planet.id == Colony.planet_id)
+            .where(
+                Colony.universe_id == universe_id,
+                Colony.empire_id != empire_id,
+                Planet.system_id.in_(sorted(monitored, key=str)),
+                or_(Colony.founded_at.is_(None), Colony.founded_at <= at),
+            )
+            .order_by(Colony.planet_id)
+        ):
+            seen[planet_id] = (owner, system_id, at, "monitoring")
+    if "combat.read" in permissions and rules.combat is not None:
+        from app.combat.models import CombatReport
+
+        for report in session.scalars(
+            select(CombatReport)
+            .where(
+                CombatReport.universe_id == universe_id,
+                CombatReport.empire_id == empire_id,
+                CombatReport.role == "attacker",
+            )
+            .order_by(CombatReport.battle_at.desc(), CombatReport.engagement_id)
+            .limit(RELATION_LIMIT)
+        ):
+            result = report.result or {}
+            target = result.get("target") or {}
+            opponent, planet = result.get("opponent_empire_id"), target.get("planet_id")
+            if not opponent or not planet or result.get("outcome") == "target_unavailable":
+                continue
+            planet = UUID(planet)
+            if planet not in seen:  # the newest report wins; a current observation first
+                system = UUID(target["system_id"])
+                seen[planet] = (UUID(opponent), system, report.battle_at, "combat")
+    if not seen:
+        return []
+    known = {
+        UUID(entry["empire"]["id"]): entry
+        for entry in project(session, universe_id, empire_id, at)["relations"]
+        if entry["contact"] is not None
+    }
+    out = []
+    for planet, (owner, system, observed, source) in sorted(seen.items(), key=lambda i: str(i[0])):
+        entry = known.get(owner)
+        item = {
+            "planet_id": str(planet),
+            "system_id": str(system),
+            "observed_at": observed.isoformat(),
+            "source": source,
+            "relation": "unknown",
+        }
+        if entry is not None:
+            item["empire"] = entry["empire"]
+            item["relation"] = map_class(rules.relations.map, entry, entry["standing"], at)
+        out.append(item)
+    return out

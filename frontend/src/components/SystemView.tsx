@@ -10,7 +10,7 @@ import { planetImage } from '../shell/assets';
 import { Kpis, Thumb, ViewHero, shipImage } from '../shell/view';
 import { PanelHead } from '../shell/visual';
 import { MissionPlanner } from '../command/MissionPlanner';
-import { kindNames, offers, opportunityNames, systemFacts } from '../command/model';
+import { foreignName, kindNames, occupation, offers, opportunityNames, relationNames, systemFacts } from '../command/model';
 import type { ActionOffer, PlanetFact, World } from '../command/model';
 import type { CommandFeedback, MissionApi } from '../command/types';
 import { useCommandWorld } from '../command/useCommandWorld';
@@ -73,7 +73,7 @@ function SystemHub({ universe, empire, data, world, now, api, pending, feedback,
   const planets: PlanetFact[] = facts?.planets.length ? facts.planets : (data.planets ?? []).map(p => ({
     id: p.id, name: p.name, sectors: p.sector_capacity, orbitals: p.orbital_capacity,
     own: !!data.colony_links?.some(c => c.planet_id === p.id), colony: data.colony_links?.find(c => c.planet_id === p.id)?.colony_id ?? null,
-    foreign: null, alert: null }));
+    foreign: null, presence: null, alert: null }));
   const opportunities: KnownOpportunity[] = (world?.galaxy.systems.find(s => s.id === system)?.opportunities ?? data.opportunities)?.known ?? [];
   const signatures = (world?.galaxy.systems.find(s => s.id === system)?.opportunities ?? data.opportunities)?.signatures ?? null;
   // Open on the Empire's own world when one is linked, so its action is never hidden behind a pick.
@@ -85,6 +85,7 @@ function SystemHub({ universe, empire, data, world, now, api, pending, feedback,
   const offered = world ? offers(world, system) : [];
   const own = planets.some(p => p.own) || !!data.observation?.own_colony_ids.length;
   const foreign = [...new Set(planets.filter(p => p.foreign !== null).map(p => p.foreign))];
+  const known = [...new Set(planets.filter(p => p.presence).map(p => foreignName(p.presence!)))];
   const back = `#universe/${universe}/galaxy`;
   const systemHref = (id: string) => `#universe/${universe}/galaxy/system/${empire}/${id}`;
   const link = planet ? data.colony_links?.find(c => c.planet_id === planet.id) : undefined;
@@ -94,7 +95,7 @@ function SystemHub({ universe, empire, data, world, now, api, pending, feedback,
     { icon: 'icons/sidebar/nav-galaxie.svg', label: 'Connaissance', value: data.state === 'MONITORED' ? 'Surveillé' : 'Cartographié' },
     { icon: 'icons/actions/action-lancer.svg', label: 'Distance', value: facts?.distance ? (facts.distance.hops === 0 ? 'Ici' : `${facts.distance.hops} saut${facts.distance.hops > 1 ? 's' : ''}`) : 'Inconnue',
       note: facts?.distance && facts.distance.hops > 0 ? 'par vos routes connues' : undefined },
-    { icon: 'icons/stats/stat-colonies.svg', label: 'Contrôle', value: own ? 'Votre colonie' : foreign.length ? foreign.map(n => `Empire ${n}`).join(', ') : 'Inconnu' },
+    { icon: 'icons/stats/stat-colonies.svg', label: 'Contrôle', value: own ? 'Votre colonie' : known.length ? known.join(', ') : foreign.length ? foreign.map(n => `Empire ${n}`).join(', ') : 'Inconnu' },
     { icon: 'icons/stats/stat-systemes.svg', label: 'Mondes connus', value: planets.length },
     { icon: 'icons/colonie/panel-points-interet.svg', label: 'Opportunités', value: opportunities.length, note: signatures ? `${signatures} signature${signatures > 1 ? 's' : ''} à prospecter` : undefined },
     { icon: 'icons/stats/stat-flottes.svg', label: 'Vos flottes ici', value: facts ? facts.fleets.length : '?', note: facts?.incoming.length ? `${facts.incoming.length} en route` : undefined },
@@ -183,7 +184,7 @@ function SystemHub({ universe, empire, data, world, now, api, pending, feedback,
         <button type="button" className={`d-sys-world${pick?.id === p.id ? ' is-current' : ''}`} aria-pressed={pick?.id === p.id} onClick={() => setPick({ kind: 'planet', id: p.id })}>
           <img src={planetImage(p.id)} alt="" width="44" height="44" />
           <span><strong>{p.name}</strong><small>{p.sectors} secteurs · {p.orbitals} orbitaux</small></span>
-          <em className={p.own ? 'is-own' : p.foreign !== null ? 'is-foreign' : ''}>{p.own ? 'Votre colonie' : p.foreign !== null ? `Empire ${p.foreign}` : 'Occupation inconnue'}</em>
+          <em className={`is-${occupation(p).tone}`}>{occupation(p).text}</em>
         </button></li>)}</ul>
     </section>
   </div>;
@@ -239,7 +240,9 @@ function PlanetDetail({ planet, universe, link, onColony }: {
     <img className="d-sys-head-img" src={planetImage(planet.id)} alt="" width="96" height="96" />
     <div>
       <h2 id="system-world-title">{planet.name}</h2>
-      <p className={planet.own ? 'd-tone-blue' : planet.foreign !== null ? 'd-tone-amber' : 'd-muted'}>{planet.own ? 'Votre colonie' : planet.foreign !== null ? `Colonie de l’Empire ${planet.foreign} (partie de test)` : 'Occupation actuelle inconnue : elle n’est vérifiée qu’à l’arrivée d’une mission.'}</p>
+      <p className={planet.own ? 'd-tone-blue' : planet.presence ? `d-rel-${planet.presence.relation}` : planet.foreign !== null ? 'd-tone-amber' : 'd-muted'}>{planet.own ? 'Votre colonie'
+        : planet.presence ? `Colonie de ${foreignName(planet.presence)} · ${relationNames[planet.presence.relation]} (${planet.presence.source === 'combat' ? 'vue lors de votre attaque du' : 'observée le'} ${time(planet.presence.observed_at)})`
+        : planet.foreign !== null ? `Colonie de l’Empire ${planet.foreign} (partie de test)` : 'Occupation actuelle inconnue : elle n’est vérifiée qu’à l’arrivée d’une mission.'}</p>
       <dl className="system-capacities d-sys-dl"><div><dt>Secteurs exploitables</dt><dd>{planet.sectors}</dd></div>
         <div><dt>Capacité orbitale</dt><dd>{planet.orbitals}</dd></div></dl>
       {planet.alert && <p className="d-tone-red">Attaque annoncée : bataille le {time(planet.alert)}.</p>}

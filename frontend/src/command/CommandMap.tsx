@@ -183,8 +183,11 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
         <div className="cmd-filters" role="group" aria-label="Filtrer la carte">
           {filters.map(([id, label]) => <button key={id} type="button" className={`cmd-filter${filter === id ? " is-active" : ""}`}
             aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>)}
-          {["Alliés", "Neutres", "Hostiles"].map((label) => <button key={label} type="button" className="cmd-filter is-pending" disabled
-            title="Implémentation backend nécessaire : la Knowledge ne qualifie pas encore les systèmes d’autres Empires">{label}</button>)}
+          {([["ally", "Alliés"], ["neutral", "Neutres"], ["hostile", "Hostiles"]] as const).map(([id, label]) => world.galaxy.foreign
+            ? <button key={id} type="button" className={`cmd-filter cmd-filter--${id}${filter === id ? " is-active" : ""}`}
+              aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
+            : <button key={id} type="button" className="cmd-filter is-pending" disabled
+              title="Présences étrangères : univers v0.12 et droit de lecture des relations nécessaires">{label}</button>)}
         </div>
         <div className="cmd-switches">
           {([["Routes", showRoutes, setShowRoutes], ["Noms", showNames, setShowNames], ["Légende", showLegend, setShowLegend]] as const).map(([label, on, set]) =>

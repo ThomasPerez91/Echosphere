@@ -64,6 +64,10 @@ export type Option = {
   reason: string | null;
 };
 export type Presence = { empire: number; system_id: string; planet_id: string };
+/** v0.12 map: a foreign Colony this Empire legitimately knows (own MONITORED system, own attack report). */
+export type Relation = "ally" | "neutral" | "hostile" | "unknown";
+export type ForeignPresence = { planet_id: string; system_id: string; observed_at: string; source: "monitoring" | "combat";
+  relation: Relation; empire?: { id: string; name: string | null } };
 export type Projection = {
   server_time: string;
   /** Pinned exploration means: abstract expedition (v0.3) or probe Fleet SURVEY (v0.4+). */
@@ -78,6 +82,8 @@ export type Projection = {
   sandbox?: { presences: Presence[] };
   /** Shaped galaxy (v0.12): the density of the backdrop, decorative only. */
   layout?: Layout;
+  /** v0.12: known foreign Colonies, classed ally/neutral/hostile (absent before v0.12 or without relations.read). */
+  foreign?: ForeignPresence[];
   sources: { id: string; name: string; stocks: Amounts }[];
   options: Option[];
   missions: Mission[];
@@ -169,6 +175,9 @@ export function validProjection(value: unknown, empire: string): value is Projec
     !list(value.routes, route) ||
     ("stars" in value && !list(value.stars, (p) => Array.isArray(p) && p.length === 2 && p.every((c) => typeof c === "number" && Number.isFinite(c)))) ||
     ("layout" in value && !validLayout(value.layout)) ||
+    ("foreign" in value && !list(value.foreign, (p) => object(p) && id(p.planet_id) && id(p.system_id) && date(p.observed_at)
+      && (p.source === "monitoring" || p.source === "combat") && ["ally", "neutral", "hostile", "unknown"].includes(String(p.relation))
+      && (p.empire === undefined ? p.relation === "unknown" : object(p.empire) && id(p.empire.id) && (p.empire.name === null || typeof p.empire.name === "string")))) ||
     ("sandbox" in value && !(object(value.sandbox) && list(value.sandbox.presences, (p) => object(p) && integer(p.empire) && id(p.system_id) && id(p.planet_id)))) ||
     !list(value.sources, (s) => object(s) && id(s.id) && typeof s.name === "string" && amounts(s.stocks)) ||
     !list(

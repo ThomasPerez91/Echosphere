@@ -329,6 +329,9 @@ class Ruleset(StrictModel):
         if self.relations is not None and self.relations.standing is not None:
             if not since(self.version, "v0.12"):
                 raise ValueError("Relation standing exists from v0.12")
+        if self.relations is not None and self.relations.map is not None:
+            if self.relations.standing is None or not since(self.version, "v0.12"):
+                raise ValueError("Map relation classes need the v0.12 standing")
         # Frontier presence (13B) exists from v0.9 only; v0.1-v0.8 stay strictly unchanged.
         if since(self.version, "v0.9"):
             if self.frontier is None or self.frontier.version != self.version:

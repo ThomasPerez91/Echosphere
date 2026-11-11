@@ -8,7 +8,7 @@
  * one colonizer, a task fleet's own composition for a move, an explicit choice for an attack, and
  * never anything taken automatically from a garrison.
  */
-import type { KnownSystem, Route } from "../galaxy/api";
+import type { ForeignPresence, KnownSystem, Relation, Route } from "../galaxy/api";
 import type { Layout } from "../galaxy/shape";
 import type { FleetProjection, FleetView, MissionKind, MissionView } from "../fleet/api";
 import type { CommandQuote } from "./types";
@@ -45,7 +45,18 @@ export type World = { fleets: FleetProjection; galaxy: { systems: KnownSystem[];
   /** Test game only: foreign Colonies by anonymous Empire number. */
   presences?: { empire: number; system_id: string; planet_id?: string }[];
   /** Shaped galaxy (v0.12): the density it was drawn from, painted as the backdrop. */
-  layout?: Layout } };
+  layout?: Layout;
+  /** v0.12: foreign Colonies legitimately known, classed by relation. */
+  foreign?: ForeignPresence[] } };
+
+export const relationNames: Record<Relation, string> = { ally: "Allié", neutral: "Neutre", hostile: "Hostile", unknown: "Inconnu" };
+/** Most pressing class first: a system holding a hostile and an allied Colony shows as hostile. */
+const RANK: Relation[] = ["hostile", "neutral", "unknown", "ally"];
+export function systemRelation(w: World, id: string): Relation | null {
+  const found = (w.galaxy.foreign ?? []).filter((p) => p.system_id === id).map((p) => p.relation);
+  return found.length ? RANK.find((r) => found.includes(r))! : null;
+}
+export const foreignName = (p: ForeignPresence) => p.empire?.name ?? "Empire inconnu";
 
 const can = (w: World, right: string) => w.fleets.permissions.includes(right);
 export const stationed = (w: World) => (w.fleets.fleets ?? []).filter((f) => f.status === "STATIONED");
@@ -264,6 +275,8 @@ export function fleetLines(w: World, now: number): FleetLine[] {
 }
 
 export type PlanetFact = { id: string; name: string; sectors: number; orbitals: number; own: boolean; colony: string | null;
+  /** v0.12: a foreign Colony known on this world (dated observation, class of its Empire). */
+  presence: ForeignPresence | null;
   /** Test game only: anonymous Empire number of a foreign Colony on this world. */
   foreign: number | null; alert: string | null };
 export type SystemFacts = {
@@ -286,7 +299,8 @@ export function systemFacts(w: World, id: string): SystemFacts {
   const planets = (ref?.planets ?? known?.planets ?? []).map((p) => {
     const colony = "colony_id" in p ? (p as { colony_id?: string | null }).colony_id ?? null : null;
     const foreign = (w.galaxy.presences ?? []).find((x) => x.planet_id === p.id)?.empire ?? null;
-    return { id: p.id, name: p.name, sectors: p.sector_capacity, orbitals: p.orbital_capacity, own: !!colony, colony, foreign,
+    const presence = (w.galaxy.foreign ?? []).find((x) => x.planet_id === p.id) ?? null;
+    return { id: p.id, name: p.name, sectors: p.sector_capacity, orbitals: p.orbital_capacity, own: !!colony, colony, foreign, presence,
       alert: alerts.find((a) => a.planet_id === p.id)?.battle_at ?? null };
   });
   return {
@@ -300,4 +314,12 @@ export function systemFacts(w: World, id: string): SystemFacts {
     routes: w.galaxy.routes.filter((r) => r.a_id === id || r.b_id === id).map((r) => (r.a_id === id ? r.b_id : r.a_id)),
     alerts,
   };
+}
+
+/** Occupation of a world as this Empire knows it, in player words and a tone for colours. */
+export function occupation(p: PlanetFact): { text: string; tone: "own" | Relation | "foreign" | "none" } {
+  if (p.own) return { text: "Votre colonie", tone: "own" };
+  if (p.presence) return { text: `${foreignName(p.presence)} · ${relationNames[p.presence.relation]}`, tone: p.presence.relation };
+  if (p.foreign !== null) return { text: `Empire ${p.foreign}`, tone: "foreign" };
+  return { text: "Occupation inconnue", tone: "none" };
 }
