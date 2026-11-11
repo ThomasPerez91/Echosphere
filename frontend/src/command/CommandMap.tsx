@@ -55,6 +55,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   const [filter, setFilter] = useState<MapFilter>("all");
   const [showRoutes, setShowRoutes] = useState(true);
   const [showNames, setShowNames] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
   const [search, setSearch] = useState("");
   const [searchMiss, setSearchMiss] = useState(false);
   const [tab, setTab] = useState<"overview" | "planets" | "routes" | "data">("overview");
@@ -241,7 +242,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
             title="Implémentation backend nécessaire : la Knowledge ne qualifie pas encore les systèmes d’autres Empires">{label}</button>)}
         </div>
         <div className="cmd-switches">
-          {([["Routes", showRoutes, setShowRoutes], ["Noms", showNames, setShowNames]] as const).map(([label, on, set]) =>
+          {([["Routes", showRoutes, setShowRoutes], ["Noms", showNames, setShowNames], ["Légende", showLegend, setShowLegend]] as const).map(([label, on, set]) =>
             <button key={label} type="button" role="switch" aria-checked={on} className="cmd-switch" onClick={() => set(!on)}>
               {label}<span className="cmd-switch-track" aria-hidden="true"><span /></span></button>)}
           <button type="button" role="switch" aria-checked={false} className="cmd-switch is-pending" disabled title="Régions : implémentation backend nécessaire">
@@ -255,7 +256,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
             onClose={() => setFleetAt(null)} onMove={(f) => { setMoving(f); setNotice(null); }}
             onProtocol={api.protocol ? async (f, p) => { setBusy(true); try { return await api.protocol!(f.id, p); } finally { setBusy(false); } } : undefined} />
           : null}
-        filter={filter} showRoutes={showRoutes} showNames={showNames} focus={focus} backdrop={backdrop} menu={menu}
+        filter={filter} showRoutes={showRoutes} showNames={showNames} showLegend={showLegend} focus={focus} backdrop={backdrop} menu={menu}
         preview={intent && fleet?.system && selected && step === "summary" ? { from: fleet.system.id, to: ready?.destination_id ?? selected, path } : null} />
       <details className="cmd-list">
         <summary>Liste des systèmes connus</summary>

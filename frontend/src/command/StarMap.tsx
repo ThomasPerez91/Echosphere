@@ -19,6 +19,15 @@ function starfield(box: View, count: number) {
   }));
 }
 
+/** Cosmetic star tint from the system id (reference carte-galaxie.html palette): no game
+    meaning, the status stays carried by the ring colour and the legend. */
+const TINTS = ["#ffd9c9", "#ffe2bf", "#fff1c9", "#f4f6ff", "#d6e4ff", "#dff8ff"];
+function tint(id: string) {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return TINTS[h % TINTS.length];
+}
+
 const stateLabel = { DETECTED: "Détecté", MAPPED: "Cartographié", MONITORED: "Surveillé" } as const;
 
 /**
@@ -28,10 +37,10 @@ const stateLabel = { DETECTED: "Détecté", MAPPED: "Cartographié", MONITORED: 
  * the mockup's regions, influence and distances have no game data and are not reproduced.
  * Every system is a real button (Tab, Enter/Space); nothing depends on hover.
  */
-export function StarMap({ world, selected, onSelect, preview, missions, now, filter = "all", showRoutes = true, showNames = true, focus, backdrop = true, menu, onFleets, picking = false, onCancelPick, overlay }: {
+export function StarMap({ world, selected, onSelect, preview, missions, now, filter = "all", showRoutes = true, showNames = true, showLegend = true, focus, backdrop = true, menu, onFleets, picking = false, onCancelPick, overlay }: {
   world: World; selected: string | null; onSelect: (id: string) => void; preview: RoutePreview | null;
   missions: MissionView[]; now: number;
-  filter?: MapFilter; showRoutes?: boolean; showNames?: boolean;
+  filter?: MapFilter; showRoutes?: boolean; showNames?: boolean; showLegend?: boolean;
   /** "Localiser": centre the view on this point (keeps the zoom); `key` makes a repeat request count. */
   focus?: { x: number; y: number; key: number } | null;
   /** Animated canvas of the visual pack behind the interactive SVG (nebula, territory, fog, radar). */
@@ -119,6 +128,50 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
   const fitted = rendered?.height ? Math.max(view.w / pixels, view.h / rendered.height) : view.w / pixels;
   // No upper bound: zoomed out over the whole galaxy, markers keep their on-screen size.
   const scale = Math.max(0.35, fitted);
+  // Marker size follows the zoom a little (reference carte-galaxie.html): smaller stars when the
+  // whole galaxy is shown, larger when zoomed in, so they never pile up.
+  const zr = full.w / view.w;
+  const kz = Math.min(1.7, Math.max(0.5, Math.pow(zr, 0.42)));
+  // Names without overlap, by priority (selection, own colonies, foreign presence, fleets, then
+  // any known system once zoomed in or when few are known); the button keeps its name anyway.
+  const labelled = (() => {
+    const out = new Set<string>();
+    if (!showNames || !rendered?.width) return new Set(systems.map((x) => x.id).filter((id) => showNames || id === selected));
+    const k = Math.min(rendered.width / view.w, rendered.height / view.h);
+    const boxes: [number, number, number, number][] = [];
+    const rank = (id: string) => id === selected ? 0 : own.has(id) ? 1 : foreign.has(id) ? 2 : here.has(id) ? 3 : 4;
+    const open = systems.length <= 25 || zr >= 1.6;
+    for (const sys of [...systems].sort((a, b) => rank(a.id) - rank(b.id))) {
+      if (rank(sys.id) === 4 && !open) continue;
+      const x = (sys.x - view.x) * k, y = (sys.y - view.y) * k;
+      if (x < -40 || y < -20 || x > rendered.width + 40 || y > rendered.height + 20) continue;
+      const w = systemName(world, sys.id).length * 7.4 + 22, box: [number, number, number, number] = [x, y - 10, x + w, y + 10];
+      if (rank(sys.id) > 0 && boxes.some((b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
+      boxes.push(box);
+      out.add(sys.id);
+    }
+    return out;
+  })();
+  // Wheel zoom centred on the pointer (non-passive listener so the page does not scroll).
+  useEffect(() => {
+    const node = svg.current;
+    if (!node) return;
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = node.getBoundingClientRect();
+      if (!rect.width) return;
+      const factor = Math.exp(e.deltaY * 0.0015);
+      setView((v) => {
+        const w = Math.min(Math.max(full.w * 1.5, galaxy.w * 1.1), Math.max(full.w / 4, v.w * factor)), h = w * (full.h / full.w);
+        const k = Math.min(rect.width / v.w, rect.height / v.h);
+        const ox = (rect.width - v.w * k) / 2, oy = (rect.height - v.h * k) / 2;
+        const px = v.x + (e.clientX - rect.left - ox) / k, py = v.y + (e.clientY - rect.top - oy) / k;
+        return { x: px - (px - v.x) * (w / v.w), y: py - (py - v.y) * (h / v.h), w, h };
+      });
+    };
+    node.addEventListener("wheel", wheel, { passive: false });
+    return () => node.removeEventListener("wheel", wheel);
+  }, [full.w, full.h, galaxy.w]);
   const down = (e: PointerEvent<SVGSVGElement>) => {
     if ((e.target as Element).closest(".cmd-system")) return;
     drag.current = { x: e.clientX, y: e.clientY, view };
@@ -172,14 +225,14 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
         {stars.map((s, i) => <circle key={i} cx={s.x} cy={s.y} r={s.r * scale} opacity={s.o} className="cmd-dust" />)}
       </g>}
       <g aria-hidden="true" className="cmd-far">
-        {far.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={2.2 * scale} className="cmd-far-star" />)}
+        {far.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={1.7 * scale * kz} className="cmd-far-star" />)}
       </g>
       {showRoutes && world.galaxy.routes.map((r) => {
         const a = point(world, r.a_id)!, b = point(world, r.b_id)!;
         const partial = [r.a_id, r.b_id].some((id) => systems.find((s) => s.id === id)?.state === "DETECTED");
         const dim = !visible(r.a_id) && !visible(r.b_id);
         return <line key={r.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} strokeWidth={1.5 * scale}
-          strokeDasharray={partial ? `${6 * scale} ${5 * scale}` : undefined}
+          strokeDasharray={partial ? `${2 * scale} ${5 * scale}` : `${5 * scale} ${4 * scale}`}
           className={`cmd-route${partial ? " cmd-route--partial" : ""}${dim ? " is-dimmed" : ""}`} />;
       })}
       {planned.length > 1 && <polyline points={planned.map((p) => `${p.x},${p.y}`).join(" ")} strokeWidth={3 * scale}
@@ -209,15 +262,16 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
         return <g key={s.id} role="button" tabIndex={0} aria-pressed={selected === s.id} aria-label={label}
           className={`cmd-system cmd-system--${state}${selected === s.id ? " is-selected" : ""}${visible(s.id) ? "" : " is-dimmed"}`}
           onClick={() => onSelect(s.id)} onKeyDown={key(s.id)}>
-          <g transform={`translate(${s.x} ${s.y}) scale(${scale})`}>
-            <circle r={26} className="cmd-hit" />
-            <circle r={big ? 36 : 22} fill="url(#cmd-glow)" className="cmd-halo" />
-            {selected === s.id && <circle r={18} className="cmd-selection" />}
-            {own.has(s.id) && <><circle r={13} className="cmd-own" /><circle r={9.5} className="cmd-own cmd-own--inner" /></>}
-            {others.map((n, i) => <circle key={n} r={13 + i * 4} className="cmd-foreign" style={{ stroke: foreignColor(n) }}>
+          <g transform={`translate(${s.x} ${s.y}) scale(${scale})`}><circle r={16} className="cmd-hit" /></g>
+          <g transform={`translate(${s.x} ${s.y}) scale(${scale * kz})`}>
+            <circle r={big ? 26 : 14} fill="url(#cmd-glow)" className="cmd-halo" />
+            {selected === s.id && <circle r={13} className="cmd-selection" />}
+            {own.has(s.id) && <><circle r={9} className="cmd-own" /><circle r={6.5} className="cmd-own cmd-own--inner" /></>}
+            {others.map((n, i) => <circle key={n} r={9 + i * 3} className="cmd-foreign" style={{ stroke: foreignColor(n) }}>
               <title>{`Empire inconnu ${n}`}</title></circle>)}
-            <circle r={s.state === "DETECTED" ? 4.5 : 6.5} className="cmd-star" />
-            {(showNames || selected === s.id) && <text x={15} y={5} className={`cmd-label${big ? " cmd-label--strong" : ""}`}>{name}</text>}
+            {s.state !== "DETECTED" && !own.has(s.id) && <circle r={5.2} className="cmd-ring" />}
+            <circle r={s.state === "DETECTED" ? 3.6 : 2.6} className="cmd-star" style={s.state === "DETECTED" ? undefined : { fill: tint(s.id) }} />
+            {labelled.has(s.id) && <text x={13} y={4} transform={`scale(${1 / kz})`} className={`cmd-label${big ? " cmd-label--strong" : ""}`}>{name}</text>}
             {count > 0 && (onFleets
               ? <g className="cmd-fleet-pin is-button" transform="translate(-14 -46)" role="button" tabIndex={0}
                 aria-label={`Flottes à ${name} : ${count}`}
@@ -233,7 +287,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
       })}
     </svg>
 
-    <div className="cmd-overlay cmd-overlay--legend" aria-label="Légende des systèmes" role="group">
+    {showLegend && <div className="cmd-overlay cmd-overlay--legend" aria-label="Légende des systèmes" role="group">
       <p>Légende des systèmes</p>
       <ul>
         <li><span className="cmd-swatch cmd-swatch--unknown" />Inconnu (brouillard)</li>
@@ -247,7 +301,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
         <li><span className="cmd-swatch cmd-swatch--route" />Route hyperespace</li>
         <li className="cmd-legend-pending" title="Implémentation backend nécessaire"><span className="cmd-swatch cmd-swatch--hostile" />Système hostile <small>(à venir)</small></li>
       </ul>
-    </div>
+    </div>}
 
     <svg className="cmd-overlay cmd-minimap" viewBox={`${galaxy.x} ${galaxy.y} ${galaxy.w} ${galaxy.h}`} aria-hidden="true">
       {far.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={galaxy.w / 160} className="cmd-mini-far" />)}

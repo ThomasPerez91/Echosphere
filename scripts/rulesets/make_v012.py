@@ -71,6 +71,10 @@ def main():
         }
     research["facility"]["levels"].update({"3": 5, "4": 8})
     path.write_text(json.dumps(research, ensure_ascii=False, indent=2) + "\n")
+    path = TARGET / "galaxy.json"
+    galaxy = json.loads(path.read_text())
+    galaxy["naming"] = "syllables"
+    path.write_text(json.dumps(galaxy, ensure_ascii=False, indent=2) + "\n")
     path = TARGET / "opportunities.json"
     opportunities = json.loads(path.read_text())
     opportunities["dossiers"]["reveal_hops"] = 3

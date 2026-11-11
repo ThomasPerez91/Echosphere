@@ -38,6 +38,16 @@ function mulberry(a: number) {
   return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 const canvas = (w: number, h: number) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+/** Star classes of the reference map, weighted (red dwarfs most common); no game meaning. */
+const STAR_TINTS: [RGB, number][] = [[[255, 104, 78], 29], [[255, 162, 82], 18], [[255, 222, 128], 24], [[232, 238, 255], 11], [[120, 168, 255], 8], [[150, 236, 255], 6]];
+export function starTint(id: string): RGB {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  let pick = h % 96;
+  for (const [rgb, w] of STAR_TINTS) { if (pick < w) return rgb; pick -= w; }
+  return STAR_TINTS[0][0];
+}
+
 const glows = new Map<string, HTMLCanvasElement>();
 function glow(c: RGB) {
   const key = c.join();
@@ -172,7 +182,9 @@ export function drawFrame(ctx: CanvasRenderingContext2D, cw: number, ch: number,
   }
   if (o.stars !== false) for (const p of scene.systems) {
     const [x, y] = W2S(p.x, p.y); if (x < -30 || y < -30 || x > cw + 30 || y > ch + 30) continue;
-    const col: RGB = p.capital ? [255, 214, 130] : p.own ? [170, 240, 255] : p.state === 'MONITORED' ? C.monitored : p.state === 'MAPPED' ? C.mapped : C.detected;
+    const ring: RGB = p.own ? C.own : p.state === 'MONITORED' ? C.monitored : p.state === 'MAPPED' ? C.mapped : C.detected;
+    // Cosmetic star colour (reference carte-galaxie.html); the status is the ring colour.
+    const col: RGB = p.capital ? [255, 214, 130] : p.state === 'DETECTED' ? C.detected : starTint(p.id);
     const tw = 1 + 0.14 * Math.sin(t * 1.7 + x * 0.01) + 0.08 * Math.sin(t * 3.3 + y * 0.01);
     const r = (p.capital ? 4.6 : p.own ? 2.9 : p.state === 'DETECTED' ? 2 : 2.4) * kz;
     ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = p.state === 'DETECTED' ? 0.6 : 0.9;
@@ -185,7 +197,7 @@ export function drawFrame(ctx: CanvasRenderingContext2D, cw: number, ch: number,
       ctx.save(); ctx.translate(x, y); ctx.rotate(t * 0.35); ctx.setLineDash([3, 5]); ctx.strokeStyle = rgba(C.gold, 0.5); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.arc(0, 0, r + 13, 0, 6.283); ctx.stroke(); ctx.restore(); ctx.setLineDash([]);
     } else if (p.own) { ctx.strokeStyle = rgba(C.own, 0.9); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(x, y, r + 4, 0, 6.283); ctx.stroke(); }
-    else if (p.state !== 'DETECTED') { ctx.strokeStyle = rgba(col, 0.55); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.arc(x, y, r + 3.5, 0, 6.283); ctx.stroke(); }
+    else if (p.state !== 'DETECTED') { ctx.strokeStyle = rgba(ring, 0.7); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.arc(x, y, r + 3.5, 0, 6.283); ctx.stroke(); }
     if (o.selected === p.id) { ctx.strokeStyle = rgba(C.own, 0.9); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 10, 0, 6.283); ctx.stroke(); }
   }
   if (o.labels) {

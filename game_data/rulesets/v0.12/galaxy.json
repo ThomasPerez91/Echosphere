@@ -44,5 +44,6 @@
   "useful_sectors": 12,
   "useful_orbitals": 2,
   "starting_sectors": 12,
-  "starting_orbitals": 2
+  "starting_orbitals": 2,
+  "naming": "syllables"
 }

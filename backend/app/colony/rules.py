@@ -379,6 +379,12 @@ class Ruleset(StrictModel):
             and (not since(self.version, "v0.12") or self.combat is None)
         ):
             raise ValueError("Contested extraction exists from v0.12 with combat")
+        if (
+            isinstance(self.galaxy, GalaxyRulesV2)
+            and self.galaxy.naming is not None
+            and not since(self.version, "v0.12")
+        ):
+            raise ValueError("Syllable system names exist from v0.12")
         # EXP-01 opportunities exist from v0.10 only; v0.1-v0.9 stay strictly unchanged.
         if since(self.version, "v0.10"):
             if self.opportunities is None or self.opportunities.version != self.version:

@@ -26,6 +26,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.galaxy.generator import GenerationError, StableRandom, adjacency, canonical, two_exits
+from app.rules_dump import omit_unset_extensions
 
 Positive = Annotated[int, Field(strict=True, gt=0, le=10**6)]
 Bps = Annotated[int, Field(strict=True, ge=0, le=10000)]
@@ -58,6 +59,10 @@ class GalaxyRulesV2(StrictModel):
     min_start_zone_size: Annotated[int, Field(strict=True, ge=4, le=12)]
     planet_counts: dict[str, Positive]
     sector_capacities: dict[str, Positive]
+    # v0.12 (11/11/2026): system names made of syllables, from their own stream so every other
+    # generated value is unchanged; omitted (catalogue numbers) in earlier rulesets.
+    naming: Literal["syllables"] | None = None
+    serialize_extensions = omit_unset_extensions("naming")
     orbital_capacities: dict[str, Positive]
     useful_sectors: Positive
     useful_orbitals: Annotated[int, Field(strict=True, ge=0, le=10)]
@@ -360,9 +365,10 @@ def _candidate(random, count, empires, rules):
             planets[node] = deepcopy(budget[rank])
     names = set()
     systems = []
+    words = StableRandom(["names", random.key.decode("utf-8")]) if rules.naming else None
     for node, (x, y) in enumerate(points):
         while True:
-            name = f"System {random.below(1000000):06d}"
+            name = syllable_name(words) if words else f"System {random.below(1000000):06d}"
             if name not in names:
                 names.add(name)
                 break
@@ -380,6 +386,27 @@ def _candidate(random, count, empires, rules):
         "routes": [list(pair) for pair in sorted(routes)],
         "starting_sites": sorted(sites),
     }
+
+
+SYLLABLES = (
+    "ka reth el yn dra tha los vey is ha ra no vis sa thir mi rel or a tan cae lis ty xan dor "
+    "zy ron ve ga al tar ri on pha lu sol nyx qua ser mon kel vi an ze yr ul ith ae dun cor "
+    "bel sy os qui ren tes mar lo ix"
+).split()
+SUFFIXES = ("Prime", "II", "III", "Majoris", "Minoris")
+
+
+def syllable_name(random):
+    """Two or three syllables (4 to 9 letters), sometimes a suffix: Kareth, Vislor Prime."""
+    while True:
+        parts = 2 if random.below(10) < 7 else 3
+        word = "".join(SYLLABLES[random.below(len(SYLLABLES))] for _ in range(parts))
+        if 4 <= len(word) <= 9:
+            break
+    name = word[0].upper() + word[1:]
+    if random.below(100) < 8:
+        name += " " + SUFFIXES[random.below(len(SUFFIXES))]
+    return name
 
 
 def validate_v2(world, rules, empires):

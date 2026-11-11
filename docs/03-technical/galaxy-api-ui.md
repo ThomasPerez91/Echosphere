@@ -132,3 +132,13 @@ l’univers, **sans identité, nom, route ni contenu** (ordre des ordinaux). Tou
 routes, opportunités, flottes) reste projeté depuis la Knowledge seule. La carte de commandement
 dessine ces étoiles en points non interactifs, ajoute « Voir toute la galaxie » (touche 9), et l’effet
 radar (balayage et ondes autour de la capitale) est retiré.
+
+## Carte de commandement : lisibilité (11/11/2026)
+
+Après la recette du 11/11 (carte illisible en partie de test, toute la galaxie cartographiée), la
+carte suit la référence `carte-galaxie.html` fournie par l’utilisateur : taille des étoiles liée
+au zoom, noms seulement en zoomant (sauf sélection, colonies, Empires repérés, flottes) et sans
+chevauchement, anneau fin de statut, couleur d’étoile **cosmétique** dérivée de l’identifiant (sans
+valeur de jeu), routes en pointillés, zoom à la molette sous le pointeur, légende masquable, carte
+sur toute la largeur. Les nouvelles galaxies v0.12 nomment leurs systèmes par syllabes
+(`naming: syllables`, flux aléatoire séparé : le reste de la génération est inchangé).

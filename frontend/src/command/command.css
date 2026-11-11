@@ -337,3 +337,22 @@
 /* Test game: foreign Colony ring per anonymous Empire (colour set inline). */
 .cmd-foreign { fill: none; stroke-width: 2; stroke-dasharray: 3 2.5; }
 .cmd-swatch--foreign { border: 2px dashed hsl(75 85% 62%); }
+/* Reference carte-galaxie.html (11/11/2026): small bright cores, thin status rings, labels by zoom. */
+.cmd-star { fill: color-mix(in srgb, currentColor 35%, #fff); stroke: none; filter: drop-shadow(0 0 3px currentColor); }
+.cmd-ring { fill: none; stroke: currentColor; stroke-width: 1.05; stroke-opacity: .75; }
+.cmd-system--detected .cmd-star { fill: none; stroke: currentColor; stroke-width: 1.1; stroke-dasharray: 1.5 2.5; stroke-opacity: .7; filter: none; }
+.cmd-own { stroke-width: 1.6; } .cmd-own--inner { stroke-width: .9; }
+.cmd-selection { stroke: #fff; stroke-width: 1.3; stroke-dasharray: 3 3; }
+.cmd-label { font-size: 12.5px; font-weight: 600; stroke-width: 4px; stroke: #000000e6; }
+.cmd-label--strong { font-size: 14.5px; }
+.cmd-route { stroke: #9ec4ff; stroke-opacity: .42; }
+.cmd-system:hover .cmd-ring { stroke-opacity: 1; stroke-width: 1.6; }
+.cmd-far-star { fill: #b9cdea; opacity: .32; }
+/* Wide map (11/11/2026): the map spans the page, the system panel and the dock go under it. */
+@media (min-width: 1100px) {
+  .cmd-command { grid-template-columns: minmax(0, 1fr) minmax(340px, 440px); grid-template-areas: "head head" "map map" "dock side"; }
+  .cmd-map { height: clamp(480px, 74vh, 900px); }
+}
+.cmd-overlay--legend { font-size: .7rem; padding: 8px 12px; }
+.has-backdrop .cmd-system:not(.cmd-system--detected) .cmd-star, .has-backdrop .cmd-ring { opacity: 0; }
+.has-backdrop .cmd-system:hover .cmd-ring { opacity: 1; }
