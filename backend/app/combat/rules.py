@@ -22,14 +22,14 @@ class ShipStats(StrictModel):
 
 class CombatRules(StrictModel):
     version: str
-    combat_version: Literal["combat-v1", "combat-v2"]
+    combat_version: Literal["combat-v1"]
     min_warning_seconds: Positive
     max_rounds: Positive
     # Canonical class order: the only tie-break for targeting and every serialized listing.
     classes: list[str] = Field(min_length=1, max_length=16)
     stats: dict[str, ShipStats]
     matchups_bps: dict[str, dict[str, Bps]]
-    # v0.13 (DEF-01): defense module classes, defender side only; combat-v2 adds the shield.
+    # v0.13 (DEF-01): defense module classes, defender side only, same combat-v1 engine.
     modules: dict[str, ShipStats] | None = None
     serialize_extensions = omit_unset_extensions("modules")
 
@@ -40,8 +40,8 @@ class CombatRules(StrictModel):
 
     @model_validator(mode="after")
     def coherent(self):
-        if (self.combat_version == "combat-v2") != bool(self.modules):
-            raise ValueError("combat-v2 is the engine of defense modules, and only of them")
+        if self.modules is not None and not self.modules:
+            raise ValueError("Defense module classes are omitted, never empty")
         if self.modules and set(self.modules) & set(self.classes):
             raise ValueError("Defense modules are not ships")
         names = set(self.all_classes)

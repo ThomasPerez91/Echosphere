@@ -307,6 +307,11 @@ class Ruleset(StrictModel):
             ai_kinds |= set(getattr(self.ai, "unlocks", {}))
             if not ai_kinds <= self.catalogue.infrastructures.keys():
                 raise ValueError("Unknown infrastructure in AI policy")
+            policy = getattr(self.ai, "defense", None)
+            if (policy is not None) != (self.defense is not None) or (
+                policy is not None and policy.module_kind not in self.defense.modules
+            ):
+                raise ValueError("The AI defends with this ruleset's modules, and only then")
         elif self.ai is not None:
             raise ValueError("AI configuration unavailable in historical rulesets")
         # Combat exists from v0.7: military classes with Combat stats, no offensive AI.

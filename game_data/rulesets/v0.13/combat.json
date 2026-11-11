@@ -1,6 +1,6 @@
 {
   "version": "v0.13",
-  "combat_version": "combat-v2",
+  "combat_version": "combat-v1",
   "min_warning_seconds": 86400,
   "max_rounds": 1000,
   "classes": [

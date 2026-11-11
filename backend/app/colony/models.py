@@ -54,12 +54,18 @@ class ColonyInfrastructure(Record, Base):
         ),
         UniqueConstraint("colony_id", "sector_index", name="uq_infrastructures_sector"),
         CheckConstraint("sector_index > 0 AND level >= 1", name="sector_level"),
+        CheckConstraint(
+            "condition IS NULL OR condition IN ('operational', 'disabled', 'damaged')",
+            name="defense_condition",
+        ),
     )
     colony_id: Mapped[UUID] = mapped_column(Uuid, index=True)
     universe_id: Mapped[UUID] = mapped_column(Uuid)
     sector_index: Mapped[int]
     infrastructure_type: Mapped[str] = mapped_column(String(64))
     level: Mapped[int] = mapped_column(BigInteger)
+    # v0.13 (DEF-01): state of a defense module; None for every other infrastructure.
+    condition: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
 
 class ConstructionOrder(Record, Base):

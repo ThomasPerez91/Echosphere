@@ -154,6 +154,16 @@ class FrontierPolicy(BaseModel):
         return self
 
 
+class DefensePolicy(BaseModel):
+    """v0.13 (DEF-01): after its Colonies were attacked, the AI builds a Défense center, then one
+    `module_kind` per attack suffered within the network capacity, and repairs damaged modules."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+    center_utility: Annotated[int, Field(strict=True, gt=0, le=1000)]
+    module_kind: str
+    module_utility: Annotated[int, Field(strict=True, gt=0, le=1000)]
+
+
 class AIRulesV4(AIRulesV3):
     """v0.9 (13B B08): policy v4 = v3 plus frontier protocol choices. v0.8 dumps unchanged."""
 
@@ -165,4 +175,5 @@ class AIRulesV4(AIRulesV3):
     unlocks: dict[str, Annotated[int, Field(strict=True, gt=0, le=1000)]] = Field(
         default_factory=dict
     )
-    serialize_extensions = omit_unset_extensions("unlocks")
+    defense: DefensePolicy | None = None
+    serialize_extensions = omit_unset_extensions("unlocks", "defense")

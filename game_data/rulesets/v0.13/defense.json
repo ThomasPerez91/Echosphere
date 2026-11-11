@@ -8,33 +8,22 @@
       "family": "point_defense",
       "placement": "surface",
       "combat_class": "point_defense",
-      "shield": 0,
       "upkeep_flux": 2
     },
     "anti_ship_battery": {
       "family": "anti_ship",
       "placement": "surface",
       "combat_class": "anti_ship",
-      "shield": 0,
       "upkeep_flux": 4
     },
     "orbital_platform": {
       "family": "anti_ship",
       "placement": "orbital",
       "combat_class": "orbital_platform",
-      "shield": 0,
       "upkeep_flux": 6
-    },
-    "shield_generator": {
-      "family": "shield",
-      "placement": "orbital",
-      "combat_class": null,
-      "shield": 1500,
-      "upkeep_flux": 8
     }
   },
   "disable_order": [
-    "shield_generator",
     "orbital_platform",
     "anti_ship_battery",
     "point_defense"

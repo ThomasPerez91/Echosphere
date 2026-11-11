@@ -1,9 +1,10 @@
 """Generate game_data/rulesets/v0.13 from v0.12 (DEF-01, planetary defense, validated 11/11/2026).
 
 Run from the repository root: python3 scripts/rulesets/make_v013.py
-Balance values are provisional. v0.13 = v0.12 plus a Défense center (key building), four
-defense modules in the infrastructure catalogue (two SURFACE, two ORBITAL), their combat classes
-(combat-v2 with the shield) and the defense rules (capacity, upkeep, repair).
+Balance values are provisional. v0.13 = v0.12 plus a Défense center (key building), three
+defense modules in the infrastructure catalogue (two SURFACE, one ORBITAL), their combat-v1
+classes and the defense rules (capacity, upkeep, disable order, repair). Shields, alert states,
+sensors and support modules are DEF-02/03.
 """
 
 import json
@@ -44,9 +45,7 @@ BUILDINGS = {
                                requires={"industrial_complex": 2}, growth=160),
     "point_defense": building((600, 200, 0), 1200, requires={"defense_center": 1}),
     "anti_ship_battery": building((900, 400, 0), 1800, requires={"defense_center": 1}),
-    "orbital_platform": building((1200, 600, 100), 2400, requires={"defense_center": 2},
-                                 orbital=True),
-    "shield_generator": building((1000, 900, 200), 2400, requires={"defense_center": 2},
+    "orbital_platform": building((1200, 600, 100), 2400, requires={"defense_center": 1},
                                  orbital=True),
 }
 DEFENSE = {
@@ -55,15 +54,14 @@ DEFENSE = {
     "capacity_per_level": 2,
     "modules": {
         "point_defense": {"family": "point_defense", "placement": "surface",
-                          "combat_class": "point_defense", "shield": 0, "upkeep_flux": 2},
+                          "combat_class": "point_defense", "upkeep_flux": 2},
         "anti_ship_battery": {"family": "anti_ship", "placement": "surface",
-                              "combat_class": "anti_ship", "shield": 0, "upkeep_flux": 4},
+                              "combat_class": "anti_ship", "upkeep_flux": 4},
         "orbital_platform": {"family": "anti_ship", "placement": "orbital",
-                             "combat_class": "orbital_platform", "shield": 0, "upkeep_flux": 6},
-        "shield_generator": {"family": "shield", "placement": "orbital", "combat_class": None,
-                             "shield": 1500, "upkeep_flux": 8},
+                             "combat_class": "orbital_platform", "upkeep_flux": 6},
     },
-    "disable_order": ["shield_generator", "orbital_platform", "anti_ship_battery", "point_defense"],
+    # Platforms first, then cannons, then batteries (DEF-00), by sector inside a family.
+    "disable_order": ["orbital_platform", "anti_ship_battery", "point_defense"],
     "repair_cost_bps": 4000,
     "repair_duration_bps": 5000,
 }
@@ -93,7 +91,6 @@ def main():
     write(path, catalogue)
     path = TARGET / "combat.json"
     combat = json.loads(path.read_text())
-    combat["combat_version"] = "combat-v2"
     ships = list(combat["classes"])
     combat["modules"] = {name: stats for name, (stats, _) in MODULES.items()}
     every = ships + list(MODULES)
@@ -103,6 +100,11 @@ def main():
         combat["matchups_bps"][name] = {c: against.get(c, 10000) for c in every}
     write(path, combat)
     write(TARGET / "defense.json", {"version": "v0.13", **DEFENSE})
+    path = TARGET / "ai.json"
+    ai = json.loads(path.read_text())
+    # DEF-00: a Défense center once attacked, then one battery per attack suffered.
+    ai["defense"] = {"center_utility": 800, "module_kind": "point_defense", "module_utility": 700}
+    write(path, ai)
 
 
 if __name__ == "__main__":

@@ -25,10 +25,12 @@ from app.colony.service import rules_for
 from app.combat.models import CombatEngagement, CombatReport
 from app.combat.resolver import allocate_losses, resolve, spec_from_rules
 from app.combat.service import release_fences
+from app.defense import service as defense
 from app.fleet import service as fleet_service
 from app.fleet.models import Fleet, FleetMission, FleetReport
 from app.frontier import service as frontier
 from app.galaxy import service as galaxy
+from app.persistence.models import Colony
 from app.relations import service as relations
 from app.simulation.clock import utc
 from app.simulation.scheduler import TimelineError, lock_stream, schedule
@@ -123,7 +125,7 @@ def report(engagement, empire_id, role, processed_at, result):
     )
 
 
-def resolve_engagement(session, engagement, processed_at):
+def resolve_engagement(session, engagement, processed_at, engine=None):
     rules = rules_for(session, engagement.universe_id)
     k = rules.combat
     mission = session.get(FleetMission, engagement.mission_id, populate_existing=True)
@@ -180,6 +182,22 @@ def resolve_engagement(session, engagement, processed_at):
             if units:
                 defenders[str(op.fleet_id)] = units
     total = {c: sum(u.get(c, 0) for u in defenders.values()) for c in k.classes}
+    # v0.13 (DEF-01): the defense modules of the defender's Colony on the target world fight
+    # beside its garrison; never on a deposit, never for anyone else's Colony.
+    colony = modules = None
+    if (
+        rules.defense is not None
+        and engagement.target_planet_id is not None
+        and engagement.defender_empire_id is not None
+    ):
+        colony = session.scalar(
+            select(Colony).where(
+                Colony.planet_id == engagement.target_planet_id,
+                Colony.empire_id == engagement.defender_empire_id,
+            )
+        )
+        modules = defense.fighting(session, rules, colony.id, at) if colony else []
+        total |= defense.units(rules, modules)
     spec = combat = pact = relation = None
     if rules.relations is not None and engagement.defender_empire_id is not None:
         relation = relations.ensure_pair(
@@ -225,10 +243,43 @@ def resolve_engagement(session, engagement, processed_at):
             if engagement.defender_empire_id
             else None,
             "fleets": defenders,
+            **(
+                {"modules": {str(r.sector_index): r.infrastructure_type for r in modules}}
+                if modules
+                else {}
+            ),
         },
         "spec": spec,
     }
-    allocation = allocate_losses(defenders, combat["losses"]["defender"]) if combat else {}
+    ship_losses = (
+        {c: n for c, n in combat["losses"]["defender"].items() if c in k.classes} if combat else {}
+    )
+    allocation = allocate_losses(defenders, ship_losses) if combat else {}
+    damaged = []
+    if combat is not None and modules:
+        # A module lost in battle is DAMAGED until repaired. Its upkeep stops when the battle is
+        # resolved: the defender's Colony is caught up to now, then its effects are refreshed.
+        lost = {c: n for c, n in combat["losses"]["defender"].items() if c not in k.classes}
+        if any(lost.values()):
+            from app.colony import service as colony_service
+
+            if engine is None:
+                raise TimelineError("A module battle needs the colony timeline engine")
+            try:
+                colony_service.catch_up_owned(
+                    session,
+                    engine,
+                    engagement.universe_id,
+                    engagement.defender_empire_id,
+                    colony.id,
+                    processed_at,
+                )
+            except colony_service.ColonyError as error:
+                raise TimelineError("Defender colony timeline unavailable") from error
+            modules = defense.fighting(session, rules, colony.id, at)
+            damaged = defense.damage(rules, modules, lost)
+            session.flush()
+            colony_service.refresh_effects(session, colony.id, rules)
     # Defender losses: military units only; civilians and cargo are never touched.
     for fleet_id, lost in allocation.items():
         row = session.get(Fleet, UUID(fleet_id), populate_existing=True)
@@ -245,6 +296,8 @@ def resolve_engagement(session, engagement, processed_at):
             destroy_operation(session, rules, op, engagement, at, processed_at)
             destroyed.append(str(op.fleet_id))
     engagement.result = {"outcome": outcome, "combat": combat, "defender_losses": allocation}
+    if modules:
+        engagement.result["modules"] = {"fought": len(modules), "damaged_sectors": damaged}
     if engagement.target_opportunity_id is not None:
         engagement.result["operations"] = [str(op.fleet_id) for op in operations]
         engagement.result["destroyed_operations"] = destroyed
@@ -520,7 +573,7 @@ class CombatOrchestrator:
                         # An earlier fence or a blocked event: never fight on a partial state.
                         return None
                 claimed = engagement.id
-                outcome = resolve_engagement(session, engagement, now)
+                outcome = resolve_engagement(session, engagement, now, self.engine)
                 if after_resolve is not None:
                     after_resolve(session)
                 return {"engagement_id": str(engagement.id), "outcome": outcome}

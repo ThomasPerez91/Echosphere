@@ -89,5 +89,10 @@
   "unlocks": {
     "orbital_shipyard": 700,
     "research_center": 600
+  },
+  "defense": {
+    "center_utility": 800,
+    "module_kind": "point_defense",
+    "module_utility": 700
   }
 }

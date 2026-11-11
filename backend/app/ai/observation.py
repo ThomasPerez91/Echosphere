@@ -13,6 +13,7 @@ from sqlalchemy import func, or_, select
 from app.ai.policy import circular_page
 from app.ai.rules import BOOTSTRAP_ORDER, fingerprint
 from app.colony import service as colony
+from app.defense.service import slots as colony_slots
 from app.fleet import service as fleet
 from app.fleet.models import Fleet, FleetMission, FleetReport, FleetStack, ShipOrder
 from app.galaxy import service as galaxy
@@ -440,6 +441,21 @@ def collect(session, controller, rules, at):
 
     needed = {}
     economy_refs = []
+    guard = getattr(cfg, "defense", None)
+    attacked = 0
+    if guard is not None and rules.defense is not None:
+        from app.combat.models import CombatReport
+
+        # DEF-01: battles this Empire fought as defender (its own reports, never another's).
+        attacked = session.scalar(
+            select(func.count())
+            .select_from(CombatReport)
+            .where(
+                CombatReport.universe_id == u,
+                CombatReport.empire_id == e,
+                CombatReport.role == "defender",
+            )
+        )
     for cid, state in states.items():
         projected = {
             b.sector_index: (b.infrastructure_type, b.level) for b in state.infrastructures
@@ -460,6 +476,24 @@ def collect(session, controller, rules, at):
         economy_refs.extend(
             (cid, i, kind, level + 1) for i, (kind, level) in sorted(projected.items())
         )
+        if attacked:
+            d = rules.defense
+            orbit = next(
+                (
+                    i
+                    for i in colony_slots(rules, state.planet, guard.module_kind)
+                    if i not in projected
+                ),
+                0,
+            )
+            if orbit and orbit != free:
+                economy_refs.append((cid, orbit, guard.module_kind, 1))
+            # Damaged modules are repaired in place (same level), before any new one.
+            economy_refs.extend(
+                (cid, b.sector_index, b.infrastructure_type, b.level)
+                for b in sorted(state.infrastructures, key=lambda b: b.sector_index)
+                if b.infrastructure_type in d.modules and b.condition == "damaged"
+            )
     for cid, sector, kind, level in page("economy", economy_refs):
         bootstrap = needed.get(cid) == kind and level == 1
         utility = 0
@@ -472,6 +506,19 @@ def collect(session, controller, rules, at):
             utility = cfg.industry_utility // level
         if kind in getattr(cfg, "unlocks", {}):
             utility = cfg.unlocks[kind] // level
+        if guard is not None and rules.defense is not None and attacked:
+            d = rules.defense
+            modules = sum(
+                b.infrastructure_type in d.modules for b in states[cid].infrastructures
+            ) + sum(q.infrastructure_type in d.modules for q in states[cid].queue)
+            if kind == d.center and level == 1:
+                utility = guard.center_utility
+            elif kind == guard.module_kind and level == 1:
+                repairing = any(
+                    b.sector_index == sector and b.condition == "damaged"
+                    for b in states[cid].infrastructures
+                )
+                utility = guard.module_utility if repairing or modules < attacked else 0
         if kind == cfg.storage_kind:
             utility = (
                 1000

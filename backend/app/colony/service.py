@@ -45,6 +45,14 @@ class OrderSnapshot(StrictModel):
     refund_queued_bps: int = Field(strict=True, ge=0, le=10000)
     refund_active_bps: int = Field(strict=True, ge=0, le=10000)
     research_bonuses: dict[str, int] = Field(default_factory=dict)
+    # v0.13 (DEF-01): a repair of a damaged module (same level); omitted from other snapshots.
+    repair: bool = False
+
+    def stored(self) -> dict:
+        data = self.model_dump()
+        if not self.repair:
+            data.pop("repair")
+        return data
 
 
 def configure_universe(session: Session, universe_id: UUID, rules: Ruleset) -> None:
@@ -113,12 +121,18 @@ def queue_rows(session: Session, colony_id: UUID) -> list[ConstructionOrder]:
 def refresh_effects(session: Session, colony_id: UUID, rules: Ruleset) -> int:
     production = dict.fromkeys(RESOURCES, 0)
     capacity, bonus = rules.colony.base_capacity * MICRO_UNITS, 0
-    for row in infrastructure_rows(session, colony_id):
+    rows = infrastructure_rows(session, colony_id)
+    for row in rows:
         quote = rules.quote(row.infrastructure_type, row.level)
         for resource, rate in quote.production.items():
             production[resource] = amount(production[resource] + rate)
         capacity = max(capacity, quote.capacity or 0)
         bonus = amount(bonus + quote.construction_bonus_bps)
+    if rules.defense is not None:
+        from app.defense.service import power
+
+        # DEF-01: module upkeep comes out of the Flux production, never below zero.
+        production["flux"] = power(rules.defense, rows, production["flux"])
     for resource in RESOURCES:
         balance = session.get(ResourceBalance, (colony_id, resource))
         if balance is None:
@@ -201,7 +215,9 @@ def plan_order(
     except ValueError as error:
         raise ColonyError(str(error), "invalid_request") from None
     planet = state.planet
-    if type(sector) is not int or planet is None or not 1 <= sector <= planet.sector_capacity:
+    from app.defense.service import check_module, repair_quote, slots
+
+    if type(sector) is not int or planet is None or sector not in slots(rules, planet, kind):
         raise ColonyError("Sector outside planetary capacity", "sector_unavailable")
     if len(state.queue) >= rules.colony.queue_limit:
         raise ColonyError("Construction queue full", "queue_full")
@@ -211,6 +227,14 @@ def plan_order(
     for order in state.queue:
         projected[order.sector_index] = (order.infrastructure_type, order.target_level)
     current = projected.get(sector)
+    if is_repair(rules, state, kind, sector, target_level):
+        # DEF-01: a damaged module is repaired in place, nothing else may be queued there.
+        quote = repair_quote(rules.defense, quote)
+        for resource, cost in quote.cost.items():
+            if state.balances[resource].stock < cost:
+                raise ColonyError("Insufficient resources", "insufficient_resources")
+        return quote
+    check_module(rules, state, kind, current, projected)
     if (current and current[0] != kind) or target_level != (current[1] + 1 if current else 1):
         raise ColonyError("Occupied sector or non-contiguous upgrade", "sector_unavailable")
     rule = rules.catalogue.infrastructures[kind]
@@ -231,6 +255,20 @@ def plan_order(
         if state.balances[resource].stock < cost:
             raise ColonyError("Insufficient resources", "insufficient_resources")
     return quote
+
+
+def is_repair(rules: Ruleset, state: ColonyState, kind: str, sector: int, level: int) -> bool:
+    """DEF-01: the order re-targets the level of a DAMAGED module with nothing queued there."""
+    if rules.defense is None or kind not in rules.defense.modules:
+        return False
+    row = next((r for r in state.infrastructures if r.sector_index == sector), None)
+    return (
+        row is not None
+        and row.infrastructure_type == kind
+        and row.level == level
+        and row.condition == "damaged"
+        and not any(o.sector_index == sector for o in state.queue)
+    )
 
 
 def cancellation_plan(
@@ -430,6 +468,7 @@ def enqueue(
         rules = catch_up_owned(session, engine, universe_id, empire_id, colony_id, utc(at))
         state = colony_state(session, owned_colony(session, universe_id, empire_id, colony_id))
         quote = plan_order(rules, state, kind, sector, target_level)
+        repair = is_repair(rules, state, kind, sector, target_level)
         for resource, cost in quote.cost.items():
             state.balances[resource].stock -= cost
         economy = session.get(ColonyEconomy, colony_id)
@@ -443,6 +482,7 @@ def enqueue(
             refund_queued_bps=rules.colony.refund_queued_bps,
             refund_active_bps=rules.colony.refund_active_bps,
             research_bonuses=state.research_bonuses,
+            repair=repair,
         )
         order = ConstructionOrder(
             colony_id=colony_id,
@@ -453,7 +493,7 @@ def enqueue(
             sector_index=sector,
             target_level=target_level,
             status="queued",
-            snapshot=snapshot.model_dump(),
+            snapshot=snapshot.stored(),
         )
         economy.next_order_sequence += 1
         session.add(order)
@@ -481,7 +521,18 @@ def complete_construction(session: Session, event: ScheduledEvent) -> None:
     settle(session, timeline, event.due_at)
     rows = {row.sector_index: row for row in infrastructure_rows(session, order.colony_id)}
     building = rows.get(order.sector_index)
-    if building is None:
+    rules = rules_for(session, event.universe_id)
+    module = rules.defense is not None and order.infrastructure_type in rules.defense.modules
+    if snapshot.repair:
+        if (
+            building is None
+            or building.infrastructure_type != order.infrastructure_type
+            or building.level != order.target_level
+            or building.condition != "damaged"
+        ):
+            raise ColonyError("Repaired module changed before completion")
+        building.condition = "operational"
+    elif building is None:
         if snapshot.target_level != 1:
             raise ColonyError("Missing predecessor infrastructure")
         building = ColonyInfrastructure(
@@ -490,6 +541,7 @@ def complete_construction(session: Session, event: ScheduledEvent) -> None:
             sector_index=order.sector_index,
             infrastructure_type=order.infrastructure_type,
             level=1,
+            condition="operational" if module else None,
         )
         session.add(building)
     elif building.infrastructure_type != order.infrastructure_type or (
@@ -500,7 +552,6 @@ def complete_construction(session: Session, event: ScheduledEvent) -> None:
         building.level = order.target_level
     order.status, order.completed_at = "completed", event.due_at
     session.flush()
-    rules = rules_for(session, event.universe_id)
     refresh_effects(session, order.colony_id, rules)
     activate_next(session, order.colony_id, event.due_at, rules)
 

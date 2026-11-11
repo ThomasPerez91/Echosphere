@@ -1139,7 +1139,7 @@
     "orbital_platform": {
       "max_per_colony": null,
       "requires": {
-        "defense_center": 2
+        "defense_center": 1
       },
       "explicit_levels": [
         {
@@ -1147,46 +1147,6 @@
             "alloys": 1200,
             "flux": 600,
             "data": 100
-          },
-          "duration_seconds": 2400,
-          "production": {},
-          "construction_bonus_bps": 0,
-          "capacity": null
-        }
-      ],
-      "scaling_after_level": 1,
-      "scaling": {
-        "cost": {
-          "numerator": 130,
-          "denominator": 100
-        },
-        "duration": {
-          "numerator": 120,
-          "denominator": 100
-        },
-        "production": {
-          "numerator": 100,
-          "denominator": 100
-        },
-        "capacity": {
-          "numerator": 100,
-          "denominator": 100
-        },
-        "bonus_increment_bps": 0
-      },
-      "placement": "orbital"
-    },
-    "shield_generator": {
-      "max_per_colony": null,
-      "requires": {
-        "defense_center": 2
-      },
-      "explicit_levels": [
-        {
-          "cost": {
-            "alloys": 1000,
-            "flux": 900,
-            "data": 200
           },
           "duration_seconds": 2400,
           "production": {},
