@@ -67,6 +67,9 @@ explicite, aucun appel Portal. Droits : lecture `fleet.read` ; production + `fle
 `colony.read` ; commandes + `fleet.command` (SURVEY + `galaxy.read`, cargo + `colony.read`).
 Sans `colony.read` : aucune colonie, attache, payeuse (devis compris, `payer_colony_id` nul) ni preview de cargo transmise. Flottes
 étrangères/inconnues/autre univers : même 404 ; systèmes DETECTED listés seulement avec `galaxy.read`.
+Depuis [UX-API-01](ux-api-01-mission-path.md) : `path` additif (identifiants de systèmes, départ →
+destination, `hops + 1` éléments) dans le devis et dans `missions[]` (aller lancé, depuis les legs
+persistés) ; absent quand il ne peut être établi exactement ou sortirait de la Knowledge.
 
 ## UI
 
@@ -95,3 +98,11 @@ stockage partiel, Portal coupé, expiration de session. Résultats et CI dans [p
   implicite.
 - **Flottes `SETTLED` :** une flotte dont le colonisateur a fondé une colonie est exclue des listes,
   comme `MERGED`.
+
+## Compléments de catalogue (recette 10/11/2026)
+
+Chaque classe du catalogue porte aussi `hop_us` (durée d’un saut à la vitesse de flotte de
+l’univers, arrondie au supérieur comme `mission_quote`) et, pour les classes militaires, `hull` et
+`attack` des règles de combat. La vue Flottes en tire la puissance et la coque cumulées d’une flotte
+et la durée d’un saut au rythme de sa classe la plus lente ; ce sont des lectures des règles, jamais
+une prévision de combat.

@@ -8,11 +8,17 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.ai.rules import AIRules, AIRulesV2
+from app.ai.rules import AIRules, AIRulesV2, AIRulesV3, AIRulesV4
 from app.colonization.rules import ColonizationRules
 from app.combat.rules import CombatRules
+from app.defense.rules import DefenseRules
 from app.fleet.rules import FleetRules
+from app.frontier.rules import FrontierRules
+from app.galaxy.generator_v2 import GalaxyRulesV2
+from app.galaxy.opportunities import OpportunityRules
 from app.galaxy.rules import ExplorationRules, GalaxyRules
+from app.relations.rules import RelationsRules
+from app.rules_dump import omit_unset_extensions
 from app.simulation.production import MAX_AMOUNT, MICRO_UNITS, RESOURCES, amount
 
 Positive = Annotated[int, Field(strict=True, gt=0, le=MAX_AMOUNT)]
@@ -21,6 +27,7 @@ Nonnegative = Annotated[int, Field(strict=True, ge=0, le=MAX_AMOUNT)]
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
 
 
 class Ratio(StrictModel):
@@ -74,6 +81,9 @@ class InfrastructureRule(StrictModel):
     explicit_levels: list[Level] = Field(min_length=1)
     scaling_after_level: Positive
     scaling: Scaling
+    # v0.13 (DEF-01): an ORBITAL module occupies an orbital slot instead of a sector.
+    placement: Literal["orbital"] | None = None
+    serialize_extensions = omit_unset_extensions("placement")
 
     @model_validator(mode="after")
     def levels_valid(self):
@@ -89,6 +99,16 @@ class ResourceRules(StrictModel):
     resources: list[str]
 
 
+class LevelCap(StrictModel):
+    """v0.11 (COL-11): highest level of a building on a planet, base + sectors // divisor."""
+
+    base: Positive
+    sectors_divisor: Positive
+
+    def cap(self, sectors: int) -> int:
+        return self.base + sectors // self.sectors_divisor
+
+
 class ColonyRules(StrictModel):
     version: str
     sectors: Positive
@@ -100,6 +120,8 @@ class ColonyRules(StrictModel):
     refund_queued_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
     refund_active_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
     speeds: dict[str, Ratio]
+    level_cap: LevelCap | None = None
+    serialize_extensions = omit_unset_extensions("level_cap")
 
 
 class InfrastructureRules(StrictModel):
@@ -118,12 +140,36 @@ class Quote(StrictModel):
 class Technology(StrictModel):
     name: str = Field(min_length=1, max_length=120)
     domain: Literal["engineering", "energy", "computation", "xenoscience"]
-    tier: Literal[1, 2]
+    # Tiers III and IV exist from v0.12 (recette 10/11/2026).
+    tier: Literal[1, 2, 3, 4]
     requires: list[str]
     cost: dict[str, Nonnegative]
     duration_seconds: Positive
-    effect: Literal["colony_alloys", "colony_flux", "research_duration", "research_data"]
+    # v0.12: ship_cost, ship_duration (Chantier orbital orders), colony_duration (constructions).
+    effect: Literal[
+        "colony_alloys",
+        "colony_flux",
+        "research_duration",
+        "research_data",
+        "ship_cost",
+        "ship_duration",
+        "colony_duration",
+    ]
     reduction_bps: Annotated[int, Field(strict=True, ge=0, lt=10000)]
+
+
+V012_EFFECTS = {"ship_cost", "ship_duration", "colony_duration"}
+
+
+class Facility(StrictModel):
+    """v0.11 (COL-11): research starts from a colony holding this building at the level of the
+    technology tier (Institut des Échos)."""
+
+    kind: str
+    levels: dict[Literal["1", "2", "3", "4"], Positive]
+
+    def level(self, tier: int) -> int:
+        return self.levels[str(tier)]
 
 
 class ResearchRules(StrictModel):
@@ -132,6 +178,8 @@ class ResearchRules(StrictModel):
     refund_queued_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
     refund_active_bps: Annotated[int, Field(strict=True, ge=0, le=10000)]
     technologies: dict[str, Technology] = Field(min_length=1)
+    facility: Facility | None = None
+    serialize_extensions = omit_unset_extensions("facility")
 
     @model_validator(mode="after")
     def valid_catalogue(self):
@@ -171,17 +219,29 @@ class ResearchRules(StrictModel):
         return self
 
 
+def since(version: str, first: str) -> bool:
+    """Numeric ruleset order (v0.10 follows v0.9); every domain exists from one version on."""
+    def key(v):
+        return tuple(int(part) for part in v[1:].split("."))
+
+    return key(version) >= key(first)
+
+
 class Ruleset(StrictModel):
     resources: ResourceRules
     colony: ColonyRules
     catalogue: InfrastructureRules
     research: ResearchRules | None = None
-    galaxy: GalaxyRules | None = None
+    galaxy: GalaxyRulesV2 | GalaxyRules | None = None
     exploration: ExplorationRules | None = None
     fleets: FleetRules | None = None
     colonization: ColonizationRules | None = None
-    ai: AIRulesV2 | AIRules | None = None
+    ai: AIRulesV4 | AIRulesV3 | AIRulesV2 | AIRules | None = None
     combat: CombatRules | None = None
+    relations: RelationsRules | None = None
+    frontier: FrontierRules | None = None
+    opportunities: OpportunityRules | None = None
+    defense: DefenseRules | None = None
 
     @property
     def version(self) -> str:
@@ -240,16 +300,22 @@ class Ruleset(StrictModel):
                 raise ValueError("Founding package must fit the colonizer and new colony storage")
             self.fleets.order_quote(x.colonizer_class, x.colonizer_max_quantity)
             x.multiplier_bps(x.max_colonies)
-        if self.version in {"v0.6", "v0.7"}:
+        if since(self.version, "v0.6"):
             if self.ai is None or self.ai.version != self.version:
                 raise ValueError("Pinned AI configuration required, not an active controller")
             ai_kinds = {*self.ai.producers.values(), self.ai.industry_kind, self.ai.storage_kind}
+            ai_kinds |= set(getattr(self.ai, "unlocks", {}))
             if not ai_kinds <= self.catalogue.infrastructures.keys():
                 raise ValueError("Unknown infrastructure in AI policy")
+            policy = getattr(self.ai, "defense", None)
+            if (policy is not None) != (self.defense is not None) or (
+                policy is not None and policy.module_kind not in self.defense.modules
+            ):
+                raise ValueError("The AI defends with this ruleset's modules, and only then")
         elif self.ai is not None:
             raise ValueError("AI configuration unavailable in historical rulesets")
-        # Combat exists from v0.7 only: military classes with Combat stats, no offensive AI.
-        if self.version == "v0.7":
+        # Combat exists from v0.7: military classes with Combat stats, no offensive AI.
+        if since(self.version, "v0.7"):
             k = self.combat
             if k is None or k.version != self.version:
                 raise ValueError("Missing or mixed Combat version")
@@ -261,6 +327,101 @@ class Ruleset(StrictModel):
                 raise ValueError("AI military goal must use a military class")
         elif self.combat is not None:
             raise ValueError("Combat unavailable in historical rulesets")
+        # Relations exist from v0.8 only (Q18): contacts, NO_AGREEMENT/PACT, AI diplomacy v3.
+        if since(self.version, "v0.8"):
+            if self.relations is None or self.relations.version != self.version:
+                raise ValueError("Missing or mixed Relations version")
+            expected = AIRulesV4 if since(self.version, "v0.9") else AIRulesV3
+            if type(self.ai) is not expected:
+                raise ValueError("Relations require the diplomacy AI policy of this version")
+        elif self.relations is not None:
+            raise ValueError("Relations unavailable in historical rulesets")
+        if self.relations is not None and self.relations.standing is not None:
+            if not since(self.version, "v0.12"):
+                raise ValueError("Relation standing exists from v0.12")
+        if self.relations is not None and self.relations.map is not None:
+            if self.relations.standing is None or not since(self.version, "v0.12"):
+                raise ValueError("Map relation classes need the v0.12 standing")
+        # Frontier presence (13B) exists from v0.9 only; v0.1-v0.8 stay strictly unchanged.
+        if since(self.version, "v0.9"):
+            if self.frontier is None or self.frontier.version != self.version:
+                raise ValueError("Missing or mixed Frontier version")
+        elif self.frontier is not None:
+            raise ValueError("Frontier unavailable in historical rulesets")
+        # galaxy-v2 (Q61: sizes, dead ends, chokepoints) from v0.10; v0.3-v0.9 keep galaxy-v1.
+        if self.galaxy is not None and isinstance(self.galaxy, GalaxyRulesV2) != since(
+            self.version, "v0.10"
+        ):
+            raise ValueError("galaxy-v2 is the generator of v0.10 and later only")
+        # COL-11 (v0.11): level cap, Forge orbitale for ships, Institut des Échos for research.
+        gated = since(self.version, "v0.11")
+        if gated != (self.colony.level_cap is not None) or (
+            self.research is not None and gated != (self.research.facility is not None)
+        ):
+            raise ValueError("Level cap and research facility exist from v0.11 only")
+        if self.research is not None and self.research.facility is not None:
+            f = self.research.facility
+            tiers = {str(t.tier) for t in self.research.technologies.values()}
+            if f.kind not in self.catalogue.infrastructures or set(f.levels) != tiers:
+                raise ValueError("Research facility must be a known infrastructure for each tier")
+        if self.research is not None and not since(self.version, "v0.12"):
+            for tech in self.research.technologies.values():
+                if tech.tier > 2 or tech.effect in V012_EFFECTS:
+                    raise ValueError("Research tiers III-IV and their effects exist from v0.12")
+        if self.fleets is not None:
+            for ship in self.fleets.classes.values():
+                if ship.requires and not gated:
+                    raise ValueError("Ship prerequisites exist from v0.11 only")
+                if not set(ship.requires) <= self.catalogue.infrastructures.keys():
+                    raise ValueError("Unknown infrastructure in ship prerequisites")
+        if (
+            self.opportunities is not None
+            and self.opportunities.operations.regeneration_bps_per_day is not None
+            and not gated
+        ):
+            raise ValueError("Deposit regeneration exists from v0.11 only")
+        if (
+            self.opportunities is not None
+            and self.opportunities.dossiers.reveal_hops is not None
+            and not since(self.version, "v0.12")
+        ):
+            raise ValueError("Dossier rewards exist from v0.12 only")
+        if (
+            self.opportunities is not None
+            and self.opportunities.operations.contested
+            and (not since(self.version, "v0.12") or self.combat is None)
+        ):
+            raise ValueError("Contested extraction exists from v0.12 with combat")
+        if (
+            isinstance(self.galaxy, GalaxyRulesV2)
+            and self.galaxy.naming is not None
+            and not since(self.version, "v0.12")
+        ):
+            raise ValueError("Syllable system names exist from v0.12")
+        if (
+            isinstance(self.galaxy, GalaxyRulesV2)
+            and self.galaxy.shapes is not None
+            and not since(self.version, "v0.12")
+        ):
+            raise ValueError("Galaxy shapes exist from v0.12")
+        # EXP-01 opportunities exist from v0.10 only; v0.1-v0.9 stay strictly unchanged.
+        self.defense_valid()
+        if since(self.version, "v0.10"):
+            if self.opportunities is None or self.opportunities.version != self.version:
+                raise ValueError("Missing or mixed Opportunities version")
+        elif self.opportunities is not None:
+            raise ValueError("Opportunities unavailable in historical rulesets")
+        if self.opportunities is not None:
+            # The extractor is a civilian cargo class of this ruleset, never a combat class.
+            extractor = self.fleets.classes.get(self.opportunities.operations.extractor_class)
+            combat = set(self.combat.classes) if self.combat else set()
+            if (
+                extractor is None
+                or extractor.cargo <= 0
+                or extractor.survey
+                or self.opportunities.operations.extractor_class in combat
+            ):
+                raise ValueError("Extractor class must be a civilian cargo class")
         c, catalogue = self.colony, self.catalogue.infrastructures
         if set(c.initial_stocks) != RESOURCES or set(c.speeds) != {
             "economy",
@@ -289,6 +450,33 @@ class Ruleset(StrictModel):
             if value > c.base_capacity:
                 raise ValueError("Initial stock exceeds base capacity")
         return self
+
+    def defense_valid(self):
+        """DEF-01 exists from v0.13: the center, its modules and their combat classes agree."""
+        orbital = {k for k, r in self.catalogue.infrastructures.items() if r.placement}
+        d = self.defense
+        if not since(self.version, "v0.13"):
+            if d is not None or orbital or (self.combat and self.combat.modules):
+                raise ValueError("Planetary defense exists from v0.13 only")
+            return
+        if d is None or d.version != self.version or self.combat is None or not self.combat.modules:
+            raise ValueError("Missing or mixed Defense version")
+        infra = self.catalogue.infrastructures
+        center = infra.get(d.center)
+        if center is None or center.max_per_colony != 1 or not set(d.modules) <= set(infra):
+            raise ValueError("Defense center and modules are colony infrastructures")
+        for kind, module in d.modules.items():
+            if (infra[kind].placement == "orbital") != (module.placement == "orbital"):
+                raise ValueError("Module placement differs from its infrastructure")
+            if any(level.production for level in infra[kind].explicit_levels):
+                raise ValueError("A defense module produces nothing")
+            if module.combat_class is not None and module.combat_class not in self.combat.modules:
+                raise ValueError("Unknown module combat class")
+        if orbital - set(d.modules):
+            raise ValueError("Only defense modules are orbital")
+        fighting = {m.combat_class for m in d.modules.values() if m.combat_class}
+        if fighting != set(self.combat.modules):
+            raise ValueError("Every combat module class belongs to one defense module")
 
     def quote(self, kind: str, level: int) -> Quote:
         if type(level) is not int or level < 1:
@@ -361,6 +549,14 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
             extensions += ("ai",)
         if version == "v0.7":
             extensions += ("ai", "combat")
+        if version == "v0.8":
+            extensions += ("ai", "combat", "relations")
+        if version == "v0.9":
+            extensions += ("ai", "combat", "relations", "frontier")
+        if version in {"v0.10", "v0.11", "v0.12"}:
+            extensions += ("ai", "combat", "relations", "frontier", "opportunities")
+        if version == "v0.13":
+            extensions += ("ai", "combat", "relations", "frontier", "opportunities", "defense")
         for name in extensions:
             parts[name] = json.loads(
                 (location / "rulesets" / version / f"{name}.json").read_text(),

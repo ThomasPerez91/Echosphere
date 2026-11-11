@@ -5,6 +5,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.rules_dump import omit_unset_extensions
+
 Positive = Annotated[int, Field(strict=True, gt=0, le=1_000_000)]
 Bps = Annotated[int, Field(strict=True, gt=0, le=100_000)]
 
@@ -27,15 +29,27 @@ class CombatRules(StrictModel):
     classes: list[str] = Field(min_length=1, max_length=16)
     stats: dict[str, ShipStats]
     matchups_bps: dict[str, dict[str, Bps]]
+    # v0.13 (DEF-01): defense module classes, defender side only, same combat-v1 engine.
+    modules: dict[str, ShipStats] | None = None
+    serialize_extensions = omit_unset_extensions("modules")
+
+    @property
+    def all_classes(self) -> list[str]:
+        """Ships in canonical order, then defense modules in theirs."""
+        return [*self.classes, *(self.modules or {})]
 
     @model_validator(mode="after")
     def coherent(self):
-        names = set(self.classes)
-        if len(names) != len(self.classes) or not all(
-            re.fullmatch(r"[a-z][a-z0-9_]{0,31}", c) for c in self.classes
+        if self.modules is not None and not self.modules:
+            raise ValueError("Defense module classes are omitted, never empty")
+        if self.modules and set(self.modules) & set(self.classes):
+            raise ValueError("Defense modules are not ships")
+        names = set(self.all_classes)
+        if len(names) != len(self.all_classes) or not all(
+            re.fullmatch(r"[a-z][a-z0-9_]{0,31}", c) for c in self.all_classes
         ):
             raise ValueError("Military classes must be distinct identifiers")
-        if set(self.stats) != names or set(self.matchups_bps) != names:
+        if set(self.stats) != set(self.classes) or set(self.matchups_bps) != names:
             raise ValueError("Stats and matchups required for every military class")
         if any(set(row) != names for row in self.matchups_bps.values()):
             raise ValueError("Complete matchup matrix required")

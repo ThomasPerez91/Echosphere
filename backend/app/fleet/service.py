@@ -11,8 +11,10 @@ from uuid import UUID, uuid4
 from sqlalchemy import func, literal, select, tuple_
 
 from app.colonization.service import found_colony
+from app.colony.models import ColonyInfrastructure
 from app.colony.service import ColonyError, catch_up_owned, owned_colony, recoverable_refunds
 from app.colony.service import rules_for as ruleset_for
+from app.fleet import exploitation, extraction
 from app.fleet.models import (
     Fleet,
     FleetCargo,
@@ -23,12 +25,23 @@ from app.fleet.models import (
     FleetStack,
     ShipOrder,
 )
+from app.fleet.path import public_path, systems_along
+from app.frontier import service as frontier
+from app.frontier.encounter import add as frontier_add
 from app.galaxy import service as galaxy
-from app.galaxy.models import GalaxyRoute, PlanetKnowledge
+from app.galaxy.models import (
+    DepositClaim,
+    GalaxyOpportunity,
+    GalaxyRoute,
+    OpportunityKnowledge,
+    PlanetKnowledge,
+    RouteKnowledge,
+    SystemKnowledge,
+)
 from app.persistence.models import Colony, Planet
 from app.simulation.clock import utc
 from app.simulation.models import ColonyTimeline, ResourceBalance, ScheduledEvent
-from app.simulation.production import RESOURCES, ProductionState, amount, produce
+from app.simulation.production import MICRO_UNITS, RESOURCES, ProductionState, amount, produce
 from app.simulation.scheduler import IdempotencyConflict, TimelineError, lock_stream, schedule
 
 OPEN = ("queued", "active")
@@ -142,9 +155,43 @@ def colonizer_rank(session, rules, empire_id):
     return colonies + units + ordered
 
 
-def snapshot_order(rules, ship_class, quantity, rank=None):
-    """Accepted batch price; a colonizer's progressive price is fixed here, never recomputed."""
+def check_unlocked(session, rules, colony_id, ship_class):
+    """COL-11 (v0.11): a class is built only by a colony whose Chantier orbital (or any listed
+    infrastructure) has the required level; nothing before v0.11."""
+    required = rules.fleets.classes[ship_class].requires
+    if not required:
+        return
+    levels = {}
+    for row in session.scalars(
+        select(ColonyInfrastructure).where(ColonyInfrastructure.colony_id == colony_id)
+    ):
+        levels[row.infrastructure_type] = max(levels.get(row.infrastructure_type, 0), row.level)
+    if any(levels.get(kind, 0) < level for kind, level in required.items()):
+        raise FleetError("Shipyard level too low for this class", "shipyard_required")
+
+
+SHIP_EFFECTS = ("ship_cost", "ship_duration")
+
+
+def ship_bonus(session, empire_id):
+    """v0.12 research effects on Chantier orbital orders; empty without them."""
+    from app.research.service import bonuses
+
+    found = bonuses(session, empire_id)
+    return {k: found[k] for k in SHIP_EFFECTS if found.get(k)}
+
+
+def snapshot_order(rules, ship_class, quantity, rank=None, bonus=None):
+    """Accepted batch price; a colonizer's progressive price is fixed here, never recomputed.
+    `bonus` (v0.12 research effects) is frozen in the snapshot, so a later technology never
+    changes an accepted order."""
+    from app.research.service import discounted
+
     cost, duration = rules.fleets.order_quote(ship_class, quantity)
+    bonus = {k: v for k, v in (bonus or {}).items() if v}
+    if bonus:
+        cost = {r: discounted(v, bonus.get("ship_cost", 0)) for r, v in cost.items()}
+        duration = max(1, discounted(duration, bonus.get("ship_duration", 0)))
     snapshot = {
         "version": rules.version,
         "engagement": rules.fleets.engagement_version,
@@ -154,7 +201,11 @@ def snapshot_order(rules, ship_class, quantity, rank=None):
         "duration_us": duration,
         "refund_queued_bps": rules.fleets.refund_queued_bps,
         "refund_active_bps": rules.fleets.refund_active_bps,
+        # One unit after another: unit n is out at started + duration x n / quantity.
+        "delivery": "unit",
     }
+    if bonus:
+        snapshot["bonus_bps"] = dict(sorted(bonus.items()))
     if is_colonizer(rules, ship_class):
         if quantity > rules.colonization.colonizer_max_quantity or rank is None:
             raise ValueError("Colonizer orders hold one unit at a known rank")
@@ -171,8 +222,24 @@ def colonizer_quote(session, rules, empire_id):
     if rules.colonization is None:
         return None
     rank = colonizer_rank(session, rules, empire_id)
-    snapshot = snapshot_order(rules, rules.colonization.colonizer_class, 1, rank)
+    snapshot = snapshot_order(
+        rules, rules.colonization.colonizer_class, 1, rank, ship_bonus(session, empire_id)
+    )
     return {"rank": rank, "multiplier_bps": snapshot["multiplier_bps"], "cost": snapshot["cost"]}
+
+
+def unit_due(order, n):
+    """Due date of the n-th unit (unit delivery), or of the whole batch (older orders)."""
+    total = order.snapshot["duration_us"]
+    if order.snapshot.get("delivery") != "unit":
+        return order.started_at + timedelta(microseconds=total)
+    return order.started_at + timedelta(microseconds=total * n // order.quantity)
+
+
+def unit_event_key(order):
+    """Event of the unit being built: the first keeps the historical key."""
+    base = f"ship-order:{order.id}"
+    return base if not order.delivered else f"{base}:{order.delivered + 1}"
 
 
 def activate_next(session, state, colony_id, at):
@@ -188,7 +255,7 @@ def activate_next(session, state, colony_id, at):
     if following is None:
         return
     following.status, following.started_at = "active", utc(at)
-    following.due_at = utc(at) + timedelta(microseconds=following.snapshot["duration_us"])
+    following.due_at = unit_due(following, 1)
     session.flush()
     schedule(
         session,
@@ -229,9 +296,12 @@ def order_ships(
                 if is_colonizer(rules, ship_class)
                 else None
             )
-            snapshot = snapshot_order(rules, ship_class, quantity, rank)
+            snapshot = snapshot_order(
+                rules, ship_class, quantity, rank, ship_bonus(session, empire_id)
+            )
         except ValueError:
             raise FleetError("Unknown class or invalid quantity", "invalid_request") from None
+        check_unlocked(session, rules, colony_id, ship_class)
         queued = session.scalar(
             select(func.count())
             .select_from(ShipOrder)
@@ -266,9 +336,11 @@ def order_ships(
 
 
 def refund_plan(order):
+    """Undelivered units only: a cancelled order keeps the units already out."""
     snap = order.snapshot
     bps = snap["refund_active_bps"] if order.status == "active" else snap["refund_queued_bps"]
-    return {r: value * bps // 10000 for r, value in snap["cost"].items()}
+    left = order.quantity - (order.delivered or 0)
+    return {r: value * left // order.quantity * bps // 10000 for r, value in snap["cost"].items()}
 
 
 def cancel_preview(session, order, at):
@@ -306,7 +378,7 @@ def cancel_order(session, engine, universe_id, empire_id, order_id, *, at):
             event = session.scalar(
                 select(ScheduledEvent).where(
                     ScheduledEvent.stream_id == state.stream_id,
-                    ScheduledEvent.idempotency_key == f"ship-order:{order.id}",
+                    ScheduledEvent.idempotency_key == unit_event_key(order),
                 )
             )
             if event is None or event.status != "pending":
@@ -351,27 +423,58 @@ def complete_order(session, event):
     if order is None or order.universe_id != event.universe_id:
         raise TimelineError("Order outside event universe")
     state = galaxy.state_for(session, order.universe_id, order.empire_id)
-    if state.stream_id != event.stream_id or event.idempotency_key != f"ship-order:{order.id}":
+    base = f"ship-order:{order.id}"
+    if state.stream_id != event.stream_id or event.idempotency_key not in (
+        base, f"{base}:{(order.delivered or 0) + 1}"
+    ):
         raise TimelineError("Order outside event stream")
     if order.status == "completed":
         return
     rules = rules_for(session, order.universe_id)
+    expected = snapshot_order(
+        rules,
+        order.ship_class,
+        order.quantity,
+        order.snapshot.get("colonizer_rank"),
+        order.snapshot.get("bonus_bps"),
+    )
+    unit = order.snapshot.get("delivery") == "unit"
+    if not unit:
+        expected.pop("delivery")  # accepted before unit delivery: one whole batch
+    n = (order.delivered or 0) + 1
     if (
         order.status != "active"
         or order.due_at != event.due_at
-        or order.snapshot
-        != snapshot_order(
-            rules, order.ship_class, order.quantity, order.snapshot.get("colonizer_rank")
-        )
-        or order.due_at - order.started_at != timedelta(microseconds=order.snapshot["duration_us"])
+        or order.snapshot != expected
+        or order.due_at != unit_due(order, n if unit else 1)
     ):
         raise TimelineError("Inconsistent production snapshot/deadline")
     garrison = garrison_for(session, session.get(Colony, order.colony_id))
-    # Atomic batch: the whole quantity appears at once, never a partial delivery.
-    add_units(session, garrison.id, {order.ship_class: order.quantity})
-    order.status, order.completed_at = "completed", event.due_at
+    if not unit:
+        add_units(session, garrison.id, {order.ship_class: order.quantity})
+        order.status, order.completed_at = "completed", event.due_at
+        session.flush()
+        activate_next(session, state, order.colony_id, event.due_at)
+        return
+    # Unit delivery (10/11/2026): one more unit in the garrison, the next one scheduled.
+    add_units(session, garrison.id, {order.ship_class: 1})
+    order.delivered = n
+    if n == order.quantity:
+        order.status, order.completed_at = "completed", event.due_at
+        session.flush()
+        activate_next(session, state, order.colony_id, event.due_at)
+        return
+    order.due_at = unit_due(order, n + 1)
     session.flush()
-    activate_next(session, state, order.colony_id, event.due_at)
+    schedule(
+        session,
+        state.stream_id,
+        order.universe_id,
+        key=f"{base}:{n + 1}",
+        kind="SHIP_ORDER_COMPLETE",
+        due_at=order.due_at,
+        payload={"order_id": str(order.id)},
+    )
 
 
 # --- Fleet composition and cargo ---------------------------------------------------------------
@@ -518,6 +621,7 @@ def split(session, engine, universe_id, empire_id, fleet_id, units, cargo, *, ke
         if done is not None:
             return done.result
         source = stationed(owned_fleet(session, universe_id, empire_id, fleet_id))
+        frontier.guard_fleet_change(session, source, at)
         new = detach(session, rules, source, parse_units(rules, units), parse_cargo(cargo))
         return record(
             session, universe_id, empire_id, key, "split", request, {"fleet_id": str(new.id)}, at
@@ -538,6 +642,8 @@ def merge(session, engine, universe_id, empire_id, fleet_id, target_id, *, key, 
             raise FleetError("Only a task fleet merges into another", "invalid_request")
         if source.system_id != target.system_id:
             raise FleetError("Fleets are not in the same system", "fleet_elsewhere")
+        frontier.guard_fleet_change(session, source, at)
+        frontier.guard_fleet_change(session, target, at)
         # Stacks and cargo add up; combined capacity always covers combined cargo.
         add_units(session, target.id, stacks_of(session, source.id))
         total = cargo_of(session, target.id)
@@ -546,11 +652,31 @@ def merge(session, engine, universe_id, empire_id, fleet_id, target_id, *, key, 
         set_cargo(session, target.id, total)
         set_stacks(session, source.id, {})
         set_cargo(session, source.id, {})
+        frontier.end_protocol(session, source, at)
         source.status, source.system_id = "MERGED", None
         session.flush()
         return record(
             session, universe_id, empire_id, key, "merge", request, {"fleet_id": str(target.id)}, at
         )
+
+
+def set_protocol(session, engine, universe_id, empire_id, fleet_id, protocol, *, key, at):
+    """13B FC1: set (or clear with None) the first-contact protocol of a stationed task Fleet.
+    It holds until the Fleet leaves, merges or is destroyed, or the protocol is changed."""
+    with session.begin_nested():
+        rules = rules_for(session, universe_id)
+        frontier.check_protocol(rules, protocol)
+        operations(session, engine, universe_id, empire_id, at)
+        request = {"fleet_id": str(fleet_id), "protocol": protocol}
+        done = ledger(session, empire_id, key, "protocol", request)
+        if done is not None:
+            return done.result
+        fleet = stationed(owned_fleet(session, universe_id, empire_id, fleet_id))
+        if fleet.kind != "TASK":
+            raise FleetError("Only an operational (task) fleet holds a protocol", "protocol_task")
+        frontier.start_protocol(session, fleet, protocol, at)
+        result = {"fleet_id": str(fleet.id), "protocol": protocol}
+        return record(session, universe_id, empire_id, key, "protocol", request, result, at)
 
 
 def colony_here(session, universe_id, empire_id, fleet, colony_id):
@@ -685,6 +811,52 @@ def plan_attack(session, rules, fleet, destination_id, stacks, target_planet_id)
     return known.system_id, path, round_trip(cost), travel, 0
 
 
+def plan_attack_deposit(session, rules, fleet, destination_id, stacks, opportunity_id):
+    """v0.12 (EXP-02c): an ATTACK on a deposit this Empire knows; same travel and fuel as an
+    attack on a planet of that system."""
+    ops = rules.opportunities.operations if rules.opportunities else None
+    if rules.combat is None or ops is None or not ops.contested:
+        raise FleetError("Unknown mission", "invalid_request")
+    known = session.get(OpportunityKnowledge, (fleet.empire_id, opportunity_id))
+    deposit = session.get(GalaxyOpportunity, opportunity_id)
+    if known is None or deposit is None or deposit.family != "deposit":
+        raise FleetError("Opportunity not found", "opportunity_not_found")
+    if destination_id not in (None, deposit.system_id):
+        raise FleetError("Destination is the deposit's system", "invalid_request")
+    if not stacks or any(c not in rules.combat.classes for c in stacks):
+        raise FleetError("ATTACK engages military units only", "attack_units")
+    if deposit.system_id == fleet.system_id:
+        return deposit.system_id, [], dict(NO_COST), 0, 0
+    path = galaxy.known_path(
+        session, fleet.universe_id, fleet.empire_id, fleet.system_id, deposit.system_id,
+        mapped=True,
+    )
+    cost, travel, _ = rules.fleets.mission_quote(
+        stacks, len(path), rules.colony.speeds["fleet"], False
+    )
+    return deposit.system_id, path, round_trip(cost), travel, 0
+
+
+def deposit_defender(session, empire_id, opportunity_id, at):
+    """Under the deposit row lock: the foreign Empire with the most extractors at work there at
+    launch (ties: lowest id) is bound as the defender; nothing about it is returned."""
+    from app.fleet.extraction import lock_deposit
+
+    lock_deposit(session, opportunity_id)
+    rows = session.execute(
+        select(DepositClaim.empire_id, func.sum(DepositClaim.extractors))
+        .where(
+            DepositClaim.opportunity_id == opportunity_id,
+            DepositClaim.empire_id != empire_id,
+            DepositClaim.active_until > utc(at),
+        )
+        .group_by(DepositClaim.empire_id)
+    ).all()
+    if not rows:
+        return None
+    return sorted(rows, key=lambda r: (-r[1], str(r[0])))[0][0]
+
+
 def battle_time(rules, started_at, travel_arrival_at):
     """Q02: never less than the minimum warning after launch, never before the arrival."""
     return max(
@@ -693,10 +865,14 @@ def battle_time(rules, started_at, travel_arrival_at):
     )
 
 
-def attack_terms(rules, target_planet_id, battle_at):
-    """ATTACK-only snapshot part: target, accepted Combat rules and the battle instant."""
-    return {
-        "target_planet_id": str(target_planet_id),
+def attack_terms(rules, target_planet_id, battle_at, target_opportunity_id=None):
+    """ATTACK-only snapshot part: target, accepted Combat rules and the battle instant
+    (v0.12: a deposit target adds `target_opportunity_id`, the planet is then None)."""
+    terms = {} if target_opportunity_id is None else {
+        "target_opportunity_id": str(target_opportunity_id)
+    }
+    return terms | {
+        "target_planet_id": str(target_planet_id) if target_planet_id else None,
         "combat": rules.combat.model_dump(),
         "battle_at": utc(battle_at).isoformat(),
     }
@@ -713,8 +889,28 @@ def check_attack(session, empire_id, target_planet_id, colony_read):
     return owner
 
 
-def plan_mission(session, rules, fleet, kind, destination_id, stacks, target_planet_id=None):
-    """Server path and quote; the client never chooses routes, durations or costs."""
+def plan_mission(
+    session, rules, fleet, kind, destination_id, stacks, target_planet_id=None,
+    target_opportunity_id=None, cargo_room=None, duration_hours=None,
+):
+    """Server path and quote; the client never chooses routes or costs (EXTRACT: only its
+    length in whole hours, bounded by the ruleset)."""
+    if kind == "ATTACK" and target_opportunity_id is not None:
+        if target_planet_id is not None or duration_hours is not None:
+            raise FleetError("Unknown mission", "invalid_request")
+        return plan_attack_deposit(
+            session, rules, fleet, destination_id, stacks, target_opportunity_id
+        )
+    if kind in exploitation.ANALYSES:
+        if target_planet_id is not None:
+            raise FleetError("Unknown mission", "invalid_request")
+        room = cargo_room or (lambda units: rules.fleets.cargo_capacity(units))
+        return exploitation.plan(
+            session, rules, fleet, kind, destination_id, stacks, target_opportunity_id, room,
+            duration_hours,
+        )
+    if target_opportunity_id is not None or duration_hours is not None:
+        raise FleetError("Unknown mission", "invalid_request")
     if kind == "COLONIZE":
         return plan_colonize(session, rules, fleet, destination_id, stacks, target_planet_id)
     if kind == "ATTACK":
@@ -792,6 +988,9 @@ def launch(
     at,
     target_planet_id=None,
     colony_read=False,
+    target_opportunity_id=None,
+    duration_hours=None,
+    after=None,
 ):
     with session.begin_nested():
         rules = rules_for(session, universe_id)
@@ -805,6 +1004,12 @@ def launch(
         }
         if target_planet_id is not None:
             request["target_planet_id"] = str(target_planet_id)
+        if target_opportunity_id is not None:
+            request["target_opportunity_id"] = str(target_opportunity_id)
+        if duration_hours is not None:
+            request["duration_hours"] = duration_hours
+        if after is not None:
+            request["after"] = after
         existing = session.scalar(
             select(FleetMission).where(
                 FleetMission.empire_id == empire_id, FleetMission.idempotency_key == key
@@ -816,6 +1021,7 @@ def launch(
             return existing
         check_key(key)
         source = stationed(owned_fleet(session, universe_id, empire_id, fleet_id))
+        frontier.guard_fleet_change(session, source, at)
         wanted, moved_cargo = parse_units(rules, units), parse_cargo(cargo)
         have = stacks_of(session, source.id)
         # A whole task fleet moves itself with its cargo; otherwise a detachment leaves.
@@ -823,9 +1029,16 @@ def launch(
         stacks = have if whole else wanted
         if any(have.get(c, 0) < n for c, n in wanted.items()):
             raise FleetError("Units unavailable in fleet", "units_unavailable")
+        carried = cargo_of(session, source.id) if whole else moved_cargo
         destination, path, *quote = plan_mission(
-            session, rules, source, kind, destination_id, stacks, target_planet_id
+            session, rules, source, kind, destination_id, stacks, target_planet_id,
+            target_opportunity_id,
+            lambda units: rules.fleets.cargo_capacity(units) - sum(carried.values()),
+            duration_hours,
         )
+        follow = extract_after(kind, after)
+        if follow == "RETURN":
+            quote[0] = round_trip(quote[0])  # the way back is paid at launch, like an ATTACK
         if kind == "COLONIZE":
             check_colonize(
                 session,
@@ -839,7 +1052,11 @@ def launch(
         if kind == "ATTACK":
             if moved_cargo or (whole and cargo_of(session, source.id)):
                 raise FleetError("ATTACK carries no cargo", "attack_cargo")
-            defender = check_attack(session, empire_id, target_planet_id, colony_read)
+            defender = (
+                deposit_defender(session, empire_id, target_opportunity_id, at)
+                if target_opportunity_id is not None
+                else check_attack(session, empire_id, target_planet_id, colony_read)
+            )
         origin = source.system_id
         fleet = source if whole else detach(session, rules, source, wanted, moved_cargo)
         catch_up_owned(session, engine, universe_id, empire_id, fleet.home_colony_id, at)
@@ -863,7 +1080,11 @@ def launch(
         if kind == "COLONIZE":
             snapshot |= colonize_terms(rules, target_planet_id, due, utc(at), mission_id)
         if kind == "ATTACK":
-            snapshot |= attack_terms(rules, target_planet_id, due)
+            snapshot |= attack_terms(rules, target_planet_id, due, target_opportunity_id)
+        if kind in ("STUDY", "EXTRACT"):
+            snapshot["target_opportunity_id"] = str(target_opportunity_id)
+        if kind == "EXTRACT":
+            snapshot["duration_hours"], snapshot["after"] = duration_hours, follow
         snapshot["request"] = request
         mission = FleetMission(
             id=mission_id,
@@ -876,6 +1097,9 @@ def launch(
             destination_id=destination,
             payer_colony_id=fleet.home_colony_id,
             target_planet_id=target_planet_id,
+            target_opportunity_id=target_opportunity_id
+            if kind in ("STUDY", "EXTRACT", "ATTACK")
+            else None,
             idempotency_key=key,
             snapshot=snapshot,
             started_at=utc(at),
@@ -894,13 +1118,24 @@ def launch(
                     route_id=route_id,
                 )
             )
+        # A departing Fleet ends its stationing, hence any frontier protocol (13B).
+        frontier.end_protocol(session, fleet, at)
         fleet.status, fleet.system_id, fleet.active_mission_id = "MOVING", None, mission.id
         session.flush()
+        frontier.record_outbound(session, rules, mission, state.stream_id, path, quote[1])
+        if kind == "EXTRACT":
+            extractors, room = extraction_terms(rules, stacks, cargo_of(session, fleet.id))
+            extraction.open_claim(session, rules, mission, extractors, room, utc(at))
         if kind == "ATTACK":
             # No arrival event: the Combat orchestrator resolves the engagement at battle_at.
             from app.combat.service import open_engagement
 
+            if not path:
+                frontier.record_local(session, rules, mission)  # C03: 0-hop hostile act
             open_engagement(session, mission, state.stream_id, defender)
+            # After the engagement exists (its battle fence already holds the defender's stream
+            # FOR KEY SHARE): a friendly watcher of the defender may retreat (D7).
+            frontier.plan_for_mission(session, rules, mission)
             return mission
         schedule(
             session,
@@ -953,6 +1188,9 @@ def preview(
     at,
     target_planet_id=None,
     colony_read=False,
+    target_opportunity_id=None,
+    duration_hours=None,
+    after=None,
 ):
     """Read-only quote of a launch; the command recomputes everything under lock."""
     rules = rules_for(session, universe_id)
@@ -960,13 +1198,19 @@ def preview(
     wanted, have = parse_units(rules, units), stacks_of(session, source.id)
     if any(have.get(c, 0) < n for c, n in wanted.items()):
         raise FleetError("Units unavailable in fleet", "units_unavailable")
+    carried = cargo_of(session, source.id) if source.kind == "TASK" and wanted == have else {}
     destination, path, cost, travel, survey = plan_mission(
-        session, rules, source, kind, destination_id, wanted, target_planet_id
+        session, rules, source, kind, destination_id, wanted, target_planet_id,
+        target_opportunity_id,
+        lambda units: rules.fleets.cargo_capacity(units) - sum(carried.values()),
+        duration_hours,
     )
+    if extract_after(kind, after) == "RETURN":
+        cost = round_trip(cost)
     if kind == "COLONIZE":
         # The package aboard is chosen at launch; the launch checks it against the minimum.
         check_colonize(session, rules, empire_id, target_planet_id, None, colony_read)
-    if kind == "ATTACK":
+    if kind == "ATTACK" and target_planet_id is not None:
         # Read-only: own target only; a foreign occupant or defence is never consulted.
         owner = session.scalar(select(Colony.empire_id).where(Colony.planet_id == target_planet_id))
         if owner == empire_id:
@@ -986,14 +1230,87 @@ def preview(
         "due_at": (travel_arrival + timedelta(microseconds=survey)).isoformat(),
         "payer_colony_id": str(source.home_colony_id),
         "affordable": all(estimate[r].stock >= cost[r] for r in cost),
-        "target_planet_id": str(target_planet_id) if kind in ("COLONIZE", "ATTACK") else None,
+        "target_planet_id": str(target_planet_id)
+        if kind in ("COLONIZE", "ATTACK") and target_planet_id
+        else None,
         "package_minimum": rules.colonization.package_minimum() if kind == "COLONIZE" else None,
     }
     if kind == "ATTACK":
         quote["due_at"] = battle_time(rules, at, travel_arrival).isoformat()
         quote["battle_at"] = quote["due_at"]
         quote["units"] = wanted
+    # UX-API-01: the systems of the very routes this quote is computed on (absent if unsure).
+    route = quote_path(session, universe_id, empire_id, source.system_id, destination, path)
+    if route is not None:
+        quote["path"] = route
     return quote
+
+
+# --- UX-API-01: mission path (read-only) --------------------------------------------------------
+
+
+def known_systems(session, universe_id, empire_id):
+    """Systems the Empire knows (any state): the only ids a `path` may contain."""
+    return set(
+        session.scalars(
+            select(SystemKnowledge.system_id).where(
+                SystemKnowledge.universe_id == universe_id, SystemKnowledge.empire_id == empire_id
+            )
+        )
+    )
+
+
+def route_endpoints(session, universe_id, empire_id, route_ids):
+    """Endpoints of each route from the Empire's own RouteKnowledge, in order (None if unknown)."""
+    if not route_ids:
+        return []
+    rows = {
+        r.route_id: (r.a_id, r.b_id)
+        for r in session.scalars(
+            select(RouteKnowledge).where(
+                RouteKnowledge.universe_id == universe_id,
+                RouteKnowledge.empire_id == empire_id,
+                RouteKnowledge.route_id.in_(route_ids),
+            )
+        )
+    }
+    return [rows.get(route_id) for route_id in route_ids]
+
+
+def quote_path(session, universe_id, empire_id, origin, destination, route_ids, known=None):
+    """`path` of a quote: exactly the routes the quote was computed on (plan_mission)."""
+    if known is None:
+        known = known_systems(session, universe_id, empire_id)
+    systems = systems_along(origin, route_endpoints(session, universe_id, empire_id, route_ids))
+    return public_path(systems, destination, len(route_ids), known)
+
+
+def mission_path(session, mission, known):
+    """`path` of a mission as launched: its persisted legs, which must equal the accepted
+    snapshot. Never recomputed from today's Knowledge; any doubt withholds the field."""
+    route_ids = list(
+        session.scalars(
+            select(FleetMissionLeg.route_id)
+            .where(
+                FleetMissionLeg.mission_id == mission.id,
+                FleetMissionLeg.empire_id == mission.empire_id,
+                FleetMissionLeg.universe_id == mission.universe_id,
+            )
+            .order_by(FleetMissionLeg.ordinal)
+        )
+    )
+    accepted = mission.snapshot.get("path") if isinstance(mission.snapshot, dict) else None
+    if accepted != [str(route_id) for route_id in route_ids]:
+        return None
+    return quote_path(
+        session,
+        mission.universe_id,
+        mission.empire_id,
+        mission.origin_id,
+        mission.destination_id,
+        route_ids,
+        known,
+    )
 
 
 def check_mission_event(session, event, prefix):
@@ -1057,23 +1374,56 @@ SNAPSHOT_KEYS = {
 }
 COLONIZE_KEYS = SNAPSHOT_KEYS | {"target_planet_id", "colonization", "rank"}
 ATTACK_KEYS = SNAPSHOT_KEYS | {"target_planet_id", "combat", "battle_at"}
+STUDY_KEYS = SNAPSHOT_KEYS | {"target_opportunity_id"}
+EXTRACT_KEYS = STUDY_KEYS | {"duration_hours", "after"}
 
 
-def verify_mission_snapshot(session, mission, engaged=None):
+def extraction_terms(rules, stacks, cargo):
+    """(extractors, free hold) of an engaged EXTRACT fleet, as at its launch."""
+    room = rules.fleets.cargo_capacity(stacks) - sum(cargo.values())
+    return stacks.get(rules.opportunities.operations.extractor_class, 0), room
+
+
+AFTER = ("STAY", "RETURN")
+
+
+def extract_after(kind, after):
+    """EXP-02b: after the extraction the fleet stays (default) or comes back to its origin."""
+    if kind != "EXTRACT":
+        if after is not None:
+            raise FleetError("Only an extraction chooses what follows", "invalid_request")
+        return None
+    if after not in (None, *AFTER):
+        raise FleetError("Unknown follow-up", "invalid_request")
+    return after or "STAY"
+
+
+def verify_mission_snapshot(session, mission, engaged=None, cargo=None):
     """Worker check of the accepted intention: the snapshot is rebuilt from the pinned ruleset,
     the persisted legs and the engaged composition, then compared exactly. Any drift is a
     TimelineError (rollback, retry then blocked), never a silent repositioning.
 
     `engaged`: after a battle, an ATTACK is checked against the composition it launched with
-    (recorded in the resolved engagement), not against its survivors."""
+    (recorded in the resolved engagement), not against its survivors.
+    `cargo`: an EXTRACT coming back is checked against the hold it left with (the extracted
+    credit, recorded on its claim, is removed by the caller)."""
     snapshot, fleet = mission.snapshot, session.get(Fleet, mission.fleet_id)
     rules = ruleset_for(session, mission.universe_id)
     colonize, attack = mission.kind == "COLONIZE", mission.kind == "ATTACK"
-    keys = COLONIZE_KEYS if colonize else (ATTACK_KEYS if attack else SNAPSHOT_KEYS)
+    analysis = mission.kind in exploitation.ANALYSES
+    keys = (
+        COLONIZE_KEYS if colonize
+        else ATTACK_KEYS | ({"target_opportunity_id"} if mission.target_opportunity_id else set())
+        if attack
+        else STUDY_KEYS if mission.kind == "STUDY"
+        else EXTRACT_KEYS if mission.kind == "EXTRACT"
+        else SNAPSHOT_KEYS
+    )
     if (
         rules.fleets is None
         or (colonize and rules.colonization is None)
         or (attack and rules.combat is None)
+        or (analysis and rules.opportunities is None)
         or not isinstance(snapshot, dict)
         or set(snapshot) != keys
         or fleet is None
@@ -1081,8 +1431,16 @@ def verify_mission_snapshot(session, mission, engaged=None):
         or fleet.home_colony_id != mission.payer_colony_id
     ):
         raise TimelineError("Inconsistent mission snapshot")
-    path = verified_path(session, mission, local=colonize or attack)
+    path = verified_path(session, mission, local=colonize or attack or analysis)
+    carried = cargo_of(session, fleet.id) if cargo is None else cargo
     stacks = stacks_of(session, fleet.id) if engaged is None else engaged
+    # 13B: units destroyed by frontier engagements on the way were part of the launch.
+    stacks = frontier_add(stacks, frontier.intercepted_losses(session, mission.id))
+    if mission.kind == "EXTRACT" and engaged is None:
+        # v0.12 (EXP-02c): escorts lost defending the deposit were part of the launch.
+        from app.combat.service import operation_losses
+
+        stacks = frontier_add(stacks, operation_losses(session, mission))
     survey = mission.kind == "SURVEY"
     try:
         if survey and not all(rules.fleets.classes[c].survey for c in stacks):
@@ -1091,9 +1449,37 @@ def verify_mission_snapshot(session, mission, engaged=None):
             raise ValueError("COLONIZE engages exactly one colonizer")
         if attack and (not stacks or any(c not in rules.combat.classes for c in stacks)):
             raise ValueError("ATTACK engages military units only")
-        if attack and cargo_of(session, fleet.id):
+        if attack and carried:
             raise ValueError("ATTACK carries no cargo")
-        if (colonize or attack) and not path:
+        if mission.kind == "PROSPECT" and not all(rules.fleets.classes[c].survey for c in stacks):
+            raise ValueError("PROSPECT with a non-survey class")
+        if mission.kind == "STUDY" and not exploitation.can_study(rules, stacks):
+            raise ValueError("STUDY without instruments")
+        if mission.kind == "EXTRACT":
+            extractors, room = extraction_terms(rules, stacks, carried)
+            if extractors < 1 or room <= 0:
+                raise ValueError("EXTRACT without extractor or hold")
+            analysis_us = extraction.planned_us(
+                rules, session.get(GalaxyOpportunity, mission.target_opportunity_id),
+                extractors, room, snapshot.get("duration_hours"),
+            )
+        elif analysis:
+            seconds = (
+                rules.opportunities.operations.prospect_seconds
+                if mission.kind == "PROSPECT"
+                else session.get(GalaxyOpportunity, mission.target_opportunity_id).study_seconds
+            )
+            analysis_us = amount(seconds * MICRO_UNITS)
+        if analysis:
+            cost, duration = dict(NO_COST), 0
+            if path:
+                cost, duration, _ = rules.fleets.mission_quote(
+                    stacks, len(path), rules.colony.speeds["fleet"], False
+                )
+            if snapshot.get("after") == "RETURN":
+                cost = round_trip(cost)
+            quote = (cost, duration, analysis_us)
+        elif (colonize or attack) and not path:
             quote = (dict(NO_COST), 0, 0)
         else:
             quote = rules.fleets.mission_quote(
@@ -1111,7 +1497,7 @@ def verify_mission_snapshot(session, mission, engaged=None):
         mission.destination_id,
         path,
         stacks,
-        cargo_of(session, fleet.id),
+        carried,
         quote,
     )
     if colonize:
@@ -1119,10 +1505,19 @@ def verify_mission_snapshot(session, mission, engaged=None):
             rules, mission.target_planet_id, mission.due_at, mission.started_at, mission.id
         )
         minimum = rules.colonization.package_minimum()
-        if any(cargo_of(session, fleet.id).get(r, 0) < v for r, v in minimum.items()):
+        if any(carried.get(r, 0) < v for r, v in minimum.items()):
             raise TimelineError("Inconsistent mission snapshot")
     if attack:
-        expected |= attack_terms(rules, mission.target_planet_id, mission.due_at)
+        expected |= attack_terms(
+            rules, mission.target_planet_id, mission.due_at, mission.target_opportunity_id
+        )
+    if mission.kind in ("STUDY", "EXTRACT"):
+        expected["target_opportunity_id"] = str(mission.target_opportunity_id)
+    if mission.kind == "EXTRACT":
+        expected["duration_hours"] = snapshot.get("duration_hours")
+        if snapshot.get("after") not in AFTER:
+            raise TimelineError("Inconsistent mission snapshot")
+        expected["after"] = snapshot["after"]
     if any(snapshot[k] != v for k, v in expected.items()):
         raise TimelineError("Inconsistent mission snapshot")
     if mission.kind == "RETURN" and mission.destination_id != colony_system(
@@ -1150,6 +1545,97 @@ def settle_fleet(session, mission, system_id, at):
     session.flush()
 
 
+def finish_extraction(session, mission, at):
+    """The claim's credit, final at `at`, is loaded in the hold (it fits: the claim's room is
+    the free hold at launch)."""
+    rules = ruleset_for(session, mission.universe_id)
+    resource, credited = extraction.close_claim(session, rules, mission, at)
+    cargo = cargo_of(session, mission.fleet_id)
+    cargo[resource] = cargo.get(resource, 0) + credited
+    if sum(cargo.values()) > rules.fleets.cargo_capacity(stacks_of(session, mission.fleet_id)):
+        raise TimelineError("Extraction beyond the hold")
+    set_cargo(session, mission.fleet_id, {r: v for r, v in cargo.items() if v})
+    return {
+        "opportunity_id": str(mission.target_opportunity_id),
+        "resource": resource,
+        "extracted": str(credited),
+    }
+
+
+def end_extraction(session, mission, at, processed_at, result):
+    """After the credit: the fleet stays in the deposit's system (report now), or, when chosen
+    at launch and the deposit is elsewhere, travels back to its origin (report on return)."""
+    if mission.snapshot["after"] == "RETURN" and mission.origin_id != mission.destination_id:
+        rules = ruleset_for(session, mission.universe_id)
+        mission.status = "returning"
+        mission.return_at = at + (mission.travel_arrival_at - mission.started_at)
+        session.flush()
+        state = galaxy.state_for(session, mission.universe_id, mission.empire_id)
+        frontier.record_way_back(
+            session, rules, mission, state.stream_id, at, mission.travel_arrival_at
+        )
+        schedule(
+            session,
+            state.stream_id,
+            mission.universe_id,
+            key=f"fleet-return:{mission.id}",
+            kind="FLEET_RETURN",
+            due_at=mission.return_at,
+            payload={"mission_id": str(mission.id)},
+        )
+        return
+    session.add(
+        FleetReport(
+            mission_id=mission.id,
+            empire_id=mission.empire_id,
+            universe_id=mission.universe_id,
+            observed_at=at,
+            processed_at=utc(processed_at),
+            result=result,
+        )
+    )
+    settle_fleet(session, mission, mission.destination_id, at)
+
+
+def complete_extract_return(session, mission, event, processed_at):
+    """The way back of an extraction: checked against the hold it left with, then reported."""
+    claim = session.get(DepositClaim, mission.id)
+    if (
+        claim is None
+        or mission.status != "returning"
+        or mission.snapshot.get("after") != "RETURN"
+        or mission.return_at != event.due_at
+        or mission.return_at
+        != claim.active_until + (mission.travel_arrival_at - mission.started_at)
+    ):
+        raise TimelineError("Inconsistent return deadline")
+    resource = session.get(GalaxyOpportunity, claim.opportunity_id).resource
+    cargo = cargo_of(session, mission.fleet_id)
+    if cargo.get(resource, 0) < claim.credited:
+        raise TimelineError("Extraction credit missing from the hold")
+    cargo[resource] -= claim.credited
+    verify_mission_snapshot(session, mission, cargo={r: v for r, v in cargo.items() if v})
+    origin = UUID(mission.snapshot["origin_id"])
+    session.add(
+        FleetReport(
+            mission_id=mission.id,
+            empire_id=mission.empire_id,
+            universe_id=mission.universe_id,
+            observed_at=event.due_at,
+            processed_at=utc(processed_at),
+            result={
+                "kind": "EXTRACT",
+                "destination_id": str(origin),
+                "opportunity_id": str(claim.opportunity_id),
+                "resource": resource,
+                "extracted": str(claim.credited),
+                "returned": True,
+            },
+        )
+    )
+    settle_fleet(session, mission, origin, event.due_at)
+
+
 def complete_arrival(session, event, processed_at):
     mission = check_mission_event(session, event, "fleet-arrival")
     if mission.status == "completed" and session.get(FleetReport, mission.id) is not None:
@@ -1168,6 +1654,21 @@ def complete_arrival(session, event, processed_at):
         # Mapping happens at due_at only, after the analysis; same monotone Knowledge merge.
         result["discoveries"] = galaxy.map_system(
             session, mission.universe_id, mission.empire_id, mission.destination_id, event.due_at
+        )
+    if mission.kind == "PROSPECT":
+        result |= exploitation.prospect(session, mission, event.due_at)
+    if mission.kind == "EXTRACT":
+        result |= finish_extraction(session, mission, event.due_at)
+        return end_extraction(session, mission, event.due_at, processed_at, result)
+    if mission.kind == "STUDY":
+        rules = ruleset_for(session, mission.universe_id)
+        fleet_id = mission.fleet_id
+        result |= exploitation.study(
+            session, rules, mission,
+            lambda: cargo_of(session, fleet_id),
+            lambda values: set_cargo(session, fleet_id, values),
+            rules.fleets.cargo_capacity(stacks_of(session, fleet_id)),
+            event.due_at,
         )
     session.add(
         FleetReport(
@@ -1244,7 +1745,11 @@ def resolve_colonize(session, mission, event, processed_at):
     session.flush()
     result = base | {"outcome": "founded", "colony_id": str(colony.id)}
     session.add(report_for(mission, event, processed_at, result))
-    galaxy.refresh_monitoring(session, mission.universe_id, mission.empire_id, event.due_at)
+    # Handlers may run inside a Combat catch-up that locks a relation pair afterwards: no
+    # presence contact here (pair → contact order); the next own refresh records it.
+    galaxy.refresh_monitoring(
+        session, mission.universe_id, mission.empire_id, event.due_at, contacts=False
+    )
     session.flush()
 
 
@@ -1261,7 +1766,7 @@ def report_for(mission, event, processed_at, result):
 
 def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
     with session.begin_nested():
-        rules_for(session, universe_id)
+        rules = rules_for(session, universe_id)
         state = operations(session, engine, universe_id, empire_id, at)
         request = {"mission_id": str(mission_id)}
         done = ledger(session, empire_id, key, "recall", request)
@@ -1271,6 +1776,9 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         if done is None and mission.kind == "ATTACK" and mission.status == "returning":
             if mission.recalled_at is None:
                 raise FleetError("The battle already took place", "recall_too_late")
+        if done is None and mission.kind == "EXTRACT" and mission.status == "returning":
+            if mission.recalled_at is None:
+                raise FleetError("The extraction is over", "recall_too_late")
         if done is not None or mission.status == "returning":
             return mission
         if mission.status == "completed":
@@ -1281,6 +1789,8 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
             return recall_attack(session, state, mission, key, request, at)
         if mission.kind == "COLONIZE":
             lock_target(session, mission)  # visible to a competing claim only once committed
+        if mission.kind == "EXTRACT" and utc(at) >= mission.travel_arrival_at:
+            return stop_extraction(session, state, mission, key, request, at)
         # DEPLOY until arrival; SURVEY only while travelling, never during the analysis.
         if utc(at) >= mission.travel_arrival_at:
             raise FleetError("Fleet already arrived", "recall_too_late")
@@ -1295,9 +1805,12 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         # Never schedule a return from a drifted mission: its origin comes from the snapshot.
         verify_mission_snapshot(session, mission)
         event.status, event.completed_at, event.error_code = "completed", utc(at), "cancelled"
+        if mission.kind == "EXTRACT":
+            extraction.close_claim(session, rules, mission, utc(at))  # empty window
         mission.status, mission.recalled_at = "returning", utc(at)
         mission.return_at = utc(at) + (utc(at) - mission.started_at)
         session.flush()
+        frontier.record_way_back(session, rules, mission, state.stream_id, utc(at), utc(at))
         schedule(
             session,
             state.stream_id,
@@ -1309,6 +1822,26 @@ def recall(session, engine, universe_id, empire_id, mission_id, *, key, at):
         )
         record(session, universe_id, empire_id, key, "recall", request, request, at)
         return mission
+
+
+def stop_extraction(session, state, mission, key, request, at):
+    """EXP-02b: a recall during the extraction stops it now; what was extracted is loaded and
+    the fleet stays in the system (it travels home by an ordinary mission)."""
+    event = session.scalar(
+        select(ScheduledEvent).where(
+            ScheduledEvent.stream_id == state.stream_id,
+            ScheduledEvent.idempotency_key == f"fleet-arrival:{mission.id}",
+        )
+    )
+    if event is None or event.status != "pending":
+        raise TimelineError("Arrival event missing or blocked")
+    verify_mission_snapshot(session, mission)
+    event.status, event.completed_at, event.error_code = "completed", utc(at), "cancelled"
+    result = {"kind": "EXTRACT", "destination_id": str(mission.destination_id), "stopped": True}
+    result |= finish_extraction(session, mission, utc(at))
+    end_extraction(session, mission, utc(at), at, result)
+    record(session, mission.universe_id, mission.empire_id, key, "recall", request, request, at)
+    return mission
 
 
 def recall_attack(session, state, mission, key, request, at):
@@ -1344,6 +1877,10 @@ def recall_attack(session, state, mission, key, request, at):
         mission.status, mission.recalled_at = "returning", now
         mission.return_at = now + travelled
         session.flush()
+        rules = ruleset_for(session, mission.universe_id)
+        frontier.record_way_back(
+            session, rules, mission, state.stream_id, now, min(now, mission.travel_arrival_at)
+        )
         schedule(
             session,
             state.stream_id,
@@ -1402,6 +1939,8 @@ def complete_return(session, event, processed_at):
         return
     if mission.kind == "ATTACK":
         return complete_attack_return(session, mission, event, processed_at)
+    if mission.kind == "EXTRACT" and mission.recalled_at is None:
+        return complete_extract_return(session, mission, event, processed_at)
     if (
         mission.status != "returning"
         or mission.return_at != event.due_at

@@ -3,15 +3,17 @@
 import argparse
 import json
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
+from uuid import UUID
 
 from sqlalchemy import exists, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from portal_app.account_security.models import AccountRevocation
+from portal_app.accounts.models import User
 from portal_app.accounts.service import Accounts
 from portal_app.control.models import ControlOutbox, UniverseMembership, UniverseReference
-from portal_app.control.service import digest, enqueue
+from portal_app.control.service import PERMISSIONS, Lobby, digest, enqueue, start_receipt
 from portal_app.control.transport import DeliveryError, Transport
 from portal_app.core.config import Settings
 from portal_app.persistence.database import create_database_engine, create_session_factory
@@ -112,6 +114,52 @@ def accept_receipt(session, accounts, row, receipt):
         ):
             raise DeliveryError("invalid_receipt")
         session.get(UniverseReference, row.universe_id).provisioned = True
+    elif message["kind"] == "start_universe":
+        seats = start_receipt(message, result)
+        if seats is None:
+            raise DeliveryError("invalid_receipt")
+        # Same lock order as browser requests (account, then universe): never a deadlock cycle.
+        created_by = session.scalar(
+            select(UniverseReference.created_by).where(UniverseReference.id == row.universe_id)
+        )
+        creator = session.get(User, created_by, with_for_update=True) if created_by else None
+        universe = session.get(UniverseReference, row.universe_id, with_for_update=True)
+        if universe.human_empire_id is None:
+            universe.provisioned = True
+            universe.human_empire_id = UUID(result["human_empire_id"])
+            universe.seats = seats
+            universe.started_at = datetime.fromisoformat(result["started_at"])
+            # The creator gets the first seat with every permission, through the same
+            # membership/access path as operators (revision, epochs, reconciliation).
+            # A creation deleted while starting stays out of reach: no access is granted.
+            if creator is not None and creator.status == "active" and universe.deleted_at is None:
+                granted = Lobby(accounts).grant(
+                    session,
+                    creator,
+                    universe,
+                    "active",
+                    [
+                        {
+                            "empire_id": str(universe.human_empire_id),
+                            "permissions": sorted(PERMISSIONS),
+                        }
+                    ],
+                )
+                name = (universe.start_request or {}).get("empire_name")
+                if name:
+                    # Q60: the creator's chosen Empire name, applied by Game like any rename.
+                    from portal_app.control.life import set_name
+
+                    member = session.get(UniverseMembership, UUID(granted["membership_id"]))
+                    set_name(session, accounts, universe, member, name)
+        elif str(universe.human_empire_id) != result["human_empire_id"]:
+            raise DeliveryError("invalid_receipt")
+    elif message["kind"] in ("name_empire", "hand_over_empire"):
+        # Q60: Game echoes the target and the applied value; anything else is not this effect.
+        value = "name" if message["kind"] == "name_empire" else "profile"
+        echoed = ("universe_id", "empire_id", value)
+        if result["status"] != "applied" or any(result.get(k) != message[k] for k in echoed):
+            raise DeliveryError("invalid_receipt")
     elif message["kind"] == "set_universe_access":
         reported = result.get("snapshot")
         if (
@@ -171,6 +219,12 @@ def deliver_one(accounts, transport):
                     receipt = transport.request(
                         row.backend_id, "GET", f"/internal/v1/operations/{row.id}"
                     )
+                    if isinstance(receipt, dict) and receipt.get("request_digest") != (
+                        row.request_digest
+                    ):
+                        # A receipt stored under another digest rule: the idempotent POST lets
+                        # Game compare the content itself and answer with this digest.
+                        receipt = None
                 if receipt is None:
                     receipt = transport.request(
                         row.backend_id, "POST", "/internal/v1/operations", row.envelope

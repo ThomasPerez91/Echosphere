@@ -139,3 +139,18 @@ sous-décisions déjà prises), Q14, Q18 et Q25 restent ouvertes ou futures.
   état (en attente ou annulée). Ni attaquant, ni origine, ni route, ni composition.
 - **Hors périmètre :** butin, occupation, siège, bombardement, conquête, modules de défense
   (Q30–Q38 restent reportés au runtime), relations (étape 13), offensive IA (Q18 ouverte).
+
+## Relations et premier contact
+
+Étape 13 : un pacte actif à `battle_at` annule la bataille (`voided_by_pact`), jamais un refus au
+lancement ; une bataille résolue est un acte hostile daté et crée les contacts. [Relations Q18](relations.md).
+Engagements automatiques futurs (AMBUSH, INTERCEPTION) et repli amical : [présence frontalière et premier contact](first-contact.md), lot 13B.
+
+## Exception D5 — rencontres frontalières (13B, 02/11/2026)
+
+Q02 reste entière pour ATTACK : 24 h minimum avant toute bataille contre une planète. Par exception
+validée, une rencontre automatique entre deux flottes physiquement présentes dans le même système
+(protocoles AMBUSH ou INTERCEPTION) est résolue à l'instant logique de l'entrée, par le même
+résolveur, avec les mêmes limites (pertes militaires seules, aucun effet sur colonies, bâtiments ou
+ressources, flotte exclusivement civile jamais détruite, pacte prioritaire). Règles :
+[premier contact, D5](first-contact.md#décisions-d1d7--02112026).

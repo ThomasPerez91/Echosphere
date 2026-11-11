@@ -1,5 +1,7 @@
 import { ApiError } from "../colony/api";
 import type { Amounts } from "../colony/api";
+import { validLayout } from "./shape";
+import type { Layout } from "./shape";
 export { ApiError };
 
 export type Empire = { id: string; name: string };
@@ -22,6 +24,15 @@ export type KnownSystem = {
   last_seen_at?: string | null;
   observation?: { own_colony_ids: string[] } | null;
   planets?: KnownPlanet[];
+  /** EXP-01 (v0.10): signatures not prospected yet, and the dated details of those that were. */
+  opportunities?: { signatures: number; known: KnownOpportunity[] };
+};
+export type KnownOpportunity = {
+  id: string; family: "deposit" | "curiosity"; kind: string; tier: "common" | "remarkable"; observed_at: string;
+  resource?: "alloys" | "flux" | "data"; reserve?: string; throughput_per_hour?: string;
+  study_seconds?: number; data?: string; dossier?: number; clue?: number;
+  /** EXP-02a: this Empire already studied this curiosity (one study per Empire). */
+  studied?: boolean;
 };
 export type Route = { id: string; a_id: string; b_id: string };
 export type Report = {
@@ -52,6 +63,11 @@ export type Option = {
   duration_us: string;
   reason: string | null;
 };
+export type Presence = { empire: number; system_id: string; planet_id: string };
+/** v0.12 map: a foreign Colony this Empire legitimately knows (own MONITORED system, own attack report). */
+export type Relation = "ally" | "neutral" | "hostile" | "unknown";
+export type ForeignPresence = { planet_id: string; system_id: string; observed_at: string; source: "monitoring" | "combat";
+  relation: Relation; empire?: { id: string; name: string | null } };
 export type Projection = {
   server_time: string;
   /** Pinned exploration means: abstract expedition (v0.3) or probe Fleet SURVEY (v0.4+). */
@@ -60,6 +76,14 @@ export type Projection = {
   permissions: string[];
   systems: KnownSystem[];
   routes: Route[];
+  /** Every star of the galaxy as a bare position (decision 09/11/2026): no identity, no route. */
+  stars?: [number, number][];
+  /** Test game only: every foreign Colony with an anonymous Empire number (never a name). */
+  sandbox?: { presences: Presence[] };
+  /** Shaped galaxy (v0.12): the density of the backdrop, decorative only. */
+  layout?: Layout;
+  /** v0.12: known foreign Colonies, classed ally/neutral/hostile (absent before v0.12 or without relations.read). */
+  foreign?: ForeignPresence[];
   sources: { id: string; name: string; stocks: Amounts }[];
   options: Option[];
   missions: Mission[];
@@ -75,7 +99,15 @@ const micro = (v: unknown) => typeof v === "string" && /^\d{1,20}$/.test(v);
 const amounts = (v: unknown) => object(v) && ["alloys", "flux", "data"].every((k) => micro(v[k]));
 const list = (v: unknown, item: (x: unknown) => boolean) => Array.isArray(v) && v.every(item);
 const route = (v: unknown) => object(v) && id(v.id) && id(v.a_id) && id(v.b_id);
-const STRUCTURE = ["name", "mapped_at", "last_seen_at", "observation", "planets"];
+const STRUCTURE = ["name", "mapped_at", "last_seen_at", "observation", "planets", "opportunities"];
+const opportunity = (o: unknown) => object(o) && id(o.id) && typeof o.kind === "string" && date(o.observed_at)
+  && (o.tier === "common" || o.tier === "remarkable")
+  && (o.family === "deposit"
+    ? ["alloys", "flux", "data"].includes(String(o.resource)) && micro(o.reserve) && micro(o.throughput_per_hour) && !("data" in o)
+    : o.family === "curiosity" && integer(o.study_seconds) && micro(o.data) && !("reserve" in o)
+      && (o.studied === undefined || typeof o.studied === "boolean"));
+const opportunities = (v: unknown) => v === undefined
+  || (object(v) && integer(v.signatures) && v.signatures >= 0 && list(v.known, opportunity));
 
 export function validKnownSystem(v: unknown): v is KnownSystem {
   if (!object(v) || !id(v.id) || !integer(v.x) || !integer(v.y) || !date(v.discovered_at))
@@ -85,6 +117,7 @@ export function validKnownSystem(v: unknown): v is KnownSystem {
   if (v.state !== "MAPPED" && v.state !== "MONITORED") return false;
   return (
     typeof v.name === "string" &&
+    opportunities(v.opportunities) &&
     date(v.mapped_at) &&
     (v.last_seen_at === null || date(v.last_seen_at)) &&
     (v.observation === null ||
@@ -140,6 +173,12 @@ export function validProjection(value: unknown, empire: string): value is Projec
     // Colony identifiers belong to colony.read: refuse them instead of hiding them.
     (!(value.permissions as string[]).includes("colony.read") && (value.systems as KnownSystem[]).some((s) => s.observation)) ||
     !list(value.routes, route) ||
+    ("stars" in value && !list(value.stars, (p) => Array.isArray(p) && p.length === 2 && p.every((c) => typeof c === "number" && Number.isFinite(c)))) ||
+    ("layout" in value && !validLayout(value.layout)) ||
+    ("foreign" in value && !list(value.foreign, (p) => object(p) && id(p.planet_id) && id(p.system_id) && date(p.observed_at)
+      && (p.source === "monitoring" || p.source === "combat") && ["ally", "neutral", "hostile", "unknown"].includes(String(p.relation))
+      && (p.empire === undefined ? p.relation === "unknown" : object(p.empire) && id(p.empire.id) && (p.empire.name === null || typeof p.empire.name === "string")))) ||
+    ("sandbox" in value && !(object(value.sandbox) && list(value.sandbox.presences, (p) => object(p) && integer(p.empire) && id(p.system_id) && id(p.planet_id)))) ||
     !list(value.sources, (s) => object(s) && id(s.id) && typeof s.name === "string" && amounts(s.stocks)) ||
     !list(
       value.options,

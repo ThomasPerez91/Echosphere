@@ -123,3 +123,61 @@ Le GET détail réutilisé lit désormais la Knowledge persistée sous verrou Ex
 catch_up ni avancement de stream** ; DETECTED reste minimal. Détail MAPPED/MONITORED enrichi par
 composition : dates, routes connues, présence propre observée et liens Colony sous colony.read.
 Aucun rapport figé ni API générale Galaxy modifié ; [contrat technique System View](system-view.md).
+
+## Décision utilisateur du 09/11/2026 — étoiles visibles, carte dézoomable
+
+Retour de recette : on doit pouvoir dézoomer sur toute la galaxie et voir ses étoiles, même dans le
+brouillard. La projection Galaxy ajoute `stars` : la position `[x, y]` de chaque système de
+l’univers, **sans identité, nom, route ni contenu** (ordre des ordinaux). Tout le reste (systèmes,
+routes, opportunités, flottes) reste projeté depuis la Knowledge seule. La carte de commandement
+dessine ces étoiles en points non interactifs, ajoute « Voir toute la galaxie » (touche 9), et l’effet
+radar (balayage et ondes autour de la capitale) est retiré.
+
+## Carte de commandement : lisibilité (11/11/2026)
+
+Après la recette du 11/11 (carte illisible en partie de test, toute la galaxie cartographiée), la
+carte suit la référence `carte-galaxie.html` fournie par l’utilisateur : taille des étoiles liée
+au zoom, noms seulement en zoomant (sauf sélection, colonies, Empires repérés, flottes) et sans
+chevauchement, anneau fin de statut, couleur d’étoile **cosmétique** dérivée de l’identifiant (sans
+valeur de jeu), routes en pointillés, zoom à la molette sous le pointeur, légende masquable, carte
+sur toute la largeur. Les nouvelles galaxies v0.12 nomment leurs systèmes par syllabes
+(`naming: syllables`, flux aléatoire séparé : le reste de la génération est inchangé).
+
+## Formes de galaxie (11/11/2026)
+
+Demande de l’utilisateur du 11/11 : les formes du `carte-galaxie.html` à la création. Ruleset
+**v0.12** seulement (`galaxy.shapes`, extension omise sinon) : elliptique, spirale à 2 ou 4 bras,
+irrégulière, amas d’étoiles, ou « au hasard » (forme tirée du seed). `start_universe.shape` est
+facultatif (omis : grille historique, digests et reçus antérieurs inchangés) ; Portal le transmet
+depuis « Nouvelle partie » (choix « Forme de la galaxie », « Au hasard » par défaut).
+
+- Génération (`app/galaxy/shapes.py`) : densité de la référence sur un disque normalisé incliné
+  (aplatissement 0,74), paramètres tirés en entiers (millièmes) ; étoiles tirées selon la densité
+  avec distance minimale (`min_separation` toujours respectée), étoiles isolées retirées et
+  retirées ailleurs ; routes candidates = graphe de Gabriel (planaire, jusqu’à
+  `shapes.max_route_length` = 600) plus quelques liaisons longues joignant les amas
+  (`shapes.max_link_length` = 4 000). Les longueurs sont visuelles : le trajet compte des sauts.
+- Le reste de galaxy-v2 est inchangé : régions, arbre presque minimal dans chaque région,
+  impasses, goulots entre régions, départs équitables validés par `validate_v2` ; une forme
+  ajoute des régions de réserve (bras fins) et peut renforcer un départ en carrefour (3 routes).
+- Persistance : `universe_galaxies.layout` (migration 0022, JSONB nullable) ; la projection
+  Galaxie expose `layout` (forme, centre, rayon, paramètres) pour le fond de carte. Aucune fuite :
+  toutes les étoiles sont déjà visibles comme points.
+- Fond (`frontend/src/galaxy/shape.ts`) : même densité que le serveur (bruit identique, testé des
+  deux côtés), palette et rendu de la référence (bras, noyau, bandes de poussière, régions HII,
+  amas), brouillard plus léger. Les galaxies sans forme gardent la nébuleuse générique.
+- Tests : `tests/test_galaxy_shapes.py` (chaque forme valide en 100 et 300 systèmes,
+  déterminisme, densité, Gabriel sans croisement, refus hors v0.12),
+  `tests/integration/test_galaxy_shapes_db.py` (PostgreSQL : choix transmis, layout servi),
+  `galaxy/shape.test.ts` (parité du bruit et de la densité).
+
+## Infobulle, menu contextuel et en-tête allégé (11/11/2026)
+
+Fin du portage du `carte-galaxie.html` : au survol à la souris, une infobulle donne nom, statut,
+contrôle connu, planètes, opportunités (et signaux à prospecter), vos flottes et la distance en
+sauts (décorative, `aria-hidden` : les mêmes faits sont dans le nom accessible et la fiche). Le
+menu contextuel prend le style de la référence (pastille d’étoile, flèche vers le système,
+apparition douce, actions avec pictogramme par type). L’en-tête de la page Galaxie tient sur une
+ligne : titre et sous-titre à gauche, recherche, bascule compacte Commandement/Classique,
+Empire et date des connaissances, Actualiser à droite ; la vue « Influence » (backend
+nécessaire) rejoint les interrupteurs désactivés de la carte.

@@ -6,6 +6,7 @@ for (const width of [320, 390, 768, 1440]) {
   test(`system ${width}px: knowledge, keyboard/touch, deep-link and history`, async ({ browser }, testInfo) => {
     const context = await browser.newContext({ viewport: { width, height: 850 }, hasTouch: true });
     const page = await context.newPage();
+    await page.addInitScript(() => { try { localStorage.setItem('echosphere.galaxy.mode', 'classic'); } catch { /* none */ } }); // UX05: these steps drive the classic map
     const requests: string[] = [];
     page.on('request', r => { if (r.url().includes('/api/game/')) requests.push(`${r.method()} ${r.url()}`); });
     await page.route('**/api/ready', r => r.fulfill({ json: { status: 'ready' } }));
@@ -24,7 +25,7 @@ for (const width of [320, 390, 768, 1440]) {
     await open.focus(); await page.keyboard.press('Enter');
     await expect(page).toHaveURL(new RegExp(`galaxy/system/${empire}/${origin}$`));
     // Scoped: the Galaxy detail panel carries the same system name.
-    const heading = page.locator('.system-heading').getByRole('heading', { name: 'Système d’origine', exact: true });
+    const heading = page.locator('.d-system .d-vhero').getByRole('heading', { name: 'Système d’origine', exact: true });
     await expect(heading).toBeFocused();
     await expect(page.getByText('Présence propre observée : Nouvelle Aube')).toBeVisible();
     const overflow = await page.evaluate(() => ({
@@ -39,10 +40,11 @@ for (const width of [320, 390, 768, 1440]) {
     expect(overflow.scrollWidth, JSON.stringify(overflow)).toBeLessThanOrEqual(overflow.width);
     // Own world is preselected even though it is not first in server order.
     await expect(page.getByRole('link', { name: 'Voir ma colonie', exact: true })).toBeVisible();
-    const other = page.getByRole('button', { name: 'Sélectionner Rocher Pâle' });
+    // Redrawn view (11/11/2026): the « Mondes connus » cards select a world (touch-sized).
+    const other = page.locator('.d-sys-worlds').getByRole('button', { name: /Rocher Pâle/ });
     await other.tap();
     await expect(page.getByRole('link', { name: 'Voir ma colonie', exact: true })).toHaveCount(0);
-    const planet = page.getByRole('button', { name: 'Sélectionner Nouvelle Aube' });
+    const planet = page.locator('.d-sys-worlds').getByRole('button', { name: /Nouvelle Aube/ });
     await planet.scrollIntoViewIfNeeded();
     const rect = (await planet.boundingBox())!;
     expect(rect.height).toBeGreaterThanOrEqual(44);
@@ -55,12 +57,13 @@ for (const width of [320, 390, 768, 1440]) {
     await expect(page.locator('.galaxy-map')).toHaveAttribute('viewBox', box!);
     await page.goForward(); await expect(heading).toBeVisible();
     await page.reload(); await expect(heading).toBeVisible();
-    // System route has no Galaxy GET/polling of its own and no gameplay mutation.
+    // Refreshing re-reads the system (and the projections its actions need), never a mutation.
     const before = requests.length;
-    await page.getByRole('button', { name: 'Actualiser les connaissances' }).click();
+    await page.getByRole('button', { name: 'Actualiser', exact: true }).click();
     await expect.poll(() => requests.length).toBeGreaterThan(before);
-    expect(requests.slice(before).every(r => r.startsWith('GET ') && r.includes('/systems/'))).toBe(true);
-    await page.getByRole('link', { name: '← Retour à la Galaxie', exact: true }).click();
+    expect(requests.slice(before).every(r => r.startsWith('GET '))).toBe(true);
+    expect(requests.slice(before).some(r => r.includes('/systems/'))).toBe(true);
+    await page.getByRole('link', { name: /Voir sur la carte galactique/ }).click();
     await page.locator('.galaxy-list').getByRole('button', { name: /Signal détecté 1/ }).click();
     await expect(page.getByRole('link', { name: 'Voir le système' })).toHaveCount(0);
     await page.goto(`/#universe/${universe}/galaxy/system/${empire}/${near}`);

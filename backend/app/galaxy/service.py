@@ -11,19 +11,24 @@ from uuid import UUID
 from sqlalchemy import select
 
 from app.colony.service import ColonyError, catch_up_owned, owned_colony, rules_for
+from app.frontier import service as frontier
 from app.galaxy.models import (
     EmpireExploration,
     ExplorationMission,
     ExplorationReport,
+    GalaxyOpportunity,
     GalaxyPlanet,
     GalaxyRoute,
     GalaxySystem,
     MissionLeg,
+    OpportunityKnowledge,
+    OpportunityStudy,
     PlanetKnowledge,
     RouteKnowledge,
     SystemKnowledge,
 )
 from app.persistence.models import Colony, Empire, Planet, StellarSystem
+from app.relations import service as relations
 from app.research import service as research
 from app.simulation.clock import utc
 from app.simulation.models import ResourceBalance
@@ -174,14 +179,20 @@ def initialize_empire(session, engine, universe_id, empire_id, colony_id, at):
         return state
 
 
-def refresh_monitoring(session, universe_id, empire_id, at):
+def refresh_monitoring(session, universe_id, empire_id, at, *, contacts=True):
+    """Own legitimate observation. Returns the systems MONITORED now.
+
+    `contacts=False` defers the v0.8 presence contacts: a transaction that may later lock a
+    relation pair (Combat catch-up handlers, AI turn) must write contacts only after that pair
+    (global order pair → contact), then call `relations.observe_presences` itself.
+    """
     # Only the Empire's OWN legitimate Colony presence grants observation; no remote sensors.
     owned = session.execute(
         select(Planet.system_id, Colony.id)
         .join(Colony, Colony.planet_id == Planet.id)
         .where(Colony.universe_id == universe_id, Colony.empire_id == empire_id)
     ).all()
-    by_system = {}
+    by_system, monitored = {}, []
     for system_id, colony_id in owned:
         by_system.setdefault(system_id, []).append(str(colony_id))
     for known in session.scalars(
@@ -192,11 +203,72 @@ def refresh_monitoring(session, universe_id, empire_id, at):
         if known.system_id in by_system and known.state != "DETECTED":
             known.state, known.last_seen_at = "MONITORED", utc(at)
             known.observation = {"own_colony_ids": sorted(by_system[known.system_id])}
+            monitored.append(known.system_id)
         elif known.state == "MONITORED":
             known.state = "MAPPED"  # preserve structure and the dated observation
+    # v0.8 (Q18 B3): a foreign Colony seen in a system MONITORED by an own Colony is a dated,
+    # oriented contact (Empire, planet, date only). Earlier rulesets observe nothing more.
+    if contacts:
+        record_contacts(session, universe_id, empire_id, monitored, at)
+    return monitored
 
 
-def project_system(session, known, colony_read=True):
+def record_contacts(session, universe_id, empire_id, monitored, at):
+    """Contacts this Empire legitimately acquired: presences (v0.8+) and FRIENDLY_CONTACT
+    introductions (v0.9+). Only where no relation pair is locked afterwards."""
+    rules = rules_for(session, universe_id)
+    if rules.relations is not None and monitored:
+        relations.observe_presences(session, universe_id, empire_id, monitored, utc(at))
+    if frontier.enabled(rules):
+        frontier.materialise_introductions(session, universe_id, empire_id, at)
+
+
+def opportunity_views(session, universe_id, empire_id, system_ids=None):
+    """EXP-01 Fog: per known system, the number of signatures this Empire has not prospected and
+    the dated details of those it has. Values are the ones observed, never the current ones."""
+    rows = select(GalaxyOpportunity).where(GalaxyOpportunity.universe_id == universe_id)
+    if system_ids is not None:
+        rows = rows.where(GalaxyOpportunity.system_id.in_(list(system_ids)))
+    known = {
+        k.opportunity_id: k
+        for k in session.scalars(
+            select(OpportunityKnowledge).where(
+                OpportunityKnowledge.universe_id == universe_id,
+                OpportunityKnowledge.empire_id == empire_id,
+            )
+        )
+    }
+    studied = set(
+        session.scalars(
+            select(OpportunityStudy.opportunity_id).where(
+                OpportunityStudy.universe_id == universe_id,
+                OpportunityStudy.empire_id == empire_id,
+            )
+        )
+    )
+    views = {}
+    for o in session.scalars(rows.order_by(GalaxyOpportunity.system_id, GalaxyOpportunity.ordinal)):
+        view = views.setdefault(o.system_id, {"signatures": 0, "known": []})
+        seen = known.get(o.id)
+        if seen is None:
+            view["signatures"] += 1
+            continue
+        item = {"id": str(o.id), "family": o.family, "kind": o.kind, "tier": o.tier,
+                "observed_at": seen.observed_at.isoformat()}
+        if o.family == "deposit":
+            item.update(resource=o.resource, reserve=str(seen.observed_reserve),
+                        throughput_per_hour=str(o.throughput_per_hour))
+        else:
+            item.update(
+                study_seconds=o.study_seconds, data=str(o.data_reward), studied=o.id in studied
+            )
+            if o.dossier is not None:
+                item.update(dossier=o.dossier, clue=o.clue)
+        view["known"].append(item)
+    return views
+
+
+def project_system(session, known, colony_read=True, opportunities=None):
     result = {
         "id": str(known.system_id),
         "state": known.state,
@@ -231,6 +303,11 @@ def project_system(session, known, colony_read=True):
                 )
             ],
         )
+        if opportunities is not None:
+            # v0.10 only (EXP-01): mapping reveals signatures; prospection, their details.
+            result["opportunities"] = opportunities.get(
+                known.system_id, {"signatures": 0, "known": []}
+            )
     return result
 
 

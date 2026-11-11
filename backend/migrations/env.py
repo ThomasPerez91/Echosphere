@@ -7,9 +7,11 @@ from app.combat import models as combat_models  # noqa: F401
 from app.control import models as control_models  # noqa: F401
 from app.core.config import Settings
 from app.fleet import models as fleet_models  # noqa: F401
+from app.frontier import models as frontier_models  # noqa: F401
 from app.galaxy import models as galaxy_models  # noqa: F401
 from app.persistence.database import create_database_engine
 from app.persistence.models import Base
+from app.relations import models as relations_models  # noqa: F401
 from app.research import models as research_models  # noqa: F401
 from app.simulation import models as simulation_models  # noqa: F401
 

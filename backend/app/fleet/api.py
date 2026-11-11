@@ -16,15 +16,26 @@ from app.access.http import cookie_name
 from app.access.service import AccessError
 from app.colony.api import Colonies, bootstrap, call, command
 from app.colony.projection import amounts
+from app.colony.rules import Ratio
 from app.colony.service import rules_for
 from app.combat import service as combat
 from app.control.models import EmpireBinding
 from app.fleet import service
 from app.fleet.models import Fleet, FleetMission, FleetReport, ShipOrder
+from app.fleet.service import ship_bonus
+from app.frontier import service as frontier
 from app.galaxy import service as galaxy
 from app.galaxy.models import PlanetKnowledge, SystemKnowledge
 from app.persistence.models import Colony, Empire, Planet
+from app.research.service import discounted
 from app.simulation.scheduler import lock_stream
+
+
+def combat_stats(rules, key):
+    """Hull and attack of a military class (combat rules), absent for civilian classes."""
+    stats = rules.combat.stats.get(key) if rules.combat else None
+    return {"hull": stats.hull, "attack": stats.attack} if stats else {}
+
 
 router = APIRouter(prefix="/game/{universe_id}/fleets")
 
@@ -47,9 +58,17 @@ class Order(Body):
 
 class Plan(Body):
     fleet_id: str = Field(pattern=UUID_PATTERN)
-    kind: Literal["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK"]
+    kind: Literal[
+        "DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK", "PROSPECT", "STUDY", "EXTRACT"
+    ]
     destination_id: str | None = Field(default=None, pattern=UUID_PATTERN)
     target_planet_id: str | None = Field(default=None, pattern=UUID_PATTERN)
+    # EXP-02 (v0.10): the curiosity a STUDY analyses, the deposit an EXTRACT works.
+    target_opportunity_id: str | None = Field(default=None, pattern=UUID_PATTERN)
+    # EXP-02b: extraction length in whole hours (bounded by the pinned ruleset).
+    duration_hours: int | None = Field(default=None, ge=1, le=1000)
+    # EXP-02b: after the extraction, stay in the deposit's system (default) or come back.
+    after: Literal["STAY", "RETURN"] | None = None
     units: Units = Field(min_length=1, max_length=16)
 
 
@@ -74,6 +93,10 @@ class Merge(Keyed):
 class Load(Keyed):
     colony_id: str = Field(pattern=UUID_PATTERN)
     cargo: Cargo = Field(min_length=1)
+
+
+class ProtocolChoice(Keyed):
+    protocol: Literal["SURVEILLANCE", "AMBUSH", "INTERCEPTION", "FRIENDLY_CONTACT"] | None
 
 
 class Unload(Keyed):
@@ -121,10 +144,12 @@ def known_planets(session, empire_id, system_id, owned):
     ]
 
 
-def mission_view(session, mission, permissions):
+def mission_view(session, mission, permissions, known):
     report = session.get(FleetReport, mission.id)
     snap = mission.snapshot
-    return {
+    # UX-API-01: the route as launched (persisted legs), only through systems the Empire knows.
+    path = service.mission_path(session, mission, known)
+    return ({"path": path} if path is not None else {}) | {
         "id": str(mission.id),
         "fleet_id": str(mission.fleet_id),
         "kind": mission.kind,
@@ -200,6 +225,7 @@ def project(session, universe_id, empire_id, permissions, at):
                         "id": str(o.id),
                         "ship_class": o.ship_class,
                         "quantity": o.quantity,
+                        "delivered": o.delivered or 0,
                         "status": o.status,
                         "accepted_at": o.accepted_at.isoformat(),
                         "started_at": o.started_at.isoformat() if o.started_at else None,
@@ -243,6 +269,8 @@ def project(session, universe_id, empire_id, permissions, at):
                 "cargo": amounts(carried),
                 "capacity": str(f.cargo_capacity(stacks)),
                 "mission_id": str(mission.id) if mission else None,
+                # 13B (v0.9): first-contact protocol of a stationed task Fleet, else null.
+                "protocol": fleet.protocol,
                 "colonies_here": [
                     {
                         "id": str(c.id),
@@ -280,6 +308,7 @@ def project(session, universe_id, empire_id, permissions, at):
         .order_by(SystemKnowledge.system_id)
     )
     galaxy_read = "galaxy.read" in permissions
+    known_ids = service.known_systems(session, universe_id, empire_id)
     owned = {c.planet_id: str(c.id) for c in colonies} if colony_read else {}
     x = rules.colonization
     colonization = None
@@ -307,28 +336,79 @@ def project(session, universe_id, empire_id, permissions, at):
         if x is not None and ref["state"] != "DETECTED":
             ref["planets"] = known_planets(session, empire_id, k.system_id, owned)
         systems_view.append(ref)
+    # Effective fleet speed is a ratio of time: durations are multiplied by its inverse.
+    bonus = ship_bonus(session, empire_id)
+    ratio = rules.colony.speeds["fleet"]
+    speed = Ratio(numerator=ratio.denominator, denominator=ratio.numerator)
     return base | {
         "catalogue": {
             key: {
                 "name": ship.name,
-                "cost": amounts(f.order_quote(key, 1)[0]),
-                "build_us": str(f.order_quote(key, 1)[1]),
+                # v0.12: price and build time with the Empire's research effects (new orders).
+                "cost": amounts(
+                    {
+                        r: discounted(v, bonus.get("ship_cost", 0))
+                        for r, v in f.order_quote(key, 1)[0].items()
+                    }
+                ),
+                "build_us": str(
+                    max(1, discounted(f.order_quote(key, 1)[1], bonus.get("ship_duration", 0)))
+                ),
                 "hop_seconds": ship.hop_seconds,
+                # Travel time of one hop at this universe's fleet speed (recette 10/11/2026).
+                "hop_us": str(speed.apply(ship.hop_seconds * 1_000_000, ceiling=True)),
                 "flux_per_hop": ship.flux_per_hop,
                 "cargo": str(f.cargo_capacity({key: 1})),
                 "survey": ship.survey,
+                # COL-11 (v0.11): building levels of the building colony that unlock the class.
+                "requires": [
+                    {"infrastructure_type": kind, "level": level}
+                    for kind, level in sorted(ship.requires.items())
+                ],
             }
+            | combat_stats(rules, key)
             for key, ship in f.classes.items()
         },
         "queue_limit": f.queue_limit,
         "max_quantity": f.max_quantity,
         "colonies": colony_views,
         "fleets": fleet_views,
-        "missions": [mission_view(session, m, permissions) for m in missions],
+        "missions": [mission_view(session, m, permissions, known_ids) for m in missions],
         "colonization": colonization,
+        "frontier": frontier_view(session, rules, universe_id, empire_id),
         "combat": combat_view(session, rules, universe_id, empire_id, permissions),
+        # v0.12 (EXP-02c): an ATTACK may target a known deposit.
+        "contested": bool(rules.opportunities and rules.opportunities.operations.contested),
         # Destinations come from Knowledge only; DETECTED signals need galaxy.read (SURVEY).
         "systems": systems_view,
+    }
+
+
+def frontier_view(session, rules, universe_id, empire_id):
+    """13B: enabled protocols and this Empire's own detections (anonymous unless identified)."""
+    if rules.frontier is None:
+        return None
+
+    def name(empire):
+        row = session.get(Empire, empire)
+        return row.name if row else None
+
+    return {
+        "protocols": list(rules.frontier.protocols),
+        "detections": frontier.detections_for(
+            session,
+            universe_id,
+            empire_id,
+            name,
+            lambda system: system_ref(session, empire_id, system),
+        ),
+        "encounters": frontier.encounters_for(
+            session,
+            universe_id,
+            empire_id,
+            name,
+            lambda system: system_ref(session, empire_id, system),
+        ),
     }
 
 
@@ -446,7 +526,9 @@ class Fleets(Colonies):
         if kind == "COLONIZE":
             # Founding is irreversible in v0.5: a dedicated right, never colony.construct.
             return ("fleet.command", "galaxy.read", "colony.expand")
-        return ("fleet.command", "galaxy.read") if kind == "SURVEY" else ("fleet.command",)
+        if kind in ("SURVEY", "PROSPECT", "STUDY", "EXTRACT"):
+            return ("fleet.command", "galaxy.read")
+        return ("fleet.command",)
 
     def preview(self, raw, universe_id, empire_id, body: Plan):
         with self.factory.begin() as session:
@@ -464,6 +546,9 @@ class Fleets(Colonies):
                 self.clock.now(),
                 UUID(body.target_planet_id) if body.target_planet_id else None,
                 "colony.read" in permissions,
+                UUID(body.target_opportunity_id) if body.target_opportunity_id else None,
+                body.duration_hours,
+                body.after,
             )
             if "colony.read" not in permissions:
                 # Commanding stays allowed without colony.read; the paying colony is not shown.
@@ -488,6 +573,11 @@ class Fleets(Colonies):
                 at=at,
                 target_planet_id=UUID(body.target_planet_id) if body.target_planet_id else None,
                 colony_read="colony.read" in permissions,
+                target_opportunity_id=UUID(body.target_opportunity_id)
+                if body.target_opportunity_id
+                else None,
+                duration_hours=body.duration_hours,
+                after=body.after,
             )
             return {"mission_id": str(mission.id), "fleet_id": str(mission.fleet_id)}
 
@@ -506,7 +596,9 @@ class Fleets(Colonies):
                 key=ns + body.idempotency_key,
                 at=at,
             )
-            return {"mission_id": str(mission.id), "return_at": mission.return_at.isoformat()}
+            # EXP-02b: a stopped extraction that stays has no way back.
+            back = mission.return_at.isoformat() if mission.return_at else None
+            return {"mission_id": str(mission.id), "return_at": back}
 
         return self.act(raw, universe_id, empire_id, ("fleet.command",), run)
 
@@ -535,6 +627,21 @@ class Fleets(Colonies):
                 empire_id,
                 fleet_id,
                 UUID(body.target_id),
+                key=ns + body.idempotency_key,
+                at=at,
+            )
+
+        return self.act(raw, universe_id, empire_id, ("fleet.command",), run)
+
+    def protocol(self, raw, universe_id, empire_id, fleet_id, body: ProtocolChoice):
+        def run(session, at, ns):
+            return service.set_protocol(
+                session,
+                self.engine,
+                universe_id,
+                empire_id,
+                fleet_id,
+                body.protocol,
                 key=ns + body.idempotency_key,
                 at=at,
             )
@@ -650,3 +757,11 @@ async def load(universe_id: UUID, empire_id: UUID, fleet_id: UUID, request: Requ
 async def unload(universe_id: UUID, empire_id: UUID, fleet_id: UUID, request: Request):
     raw, body = await command(request, universe_id, Unload)
     return await call(Fleets(request.app.state).unload, raw, universe_id, empire_id, fleet_id, body)
+
+
+@router.post("/{empire_id}/{fleet_id}/protocol")
+async def protocol(universe_id: UUID, empire_id: UUID, fleet_id: UUID, request: Request):
+    raw, body = await command(request, universe_id, ProtocolChoice)
+    return await call(
+        Fleets(request.app.state).protocol, raw, universe_id, empire_id, fleet_id, body
+    )

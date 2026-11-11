@@ -101,15 +101,21 @@ def resolve(spec):
 
 
 def spec_from_rules(rules, attacker, defender):
-    """The exact resolver input from pinned CombatRules; stored whole in the engagement."""
+    """The exact resolver input from pinned CombatRules; stored whole in the engagement.
+
+    v0.13 (DEF-01): defense module classes follow the ships in the canonical order; they are
+    ordinary combat-v1 classes (hull, attack, matchups), present on the defender side only."""
+    classes = rules.all_classes
+    stats = {c: rules.stats[c].model_dump() for c in rules.classes}
+    stats |= {c: s.model_dump() for c, s in (rules.modules or {}).items()}
     return {
         "combat_version": rules.combat_version,
-        "classes": list(rules.classes),
-        "stats": {c: rules.stats[c].model_dump() for c in rules.classes},
-        "matchups_bps": {c: dict(rules.matchups_bps[c]) for c in rules.classes},
+        "classes": list(classes),
+        "stats": stats,
+        "matchups_bps": {c: dict(rules.matchups_bps[c]) for c in classes},
         "max_rounds": rules.max_rounds,
-        "attacker": {c: attacker.get(c, 0) for c in rules.classes},
-        "defender": {c: defender.get(c, 0) for c in rules.classes},
+        "attacker": {c: attacker.get(c, 0) for c in classes},
+        "defender": {c: defender.get(c, 0) for c in classes},
     }
 
 

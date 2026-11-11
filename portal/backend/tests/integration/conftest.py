@@ -61,7 +61,8 @@ def accounts(database_engine, tmp_path):
         with database_engine.begin() as connection:
             connection.execute(
                 text(
-                    "TRUNCATE control_outbox, universe_memberships, "
+                    "TRUNCATE control_outbox, invitation_email_outbox, universe_invitations, "
+                    "universe_memberships, "
                     "universe_references, auth_failures, mfa_backup_codes, "
                     "mfa_challenges, "
                     "mfa_recovery_sessions, "

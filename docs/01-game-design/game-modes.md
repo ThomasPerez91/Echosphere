@@ -25,6 +25,60 @@ ruleset d’un univers existant. Les multiplicateurs employés par les tests ne 
 En pause, progression gameplay et IA doivent réellement être suspendues. Une maintenance technique
 n’est pas une pause gameplay. Aucun système de pause n’est implémenté dans ce lot.
 
+## Décisions utilisateur du 09/11/2026 — création de parties (Q59)
+
+Provenance : retours de recette locale et réponses explicites de l’utilisateur le 09/11/2026.
+Elles complètent Q19–Q29/Q55 ; en cas d’écart, **ces décisions priment** sur les valeurs initiales
+ci-dessus pour SOLO et PRIVATE.
+
+- **Priorité** : SOLO et parties à plusieurs (famille PRIVATE, appelée « multi » ou « coop » en
+  interface) d’abord ; PERSISTENT plus tard.
+- **Création en libre-service** depuis le Portal ; un compte peut créer et rejoindre **plusieurs
+  parties**. La création ne demande aucune vérification supplémentaire (la confirmation d’adresse
+  se fait à l’inscription ; l’entrée dans un univers garde sa règle existante).
+- **Multi = un seul mode** : pas de « coop » distincte ni de pacte ou d’équipe imposés ; les
+  joueurs s’allient, coopèrent, se trahissent ou s’affrontent en jeu avec les mécanismes existants.
+- **Taille PRIVATE** : jusqu’à **10 joueurs humains** (remplace le maximum initial de 8) et de
+  l’ordre de **30 IA**, toujours plafonnés selon la taille de la carte.
+- **Invitation** : au choix du créateur, **soit un lien** à copier-coller, **soit un envoi par
+  email** ; jamais les deux pour une même invitation.
+- **Génération de carte** (lot futur) : tailles proposées 100, 300, 500, 1 000 et 2 000 systèmes ;
+  placement des Empires au choix (par exemple *Dispersé* : placement aléatoire ; *Regroupé* : les
+  Empires joueurs proches) ; nombre maximal de joueurs et d’IA déterminé par la taille.
+- **Garde-fou** : rester loin d’un jeu « Stellaris-like » ; le gameplay des grandes cartes et du
+  grand nombre d’Empires est à revoir avec l’utilisateur avant d’activer ces options (Q59 ouverte
+  sur ce point, comme la démonstration de charge Q29).
+
+## Décisions utilisateur du 09/11/2026 — vie d’une partie (Q60)
+
+Provenance : réponses explicites de l’utilisateur le 09/11/2026 (questions à choix).
+
+- **Abandon en multi** : l’Empire d’un joueur qui quitte une partie en cours est **repris par une
+  IA** ; la partie continue pour les autres, l’IA joue avec les mêmes règles (aucun bonus, aucune
+  ressource offerte).
+- **Abandon en SOLO** : la partie est **archivée**, pas supprimée : retirée des parties actives,
+  plus jouable, rapports consultables ; aucune donnée effacée.
+- **Notifications en jeu (cloche)** : attaque annoncée, fin de construction et de recherche,
+  missions terminées (arrivée, cartographie, colonisation, retour), diplomatie et contact.
+  Elles ne sont jamais une autorité : chacune renvoie à l’écran qui porte l’état serveur.
+- **Nom d’Empire** : choisi par le joueur à la création et en rejoignant une partie, visible dans
+  « Mes parties ».
+
+## Décisions utilisateur du 09/11/2026 — génération de carte (Q61)
+
+Provenance : réponses explicites de l’utilisateur le 09/11/2026 (atelier génération de carte).
+
+- **Départ** : chaque Empire (joueur ou IA) commence avec **un système de départ** et sa colonie de
+  base dedans.
+- **Plafond d’Empires par taille** (« Équilibré ») : 100 systèmes → 4 Empires ; 300 → 12 ; 500 →
+  20 ; 1 000 → 40 ; 2 000 → 40 ; toujours au plus 10 joueurs humains et 30 IA.
+- **Placement** : premier mode proposé = **Équitable** (distances et ressources de départ
+  équilibrées pour tous) ; *Dispersé* et *Regroupé* plus tard.
+- **Garde-fous anti « Stellaris-like »** retenus : **plafond de colonies** par Empire et **zones
+  d’influence**. Les zones d’influence sont définies par l’instruction du 09/11/2026 :
+  représentation de la présence opérationnelle, sans propriété ([Q62](operational-expansion.md)).
+- **Priorité** : ce lot passe en premier après la recette (avant Orbite et Défense).
+
 ## Compte global, Empire partagé et départ (Q21/Q23)
 
 Un compte global peut participer simultanément à plusieurs univers : User → UniverseMembership →

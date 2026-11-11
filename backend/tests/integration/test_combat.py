@@ -330,7 +330,7 @@ def test_empty_target_is_accepted_identically_then_fails_generically_and_returns
         preview(a, left, occupied, {"cruiser": 1}).json(),
         preview(a, right, empty, {"cruiser": 1}).json(),
     )
-    for key in ("hops", "cost", "travel_us", "battle_at", "affordable", "units"):
+    for key in ("hops", "path", "cost", "travel_us", "battle_at", "affordable", "units"):
         assert p1[key] == p2[key]
     assert set(p1) == set(p2)
     before = stocks(a)

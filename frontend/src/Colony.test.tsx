@@ -65,11 +65,13 @@ afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); window.h
 test('real server projection renders without any mutation, even under StrictMode', async () => {
   const fetcher = setup('colony/infrastructure', {}, true);
   expect(await screen.findByRole('heading', { name: 'Kepler Test' })).toBeVisible();
-  expect(screen.getByLabelText('Stocks de la colonie')).toHaveTextContent('2 000');
+  // Stocks live in the top bar only (recette 09/11/2026), not repeated in the colony header.
+  expect(screen.getByLabelText('Stocks de Kepler Test')).toHaveTextContent('2 000');
+  expect(screen.queryByLabelText('Stocks de la colonie')).not.toBeInTheDocument();
   expect(screen.getAllByText('+120/h').length).toBeGreaterThan(0);
   expect(screen.getByRole('button', { name: 'Construire Nœud de données' })).toBeEnabled();
-  expect(screen.getByRole('button', { name: 'Construire Complexe industriel' })).toBeDisabled();
-  expect(screen.getByText('Cette infrastructure est limitée à un exemplaire par colonie.')).toBeVisible();
+  // A unique building already present is not offered again (it is listed with the buildings).
+  expect(screen.queryByRole('button', { name: 'Construire Complexe industriel' })).not.toBeInTheDocument();
   expect(posts(fetcher)).toHaveLength(0);
   expect(fetcher.mock.calls.filter(call => call[1]?.method === 'POST')).toHaveLength(0);
 });
@@ -143,6 +145,18 @@ test('read-only access shows the colony but no command buttons', async () => {
   expect(await screen.findByRole('heading', { name: 'Kepler Test' })).toBeVisible();
   expect(screen.queryByRole('button', { name: /^Construire|^Améliorer|^Annuler/ })).not.toBeInTheDocument();
   expect(posts(fetcher)).toHaveLength(0);
+});
+
+test('the closest locked building is named with the levels still missing', async () => {
+  const locked = (kind: string, requires: { infrastructure_type: string; level: number }[]) => ({ ...projection().options[0],
+    infrastructure_type: kind, available: false, reason: 'prerequisites_unmet', requires });
+  setup('colony/infrastructure', { colony: [{ body: projection({ options: [
+    locked('orbital_shipyard', [{ infrastructure_type: 'industrial_complex', level: 2 }]),
+    locked('logistics_center', [{ infrastructure_type: 'extraction_complex', level: 2 }]),
+  ] }) }] });
+  const note = await screen.findByRole('note');
+  expect(note).toHaveTextContent('Prochain déblocage : Centre logistique');
+  expect(note).toHaveTextContent('Complexe d’extraction niveau 2 (actuel 1)');
 });
 
 test('an expired session on a command re-reads the session and shows the lobby path', async () => {
@@ -272,4 +286,65 @@ test('incoming attacks without combat.read are a leak and refused', () => {
     incoming: [{ id: 'e1', battle_at: '2099-01-02T00:00:00Z', state: 'pending' }] }), colonyId)).toBe(false);
   expect(validProjection(projection({ permissions: ['colony.read', 'combat.read'],
     incoming: [{ id: 'e1', battle_at: '2099-01-02T00:00:00Z', state: 'pending', attacker: 'x' } as never] }), colonyId)).toBe(false);
+});
+
+// DEF-01 (ruleset v0.13): the network, its modules and their repair, as the server reports them.
+function defended(changes: Partial<Projection> = {}): Projection {
+  const base = projection();
+  const build = (kind: string, sector: number) => ({ ...base.options[0], infrastructure_type: kind, sector_index: sector,
+    cost: amounts(600, 200, 0), production_per_hour: amounts(0, 0, 0) });
+  return projection({
+    ruleset_version: 'v0.13',
+    infrastructures: [...base.infrastructures,
+      { ...base.infrastructures[0], sector_index: 2, infrastructure_type: 'defense_center' },
+      { ...base.infrastructures[0], sector_index: 9, infrastructure_type: 'point_defense', condition: 'damaged' },
+      { ...base.infrastructures[0], sector_index: 1001, infrastructure_type: 'orbital_platform', condition: 'operational' }],
+    options: [...base.options, build('point_defense', 5), build('anti_ship_battery', 5), build('orbital_platform', 1002),
+      { ...build('point_defense', 9), action: 'repair', cost: amounts(240, 80, 0) }],
+    defense: {
+      center: 'defense_center', center_level: 1, capacity: 2, capacity_per_level: 2, used: 2,
+      orbital: { capacity: 2, base: 1000, free_indices: [1002] }, upkeep_flux_per_hour: M(6),
+      modules: [{ sector_index: 9, infrastructure_type: 'point_defense', condition: 'damaged' },
+        { sector_index: 1001, infrastructure_type: 'orbital_platform', condition: 'operational' }],
+      catalogue: {
+        point_defense: { family: 'point_defense', placement: 'surface', upkeep_flux: 2, hull: 30, attack: 6, matchups_bps: { interceptor: 15000, cruiser: 7000 } },
+        anti_ship_battery: { family: 'anti_ship', placement: 'surface', upkeep_flux: 4, hull: 40, attack: 9, matchups_bps: { cruiser: 15000, interceptor: 7000 } },
+        orbital_platform: { family: 'anti_ship', placement: 'orbital', upkeep_flux: 6, hull: 60, attack: 10, matchups_bps: { frigate: 15000, interceptor: 7000 } },
+      },
+      repair_cost_bps: 4000, repair_duration_bps: 5000,
+    },
+    ...changes,
+  });
+}
+
+test('the Défense tab shows the network, the module states and repairs a damaged module through the queue', async () => {
+  const fetcher = setup('colony/defense', { colony: [{ body: defended() }],
+    command: [{ body: { order: { id: 'o', status: 'active' }, colony: defended() } }] });
+  const network = (await screen.findByRole('heading', { name: 'Réseau défensif' })).closest('section')!;
+  expect(network.textContent).toMatch(/2 \/ 2 modules/);
+  expect(network.textContent).toMatch(/Endommagé/);
+  expect(network.textContent).toMatch(/Orbite 1/);
+  expect(screen.getByRole('button', { name: 'Construire Canon anti-vaisseaux' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Réparer Batterie de défense ponctuelle' }));
+  await waitFor(() => expect(posts(fetcher)).toHaveLength(1));
+  expect(JSON.parse(String(posts(fetcher)[0][1]?.body))).toMatchObject({ infrastructure_type: 'point_defense', sector_index: 9, target_level: 1 });
+});
+
+test('modules stay out of the Infrastructures tab; the orbit tab shows the orbital platform', async () => {
+  setup('colony/infrastructure', { colony: [{ body: defended() }] });
+  await screen.findByRole('heading', { name: 'Kepler Test' });
+  expect(screen.queryByRole('button', { name: /Construire Batterie/ })).not.toBeInTheDocument();
+  expect(screen.queryByText('Batterie de défense ponctuelle')).not.toBeInTheDocument();
+  cleanup();
+  setup('colony/orbit', { colony: [{ body: defended() }] });
+  const orbit = (await screen.findByRole('heading', { name: 'Installations orbitales' })).closest('section')!;
+  expect(orbit.textContent).toMatch(/1 \/ 2 emplacements utilisés/);
+  expect(within(orbit).getByText('Plateforme orbitale')).toBeVisible();
+});
+
+test('a defense network naming an unknown module or condition is refused', () => {
+  const p = defended();
+  expect(validProjection(p, colonyId)).toBe(true);
+  expect(validProjection({ ...p, defense: { ...p.defense!, modules: [{ sector_index: 9, infrastructure_type: 'laser', condition: 'operational' }] } }, colonyId)).toBe(false);
+  expect(validProjection({ ...p, defense: { ...p.defense!, modules: [{ sector_index: 9, infrastructure_type: 'point_defense', condition: 'broken' as never }] } }, colonyId)).toBe(false);
 });

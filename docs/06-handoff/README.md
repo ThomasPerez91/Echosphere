@@ -102,3 +102,20 @@ CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026 ; Q11 close. L
 `work/step-12-combat`, PR Draft unique. Q02/Q10 closes pour le Combat MVP v0.7 seulement,
 [décisions](../01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [plan COM00–COM11](../05-project/step-12-plan.md).
 Étape 13 Relations non commencée ; aucun merge ni suppression de branche autorisé.
+
+## État post-merge étape 12 — 02/11/2026
+
+Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
+Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Les états courants étape 12
+ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, branche
+`work/step-13-ai-relations`, PR Draft unique. Q18 close pour l'étape 13 le 02/11/2026 avec amendements,
+[proposition B1–B12](../01-game-design/relations.md), [plan R00–R11](../05-project/step-13-plan.md).
+R02–R11 autorisés. Lot 13B [premier contact](../01-game-design/first-contact.md) : démarrage anticipé
+autorisé le 02/11/2026 sur `work/step-13b-first-contact` (PR #17 Draft vers la branche de l'étape 13),
+B00–B09 et correctifs C01–C05 écrits ; C04 et lecture B08 validées par l'utilisateur ; PostgreSQL,
+Alembic, Chromium et recette Compose exécutés et réussis en local le 02/11/2026 (WSL2 + Docker) ;
+revue indépendante R11/B09 à faire — reprise : bloc 13B de [progress](../../progress.md). Aucun merge ni suppression de branche autorisé.
+
+## Refonte UX/UI — 03/11/2026
+
+Chantier ouvert sur `work/ux-redesign` (PR #19 Draft, dépendante de #17) : [passation dédiée](ux-redesign-handoff.md).

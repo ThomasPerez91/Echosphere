@@ -4,6 +4,7 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -43,6 +44,8 @@ class Universe(Record, Base):
 
     name: Mapped[str] = mapped_column(String(120))
     seed: Mapped[str] = mapped_column(String(200))
+    # Test game (recette 10/11/2026): sandbox tools (grants, instant completion) are allowed.
+    sandbox: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
 
 
 class Empire(Record, Base):
@@ -123,3 +126,8 @@ class Colony(Record, Base):
     planet_id: Mapped[UUID] = mapped_column(Uuid)
     founded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     founding_mission_id: Mapped[UUID | None] = mapped_column(Uuid)
+    # Recette 09/11/2026: the player names a colony; the planet name until then.
+    name: Mapped[str | None] = mapped_column(String(40))
+
+    def display_name(self, planet):
+        return self.name or planet.name

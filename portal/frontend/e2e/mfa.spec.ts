@@ -47,7 +47,8 @@ test('WebAuthn registration and login use a real Chromium authenticator at mobil
     }
     return route.fulfill({ status: 404, json: { error: { code: 'unexpected_test_route' } } });
   });
-  await page.goto('http://localhost:5174/');
+  await page.goto('http://localhost:5174/compte');
+  await page.getByText('Sécurité avancée').click(); // optional security, folded by default
   await page.getByLabel('Opération MFA').selectOption('webauthn');
   await page.getByLabel('Nom de l’authentificateur').fill('Ma passkey');
   await page.getByLabel('Mot de passe pour la MFA').fill('Browser authentication password !');
@@ -59,6 +60,7 @@ test('WebAuthn registration and login use a real Chromium authenticator at mobil
   await page.getByRole('button', { name: 'Masquer les codes' }).click();
   await page.getByLabel('Adresse email', { exact: true }).fill('player@example.org');
   await page.getByLabel('Mot de passe', { exact: true }).fill('Browser authentication password !');
+  await page.getByRole('button', { name: 'J’ai activé la double vérification' }).click();
   await page.getByLabel('Preuve MFA').selectOption('webauthn');
   await page.getByRole('button', { name: 'Ouvrir ma session' }).click();
   await expect(page.getByRole('heading', { name: 'Vos connexions' })).toBeVisible();

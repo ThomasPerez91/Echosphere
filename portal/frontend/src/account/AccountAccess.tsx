@@ -2,6 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { RevocationStatus } from './RevocationStatus';
 import { Lobby } from './Lobby';
+import type { LobbySnapshot, ReceivedInvitation } from './Lobby';
+import { Icon } from '../theme/Icon';
+import { Pending } from '../site/Site';
+import type { SignedIn } from '../site/Site';
+import { NewGame } from './NewGame';
+import { Link, paths } from '../router';
 import { AccountForms } from './AccountForms';
 import { ResetRequestForm, SensitiveSettings } from './SecurityForms';
 import { FactorFields, MfaRecovery, MfaSettings } from './MfaForms';
@@ -26,13 +32,25 @@ function validState(body: unknown): body is SessionState {
 
 const bootstrap = { 'X-Portal-Request': 'bootstrap' };
 
-export function AccountAccess({ verificationToken }: { verificationToken: string | null }) {
+/** Which Portal page is shown. Signed out, every private page shows the login form. */
+export type AccountPage = 'home' | 'login' | 'register' | 'games' | 'new-game' | 'account' | 'join';
+
+export function AccountAccess({ verificationToken, onSession, page = 'register', onNavigate, inviteToken = null }: {
+  verificationToken: string | null;
+  /** Lets the page switch between the public home and the player's space; never carries the CSRF token. */
+  onSession?: (account: SignedIn | null) => void;
+  page?: AccountPage;
+  /** Moves between the login and registration pages when the visitor switches form. */
+  onNavigate?: (path: string) => void;
+  /** UX-API-03: link token read from /rejoindre#invite=…, kept in memory only. */
+  inviteToken?: string | null;
+}) {
   const [bootstrapError, setBootstrapError] = useState(false);
   const [booting, setBooting] = useState(true);
   const [reload, setReload] = useState(0);
   const [receiptVersion, setReceiptVersion] = useState(0);
   const [state, setState] = useState<SessionState | null>(null);
-  const [loginMode, setLoginMode] = useState(false);
+  const [loginMode, setLoginMode] = useState(page !== 'register');
   const [recovering, setRecovering] = useState(false);
   const [mfaRecovering, setMfaRecovering] = useState(false);
   const [codes, setCodes] = useState<string[]>([]);
@@ -43,6 +61,20 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
   const transition = useRef(0);
   const bootstrapFlight = useRef<AbortController | null>(null);
   const currentState = useRef(state); currentState.current = state;
+  const [lobby, setLobby] = useState<LobbySnapshot | null>(null);
+  const [lobbyVersion, setLobbyVersion] = useState(0);
+  const email = state?.user.email ?? null, verified = state?.user.email_verified ?? false;
+  useEffect(() => { onSession?.(email ? { email, verified } : null); }, [email, verified, onSession]);
+  useEffect(() => { if (!state) setLobby(null); }, [state]);
+  useEffect(() => {
+    if (page === 'home') return;
+    setRecovering(false); setMfaRecovering(false); setLoginMode(page !== 'register');
+  }, [page]);
+  const switchForm = () => {
+    setRecovering(false); setMfaRecovering(false);
+    const next = !loginMode; setLoginMode(next);
+    if (page !== 'join') onNavigate?.(next ? paths.login : paths.register); // keep the invitation page
+  };
 
   useEffect(() => {
     active.current = true; setBooting(true); setBootstrapError(false);
@@ -130,40 +162,74 @@ export function AccountAccess({ verificationToken }: { verificationToken: string
       setNotice(value.privileged_recovery_blocked ? 'Facteur rétabli. Les privilèges restent bloqués en attente d’une procédure approuvée.' : 'MFA modifiée. Reconnectez-vous normalement. Déconnexion des parties en attente.');
     }
   }
+  if (page === 'home' && !verificationToken) return null; // the public home only needs to know whether a session exists
   if (booting && !verificationToken && !state) return <p aria-live="polite">Vérification de votre compte…</p>;
   if (bootstrapError && !verificationToken) return <section className="panel"><h2>Compte indisponible</h2>
     <p role="alert">Impossible de confirmer votre connexion. Aucun changement n’a été demandé.</p>
     <button type="button" onClick={() => setReload(value => value + 1)}>Vérifier mon compte</button></section>;
   if (verificationToken) return <AccountForms verificationToken={verificationToken} />;
-  return <>
-    {notice && <p role="alert">{notice}</p>}
-    {!mfaRecovering && !recovering && <RevocationStatus key={receiptVersion} />}
-    {codes.length > 0 && <section className="panel"><h2>Vos dix codes de secours</h2><p>Conservez ces codes en lieu sûr. Ils ne seront plus consultables après fermeture de cet écran ; chaque code sert une seule fois.</p><pre className="recovery-codes">{codes.join('\n')}</pre><button type="button" onClick={() => setCodes([])}>Masquer les codes</button></section>}
-    {state ? <section className="panel" aria-labelledby="sessions-title">
-      <h2 id="sessions-title">Vos connexions</h2>
-      <p>{state.user.email}</p>
+  const expired = () => { transition.current++; setState(null); setLoginMode(true); setNotice('Votre session n’est plus valide. Connectez-vous à nouveau.'); };
+  const games = state && <>
+    <Stats snapshot={lobby} />
+    <div className="p-dash-grid">
+      <div className="p-games-col">
+        <Lobby csrf={state.csrf_token} onSnapshot={setLobby} onExpired={expired} version={lobbyVersion} />
+        {lobby && lobby.memberships.length === 0 && !lobby.creations?.length && <section className="p-panel p-first-game" aria-labelledby="first-game-title">
+          <div className="p-tab-pad"><h2 id="first-game-title">Aucune partie pour l’instant</h2>
+            <p>Créez votre premier univers : vous y commencez avec une colonie, face à des Empires dirigés par l’IA.</p>
+            <Link to={paths.newGame} className="p-btn p-btn-primary">Créer ma première partie</Link></div>
+        </section>}
+      </div>
+      <div className="p-side">
+        <ReceivedInvitations csrf={state.csrf_token} invitations={lobby?.invitations ?? []} onChanged={() => setLobbyVersion(v => v + 1)} />
+        <Activity snapshot={lobby} />
+      </div>
+    </div>
+  </>;
+  const account = state && <section className="p-panel p-account" id="securite" aria-labelledby="sessions-title">
+    <div className="p-p-head"><h2 id="sessions-title"><Icon name="lock" />Vos connexions</h2></div>
+    <div className="p-account-body">
+      <p className="p-account-mail"><Icon name="user" />{state.user.email}</p>
       {!state.user.email_verified && <p>Confirmez votre adresse email avant de pouvoir accéder aux parties.</p>}
-      <Lobby csrf={state.csrf_token} onExpired={() => { transition.current++; setState(null); setLoginMode(true);
-        setNotice('Votre session n’est plus valide. Connectez-vous à nouveau.'); }} />
+      <p className="p-account-help">Chaque appareil connecté à votre compte apparaît ici. Fermez ceux que vous n’utilisez plus.</p>
       <button type="button" disabled={pending} onClick={() => { void action(); }}>Actualiser mes connexions</button>
       <ul className="sessions-list">{(state.sessions ?? [{ id: state.session_id, current: true }]).map((item, index) => <li key={item.id}>
         <span>{item.current ? 'Cet appareil' : `Autre connexion ${index + 1}`}</span>
         <button type="button" disabled={pending} onClick={() => { void action(item.id); }}>{item.current ? 'Se déconnecter' : `Fermer la connexion ${index + 1}`}</button>
       </li>)}</ul>
-      <MfaSettings csrf={state.csrf_token} onOutcome={mfaOutcome} />
-      <SensitiveSettings csrf={state.csrf_token} onSignedOut={() => {
-        transition.current++; setState(null); setLoginMode(true);
-        setReceiptVersion(value => value + 1);
-        setNotice('Compte déconnecté de tous les appareils sur le Portal. Déconnexion des parties en attente.');
-      }} />
-    </section> : <>
+      {/* Optional: kept out of the way, explained in plain words, never required to play. */}
+      <details className="p-advanced">
+        <summary>Sécurité avancée <small>facultatif</small></summary>
+        <p className="p-account-help"><b>Double vérification (MFA).</b> En plus du mot de passe, la connexion demande un code à six chiffres
+          d’une application (Google Authenticator, Microsoft Authenticator…) ou une clé de sécurité. Elle protège votre compte si votre mot de passe
+          fuit. Vous pouvez jouer sans l’activer.</p>
+        <MfaSettings csrf={state.csrf_token} onOutcome={mfaOutcome} />
+        <p className="p-account-help"><b>Opérations sensibles.</b> Changer de mot de passe ou d’adresse, ou déconnecter le compte de tous les appareils.</p>
+        <SensitiveSettings csrf={state.csrf_token} onSignedOut={() => {
+          transition.current++; setState(null); setLoginMode(true);
+          setReceiptVersion(value => value + 1);
+          setNotice('Compte déconnecté de tous les appareils sur le Portal. Déconnexion des parties en attente.');
+        }} />
+      </details>
+    </div>
+  </section>;
+  return <>
+    {notice && <p role="alert">{notice}</p>}
+    {!mfaRecovering && !recovering && <RevocationStatus key={receiptVersion} />}
+    {codes.length > 0 && <section className="panel"><h2>Vos dix codes de secours</h2><p>Conservez ces codes en lieu sûr. Ils ne seront plus consultables après fermeture de cet écran ; chaque code sert une seule fois.</p><pre className="recovery-codes">{codes.join('\n')}</pre><button type="button" onClick={() => setCodes([])}>Masquer les codes</button></section>}
+    {state ? (page === 'join' ? <JoinGame csrf={state.csrf_token} token={inviteToken} onJoined={() => onNavigate?.(paths.games)} />
+      : page === 'account' ? account : page === 'new-game' ? <NewGame csrf={state.csrf_token} onExpired={expired} onCreated={() => onNavigate?.(paths.games)} /> : games) : <>
+      {(page === 'games' || page === 'new-game' || page === 'account') && !mfaRecovering && !recovering && <p className="p-auth-note">Connectez-vous pour accéder à cette page.</p>}
+      {page === 'join' && !mfaRecovering && !recovering && <p className="p-auth-note">Connectez-vous ou créez un compte pour rejoindre la partie : l’invitation reste en attente sur cette page.</p>}
       {mfaRecovering ? <MfaRecovery onBack={() => setMfaRecovering(false)} onOutcome={mfaOutcome} /> : recovering ? <ResetRequestForm onBack={() => { setRecovering(false); setLoginMode(true); }} /> : loginMode ? <LoginForm onLogin={value => {
         // Login deleted the previous receipt server-side; never keep showing its stale status.
         transition.current++; setState(value); setNotice(''); setReceiptVersion(version => version + 1);
       }} /> : <AccountForms verificationToken={null} />}
-      {!mfaRecovering && <button type="button" className="text-button" onClick={() => setMfaRecovering(true)}>J’ai perdu mes facteurs MFA</button>}
-      {loginMode && !recovering && !mfaRecovering && <button type="button" className="text-button" onClick={() => setRecovering(true)}>Mot de passe oublié ?</button>}
-      <button type="button" className="text-button" onClick={() => { setRecovering(false); setMfaRecovering(false); setLoginMode(value => !value); }}>{loginMode ? 'Créer un compte ou confirmer mon adresse' : 'Se connecter à mon compte'}</button>
+      <div className="p-auth-links">
+        {loginMode && !recovering && !mfaRecovering && <button type="button" className="text-button" onClick={() => setRecovering(true)}>Mot de passe oublié ?</button>}
+        <button type="button" className="text-button" onClick={switchForm}>{loginMode ? 'Pas encore de compte ? Créer un compte' : 'Se connecter à mon compte'}</button>
+        {loginMode && !mfaRecovering && <button type="button" className="text-button p-quiet" onClick={() => setMfaRecovering(true)}>Double vérification perdue (téléphone ou clé) ?</button>}
+      </div>
     </>}
   </>;
 }
@@ -173,6 +239,7 @@ function LoginForm({ onLogin }: { onLogin: (value: SessionState) => void }) {
   const [password, setPassword] = useState('');
   const [factorChoice, setFactorChoice] = useState<FactorChoice>('none');
   const [factorCode, setFactorCode] = useState('');
+  const [secondFactor, setSecondFactor] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const operation = useRef<AbortController | null>(null);
@@ -199,7 +266,8 @@ function LoginForm({ onLogin }: { onLogin: (value: SessionState) => void }) {
       if (response.ok && validState(body)) { setPassword(''); onLogin(body); }
       else {
         const code = body && typeof body === 'object' && 'error' in body && body.error && typeof body.error === 'object' && 'code' in body.error ? body.error.code : null;
-        setError(code === 'mfa_required' ? 'Choisissez votre facteur MFA enregistré pour vous connecter.' : code === 'device_limit_reached' ? 'Limite d’appareils atteinte. Fermez une connexion depuis un appareil déjà connecté.'
+        if (code === 'mfa_required') setSecondFactor(true);
+        setError(code === 'mfa_required' ? 'Ce compte utilise la double vérification : choisissez votre code ou votre clé ci-dessous.' : code === 'device_limit_reached' ? 'Limite d’appareils atteinte. Fermez une connexion depuis un appareil déjà connecté.'
           : response.status === 429 ? 'Trop de tentatives. Réessayez plus tard.'
           : response.status === 503 ? 'Le service est temporairement indisponible.'
           : 'Connexion impossible. Vérifiez votre adresse et votre mot de passe.');
@@ -213,9 +281,110 @@ function LoginForm({ onLogin }: { onLogin: (value: SessionState) => void }) {
     <form onSubmit={submit} aria-busy={pending}>
       <label>Adresse email<input name="email" type="email" autoComplete="username" required maxLength={320} value={email} onChange={event => setEmail(event.target.value)} /></label>
       <label>Mot de passe<input name="password" type="password" autoComplete="current-password" required maxLength={128} value={password} onChange={event => setPassword(event.target.value)} /></label>
-      <FactorFields choice={factorChoice} setChoice={setFactorChoice} code={factorCode} setCode={setFactorCode} />
+      {secondFactor ? <FactorFields choice={factorChoice} setChoice={setFactorChoice} code={factorCode} setCode={setFactorCode} />
+        : <button type="button" className="text-button p-quiet" onClick={() => setSecondFactor(true)}>J’ai activé la double vérification</button>}
       <button type="submit" disabled={pending}>{pending ? 'Connexion en cours…' : 'Ouvrir ma session'}</button>
     </form>
     {error && <p role="alert" className="form-error">{error}</p>}
   </section>;
+}
+
+/** Mockup stat strip: counts come from the lobby projection, the rest is not provided by the server yet. */
+function Stats({ snapshot }: { snapshot: LobbySnapshot | null }) {
+  const live = snapshot?.memberships.filter(item => item.desired_status === 'active' && item.delivery_state === 'applied' && !item.expired).length;
+  const tile = (icon: 'gamepad' | 'planet', value: number | undefined, label: string) => <div><Icon name={icon} />
+    <p><b>{value ?? '…'}</b><span>{label}</span></p></div>;
+  return <div className="p-stats" aria-label="Vos parties en chiffres">
+    {tile('gamepad', live, 'Parties actives')}
+    {tile('planet', snapshot?.memberships.length, 'Univers rejoints')}
+    <div className="p-stat-pending"><Icon name="layers" /><div className="p-stat-body"><span>Tours récents</span><Pending compact /></div></div>
+    <div className="p-stat-pending"><Icon name="users" /><div className="p-stat-body"><span>Alliés et partenaires</span><Pending compact /></div></div>
+  </div>;
+}
+
+function since(date: string) {
+  const ms = Date.now() - Date.parse(date);
+  if (!Number.isFinite(ms)) return '';
+  const minutes = Math.max(0, Math.round(ms / 60000));
+  return minutes < 60 ? `Il y a ${minutes} min` : minutes < 1440 ? `Il y a ${Math.round(minutes / 60)} h` : `Il y a ${Math.round(minutes / 1440)} j`;
+}
+
+/** Recent activity made only of dated facts the Portal holds: Game confirmations and logout receipts. */
+function Activity({ snapshot }: { snapshot: LobbySnapshot | null }) {
+  const items = [
+    ...(snapshot?.memberships ?? []).filter(item => item.last_checked_at).map(item => ({ at: item.last_checked_at!, icon: 'play' as const,
+      text: <><b>{item.name}</b> — accès vérifié auprès de Game</> })),
+    ...(snapshot?.revocations ?? []).map(item => ({ at: item.created_at, icon: 'logout' as const,
+      text: <>Déconnexion des parties ({item.scope === 'account' ? 'tous les appareils' : 'un appareil'}) — {item.state === 'acknowledged' ? 'terminée' : 'en cours'}</> })),
+  ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 6);
+  return <section className="p-panel" aria-labelledby="activity-title">
+    <div className="p-p-head"><h2 id="activity-title"><Icon name="news" />Activité récente</h2></div>
+    {items.length ? <ul className="p-activity">{items.map((item, index) => <li key={index}><Icon name={item.icon} /><span>{item.text}</span>
+      <time dateTime={item.at}>{since(item.at)}</time></li>)}</ul>
+      : <p className="p-empty">Aucune activité datée pour l’instant.</p>}
+    <div className="p-tab-pad"><Pending compact what="Journal des parties (tours, recherches, messages)." /></div>
+  </section>;
+}
+
+const joinErrors: Record<string, string> = {
+  invitation_not_found: 'Ce lien n’est plus valable : il a expiré ou a été remplacé. Demandez-en un nouveau.',
+  invitation_other_account: 'Cette invitation a été envoyée à une autre adresse email.',
+  game_full: 'Cette partie est complète.', game_starting: 'La partie est encore en préparation. Réessayez dans un instant.',
+  invalid_empire_name: 'Le nom d’Empire doit compter 2 à 40 caractères visibles.',
+};
+
+async function lobbyPost(path: string, csrf: string, body: object) {
+  const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+    body: JSON.stringify(body), signal: AbortSignal.timeout(10000) });
+  const data: unknown = await response.json().catch(() => null);
+  const code = data && typeof data === 'object' && 'error' in data && data.error && typeof data.error === 'object' && 'code' in data.error ? String(data.error.code) : '';
+  if (!response.ok) throw new Error(code || 'request');
+}
+
+/** UX-API-03: email invitations addressed to this account, accepted or declined here. */
+function ReceivedInvitations({ csrf, invitations, onChanged }: { csrf: string; invitations: ReceivedInvitation[]; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const act = async (path: string, body: object) => {
+    if (busy) return; setBusy(true); setError('');
+    try { await lobbyPost(path, csrf, body); onChanged(); }
+    catch (failure) { setError(joinErrors[(failure as Error).message] ?? 'Action non confirmée. Réessayez.'); }
+    finally { setBusy(false); }
+  };
+  return <section className="p-panel" aria-labelledby="invitations-title">
+    <div className="p-p-head"><h2 id="invitations-title"><Icon name="mail" />Invitations</h2></div>
+    {invitations.length ? <ul className="p-received">{invitations.map(item => <li key={item.id}>
+      <div><b>{item.name}</b><small>Expire le {new Date(item.expires_at).toLocaleDateString('fr-FR')}</small></div>
+      <div className="p-received-act">
+        <button type="button" className="p-btn p-btn-sm p-btn-glow" disabled={busy} onClick={() => { void act('/api/lobby/invitations/accept', { invitation_id: item.id }); }}>Accepter</button>
+        <button type="button" className="p-btn p-btn-sm" disabled={busy} onClick={() => { void act(`/api/lobby/invitations/${encodeURIComponent(item.id)}/decline`, {}); }}>Refuser</button>
+      </div></li>)}</ul>
+      : <p className="p-empty">Aucune invitation en attente. Les invitations reçues par email apparaissent ici.</p>}
+    {error && <p className="p-empty form-error" role="alert">{error}</p>}
+  </section>;
+}
+
+/** /rejoindre#invite=…: join the multi game the link belongs to, then open Mes parties. */
+function JoinGame({ csrf, token, onJoined }: { csrf: string; token: string | null; onJoined: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [empireName, setEmpireName] = useState('');
+  if (!token) return <section className="p-panel p-new-game" aria-labelledby="join-title"><div className="p-tab-pad">
+    <h2 id="join-title">Rejoindre une partie</h2><p>Ouvrez le lien d’invitation reçu (il commence par …/rejoindre#invite=).</p>
+    <Link to={paths.games} className="p-btn">Mes parties</Link></div></section>;
+  const join = async () => {
+    if (busy) return; setBusy(true); setError('');
+    const name = empireName.split(/\s+/).filter(Boolean).join(' ');
+    try { await lobbyPost('/api/lobby/invitations/accept', csrf, name ? { token, empire_name: name } : { token }); onJoined(); }
+    catch (failure) { setError(joinErrors[(failure as Error).message] ?? 'Action non confirmée. Réessayez.'); }
+    finally { setBusy(false); }
+  };
+  return <section className="p-panel p-new-game" aria-labelledby="join-title"><div className="p-tab-pad">
+    <h2 id="join-title">Rejoindre une partie</h2>
+    <p>Un joueur vous invite dans sa partie multijoueur. En la rejoignant, vous recevez votre propre Empire et une colonie de départ.</p>
+    <label className="p-join-name">Nom de votre Empire (facultatif)
+      <input value={empireName} onChange={event => setEmpireName(event.target.value)} maxLength={40} placeholder="Par exemple : Hégémonie de Vela" /></label>
+    <button type="button" className="p-btn p-btn-primary" disabled={busy} onClick={() => { void join(); }}>{busy ? 'Connexion à la partie…' : 'Rejoindre la partie'}</button>
+    {error && <p className="form-error" role="alert">{error}</p>}
+  </div></section>;
 }

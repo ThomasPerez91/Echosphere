@@ -6,9 +6,13 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.rules_dump import omit_unset_extensions
+
 GOALS = ("economy", "research", "exploration", "expansion", "logistics")
 # v0.7 (utility-goals-v2) adds a defensive military goal; never an offensive one.
 GOALS_V2 = (*GOALS, "military")
+# v0.8 (utility-goals-v3) adds diplomacy: answering and proposing pacts, never breaking one.
+GOALS_V3 = (*GOALS_V2, "diplomacy")
 PROFILES = {"economic_cautious", "expansionist"}
 # Q11 bootstrap order; never the order of a pinned dict (JSONB reorders object keys).
 BOOTSTRAP_ORDER = ("alloys", "flux", "data")
@@ -87,3 +91,89 @@ def canonical(value):
 
 def fingerprint(value):
     return hashlib.sha256(canonical(value).encode()).hexdigest()
+
+
+class DiplomacyPolicy(BaseModel):
+    """Q18 B8. Incoming answers are priority candidates; a spontaneous proposal follows the
+    profile rule: `no_recent_grievance` (no hostile act of that contact within the window) or
+    `past_grievance_only` (an attack suffered from that contact, older than the window)."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+    grievance_seconds: Positive
+    response_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
+    proposal_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
+    proposal_rules: dict[str, Literal["no_recent_grievance", "past_grievance_only"]]
+
+
+class AIRulesV3(AIRulesV2):
+    """v0.8: separate model so v0.6/v0.7 dumps (and pinned policy digests) never change."""
+
+    version: Literal["v0.8", "v0.9"]
+    policy_version: Literal["utility-goals-v3"]
+    diplomacy: DiplomacyPolicy
+
+    @property
+    def goals(self):
+        return GOALS_V3
+
+    @model_validator(mode="after")
+    def diplomatic(self):
+        if set(self.diplomacy.proposal_rules) != PROFILES:
+            raise ValueError("Each profile needs an explicit proposal rule")
+        # One slot answers the oldest incoming proposal, the others page own contacts.
+        if self.family_pages["diplomacy"] < 2:
+            raise ValueError("Diplomacy page must hold an answer and a proposal")
+        return self
+
+
+AIProtocol = Literal["SURVEILLANCE", "AMBUSH", "FRIENDLY_CONTACT"]
+
+
+class FrontierPolicy(BaseModel):
+    """13B B08 (validated 02/11/2026). Protocol choices live in the military family (same page,
+    same budget, one command per turn). INTERCEPTION is never an AI choice; economic_cautious
+    never chooses AMBUSH. `sighting_seconds`: how long an anonymous own detection keeps a
+    voluntary contact interesting; `ambush` uses the ruleset's D4 window."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+    surveillance_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
+    friendly_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
+    ambush_utility: Annotated[int, Field(strict=True, ge=0, le=1000)]
+    sighting_seconds: Positive
+    protocols: dict[str, list[AIProtocol]]
+
+    @model_validator(mode="after")
+    def validated(self):
+        if set(self.protocols) != PROFILES:
+            raise ValueError("Each profile needs its protocol list")
+        for allowed in self.protocols.values():
+            if len(set(allowed)) != len(allowed) or "SURVEILLANCE" not in allowed:
+                raise ValueError("Protocol lists hold SURVEILLANCE, without repetition")
+        if "AMBUSH" in self.protocols["economic_cautious"]:
+            raise ValueError("economic_cautious never ambushes (B08)")
+        return self
+
+
+class DefensePolicy(BaseModel):
+    """v0.13 (DEF-01): after its Colonies were attacked, the AI builds a Défense center, then one
+    `module_kind` per attack suffered within the network capacity, and repairs damaged modules."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+    center_utility: Annotated[int, Field(strict=True, gt=0, le=1000)]
+    module_kind: str
+    module_utility: Annotated[int, Field(strict=True, gt=0, le=1000)]
+
+
+class AIRulesV4(AIRulesV3):
+    """v0.9 (13B B08): policy v4 = v3 plus frontier protocol choices. v0.8 dumps unchanged."""
+
+    version: Literal["v0.9", "v0.10", "v0.11", "v0.12", "v0.13"]
+    policy_version: Literal["utility-goals-v4"]
+    frontier: FrontierPolicy
+    # v0.11 (COL-11): utility of buildings that unlock ships or research (Forge orbitale,
+    # Institut des Échos), divided by the target level; empty before v0.11.
+    unlocks: dict[str, Annotated[int, Field(strict=True, gt=0, le=1000)]] = Field(
+        default_factory=dict
+    )
+    defense: DefensePolicy | None = None
+    serialize_extensions = omit_unset_extensions("unlocks", "defense")

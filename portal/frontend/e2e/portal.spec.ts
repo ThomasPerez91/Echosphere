@@ -72,7 +72,7 @@ for (const width of [320, 1440]) {
       await route.fulfill({ status: route.request().url().endsWith('/verify') ? 200 : 202,
         json: { status: route.request().url().endsWith('/verify') ? 'verified' : 'request_received' } });
     });
-    await page.goto('/');
+    await page.goto('/inscription');
     await page.getByLabel('Adresse email').fill('player@example.org');
     await page.getByLabel('Mot de passe', { exact: true }).fill('Browser test phrase 2026 !');
     await page.getByRole('button', { name: 'Créer le compte', exact: true }).click();
@@ -121,8 +121,8 @@ for (const width of [320, 1440]) {
       loggedIn = false;
       return route.fulfill({ json: { current_session_closed: true, game_revocation: 'pending' } });
     });
-    await page.goto('/');
-    await page.getByRole('button', { name: 'Se connecter à mon compte' }).click();
+    // Signed out, the account page shows the login form; after login it shows the connections.
+    await page.goto('/compte');
     await page.getByLabel('Adresse email').fill('player@example.org');
     await page.getByLabel('Mot de passe', { exact: true }).fill('Browser C03 password !');
     await page.getByRole('button', { name: 'Ouvrir ma session' }).press('Enter');
@@ -152,8 +152,7 @@ for (const width of [320, 1440]) {
       if (path.includes('/password/')) { recoveries++; return route.fulfill({ json: { status: 'password_reset', game_revocation: 'pending' } }); }
       return route.fulfill({ json: { status: 'additional_confirmation_required' } });
     });
-    await page.goto('/');
-    await page.getByRole('button', { name: 'Se connecter à mon compte' }).click();
+    await page.goto('/connexion');
     await page.getByRole('button', { name: 'Mot de passe oublié ?' }).click();
     await page.getByLabel('Adresse email').fill('player@example.org');
     await page.getByRole('button', { name: 'Demander un lien de récupération' }).click();

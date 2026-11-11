@@ -47,6 +47,11 @@ def quote_view(quote: Quote) -> dict:
 
 def option(rules, state, permissions, bonus, *, action, kind, sector, level) -> dict:
     quote = construction_quote(rules, state, kind, level)
+    if action == "repair":
+        # DEF-01: a repair costs its share of the module, as `plan_order` will charge it.
+        from app.defense.service import repair_quote
+
+        quote = repair_quote(rules.defense, quote)
     try:
         if sector is None:
             raise ColonyError("No free sector", "sector_unavailable")
@@ -72,6 +77,11 @@ def option(rules, state, permissions, bonus, *, action, kind, sector, level) -> 
         ),
         "available": reason is None,
         "reason": reason,
+        # COL-11: what unlocks a locked building, shown greyed with its prerequisites.
+        "requires": [
+            {"infrastructure_type": k, "level": v}
+            for k, v in sorted(rules.catalogue.infrastructures[kind].requires.items())
+        ],
     }
 
 
@@ -81,11 +91,13 @@ def options(rules: Ruleset, state: ColonyState, permissions: list[str]) -> list[
     }
     for order in state.queue:
         projected[order.sector_index] = (order.infrastructure_type, order.target_level)
-    capacity = state.planet.sector_capacity if state.planet else 0
-    free = [index for index in range(1, capacity + 1) if index not in projected]
+    from app.defense.service import module_of, slots
+
     bonus = construction_bonus(rules, state.infrastructures)
     result = []
     for kind in rules.catalogue.infrastructures:
+        # DEF-01: an ORBITAL module takes the first free orbital slot, everything else a sector.
+        free = [index for index in slots(rules, state.planet, kind) if index not in projected]
         first_free = free[0] if free else None
         result.append(
             option(
@@ -99,6 +111,23 @@ def options(rules: Ruleset, state: ColonyState, permissions: list[str]) -> list[
                 level=1,
             )
         )
+        if module_of(rules, kind) is not None:
+            # A module never levels up; a DAMAGED one is repaired at its level.
+            for row in sorted(state.infrastructures, key=lambda r: r.sector_index):
+                if row.infrastructure_type == kind and row.condition == "damaged":
+                    result.append(
+                        option(
+                            rules,
+                            state,
+                            permissions,
+                            bonus,
+                            action="repair",
+                            kind=kind,
+                            sector=row.sector_index,
+                            level=row.level,
+                        )
+                    )
+            continue
         for sector, (existing, level) in sorted(projected.items()):
             if existing == kind:
                 result.append(
@@ -159,8 +188,10 @@ def project(
     empire = session.get(Empire, colony.empire_id)
     universe = session.get(Universe, colony.universe_id)
     timeline = session.get(ColonyTimeline, colony.id)
-    built = {row.sector_index for row in state.infrastructures}
-    reserved = {order.sector_index for order in state.queue} - built
+    surface = range(1, planet.sector_capacity + 1)
+    built = {row.sector_index for row in state.infrastructures if row.sector_index in surface}
+    reserved = {order.sector_index for order in state.queue if order.sector_index in surface}
+    reserved -= built
     return {
         "server_time": at.isoformat(),
         "settled_at": iso(timeline.settled_at),
@@ -168,7 +199,7 @@ def project(
         "permissions": sorted(permissions),
         "colony": {
             "id": str(colony.id),
-            "name": planet.name,
+            "name": colony.display_name(planet),
             "planet": {
                 "name": planet.name,
                 "sector_capacity": planet.sector_capacity,
@@ -206,9 +237,11 @@ def project(
                 "infrastructure_type": row.infrastructure_type,
                 "level": row.level,
                 **quote_view(rules.quote(row.infrastructure_type, row.level)),
+                **({"condition": row.condition} if row.condition is not None else {}),
             }
             for row in sorted(state.infrastructures, key=lambda r: r.sector_index)
         ],
+        **defense_view(rules, state),
         "queue": queue_view(state, permissions),
         "queue_limit": rules.colony.queue_limit,
         "options": options(rules, state, permissions),
@@ -228,3 +261,66 @@ def incoming(session, rules, colony, permissions):
         for a in alerts_for(session, colony.universe_id, colony.empire_id)
         if a["planet_id"] == planet
     ]
+
+
+def defense_view(rules, state):
+    """DEF-01 (v0.13): the colony's defense network as it is (capacity, slots, modules and their
+    state, upkeep) and the catalogue of its modules; absent before v0.13."""
+    d = rules.defense
+    if d is None:
+        return {}
+    from app.defense.rules import ORBITAL_BASE
+
+    planet = state.planet
+    center = max(
+        (r.level for r in state.infrastructures if r.infrastructure_type == d.center), default=0
+    )
+    modules = [r for r in state.infrastructures if r.infrastructure_type in d.modules]
+    queued = [o for o in state.queue if o.infrastructure_type in d.modules]
+    taken = {r.sector_index for r in state.infrastructures} | {o.sector_index for o in state.queue}
+    orbit = range(ORBITAL_BASE + 1, ORBITAL_BASE + planet.orbital_capacity + 1)
+    combat = rules.combat
+    return {
+        "defense": {
+            "center": d.center,
+            "center_level": center,
+            "capacity": d.capacity(center),
+            "capacity_per_level": d.capacity_per_level,
+            "used": len({r.sector_index for r in modules} | {o.sector_index for o in queued}),
+            "orbital": {
+                "capacity": planet.orbital_capacity,
+                "base": ORBITAL_BASE,
+                "free_indices": [i for i in orbit if i not in taken],
+            },
+            "upkeep_flux_per_hour": str(
+                sum(
+                    d.modules[r.infrastructure_type].upkeep_flux * 1_000_000
+                    for r in modules
+                    if r.condition == "operational"
+                )
+            ),
+            "modules": [
+                {
+                    "sector_index": r.sector_index,
+                    "infrastructure_type": r.infrastructure_type,
+                    "condition": r.condition,
+                }
+                for r in sorted(modules, key=lambda r: r.sector_index)
+            ],
+            "catalogue": {
+                kind: {
+                    "family": m.family,
+                    "placement": m.placement,
+                    "upkeep_flux": m.upkeep_flux,
+                    "hull": combat.modules[m.combat_class].hull,
+                    "attack": combat.modules[m.combat_class].attack,
+                    "matchups_bps": {
+                        c: combat.matchups_bps[m.combat_class][c] for c in combat.classes
+                    },
+                }
+                for kind, m in d.modules.items()
+            },
+            "repair_cost_bps": d.repair_cost_bps,
+            "repair_duration_bps": d.repair_duration_bps,
+        }
+    }

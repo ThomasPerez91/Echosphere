@@ -1,0 +1,28 @@
+{
+  "version": "v0.12",
+  "relations_version": "relations-v1",
+  "proposal_ttl_seconds": 259200,
+  "refusal_cooldown_seconds": 86400,
+  "notice_seconds": 86400,
+  "standing": {
+    "pact": 40,
+    "pact_per_day": 2,
+    "pact_max_bonus": 20,
+    "notice": -30,
+    "proposal_received": 10,
+    "hostile_received_recent": -50,
+    "hostile_received_old": -20,
+    "hostile_given_recent": -15,
+    "recent_days": 7,
+    "old_days": 30,
+    "thresholds": [
+      -50,
+      -15,
+      14,
+      49
+    ]
+  },
+  "map": {
+    "hostile_days": 7
+  }
+}

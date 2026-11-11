@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { onSandboxChange } from "../sandbox/api";
 import { ApiError, fleetCommand, listFleetEmpires, readFleets } from "../fleet/api";
 import type { Empire, FleetProjection } from "../fleet/api";
 
@@ -185,6 +186,8 @@ export function useFleets(universe: string | null, enabled: boolean, csrf: strin
     void read(empire);
   }, [read]);
 
+  // Test game: a sandbox grant or completion rereads every open view at once.
+  useEffect(() => onSandboxChange(() => { late.current = 0; void read(); }), [read]);
   return {
     ...state, selectedEmpire, pending, feedback, awaiting,
     refresh: () => { late.current = 0; void read(); },

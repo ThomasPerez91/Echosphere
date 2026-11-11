@@ -13,11 +13,41 @@ from app.colony.projection import amounts
 from app.colony.service import catch_up_owned, rules_for
 from app.control.models import EmpireBinding
 from app.galaxy import service, system_view
-from app.galaxy.models import ExplorationMission, ExplorationReport, RouteKnowledge, SystemKnowledge
-from app.persistence.models import Colony, Empire, Planet
+from app.galaxy.models import (
+    ExplorationMission,
+    ExplorationReport,
+    GalaxySystem,
+    RouteKnowledge,
+    SystemKnowledge,
+    UniverseGalaxy,
+)
+from app.persistence.models import Colony, Empire, Planet, Universe
 from app.research import service as research
 from app.simulation.models import ResourceBalance
 from app.simulation.scheduler import lock_stream
+
+
+def sandbox_presences(session, universe_id, empire_id):
+    """Test game only (recette 10/11/2026): every foreign Colony is shown on the map with an
+    anonymous Empire number, never its name or a contact; Relations still knows nothing."""
+    universe = session.get(Universe, universe_id)
+    if universe is None or not universe.sandbox:
+        return {}
+    rows = session.execute(
+        select(Colony.empire_id, Planet.system_id, Colony.planet_id)
+        .join(Planet, Planet.id == Colony.planet_id)
+        .where(Colony.universe_id == universe_id, Colony.empire_id != empire_id)
+        .order_by(Colony.empire_id, Colony.planet_id)
+    ).all()
+    tags = {e: n for n, e in enumerate(sorted({r[0] for r in rows}, key=str), start=1)}
+    return {
+        "sandbox": {
+            "presences": [
+                {"empire": tags[e], "system_id": str(s), "planet_id": str(p)} for e, s, p in rows
+            ]
+        }
+    }
+
 
 router = APIRouter(prefix="/game/{universe_id}")
 
@@ -111,7 +141,11 @@ class Galaxy(Colonies):
                     for r in ("alloys", "flux", "data")
                 }
                 sources.append(
-                    {"id": str(colony.id), "name": planet.name, "stocks": amounts(stocks)}
+                    {
+                        "id": str(colony.id),
+                        "name": colony.display_name(planet),
+                        "stocks": amounts(stocks),
+                    }
                 )
                 for target in knowledge:
                     if target.state != "DETECTED":
@@ -143,6 +177,11 @@ class Galaxy(Colonies):
                         }
                     )
         pinned = rules_for(session, universe_id)
+        opportunities = (
+            service.opportunity_views(session, universe_id, empire_id)
+            if pinned.opportunities is not None
+            else None
+        )
         return {
             "server_time": at.isoformat(),
             "exploration": pinned.exploration.engagement_version
@@ -151,17 +190,46 @@ class Galaxy(Colonies):
             "empire": {"id": str(empire_id), "name": session.get(Empire, empire_id).name},
             "permissions": permissions,
             "systems": [
-                service.project_system(session, k, "colony.read" in permissions) for k in knowledge
+                service.project_system(session, k, "colony.read" in permissions, opportunities)
+                for k in knowledge
             ],
             "routes": [
                 {"id": str(r.route_id), "a_id": str(r.a_id), "b_id": str(r.b_id)} for r in routes
             ],
+            # User decision 09/11/2026: every star of the galaxy is visible as a point (position
+            # only: no identity, name, route or content); everything else stays Knowledge.
+            "stars": [
+                [x, y]
+                for x, y in session.execute(
+                    select(GalaxySystem.x, GalaxySystem.y)
+                    .where(GalaxySystem.universe_id == universe_id)
+                    .order_by(GalaxySystem.ordinal)
+                )
+            ],
+            **sandbox_presences(session, universe_id, empire_id),
+            # Shaped galaxy (v0.12): the density it was drawn from, for the backdrop only. Every
+            # star is already visible as a point, the layout reveals nothing more.
+            **self.layout(session, universe_id),
+            # v0.12: foreign Colonies legitimately known, classed ally/neutral/hostile.
+            **self.foreign(session, universe_id, empire_id, at, permissions),
             "sources": sources,
             "options": options,
             "missions": self.missions_projection(session, universe_id, empire_id, permissions)
             if "exploration.read" in permissions
             else [],
         }
+
+    @staticmethod
+    def foreign(session, universe_id, empire_id, at, permissions):
+        from app.relations.service import foreign_presences
+
+        found = foreign_presences(session, universe_id, empire_id, at, permissions)
+        return {} if found is None else {"foreign": found}
+
+    @staticmethod
+    def layout(session, universe_id):
+        manifest = session.get(UniverseGalaxy, universe_id)
+        return {"layout": manifest.layout} if manifest is not None and manifest.layout else {}
 
     def missions_projection(self, session, universe_id, empire_id, permissions):
         result = []

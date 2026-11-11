@@ -1,7 +1,7 @@
 # Documentation Echosphere
 
 État intégré : étape 5A, domaine économique interne, scheduler et shell ; 5B contrats intégrés.
-Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; [C07 handoff/sessions Game](03-technical/game-handoff.md) livré, fusionnés via PR #7. Intégrée via PR #8 (`0e2ca11`) :
+Sur PR #7 : [socle Portal C01](03-technical/portal-foundation.md) et [comptes C02](03-technical/portal-registration.md) implémentés ; [C03 sessions Portal/CSRF](03-technical/portal-sessions.md) ajouté ; [C04 opérations sensibles sans MFA](03-technical/portal-account-security.md) livré. [C05 MFA](03-technical/portal-mfa.md) et [C06 lobby/mTLS](03-technical/portal-game-control.md) livrés ; [création de partie SOLO en libre-service (UX-API-02, Draft)](03-technical/universe-creation.md) ; [C07 handoff/sessions Game](03-technical/game-handoff.md) livré, fusionnés via PR #7. Intégrée via PR #8 (`0e2ca11`) :
 [API Colony sécurisée et UI Colony](03-technical/colony-api-ui.md), première boucle jouable. [Économie v0.1](01-game-design/colony-economy-v0.1.md) et
 [défense future](01-game-design/planetary-defense.md) distinguent règles implémentées et orientations.
 
@@ -41,6 +41,7 @@ ne prouvent pas la présence de leur code ; une proposition ne devient décision
   [risques](06-handoff/known-gaps.md), [audit #5](06-handoff/pr-5-audit.md), [collaboration Work/Codex/Claude Code](06-handoff/work-codex-handoff.md).
 - [Portal/Game ADR 0008](adr/0008-control-plane-game-data-plane.md) : frontières validées et socle 5C intégré via PR #7, sans certification production ;
   [architecture](03-technical/architecture.md), [modèle](03-technical/data-model.md), [sécurité](03-technical/security.md).
+- [Refonte UX/UI](02-ux-ui/redesign/README.md) : chantier ouvert le 03/11/2026 (PR #19 Draft), propositions à valider.
 - [ADR index](adr/README.md), [roadmap](05-project/roadmap.md), [questions Q01–Q56](05-project/open-questions.md).
 - [Contrats 5B](03-technical/identity-contracts.md) : décisions validées et consolidées le 2026-10-29,
   **implémentées dans leur périmètre 5C (C02–C08), fusionnées via PR #7** ; 5B documentaire terminé et intégré à master via PR #6 (`63bb7d1`). Le registre
@@ -76,6 +77,9 @@ Q06/Q08 et Exploration livrées ; anciens checkpoints ci-dessus historiques.
 Historique avant fusion : étape 10 Colonisation, branche `work/step-10-colonization` (PR #13). Q07 close
 avec amendements, COL02–COL11 réalisés. Étape 11 alors non commencée, aucun merge autorisé.
 
+Étape 13 : [Relations Q18](01-game-design/relations.md), [contrat technique](03-technical/relations-api-ui.md), [plan R00–R11](05-project/step-13-plan.md) ; lot 13B : [premier contact](01-game-design/first-contact.md).
+Chantier EXP (pré-MVP, Q62) : [expansion opérationnelle](01-game-design/operational-expansion.md), [plan EXP](05-project/exp-plan.md).
+[UX-API-01 trajet des missions](03-technical/ux-api-01-mission-path.md) : champ `path` additif, PR technique Draft dépendant de #17.
 Étape 10 : [Colonisation Q07](01-game-design/colonization.md), [contrat technique](03-technical/colonization-api-ui.md), [plan COL00–COL11](05-project/step-10-plan.md).
 Étape 9 : [Flottes Q09](01-game-design/fleets.md), [contrat technique](03-technical/fleets-api-ui.md), [plan F00–F11](05-project/step-9-plan.md).
 Étape 8 : [contrat System View](01-game-design/system-view.md), [projection/navigation](03-technical/system-view.md), [plan S00–S09](05-project/step-8-plan.md).
@@ -105,3 +109,15 @@ CI post-merge 41358533969 success (5/5), vérifiée le 02/11/2026 ; Q11 close. L
 `work/step-12-combat`, PR Draft unique. Q02/Q10 closes pour le Combat MVP v0.7 seulement,
 [décisions](01-game-design/combat.md#q02q10--décisions-combat-mvp-v07-02112026), [plan COM00–COM11](05-project/step-12-plan.md).
 Étape 13 Relations non commencée ; aucun merge ni suppression de branche autorisé.
+
+## État post-merge étape 12 — 02/11/2026
+
+Étape 12 Combat MVP intégrée via PR #15, merge `067a4e58863b910785764591d8bf3af4b0ec18e0` ;
+Full CI post-merge 41375165508 success (5/5), vérifiée le 02/11/2026. Les états courants étape 12
+ci-dessus sont historiques. Lot courant : **étape 13 Relations IA minimales**, branche
+`work/step-13-ai-relations`, PR Draft unique. Q18 close pour l'étape 13 le 02/11/2026 avec amendements,
+[proposition B1–B12](01-game-design/relations.md), [plan R00–R11](05-project/step-13-plan.md).
+R02–R11 autorisés. Lot 13B pré-MVP [premier contact](01-game-design/first-contact.md) (Q57/Q58) documenté,
+non implémenté avant fusion de l'étape 13. Aucun merge ni suppression de branche autorisé.
+
+- [Historique des constructions terminées — W-UX-05](03-technical/construction-history.md).

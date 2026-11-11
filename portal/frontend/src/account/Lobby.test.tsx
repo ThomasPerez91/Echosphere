@@ -49,9 +49,73 @@ test('acknowledged entry navigates by link and explicit confirmation waits for G
   vi.stubGlobal('fetch', fetcher); render(<Lobby csrf="csrf" />);
   expect(await screen.findByRole('link', { name: 'Entrer dans cet univers' })).toHaveAttribute('href', entry.entry_url);
   expect(fetcher).toHaveBeenCalledOnce();
-  fireEvent.click(screen.getByRole('button', { name: 'Confirmer de nouveaux droits pour cette partie' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Prolonger l’accès' }));
   expect(await screen.findByText('Confirmation de Game en attente')).toBeVisible();
   expect(screen.queryByRole('link', { name: 'Entrer dans cet univers' })).not.toBeInTheDocument();
   expect(fetcher.mock.calls[1][0]).toBe(`/api/lobby/universes/${universe}/renew`);
+  expect(fetcher.mock.calls[1][1].headers['X-CSRF-Token']).toBe('csrf');
+});
+
+test('a started game shows its mode, players and start date', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok({ revocations: [], memberships: [{ ...member, delivery_state: 'applied',
+    applied_status: 'active', family: 'private', creator: false, seats_total: 3, seats_taken: 2, started_at: '2026-11-09T09:00:00Z' }] })));
+  render(<Lobby csrf="csrf" />);
+  expect(await screen.findByText('Multijoueur')).toBeVisible();
+  expect(screen.getByText('2 / 3')).toBeVisible();
+  expect(screen.getByText('Démarrée le :')).toBeVisible();
+  expect(document.body.textContent).not.toContain('N/D');
+});
+
+test('Q60: the player names their Empire, leaves a multi game in two steps, and a left game is listed apart', async () => {
+  const live = { ...member, delivery_state: 'applied', applied_status: 'active', family: 'private', creator: false,
+    seats_total: 2, seats_taken: 2, started_at: '2026-11-09T09:00:00Z', empire_name: null as string | null, archived: false, left: false };
+  const posts: [string, string][] = [];
+  let state = live;
+  vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+    if (init?.method === 'POST') {
+      posts.push([url, String(init.body)]);
+      if (url.endsWith('/leave')) state = { ...state, left: true, desired_status: 'revoked' };
+      if (url.endsWith('/empire-name')) state = { ...state, empire_name: 'Concorde' };
+      return Promise.resolve(ok({}));
+    }
+    return Promise.resolve(ok({ revocations: [], memberships: [state] }));
+  }));
+  render(<Lobby csrf="csrf" />);
+  expect(await screen.findByText('Nom non choisi')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Choisir un nom' }));
+  fireEvent.change(screen.getByLabelText('Nom de votre Empire'), { target: { value: '  Concorde ' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+  expect(await screen.findByText('Concorde')).toBeVisible();
+  expect(posts[0]).toEqual(['/api/lobby/universes/universe/empire-name', JSON.stringify({ name: 'Concorde' })]);
+  fireEvent.click(screen.getByRole('button', { name: 'Quitter la partie' }));
+  expect(posts).toHaveLength(1); // the first click only asks for confirmation
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmer : quitter la partie' }));
+  expect(await screen.findByText('Parties quittées')).toBeVisible();
+  expect(posts[1][0]).toBe('/api/lobby/universes/universe/leave');
+  expect(screen.getByText(/Concorde est désormais dirigé par une IA/)).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Quitter la partie' })).toBeNull();
+});
+
+test('Q60: an archived solo game is only consultable', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok({ revocations: [], memberships: [{ ...member, delivery_state: 'applied',
+    applied_status: 'active', family: 'solo', creator: true, empire_name: 'Nova', archived: true, left: false,
+    entry_available: true, entry_url: 'https://game.example.org/api/game/universe/start' }] })));
+  render(<Lobby csrf="csrf" />);
+  expect(await screen.findByText('Partie archivée : consultation seule')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Consulter cet univers' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: /Archiver|Renommer/ })).toBeNull();
+});
+
+test('a blocked creation can be deleted in two steps', async () => {
+  const universe = 'e2a64223-2319-4d91-a381-e6b24551e191';
+  const fetcher = vi.fn()
+    .mockResolvedValueOnce(ok({ memberships: [], revocations: [], creations: [{ universe_id: universe, name: 'Shadowsun', created_at: '2026-11-09T18:07:35Z', state: 'refused' }] }))
+    .mockResolvedValueOnce(ok({ status: 'deleted' }))
+    .mockResolvedValueOnce(ok({ memberships: [], revocations: [], creations: [] }));
+  vi.stubGlobal('fetch', fetcher); render(<Lobby csrf="csrf" />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Supprimer' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirmer la suppression' }));
+  await waitFor(() => expect(screen.queryByText('Shadowsun')).not.toBeInTheDocument());
+  expect(fetcher.mock.calls[1][0]).toBe(`/api/lobby/universes/${universe}/delete`);
   expect(fetcher.mock.calls[1][1].headers['X-CSRF-Token']).toBe('csrf');
 });

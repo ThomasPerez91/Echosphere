@@ -10,8 +10,9 @@ from sqlalchemy import event, func, select
 from portal_app.account_security.models import AccountRevocation
 from portal_app.account_security.service import AccountSecurity
 from portal_app.accounts.models import User
+from portal_app.accounts.security import PublicError
 from portal_app.control.models import ControlOutbox, UniverseMembership, UniverseReference
-from portal_app.control.service import Lobby
+from portal_app.control.service import PERMISSIONS, Lobby
 from portal_app.control.transport import DeliveryError
 from portal_app.control.worker import deliver_one, reconcile_one, stage_revocations
 from portal_app.main import create_app
@@ -49,6 +50,22 @@ class Remote:
                 "universe_id": message["universe_id"],
                 "name": message["name"],
             }
+        elif message["kind"] == "start_universe":
+            self.started = getattr(self, "started", {})
+            seats = self.started.setdefault(
+                message["universe_id"], [str(uuid4()) for _ in range(message.get("humans", 1))]
+            )
+            result = {
+                "status": "applied",
+                "universe_id": message["universe_id"],
+                "name": message["name"],
+                "human_empire_id": seats[0],
+                "started_at": "2026-11-09T09:00:00+00:00",
+            }
+            if message["family"] != "solo":
+                result["human_empire_ids"] = seats  # like Game: seat order = site order
+        elif message["kind"] in ("name_empire", "hand_over_empire"):
+            result = {"status": "applied", **{k: v for k, v in message.items() if k != "kind"}}
         elif message["kind"] == "set_universe_access":
             result = {"status": "applied", "snapshot": copy.deepcopy(message)}
             self.states[message["membership_id"]] = {"snapshot": copy.deepcopy(message)}
@@ -340,3 +357,96 @@ def test_removing_a_target_does_not_abandon_its_persisted_revocation(setup):
     drain(accounts, remote)
     with accounts.factory() as session:
         assert session.scalar(select(LogoutRequest.state)) == "pending"
+
+
+def creation(**changes):
+    return {
+        "request_id": "11111111-1111-4111-8111-111111111111",
+        "name": "Frontière d’Orion",
+        "family": "solo",
+        "profiles": ["economic_cautious", "expansionist"],
+        **changes,
+    }
+
+
+def test_self_service_solo_creation_grants_the_human_empire_to_its_creator(setup):
+    lobby, user, _, raw, remote = setup
+    created = lobby.create(raw, csrf(raw), creation(), "peer")
+    # Replaying the same browser request never creates a second universe.
+    assert lobby.create(raw, csrf(raw), creation(), "peer") == created
+    projection = lobby.read(raw)
+    assert projection["memberships"] == []
+    assert [item["universe_id"] for item in projection["creations"]] == [created["universe_id"]]
+    drain(lobby.accounts, remote)
+    (start,) = [r for r in remote.requests if r[3] and r[3]["message"]["kind"] == "start_universe"]
+    message = start[3]["message"]
+    assert message["profiles"] == ["economic_cautious", "expansionist"]
+    assert message["ruleset"] == "v0.13" and message["family"] == "solo"
+    assert message["size"] == 100
+    assert len(message["seed"]) >= 24  # server-side randomness
+    projection = lobby.read(raw)
+    assert projection["creations"] == []
+    (member,) = projection["memberships"]
+    assert member["universe_id"] == created["universe_id"]
+    assert member["delivery_state"] == "applied" and member["desired_status"] == "active"
+    assert member["family"] == "solo" and member["started_at"].startswith("2026-11-09T09:00:00")
+    with lobby.accounts.factory() as session:
+        universe = session.get(UniverseReference, UUID(created["universe_id"]))
+        row = session.scalar(select(UniverseMembership))
+        assert universe.provisioned and universe.created_by == user
+        empire = remote.started[created["universe_id"]][0]
+        assert row.bindings == [{"empire_id": empire, "permissions": sorted(PERMISSIONS)}]
+    # A second creation (another request) is another universe: several games per account.
+    other = lobby.create(raw, csrf(raw), creation(request_id=str(uuid4()), profiles=[]), "peer")
+    assert other["universe_id"] != created["universe_id"]
+
+
+def test_creation_refuses_conflicts_other_families_and_missing_proofs(setup):
+    lobby, _, _, raw, _ = setup
+    lobby.create(raw, csrf(raw), creation(), "peer")
+    with pytest.raises(PublicError) as conflict:
+        lobby.create(raw, csrf(raw), creation(name="Autre nom"), "peer")
+    assert conflict.value.code == "creation_request_conflict"
+    with pytest.raises(PublicError) as family:
+        lobby.create(raw, csrf(raw), creation(request_id=str(uuid4()), family="persistent"), "peer")
+    assert family.value.code == "family_unavailable"  # persistent servers come later (Q59)
+    with pytest.raises(PublicError) as proof:
+        lobby.create(raw, "wrong", creation(request_id=str(uuid4())), "peer")
+    assert proof.value.code == "csrf_denied"
+    with lobby.accounts.factory() as session:
+        assert session.scalar(select(func.count()).select_from(UniverseReference)) == 2
+
+
+def test_creation_route_requires_origin_json_and_csrf(setup):
+    lobby, _, _, raw, _ = setup
+    app = create_app(lobby.accounts.settings)
+    app.state.accounts = lobby.accounts
+    origin = lobby.accounts.settings.public_origin
+    with TestClient(app, base_url=origin) as client:
+        client.cookies.set(SESSION_COOKIE, raw)
+        assert client.post("/lobby/universes", json=creation()).status_code == 403
+        answer = client.post(
+            "/lobby/universes",
+            json=creation(),
+            headers={"Origin": origin, "X-CSRF-Token": csrf(raw)},
+        )
+        assert answer.status_code == 200 and answer.json()["status"] == "starting"
+        assert answer.headers["Cache-Control"] == "no-store"
+
+
+def test_a_receipt_stored_under_another_digest_rule_is_asked_again_by_post(setup):
+    """Recette 09/11/2026: Game once stored receipts under another digest rule; the GET replay
+    of such a receipt must not block the outbox forever: the idempotent POST answers instead."""
+    lobby, user, universe, raw, remote = setup
+    drain(lobby.accounts, remote)
+    member = lobby.set_access(user, universe, "active", [])
+    remote.lose_reply = True
+    assert deliver_one(lobby.accounts, remote)
+    key = next(k for k in remote.receipts if k[1] == member["operation_id"])
+    remote.receipts[key] = dict(remote.receipts[key], request_digest="0" * 64)
+    lobby.accounts.test_clock[0] += timedelta(hours=2)
+    drain(lobby.accounts, remote)
+    with lobby.accounts.factory() as session:
+        row = session.get(ControlOutbox, UUID(member["operation_id"]))
+        assert row.state == "acknowledged" and row.last_error is None
+    assert [m for _, m, _, b in remote.requests[-2:]] == ["GET", "POST"]

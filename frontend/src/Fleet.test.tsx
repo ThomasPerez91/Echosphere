@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeAll, expect, test, vi } from "vitest";
 import { FleetView } from "./components/FleetView";
 import { ApiError, previewMission, validFleets } from "./fleet/api";
-import { colony, colonizing, done, empire, fighting, fleets, freeWorld, garrison, mission, near, order, origin, otherEmpire, otherFleets, rivalWorld, secondColony, surveying, universe } from "../tests/fleetFixture";
+import { colony, colonizing, done, empire, fighting, fleets, freeWorld, frontierFleets, garrison, mission, near, order, origin, otherEmpire, otherFleets, rivalWorld, secondColony, sentinel, surveying, universe } from "../tests/fleetFixture";
 
 const json = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body });
 beforeAll(() => {
@@ -28,7 +28,8 @@ test("StrictMode mount reads only; server state for production, garrison, missio
   const { calls } = setup(base);
   expect(await screen.findByRole("heading", { name: "Production — Nouvelle Aube" })).toBeVisible();
   expect(screen.getByText("Garnison Nouvelle Aube")).toBeVisible();
-  expect(screen.getByText(/Signal détecté — structure inconnue/)).toBeVisible();
+  const moving = screen.getByRole("heading", { name: "Flottes en mission" }).closest("section")!;
+  expect(within(moving).getByText(/Signal détecté — structure inconnue/)).toBeVisible();
   expect(screen.getByRole("heading", { name: "Rapports récents" })).toBeVisible();
   expect(screen.getByText("En fabrication")).toBeVisible();
   expect(calls().every(([, init]) => !init?.method)).toBe(true);
@@ -104,6 +105,19 @@ test("a ruleset without Fleets is explained, never filled with fake ships", asyn
     : json({ server_time: "2099-01-01T00:00:00Z", empire: { id: empire, name: "Empire test" }, permissions: ["fleet.read"], available: false }));
   expect(await screen.findByRole("heading", { name: "Flottes indisponibles dans cette partie" })).toBeVisible();
   expect(screen.queryByText(/Garnison/)).not.toBeInTheDocument();
+});
+
+test("UX-API-01: missions[].path is kept only from origin to destination in hops + 1 systems", () => {
+  const withPath = (path: unknown) => {
+    const value = fleets([{ ...surveying(), path } as never]);
+    expect(validFleets(value, empire)).toBe(true);
+    return value.missions![0].path;
+  };
+  expect(withPath([origin, near])).toEqual([origin, near]);
+  expect(withPath([near, origin])).toBeUndefined(); // reversed
+  expect(withPath([origin])).toBeUndefined(); // wrong length for 1 hop
+  expect(withPath([origin, "not-a-uuid"])).toBeUndefined();
+  expect(withPath("nope")).toBeUndefined();
 });
 
 test("validator refuses Colony data without colony.read and named DETECTED signals", async () => {
@@ -568,4 +582,76 @@ test("validator refuses an alert naming the attacker and combat data without com
   const defender = fighting();
   (defender.missions![0].attack as Record<string, unknown>).defender_empire_id = otherEmpire;
   expect(validFleets(defender, empire)).toBe(false);
+});
+
+test("a battle voided by a pact is reported without any composition (v0.8)", async () => {
+  const voided = fighting();
+  voided.combat!.reports = [{
+    engagement_id: done, role: "attacker", battle_at: "2098-12-31T00:00:00Z", processed_at: "2098-12-31T00:00:05Z",
+    outcome: "voided_by_pact", target: { planet_id: rivalWorld, system_id: near }, opponent_empire_id: otherEmpire,
+    pact_id: order,
+  }];
+  expect(validFleets(voided, empire)).toBe(true);
+  const leaky = structuredClone(voided);
+  leaky.combat!.reports![0].own = fighting().combat!.reports![0].own;
+  expect(validFleets(leaky, empire)).toBe(false);
+  const fetcher = vi.fn(async (url: string) => url.endsWith("/fleets")
+    ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(voided));
+  vi.stubGlobal("fetch", fetcher);
+  render(<StrictMode><FleetView universe={universe} enabled csrf={"a".repeat(64)} onSessionLost={vi.fn()} /></StrictMode>);
+  expect(await screen.findByText("Bataille annulée par un pacte")).toBeVisible();
+  expect(screen.getByText(/le carburant n’est pas remboursé/)).toBeVisible();
+});
+
+test("v0.9: the four protocols are distinct, explained, and one CSRF intention changes it", async () => {
+  const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
+    if (init?.method === "POST") return json({ result: { fleet_id: sentinel, protocol: "AMBUSH" }, fleets: frontierFleets() });
+    return url.endsWith("/fleets") ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(frontierFleets());
+  });
+  vi.stubGlobal("fetch", fetcher);
+  render(<StrictMode><FleetView universe={universe} enabled csrf={"a".repeat(64)} onSessionLost={vi.fn()} /></StrictMode>);
+  const card = (await screen.findByRole("heading", { name: "Sentinelle" })).closest("li")!;
+  expect(within(card).getByText("Surveillance", { selector: ".badge" })).toBeVisible();
+  const select = within(card).getByRole("combobox", { name: "Protocole de premier contact" });
+  expect([...(select as HTMLSelectElement).options].map((o) => o.text)).toEqual(
+    ["Aucun", "Surveillance", "Embuscade", "Interception", "Contact amical"]);
+  expect(within(card).getByRole("button", { name: "Appliquer" })).toBeDisabled(); // unchanged
+  fireEvent.change(select, { target: { value: "AMBUSH" } });
+  expect(within(card).getByText(/moins de 72 h/)).toBeVisible();
+  fireEvent.click(within(card).getByRole("button", { name: "Appliquer" }));
+  await screen.findByText("Ordre accepté par le serveur.");
+  const post = (fetcher.mock.calls as unknown as [string, RequestInit][]).find(([, i]) => i?.method === "POST")!;
+  expect(post[0]).toBe(`/api/game/${universe}/fleets/${empire}/${sentinel}/protocol`);
+  expect(JSON.parse(String(post[1].body))).toMatchObject({ protocol: "AMBUSH" });
+  // A garrison never offers a protocol.
+  const garrisonCard = screen.getByRole("heading", { name: "Garnison Nouvelle Aube" }).closest("li")!;
+  expect(within(garrisonCard).queryByRole("combobox", { name: "Protocole de premier contact" })).toBeNull();
+});
+
+test("v0.9: anonymous detections, interception and retreat reports in the Frontier panel", async () => {
+  vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("/fleets")
+    ? json({ empires: [{ id: empire, name: "Empire test" }] }) : json(frontierFleets())));
+  render(<StrictMode><FleetView universe={universe} enabled csrf={"a".repeat(64)} onSessionLost={vi.fn()} /></StrictMode>);
+  const panel = (await screen.findByRole("heading", { name: "Frontière" })).closest("section")!;
+  expect(within(panel).getByText("Signature étrangère détectée")).toBeVisible();
+  expect(within(panel).getByText(/Interception — Victoire/)).toBeVisible();
+  expect(within(panel).getByText("Repli effectué")).toBeVisible();
+  expect(within(panel).getByText(/Système voisin/)).toBeVisible();
+});
+
+test("v0.9 validator refuses frontier leaks and misplaced protocols", () => {
+  expect(validFleets(frontierFleets(), empire)).toBe(true);
+  const routed = frontierFleets();
+  (routed.frontier!.detections[0] as Record<string, unknown>).destination_id = near;
+  expect(validFleets(routed, empire)).toBe(false);
+  const told = frontierFleets();
+  const [engagement] = told.frontier!.encounters;
+  told.frontier!.encounters[0] = { ...engagement, role: "mover" } as never; // a mover never learns the protocol
+  expect(validFleets(told, empire)).toBe(false);
+  const garrisoned = frontierFleets();
+  garrisoned.fleets![0] = { ...garrisoned.fleets![0], protocol: "SURVEILLANCE" };
+  expect(validFleets(garrisoned, empire)).toBe(false);
+  const historical = frontierFleets();
+  historical.frontier = null;
+  expect(validFleets(historical, empire)).toBe(false); // a protocol without frontier rules
 });

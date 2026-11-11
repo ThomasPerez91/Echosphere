@@ -1,0 +1,60 @@
+{
+  "version": "v0.13",
+  "galaxy_generator_version": "galaxy-v2",
+  "sizes": {
+    "100": 4,
+    "300": 12,
+    "500": 20,
+    "1000": 40,
+    "2000": 40
+  },
+  "default_size": 100,
+  "max_humans": 10,
+  "max_ai": 30,
+  "region_size": 25,
+  "spacing": 100,
+  "jitter": 18,
+  "min_separation": 60,
+  "max_route_length": 200,
+  "max_degree": 4,
+  "extra_route_bps": 2500,
+  "dead_end_bps": 3500,
+  "region_link_bps": 3000,
+  "max_attempts": 16,
+  "detected_cell_size": 100,
+  "min_start_distance": 5,
+  "min_start_zone_size": 7,
+  "planet_counts": {
+    "2": 20,
+    "3": 40,
+    "4": 30,
+    "5": 10
+  },
+  "sector_capacities": {
+    "9": 20,
+    "12": 35,
+    "15": 30,
+    "18": 15
+  },
+  "orbital_capacities": {
+    "1": 25,
+    "2": 50,
+    "3": 25
+  },
+  "useful_sectors": 12,
+  "useful_orbitals": 2,
+  "starting_sectors": 12,
+  "starting_orbitals": 2,
+  "naming": "syllables",
+  "shapes": {
+    "offered": [
+      "elliptical",
+      "spiral2",
+      "spiral4",
+      "irregular",
+      "clusters"
+    ],
+    "max_route_length": 600,
+    "max_link_length": 4000
+  }
+}

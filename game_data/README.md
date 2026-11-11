@@ -47,3 +47,11 @@ v0.1–v0.4 immuables, univers existants jamais migrés.
 `combat.json` (`combat-v1` : coque/attaque, matrice des matchups en bps, fenêtre minimale de 24 h,
 borne de rounds) + `ai.json` `utility-goals-v2` (objectif défensif `military`, sans offensive).
 Balance provisoire. v0.1–v0.6 immuables, univers existants jamais migrés.
+
+Chantier EXP-01 (09/11/2026) : ruleset complet `v0.10` = v0.9 (versions seules changées) +
+`opportunities.json` (`opportunities-v1` : gisements Alliages/Flux/Données à réserve finie et débit
+plafonné, curiosités à étude unique, rang remarquable plafonné et éloigné des départs, gisement
+ordinaire garanti dans chaque zone de départ, dossiers d’indices). Balance provisoire. Le monde
+`galaxy-v1` et son empreinte sont identiques à ceux de v0.9 pour une même graine. L’ordre des
+versions est numérique (`since`, v0.10 après v0.9). v0.1–v0.9 immuables, univers existants jamais
+migrés ; aucune création de partie en v0.10 avant EXP-01b (bootstrap et Portal restent en v0.9).

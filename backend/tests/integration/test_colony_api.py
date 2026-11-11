@@ -653,3 +653,26 @@ def test_three_order_cascade_allocates_available_storage_only_once(world):
         assert [units(row.refunded["alloys"]) for row in rows] == [200, 400, 0]
         assert all(row.status == "cancelled" for row in rows)
     assert w.read().json()["queue"] == []
+
+
+def test_the_player_names_a_colony_and_every_view_shows_it(world):
+    """Recette 09/11/2026: colony names (colony.construct); the planet name until then."""
+    w = world(permissions=["colony.read", "colony.construct"])
+    before = w.read().json()["colony"]
+    assert before["name"] == before["planet"]["name"]
+    url = f"{w.root}/{w.colony}/name"
+    renamed = w.client.post(url, json={"name": "  Nouvelle   Aube "}, headers=w.headers())
+    assert renamed.status_code == 200, renamed.json()
+    assert renamed.json()["colony"]["colony"]["name"] == "Nouvelle Aube"
+    assert w.read().json()["colony"]["planet"]["name"] == before["planet"]["name"]
+    listing = w.client.get(w.root, headers={"X-Game-Request": "bootstrap"}).json()
+    assert [c["name"] for c in listing["colonies"]] == ["Nouvelle Aube"]
+    bad = w.client.post(url, json={"name": "x"}, headers=w.headers())
+    assert bad.status_code == 422
+    blank = w.client.post(url, json={"name": "a\u0007b"}, headers=w.headers())
+    assert blank.status_code == 422 and blank.json()["error"]["code"] == "invalid_colony_name"
+    reader = world(permissions=["colony.read"])
+    refused = reader.client.post(
+        f"{reader.root}/{reader.colony}/name", json={"name": "Lecture"}, headers=reader.headers()
+    )
+    assert refused.status_code == 403

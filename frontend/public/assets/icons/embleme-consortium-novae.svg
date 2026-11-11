@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><defs>
+  <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EEF4FA"/><stop offset=".55" stop-color="#9EB2C6"/><stop offset="1" stop-color="#34465A"/></linearGradient>
+  <linearGradient id="steelH" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#9EB2C6"/><stop offset="1" stop-color="#22303F"/></linearGradient>
+  <linearGradient id="th" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF0B8"/><stop offset=".5" stop-color="#F5C451"/><stop offset="1" stop-color="#B8761C"/></linearGradient>
+  <linearGradient id="ths" gradientUnits="userSpaceOnUse" x1="60" y1="40" x2="460" y2="480"><stop offset="0" stop-color="#FFF0B8"/><stop offset=".5" stop-color="#F5C451"/><stop offset="1" stop-color="#B8761C"/></linearGradient>
+  <linearGradient id="thd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF0B8"/><stop offset=".45" stop-color="#F5C451"/><stop offset="1" stop-color="#B8761C"/></linearGradient>
+  <linearGradient id="stroke" gradientUnits="userSpaceOnUse" x1="60" y1="40" x2="460" y2="480"><stop offset="0" stop-color="#EEF4FA"/><stop offset=".6" stop-color="#FFF0B8"/><stop offset="1" stop-color="#F5C451"/></linearGradient>
+  <radialGradient id="halo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F5C451" stop-opacity=".30"/><stop offset=".6" stop-color="#F5C451" stop-opacity=".08"/><stop offset="1" stop-color="#F5C451" stop-opacity="0"/></radialGradient>
+  <radialGradient id="orb" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#FFF0B8"/><stop offset=".45" stop-color="#F5C451"/><stop offset="1" stop-color="#B8761C"/></radialGradient>
+  <radialGradient id="glass" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F5C451" stop-opacity=".05"/><stop offset="1" stop-color="#F5C451" stop-opacity=".35"/></radialGradient>
+  <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .9 0" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="bigglow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur in="SourceGraphic" stdDeviation="16.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="soft"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<defs><linearGradient id="goldF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6C8"/><stop offset=".35" stop-color="#F5C451"/><stop offset=".75" stop-color="#D98B1F"/><stop offset="1" stop-color="#8A4A0C"/></linearGradient>
+<radialGradient id="ember" cx=".5" cy=".6" r=".5"><stop offset="0" stop-color="#FFF4C4"/><stop offset=".4" stop-color="#FF9A2E"/><stop offset="1" stop-color="#C2410C" stop-opacity="0"/></radialGradient></defs>
+<g filter="url(#glow)">
+<path d="M256 40 C300 120 352 160 340 256 C332 316 298 350 256 372 C214 350 180 316 172 256 C160 160 212 120 256 40 Z" fill="url(#goldF)"/>
+<path d="M150 120 C110 200 96 300 160 372 C196 412 236 428 256 470 C276 428 316 412 352 372 C416 300 402 200 362 120 C384 210 372 290 320 340 C296 362 272 378 256 404 C240 378 216 362 192 340 C140 290 128 210 150 120 Z" fill="url(#goldF)"/>
+<path d="M96 168 C60 250 70 340 130 400 C112 330 112 260 96 168 Z M416 168 C452 250 442 340 382 400 C400 330 400 260 416 168 Z" fill="url(#goldF)" opacity=".9"/>
+</g>
+<path d="M256 150 C278 196 300 222 292 268 C286 300 270 316 256 326 C242 316 226 300 220 268 C212 222 234 196 256 150 Z" fill="url(#ember)"/>
+<path d="M256 214 C266 236 276 250 272 274 C268 292 262 300 256 306 C250 300 244 292 240 274 C236 250 246 236 256 214 Z" fill="#FFF8DC"/>
+<path d="M256 40 C300 120 352 160 340 256 C332 316 298 350 256 372 C214 350 180 316 172 256 C160 160 212 120 256 40 Z" fill="none" stroke="#FFF6D6" stroke-width="4" opacity=".7"/>
+<g transform="translate(256 52)" filter="url(#bigglow)"><path d="M0 -30 L7 -7 L30 0 L7 7 L0 30 L-7 7 L-30 0 L-7 -7 Z" fill="#FFFFFF"/></g></svg>

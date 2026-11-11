@@ -7,7 +7,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.dialects.postgresql import insert
 
 from app.ai.models import AIController
-from app.control.contracts import Access, Provision, Revoke, digest
+from app.control.contracts import Access, HandOver, NameEmpire, Provision, Revoke, Start, digest
 from app.control.models import (
     ControlOperation,
     EmpireBinding,
@@ -21,6 +21,9 @@ SERVICE = "portal-control"
 ALLOWED = frozenset(
     (
         "provision_universe",
+        "start_universe",
+        "name_empire",
+        "hand_over_empire",
         "set_universe_access",
         "revoke_sessions",
         "get_operation",
@@ -53,6 +56,13 @@ def snapshot(row):
     return row.snapshot if row else None
 
 
+class _Clock:
+    """Adapter: the scheduler expects an object with now(); Control keeps a plain callable."""
+
+    def __init__(self, now):
+        self.now = now
+
+
 class Control:
     def __init__(self, factory, clock=None):
         self.factory = factory
@@ -60,8 +70,11 @@ class Control:
 
     def apply(self, service, operation):
         authorize(service, operation.message.kind)
-        wire = operation.model_dump(mode="json")
-        checksum = digest(wire)
+        # The receipt digest is the one of the operation as sent (fields left to their defaults
+        # are not part of it): Portal computes it on its own envelope, without Game's defaults.
+        # Rows stored before this rule carry the digest of the full dump: still recognised.
+        checksum = digest(operation.model_dump(mode="json", exclude_unset=True))
+        legacy = digest(operation.model_dump(mode="json"))
         with self.factory.begin() as session:
             lock = int.from_bytes(
                 hashlib.sha256(f"{service}:{operation.operation_id}".encode()).digest()[:8],
@@ -70,12 +83,21 @@ class Control:
             session.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock})
             previous = session.get(ControlOperation, (service, operation.operation_id))
             if previous:
-                if previous.request_digest != checksum:
+                if previous.request_digest not in (checksum, legacy):
                     raise ControlError("operation_content_conflict")
+                if previous.request_digest != checksum:
+                    previous.request_digest = checksum  # same content, the caller's digest
+                    session.flush()
                 return self.receipt(previous)
             message = operation.message
             if isinstance(message, Provision):
                 result = self.provision(session, message)
+            elif isinstance(message, Start):
+                result = self.start(session, message)
+            elif isinstance(message, NameEmpire):
+                result = self.name_empire(session, message)
+            elif isinstance(message, HandOver):
+                result = self.hand_over(session, message)
             elif isinstance(message, Access):
                 result = self.access(session, message)
             elif isinstance(message, Revoke):
@@ -128,6 +150,99 @@ class Control:
         elif row.name != message.name or row.seed != message.seed:
             raise ControlError("universe_content_conflict")
         return {"status": "applied", "universe_id": str(message.universe_id), "name": message.name}
+
+    def start(self, session, message):
+        """Same atomic bootstrap as the operator CLI, in the operation transaction: the immutable
+        receipt and the started world commit together, a retried delivery replays the receipt."""
+        from app.ai.bootstrap import bootstrap
+        from app.ai.controller import AIDenied
+        from app.colony.rules import load_ruleset
+        from app.simulation.scheduler import IdempotencyConflict
+        from app.simulation.service import TimeEngine
+
+        clock = _Clock(self.clock)
+        try:
+            started = bootstrap(
+                session,
+                TimeEngine(self.factory, clock),
+                message.universe_id,
+                message.name,
+                message.seed,
+                list(message.profiles),
+                clock.now(),
+                rules=load_ruleset(message.ruleset),
+                humans=message.humans,
+                size=message.size,
+                sandbox=message.sandbox,
+                shape=message.shape,
+            )
+        except IdempotencyConflict:
+            raise ControlError("universe_content_conflict") from None
+        except AIDenied as error:
+            raise ControlError(str(error.args[0]) if error.args else "start_denied", 409) from None
+        seats = [actor["empire_id"] for actor in started["actors"] if actor["profile"] is None]
+        result = {
+            "status": "applied",
+            "universe_id": str(message.universe_id),
+            "name": message.name,
+            "human_empire_id": seats[0],
+            "started_at": started["started_at"],
+        }
+        if message.family != "solo":
+            result["human_empire_ids"] = seats  # seat order = starting-site order
+        return result
+
+    @staticmethod
+    def _empire(session, message):
+        # Same parent row lock as the access grant and AI activation paths.
+        empire = session.scalar(
+            select(Empire).where(Empire.id == message.empire_id).with_for_update()
+        )
+        if empire is None or empire.universe_id != message.universe_id:
+            raise ControlError("empire_scope_denied", 403)
+        return empire
+
+    def name_empire(self, session, message):
+        """Q60: renames a human Empire; an AI-controlled Empire keeps its name."""
+        empire = self._empire(session, message)
+        if session.scalar(select(AIController.id).where(AIController.empire_id == empire.id)):
+            raise ControlError("empire_ai_controlled", 409)
+        empire.name = message.name
+        return {
+            "status": "applied",
+            "universe_id": str(message.universe_id),
+            "empire_id": str(empire.id),
+            "name": message.name,
+        }
+
+    def hand_over(self, session, message):
+        """Q60: the Empire of a player who left goes on under a server AI with the same rules
+        (no resource, unit or knowledge granted). Idempotent: an existing controller replays."""
+        from app.ai.controller import AIDenied, activate
+
+        empire = self._empire(session, message)
+        current = session.scalar(select(AIController).where(AIController.empire_id == empire.id))
+        if current is None:
+            bound = select(EmpireBinding.empire_id).where(EmpireBinding.empire_id == empire.id)
+            if session.scalar(bound.limit(1)):
+                # The seat is still bound: Portal's revocation has not been applied yet.
+                raise ControlError("empire_still_bound", 409)
+            empire.controller_type = "ai"
+            try:
+                current = activate(
+                    session, message.universe_id, empire.id, message.profile, self.clock()
+                )
+            except AIDenied as error:
+                code = str(error.args[0]) if error.args else "hand_over_denied"
+                raise ControlError(code) from None
+        elif current.profile != message.profile:
+            raise ControlError("hand_over_conflict")
+        return {
+            "status": "applied",
+            "universe_id": str(message.universe_id),
+            "empire_id": str(empire.id),
+            "profile": current.profile,
+        }
 
     def access(self, session, message):
         principal = account_lock(session, message.global_user_id)

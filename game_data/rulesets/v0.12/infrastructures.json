@@ -1,0 +1,1023 @@
+{
+  "version": "v0.12",
+  "infrastructures": {
+    "extraction_complex": {
+      "max_per_colony": null,
+      "requires": {},
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 40,
+            "flux": 15,
+            "data": 0
+          },
+          "duration_seconds": 60,
+          "production": {
+            "alloys": 75
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 54,
+            "flux": 20,
+            "data": 0
+          },
+          "duration_seconds": 93,
+          "production": {
+            "alloys": 165
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 73,
+            "flux": 27,
+            "data": 0
+          },
+          "duration_seconds": 144,
+          "production": {
+            "alloys": 272
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 98,
+            "flux": 37,
+            "data": 0
+          },
+          "duration_seconds": 223,
+          "production": {
+            "alloys": 399
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 133,
+            "flux": 50,
+            "data": 0
+          },
+          "duration_seconds": 346,
+          "production": {
+            "alloys": 549
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 179,
+            "flux": 67,
+            "data": 0
+          },
+          "duration_seconds": 537,
+          "production": {
+            "alloys": 725
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 242,
+            "flux": 91,
+            "data": 0
+          },
+          "duration_seconds": 832,
+          "production": {
+            "alloys": 930
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 327,
+            "flux": 123,
+            "data": 0
+          },
+          "duration_seconds": 1290,
+          "production": {
+            "alloys": 1169
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 441,
+            "flux": 165,
+            "data": 0
+          },
+          "duration_seconds": 1999,
+          "production": {
+            "alloys": 1447
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 596,
+            "flux": 223,
+            "data": 0
+          },
+          "duration_seconds": 3098,
+          "production": {
+            "alloys": 1768
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 10,
+      "scaling": {
+        "cost": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 115,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    },
+    "flux_reactor": {
+      "max_per_colony": null,
+      "requires": {},
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 40,
+            "flux": 10,
+            "data": 0
+          },
+          "duration_seconds": 60,
+          "production": {
+            "flux": 62
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 54,
+            "flux": 14,
+            "data": 0
+          },
+          "duration_seconds": 93,
+          "production": {
+            "flux": 136
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 73,
+            "flux": 18,
+            "data": 0
+          },
+          "duration_seconds": 144,
+          "production": {
+            "flux": 225
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 98,
+            "flux": 25,
+            "data": 0
+          },
+          "duration_seconds": 223,
+          "production": {
+            "flux": 330
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 133,
+            "flux": 33,
+            "data": 0
+          },
+          "duration_seconds": 346,
+          "production": {
+            "flux": 454
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 179,
+            "flux": 45,
+            "data": 0
+          },
+          "duration_seconds": 537,
+          "production": {
+            "flux": 599
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 242,
+            "flux": 61,
+            "data": 0
+          },
+          "duration_seconds": 832,
+          "production": {
+            "flux": 769
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 327,
+            "flux": 82,
+            "data": 0
+          },
+          "duration_seconds": 1290,
+          "production": {
+            "flux": 967
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 441,
+            "flux": 110,
+            "data": 0
+          },
+          "duration_seconds": 1999,
+          "production": {
+            "flux": 1196
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 596,
+            "flux": 149,
+            "data": 0
+          },
+          "duration_seconds": 3098,
+          "production": {
+            "flux": 1462
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 10,
+      "scaling": {
+        "cost": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 115,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    },
+    "data_node": {
+      "max_per_colony": null,
+      "requires": {},
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 45,
+            "flux": 20,
+            "data": 0
+          },
+          "duration_seconds": 60,
+          "production": {
+            "data": 30
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 61,
+            "flux": 27,
+            "data": 0
+          },
+          "duration_seconds": 93,
+          "production": {
+            "data": 66
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 82,
+            "flux": 36,
+            "data": 0
+          },
+          "duration_seconds": 144,
+          "production": {
+            "data": 109
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 111,
+            "flux": 49,
+            "data": 0
+          },
+          "duration_seconds": 223,
+          "production": {
+            "data": 160
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 149,
+            "flux": 66,
+            "data": 0
+          },
+          "duration_seconds": 346,
+          "production": {
+            "data": 220
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 202,
+            "flux": 90,
+            "data": 0
+          },
+          "duration_seconds": 537,
+          "production": {
+            "data": 290
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 272,
+            "flux": 121,
+            "data": 0
+          },
+          "duration_seconds": 832,
+          "production": {
+            "data": 372
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 368,
+            "flux": 163,
+            "data": 0
+          },
+          "duration_seconds": 1290,
+          "production": {
+            "data": 468
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 496,
+            "flux": 221,
+            "data": 0
+          },
+          "duration_seconds": 1999,
+          "production": {
+            "data": 579
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 670,
+            "flux": 298,
+            "data": 0
+          },
+          "duration_seconds": 3098,
+          "production": {
+            "data": 707
+          },
+          "construction_bonus_bps": 0,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 10,
+      "scaling": {
+        "cost": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 115,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    },
+    "industrial_complex": {
+      "max_per_colony": 1,
+      "requires": {},
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 120,
+            "flux": 60,
+            "data": 20
+          },
+          "duration_seconds": 120,
+          "production": {},
+          "construction_bonus_bps": 500,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 174,
+            "flux": 87,
+            "data": 29
+          },
+          "duration_seconds": 186,
+          "production": {},
+          "construction_bonus_bps": 1000,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 252,
+            "flux": 126,
+            "data": 42
+          },
+          "duration_seconds": 288,
+          "production": {},
+          "construction_bonus_bps": 1500,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 366,
+            "flux": 183,
+            "data": 61
+          },
+          "duration_seconds": 447,
+          "production": {},
+          "construction_bonus_bps": 2000,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 530,
+            "flux": 265,
+            "data": 88
+          },
+          "duration_seconds": 693,
+          "production": {},
+          "construction_bonus_bps": 2500,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 769,
+            "flux": 385,
+            "data": 128
+          },
+          "duration_seconds": 1074,
+          "production": {},
+          "construction_bonus_bps": 3000,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 1115,
+            "flux": 558,
+            "data": 186
+          },
+          "duration_seconds": 1664,
+          "production": {},
+          "construction_bonus_bps": 3500,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 1617,
+            "flux": 809,
+            "data": 270
+          },
+          "duration_seconds": 2579,
+          "production": {},
+          "construction_bonus_bps": 4000,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 2345,
+            "flux": 1172,
+            "data": 391
+          },
+          "duration_seconds": 3998,
+          "production": {},
+          "construction_bonus_bps": 4500,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 3400,
+            "flux": 1700,
+            "data": 567
+          },
+          "duration_seconds": 6197,
+          "production": {},
+          "construction_bonus_bps": 5000,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 10,
+      "scaling": {
+        "cost": {
+          "numerator": 145,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 500
+      }
+    },
+    "logistics_center": {
+      "max_per_colony": 1,
+      "requires": {
+        "extraction_complex": 3
+      },
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 150,
+            "flux": 80,
+            "data": 20
+          },
+          "duration_seconds": 180,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 20000
+        },
+        {
+          "cost": {
+            "alloys": 218,
+            "flux": 116,
+            "data": 29
+          },
+          "duration_seconds": 279,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 30000
+        },
+        {
+          "cost": {
+            "alloys": 315,
+            "flux": 168,
+            "data": 42
+          },
+          "duration_seconds": 432,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 45000
+        },
+        {
+          "cost": {
+            "alloys": 457,
+            "flux": 244,
+            "data": 61
+          },
+          "duration_seconds": 670,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 67500
+        },
+        {
+          "cost": {
+            "alloys": 663,
+            "flux": 354,
+            "data": 88
+          },
+          "duration_seconds": 1039,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 101250
+        },
+        {
+          "cost": {
+            "alloys": 961,
+            "flux": 513,
+            "data": 128
+          },
+          "duration_seconds": 1610,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 151875
+        },
+        {
+          "cost": {
+            "alloys": 1394,
+            "flux": 744,
+            "data": 186
+          },
+          "duration_seconds": 2496,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 227812
+        },
+        {
+          "cost": {
+            "alloys": 2021,
+            "flux": 1078,
+            "data": 270
+          },
+          "duration_seconds": 3869,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 341719
+        },
+        {
+          "cost": {
+            "alloys": 2931,
+            "flux": 1563,
+            "data": 391
+          },
+          "duration_seconds": 5997,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 512578
+        },
+        {
+          "cost": {
+            "alloys": 4250,
+            "flux": 2267,
+            "data": 567
+          },
+          "duration_seconds": 9295,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": 768867
+        }
+      ],
+      "scaling_after_level": 10,
+      "scaling": {
+        "cost": {
+          "numerator": 145,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 130,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    },
+    "orbital_shipyard": {
+      "max_per_colony": 1,
+      "requires": {
+        "industrial_complex": 2
+      },
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 150,
+            "flux": 80,
+            "data": 30
+          },
+          "duration_seconds": 120,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 218,
+            "flux": 116,
+            "data": 44
+          },
+          "duration_seconds": 186,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 315,
+            "flux": 168,
+            "data": 63
+          },
+          "duration_seconds": 288,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 457,
+            "flux": 244,
+            "data": 91
+          },
+          "duration_seconds": 447,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 663,
+            "flux": 354,
+            "data": 133
+          },
+          "duration_seconds": 693,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 961,
+            "flux": 513,
+            "data": 192
+          },
+          "duration_seconds": 1074,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 1394,
+            "flux": 744,
+            "data": 279
+          },
+          "duration_seconds": 1664,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 2021,
+            "flux": 1078,
+            "data": 404
+          },
+          "duration_seconds": 2579,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 2931,
+            "flux": 1563,
+            "data": 586
+          },
+          "duration_seconds": 3998,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 4250,
+            "flux": 2267,
+            "data": 850
+          },
+          "duration_seconds": 6197,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 10,
+      "scaling": {
+        "cost": {
+          "numerator": 145,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    },
+    "research_center": {
+      "max_per_colony": 1,
+      "requires": {
+        "data_node": 3
+      },
+      "explicit_levels": [
+        {
+          "cost": {
+            "alloys": 120,
+            "flux": 60,
+            "data": 60
+          },
+          "duration_seconds": 120,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 174,
+            "flux": 87,
+            "data": 87
+          },
+          "duration_seconds": 186,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 252,
+            "flux": 126,
+            "data": 126
+          },
+          "duration_seconds": 288,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 366,
+            "flux": 183,
+            "data": 183
+          },
+          "duration_seconds": 447,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 530,
+            "flux": 265,
+            "data": 265
+          },
+          "duration_seconds": 693,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 769,
+            "flux": 385,
+            "data": 385
+          },
+          "duration_seconds": 1074,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 1115,
+            "flux": 558,
+            "data": 558
+          },
+          "duration_seconds": 1664,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 1617,
+            "flux": 809,
+            "data": 809
+          },
+          "duration_seconds": 2579,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 2345,
+            "flux": 1172,
+            "data": 1172
+          },
+          "duration_seconds": 3998,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        },
+        {
+          "cost": {
+            "alloys": 3400,
+            "flux": 1700,
+            "data": 1700
+          },
+          "duration_seconds": 6197,
+          "production": {},
+          "construction_bonus_bps": 0,
+          "capacity": null
+        }
+      ],
+      "scaling_after_level": 10,
+      "scaling": {
+        "cost": {
+          "numerator": 145,
+          "denominator": 100
+        },
+        "duration": {
+          "numerator": 135,
+          "denominator": 100
+        },
+        "production": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "capacity": {
+          "numerator": 100,
+          "denominator": 100
+        },
+        "bonus_increment_bps": 0
+      }
+    }
+  }
+}

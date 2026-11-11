@@ -1,0 +1,453 @@
+/* Command map styles (UX04, production). Direction A « Console orbitale » (D-UX-1) with the discreet
+   cartographic grid of B and tabular figures of C. Scoped under .cmd-root: the rest of the shell is untouched. */
+.cmd-root {
+  /* A — Console orbitale (validated, D-UX-1): evolution of docs/visual-reference/design-system.png */
+  --ui-bg: #050d16; --ui-surface: #0e1b2a; --ui-raised: #132436; --ui-border: #223a52;
+  --ui-text: #e6f2ff; --ui-muted: #9fb3c8; --ui-primary: #23c2ff; --ui-on-primary: #04121c;
+  --ui-success: #2ecf88; --ui-warning: #ffb347; --ui-danger: #ff6b6b; --ui-accent: #a78bfa;
+  --ui-radius: 12px; --ui-gap: 16px; --ui-font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ui-display: var(--ui-font); --ui-numeric: var(--ui-font); --ui-label-transform: none; --ui-label-spacing: .02em;
+  /* Discreet cartographic grid borrowed from B (D-UX-1). */
+  --map-bg: repeating-linear-gradient(0deg, transparent 0 47px, #9fd8ff09 47px 48px),
+    repeating-linear-gradient(90deg, transparent 0 47px, #9fd8ff09 47px 48px),
+    radial-gradient(ellipse at 45% 45%, #0f2440 0%, #070f1d 60%, #03070e 100%);
+  --map-route: #3d7fc4; --map-star: #9ee9ec; --map-signal: #6f8aa3; --map-own: #ffb347;
+  --map-fleet: #23c2ff; --map-mission: #2ecf88; --map-plan: #ffe08a; --map-label: #e6f2ff;
+  /* Knowledge colours of docs/visual-reference/galaxy-map.png */
+  --map-detected: #4a9bff; --map-mapped: #ffb347; --map-monitored: #2ecf88; --map-home: #23c2ff;
+  --map-nebula-a: #7b4fd6; --map-nebula-b: #1f6fd1; --map-dust: #cfe6ff;
+}
+
+.cmd-root .button { border-radius: calc(var(--ui-radius) * .6); min-height: 44px; }
+.cmd-root .button--primary { background: var(--ui-primary); border-color: var(--ui-primary); color: var(--ui-on-primary); }
+.cmd-root :focus-visible { outline: 3px solid var(--ui-warning); outline-offset: 3px; }
+.cmd-root h1, .cmd-root h2 { font-family: var(--ui-display); }
+.cmd-root p { color: var(--ui-muted); }
+.cmd-kicker { margin: 0 0 4px; font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ui-primary) !important; }
+
+.cmd-command { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(330px, 1fr); grid-template-areas: "head head" "map side" "dock side"; gap: var(--ui-gap); align-items: start; }
+.cmd-page-head { grid-area: head; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+.cmd-page-title { font-size: clamp(1.8rem, 3vw, 2.4rem) !important; font-weight: 550; letter-spacing: -.03em; margin: 0 0 4px !important; }
+.cmd-page-head p { margin: 0; max-width: 62ch; }
+.cmd-page-head p strong { color: var(--ui-primary); font-weight: 600; }
+.cmd-search { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 0 1 480px; }
+.cmd-search input { min-height: 44px; min-width: 0; flex: 1 1 200px; background: var(--ui-surface); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .7); padding: 0 14px; font: inherit; }
+.cmd-search .cmd-help { flex-basis: 100%; }
+.cmd-map-tools { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cmd-filters, .cmd-switches { display: flex; flex-wrap: wrap; gap: 8px; }
+.cmd-filter { min-height: 44px; padding: 0 14px; border-radius: calc(var(--ui-radius) * .6); border: 1px solid var(--ui-border); background: var(--ui-raised); color: var(--ui-muted); font: inherit; font-size: .8rem; cursor: pointer; }
+.cmd-filter.is-active { color: var(--ui-text); border-color: var(--ui-primary); background: color-mix(in srgb, var(--ui-primary) 16%, var(--ui-raised)); }
+.cmd-switch { min-height: 44px; display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; color: var(--ui-text); font: inherit; font-size: .8rem; cursor: pointer; padding: 0 4px; }
+.cmd-switch-track { width: 38px; height: 22px; border-radius: 999px; background: var(--ui-border); position: relative; transition: background .15s; }
+.cmd-switch-track span { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--ui-muted); transition: transform .15s; }
+.cmd-switch[aria-checked="true"] .cmd-switch-track { background: var(--ui-primary); }
+.cmd-switch[aria-checked="true"] .cmd-switch-track span { transform: translateX(16px); background: var(--ui-on-primary); }
+.cmd-map-panel { grid-area: map; }
+.cmd-side { grid-area: side; }
+.cmd-dock { grid-area: dock; }
+.cmd-list { margin-top: 10px; font-size: .8rem; }
+.cmd-list summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--ui-muted); }
+.cmd-list ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.cmd-map-panel, .cmd-card, .cmd-planner { background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); padding: var(--ui-gap); min-width: 0; }
+.cmd-map-head { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; justify-content: space-between; }
+.cmd-map-head h2 { margin: 0; font-size: 1.05rem; }
+.cmd-map-head p { margin: 0; font-size: .8rem; }
+.cmd-map-frame { position: relative; }
+.cmd-map { display: block; width: 100%; height: clamp(360px, 64vh, 760px); border-radius: calc(var(--ui-radius) * .8); background: var(--map-bg); touch-action: none; cursor: grab; border: 1px solid var(--ui-border); }
+.cmd-map:active { cursor: grabbing; }
+.cmd-dust { fill: var(--map-dust); }
+.cmd-overlay { position: absolute; background: color-mix(in srgb, var(--ui-surface) 88%, transparent); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .7); backdrop-filter: blur(4px); }
+.cmd-overlay--legend { top: 12px; left: 12px; padding: 10px 14px; font-size: .74rem; }
+.cmd-overlay--legend p { margin: 0 0 6px; color: var(--ui-text) !important; font-weight: 600; }
+.cmd-overlay--legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; color: var(--ui-muted); }
+.cmd-swatch { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
+.cmd-swatch--detected { background: var(--map-detected); box-shadow: 0 0 6px var(--map-detected); }
+.cmd-swatch--mapped { background: var(--map-mapped); box-shadow: 0 0 6px var(--map-mapped); }
+.cmd-swatch--monitored { background: var(--map-monitored); box-shadow: 0 0 6px var(--map-monitored); }
+.cmd-swatch--own { border: 2px solid var(--map-home); box-shadow: 0 0 6px var(--map-home); }
+.cmd-swatch--fleet { background: var(--map-fleet); border-radius: 3px; }
+.cmd-swatch--mission { background: var(--map-mission); clip-path: polygon(50% 0, 100% 100%, 0 100%); border-radius: 0; }
+.cmd-swatch--route { width: 20px; height: 0; border-top: 2px dashed var(--map-route); border-radius: 0; vertical-align: 3px; }
+.cmd-minimap { left: 12px; bottom: 12px; width: 170px; height: 100px; padding: 4px; }
+.cmd-mini-route { stroke: var(--map-route); stroke-width: 4; }
+.cmd-mini-star { fill: var(--map-mapped); }
+.cmd-mini-star.cmd-system--detected { fill: var(--map-detected); }
+.cmd-mini-star.cmd-system--monitored { fill: var(--map-monitored); }
+.cmd-mini-star.cmd-system--own { fill: var(--map-home); }
+.cmd-mini-view { fill: none; stroke: var(--ui-text); stroke-width: 6; }
+.cmd-zoom { right: 12px; bottom: 12px; display: flex; gap: 6px; padding: 6px; }
+.cmd-zoom .button { width: 44px; padding: 0; font-size: 1.1rem; }
+.cmd-system.is-dimmed, .cmd-route.is-dimmed { opacity: .28; }
+.cmd-route { stroke: var(--map-route); stroke-width: 1.6; stroke-opacity: .75; }
+.cmd-route--partial { stroke-dasharray: 6 5; }
+.cmd-plan { fill: none; stroke: var(--map-plan); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.cmd-plan--estimate { stroke-dasharray: 8 6; }
+.cmd-arrow { fill: var(--map-plan); }
+.cmd-mission-path { fill: none; stroke: var(--map-mission); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
+.cmd-mission-halo { fill: color-mix(in srgb, var(--map-mission) 25%, transparent); stroke: var(--map-mission); }
+.cmd-mission-ship { fill: var(--map-mission); }
+.cmd-system { cursor: pointer; outline: none; }
+.cmd-hit { fill: transparent; }
+.cmd-system { color: var(--map-mapped); }
+.cmd-system--detected { color: var(--map-detected); }
+.cmd-system--monitored { color: var(--map-monitored); }
+.cmd-system--own { color: var(--map-home); }
+.cmd-star { fill: currentColor; stroke: #fff; stroke-width: 1.2; stroke-opacity: .7; }
+.cmd-system--detected .cmd-star { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-dasharray: 3 2; stroke-opacity: 1; }
+.cmd-halo { pointer-events: none; }
+.cmd-own { fill: none; stroke: currentColor; stroke-width: 1.8; }
+.cmd-own--inner { stroke-width: 1; stroke-opacity: .7; }
+.cmd-selection { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-dasharray: 4 3; }
+.cmd-system:focus-visible .cmd-hit { stroke: var(--ui-warning); stroke-width: 3; }
+.cmd-label { fill: var(--map-label); font-size: 13px; font-weight: 500; font-family: var(--ui-font); paint-order: stroke; stroke: #000c; stroke-width: 3px; }
+.cmd-label--strong { font-size: 15px; font-weight: 700; }
+.cmd-system--detected .cmd-label { fill: var(--map-signal); font-style: italic; font-weight: 400; }
+.cmd-fleet-pin rect { fill: var(--map-fleet); }
+.cmd-fleet-pin text { fill: var(--ui-on-primary); font-size: 10px; font-weight: 700; font-family: var(--ui-numeric); }
+
+.cmd-side { display: grid; gap: var(--ui-gap); min-width: 0; }
+.cmd-system-card { padding: 0; overflow: hidden; }
+.cmd-system-card > [role="tabpanel"] { padding: 4px var(--ui-gap) var(--ui-gap); }
+.cmd-hero { display: flex; gap: 14px; align-items: center; padding: var(--ui-gap); color: var(--map-mapped);
+  background: radial-gradient(ellipse at 85% 0%, color-mix(in srgb, currentColor 22%, transparent), transparent 65%), var(--ui-raised); border-bottom: 1px solid var(--ui-border); }
+.cmd-hero--detected { color: var(--map-detected); }
+.cmd-hero--monitored { color: var(--map-monitored); }
+.cmd-hero--own { color: var(--map-home); }
+.cmd-hero-star { font-size: 2.6rem; line-height: 1; text-shadow: 0 0 18px currentColor; }
+.cmd-hero h2 { color: var(--ui-text); font-size: 1.5rem !important; margin: 0 !important; }
+.cmd-hero .cmd-kicker { color: var(--ui-muted) !important; margin: 2px 0 6px; }
+.cmd-chip--own { color: var(--map-home); border-color: color-mix(in srgb, var(--map-home) 60%, transparent); }
+.cmd-tabs { display: flex; border-bottom: 1px solid var(--ui-border); padding: 0 calc(var(--ui-gap) - 6px); overflow-x: auto; }
+.cmd-tab { min-height: 44px; padding: 0 12px; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--ui-muted); font: inherit; font-size: .85rem; cursor: pointer; white-space: nowrap; }
+.cmd-tab[aria-selected="true"] { color: var(--ui-text); border-bottom-color: var(--ui-primary); }
+.cmd-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.cmd-tiles div { background: var(--ui-raised); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .7); padding: 10px 12px; display: grid; }
+.cmd-tiles span { font-size: .72rem; color: var(--ui-muted); }
+.cmd-tiles strong { font-size: 1.15rem; font-family: var(--ui-numeric); }
+.cmd-planets li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--ui-border); }
+.cmd-planets li div { display: grid; }
+.cmd-planets li div span { font-size: .75rem; }
+.cmd-planet-orb { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 32% 30%, #b9d3e0, #4e7f95 45%, #142b3d 75%); box-shadow: -2px -1px 6px #8fe3e633; }
+.cmd-routes { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 6px; }
+.cmd-routes .button { width: 100%; justify-content: flex-start; }
+.cmd-card h2, .cmd-planner h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.cmd-card h3, .cmd-planner h3 { font-size: .85rem; margin: 16px 0 8px; text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
+.cmd-help { font-size: .8rem; margin: 4px 0 0; }
+.cmd-planets, .cmd-actions, .cmd-dock ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.cmd-planets li { font-size: .85rem; color: var(--ui-muted); }
+.cmd-planets strong { color: var(--ui-text); }
+.cmd-action { width: 100%; justify-content: flex-start; }
+.cmd-notice { margin: 0; padding: 12px 14px; border-radius: var(--ui-radius); border: 1px solid var(--ui-success); background: color-mix(in srgb, var(--ui-success) 12%, var(--ui-surface)); color: var(--ui-text) !important; }
+.cmd-chip { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--ui-border); color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
+.cmd-dock h2 { margin: 0 0 10px; font-size: 1.05rem; }
+.cmd-dock ul { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.cmd-dock li { background: var(--ui-raised); border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .7); padding: 10px 12px; display: grid; gap: 4px; align-content: start; }
+.cmd-dock li p { margin: 0; }
+.cmd-locate { justify-self: start; padding: 6px 12px; font-size: .75rem; }
+.cmd-root .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.cmd-ghost { background: transparent; }
+.cmd-planner-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.cmd-target { margin: 0 0 12px; font-size: .85rem; }
+.cmd-steps { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 12px; }
+.cmd-step { display: flex; align-items: center; gap: 6px; font-size: .72rem; color: var(--ui-muted); padding: 4px 10px 4px 4px; border: 1px solid var(--ui-border); border-radius: 999px; }
+.cmd-step span { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ui-raised); font-family: var(--ui-numeric); }
+.cmd-step.is-done span { background: var(--ui-success); color: var(--ui-on-primary); }
+.cmd-step.is-current { color: var(--ui-text); border-color: var(--ui-primary); }
+.cmd-block { border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .8); padding: 12px; margin: 0 0 12px; min-width: 0; }
+.cmd-block legend { padding: 0 6px; font-size: .8rem; font-weight: 600; text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
+.cmd-choices { display: grid; gap: 8px; }
+.cmd-choice { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; padding: 10px; min-height: 44px; border: 1px solid var(--ui-border); border-radius: calc(var(--ui-radius) * .6); cursor: pointer; }
+.cmd-choice input { grid-row: span 2; width: 20px; height: 20px; accent-color: var(--ui-primary); }
+.cmd-choice.is-chosen { border-color: var(--ui-primary); background: color-mix(in srgb, var(--ui-primary) 10%, transparent); }
+.cmd-choice-title { font-weight: 600; }
+.cmd-choice-meta { font-size: .78rem; color: var(--ui-muted); }
+.cmd-stepper { display: grid; grid-template-columns: 1fr 44px auto 44px; gap: 8px; align-items: center; margin-top: 8px; }
+.cmd-stepper output { min-width: 4.5ch; text-align: center; font-family: var(--ui-numeric); }
+.cmd-stepper .button { padding: 0; }
+.cmd-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 0 0 8px; }
+.cmd-facts div { background: var(--ui-raised); border-radius: calc(var(--ui-radius) * .6); padding: 8px 10px; }
+.cmd-facts dt { font-size: .68rem; color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); }
+.cmd-facts dd { margin: 2px 0 0; font-family: var(--ui-numeric); font-weight: 600; }
+.cmd-route-steps { margin: 0 0 8px; padding-left: 20px; font-size: .82rem; color: var(--ui-muted); }
+.cmd-risk { font-size: .8rem; }
+.cmd-loading { animation: cmd-pulse 1.2s ease-in-out infinite; }
+.cmd-confirm { width: 100%; margin-top: 8px; }
+@keyframes cmd-pulse { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .cmd-loading { animation: none; } }
+
+/* Figures in columns (C): durations, counts, dates. */
+.cmd-facts dd, .cmd-tiles strong, .cmd-stepper output, .cmd-dock .cmd-help, .cmd-fleet-pin text, .cmd-history { font-variant-numeric: tabular-nums; }
+.cmd-nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.cmd-nav .button { min-width: 44px; }
+.cmd-nav .cmd-confirm { width: auto; flex: 1 1 220px; margin-top: 0; }
+.cmd-notice { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
+.cmd-dock-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between; }
+.cmd-dock-actions, .cmd-confirm-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.cmd-meter { height: 6px; }
+.cmd-chip--warn { color: var(--ui-warning); border-color: color-mix(in srgb, var(--ui-warning) 60%, transparent); }
+.cmd-history { margin-top: 12px; font-size: .8rem; }
+.cmd-history summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--ui-muted); }
+.cmd-history ul { display: grid; gap: 4px; padding-left: 18px; color: var(--ui-muted); }
+.cmd-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.cmd-block h3:focus { outline: none; }
+.cmd-block h3:focus-visible { outline: 3px solid var(--ui-warning); outline-offset: 3px; }
+.cmd-live { display: grid; gap: var(--ui-gap); background: transparent; min-width: 0; }
+.cmd-live > .cmd-toolbar { justify-content: flex-start; }
+.cmd-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+@media (max-width: 960px) {
+  .cmd-command { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "map" "side" "dock"; }
+  .cmd-map { height: auto; aspect-ratio: 4 / 3; }
+  .cmd-minimap { display: none; }
+  .cmd-overlay--legend { position: static; margin-top: 8px; backdrop-filter: none; }
+  .cmd-overlay--legend ul { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .cmd-zoom { position: static; justify-content: flex-end; margin-top: 8px; backdrop-filter: none; }
+  /* Bottom contextual sheet: the map stays the context above, one decision step at a time below. */
+  .cmd-side.has-selection { position: sticky; bottom: 0; z-index: 4; max-height: 52svh; overflow-y: auto; overscroll-behavior: contain;
+    padding-top: 6px; background: var(--ui-bg); border-top: 1px solid var(--ui-border); border-radius: var(--ui-radius) var(--ui-radius) 0 0;
+    box-shadow: 0 -14px 32px #000b; }
+  .cmd-side.has-selection::before { content: ""; display: block; width: 44px; height: 4px; margin: 0 auto 6px; border-radius: 4px; background: var(--ui-border); }
+  .cmd-nav { position: sticky; bottom: 0; background: var(--ui-surface); padding: 8px 0 2px; }
+}
+@media (max-width: 520px) {
+  .cmd-map-panel, .cmd-card, .cmd-planner { padding: 12px; }
+}
+
+/* ---------------------------------------------------------------------------------------------
+   UX05 — Galaxy redrawn after the dashboard mockup: same tokens as the shell (Inter, cyan accent,
+   deep navy glass panels), animated canvas backdrop under the interactive SVG, and a context
+   menu anchored on the selected system. The SVG keeps every interaction and accessible name. */
+.cmd-root {
+  --ui-bg: #040912; --ui-surface: rgba(10, 22, 40, .78); --ui-raised: rgba(16, 32, 56, .72); --ui-border: rgba(110, 170, 230, .16);
+  --ui-text: #e8f1fb; --ui-muted: #8fa4bd; --ui-primary: #3be3ff; --ui-on-primary: #02121c;
+  --ui-success: #3ee08f; --ui-warning: #ffb547; --ui-danger: #ff4d5e; --ui-accent: #a78bfa;
+  --ui-radius: 14px; --ui-font: var(--d-font, Inter, system-ui, sans-serif); --ui-display: var(--ui-font); --ui-numeric: var(--ui-font);
+  --map-detected: #6aa8ff; --map-mapped: #ffc65c; --map-monitored: #3ee08f; --map-home: #3be3ff; --map-hostile: #ff4d5e;
+  --map-route: #4f9be8; --map-label: #e8f1fb;
+  font-family: var(--ui-font);
+}
+.cmd-root .cmd-map-panel, .cmd-root .cmd-card, .cmd-root .cmd-planner, .cmd-root .cmd-dock {
+  background: linear-gradient(180deg, rgba(14, 28, 50, .82), rgba(6, 14, 28, .86)); border: 1px solid var(--ui-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 18px 40px rgba(0, 0, 0, .35); backdrop-filter: blur(6px); }
+.cmd-root .button { background: rgba(10, 30, 52, .7); border: 1px solid rgba(59, 227, 255, .32); color: #dff7ff; font-weight: 500; }
+.cmd-root .button:hover:not(:disabled) { border-color: rgba(59, 227, 255, .7); box-shadow: 0 0 14px rgba(59, 227, 255, .18); }
+.cmd-root .button--primary { background: linear-gradient(180deg, rgba(59, 227, 255, .32), rgba(59, 227, 255, .12)); border-color: rgba(59, 227, 255, .75); color: #fff; }
+.cmd-root .button:disabled { opacity: .45; cursor: not-allowed; }
+.cmd-page-title { font-weight: 600 !important; letter-spacing: -.02em; }
+.cmd-page-head .galaxy-mode { margin: 0; }
+.cmd-view-select { display: grid; gap: 4px; font-size: .72rem; color: var(--ui-muted); text-transform: uppercase; letter-spacing: .08em; }
+.cmd-view-select select { min-height: 44px; min-width: 170px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ui-border);
+  background: rgba(10, 22, 40, .9); color: var(--ui-text); font: inherit; font-size: .85rem; text-transform: none; letter-spacing: 0; }
+.cmd-filter { border-radius: 999px; background: rgba(10, 22, 40, .7); }
+.cmd-filter.is-active { border-color: rgba(59, 227, 255, .7); color: #fff; background: linear-gradient(180deg, rgba(59, 227, 255, .24), rgba(59, 227, 255, .08)); box-shadow: 0 0 14px rgba(59, 227, 255, .15); }
+.cmd-filter.is-pending, .cmd-switch.is-pending { opacity: .45; cursor: not-allowed; border-style: dashed; }
+
+/* Backdrop canvas: nebula, territory and fog from the Knowledge only; the SVG above stays the
+   interactive layer (transparent background, no duplicated glow). */
+.cmd-map-frame.has-backdrop { border-radius: 12px; overflow: hidden; isolation: isolate; background: #02050d; }
+.cmd-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; z-index: 0; }
+.has-backdrop .cmd-map { position: relative; z-index: 1; background: transparent; border-color: rgba(110, 170, 230, .14); }
+.has-backdrop .cmd-halo { display: none; }
+.has-backdrop .cmd-overlay { z-index: 2; background: rgba(6, 14, 28, .78); border-color: rgba(110, 170, 230, .2); }
+.cmd-swatch--unknown { background: #0b1220; border: 1px solid #263852; }
+.cmd-swatch--hostile { background: var(--map-hostile); box-shadow: 0 0 6px var(--map-hostile); }
+.cmd-legend-pending { opacity: .55; }
+.cmd-legend-pending small { font-size: .9em; }
+
+/* Context menu anchored on the selected system (desktop); docked when no geometry is known. */
+.cmd-ctx { position: absolute; z-index: 3; width: 290px; transform: translate(22px, -24px); }
+.cmd-ctx.is-flipped { transform: translate(calc(-100% - 22px), -24px); }
+.cmd-ctx.is-docked { top: 12px; right: 12px; transform: none; }
+.cmd-ctx-card { display: grid; gap: 8px; padding: 14px; border-radius: 12px; border: 1px solid rgba(59, 227, 255, .45);
+  background: linear-gradient(180deg, rgba(12, 28, 50, .96), rgba(5, 12, 24, .96)); box-shadow: 0 0 24px rgba(59, 227, 255, .15), 0 18px 40px rgba(0, 0, 0, .6); }
+.cmd-ctx-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+.cmd-ctx-head div { display: grid; }
+.cmd-ctx-head strong { font-size: 1.05rem; color: #fff; }
+.cmd-ctx-head small { font-size: .75rem; color: var(--ui-muted); }
+.cmd-ctx-close { min-width: 44px; min-height: 44px; margin: -10px -10px 0 0; border: 0; background: none; color: var(--ui-muted); font-size: 1.4rem; cursor: pointer; }
+.cmd-ctx-close:hover { color: #fff; }
+.cmd-ctx-card h3 { margin: 4px 0 0; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ui-primary); }
+.cmd-ctx-card .cmd-actions { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.cmd-ctx-card .cmd-actions li { display: grid; gap: 2px; }
+.cmd-ctx-card .cmd-action { width: 100%; justify-content: flex-start; text-align: left; }
+.cmd-ctx-card .cmd-help { margin: 0; font-size: .72rem; }
+.cmd-ctx-link { display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 0 4px; border-top: 1px solid var(--ui-border);
+  color: var(--ui-primary); text-decoration: none; font-size: .85rem; font-weight: 500; }
+
+/* Side panel after the mockup: hero, tabs, tiles and the three bottom actions. */
+.cmd-planet-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+.cmd-na { color: var(--ui-muted); font-weight: 500 !important; }
+.cmd-system-card > .d-pending, .cmd-system-card [role="tabpanel"] .d-pending { margin: 12px 0; }
+.cmd-system-actions { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; padding: 0 var(--ui-gap) var(--ui-gap); }
+.cmd-system-actions .button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0 10px; font-size: .85rem; }
+.cmd-hero .cmd-close { margin-left: auto; align-self: start; }
+.cmd-toolbar--solo { justify-content: flex-start; }
+@media (max-width: 960px) {
+  .cmd-ctx { display: none; }
+  .cmd-view-select { flex: 1 1 160px; }
+}
+@media (max-width: 420px) {
+  .cmd-system-actions { grid-template-columns: 1fr 1fr; }
+  .cmd-system-actions > :last-child { grid-column: 1 / -1; }
+}
+.cmd-ctx-card { max-height: min(380px, 60vh); overflow-y: auto; overscroll-behavior: contain; }
+.cmd-ctx.is-up { transform: translate(22px, calc(-100% + 24px)); }
+.cmd-ctx.is-flipped.is-up { transform: translate(calc(-100% - 22px), calc(-100% + 24px)); }
+@media (max-width: 960px) {
+  /* The legend and zoom flow below the map here: the backdrop covers the map only. */
+  .has-backdrop .cmd-backdrop { bottom: auto; height: auto; aspect-ratio: 4 / 3; }
+  .cmd-map-frame.has-backdrop { overflow: visible; background: transparent; }
+  .has-backdrop .cmd-map { background: #02050d; }
+  .has-backdrop .cmd-backdrop { z-index: 1; }
+  .has-backdrop .cmd-map { z-index: 2; background: transparent; }
+}
+/* Keep the selected system's map under the sticky top bar (and resource strip) when scrolled into view. */
+.cmd-map, .cmd-map-panel { scroll-margin-top: 120px; }
+/* UX-API-01: real route unknown on this map, departure and destination joined directly. */
+.cmd-mission-path--estimate { opacity: .55; }
+
+/* 09/11/2026 — fleets on the map: symbol above a system, fleet window, destination picking. */
+.cmd-fleet-pin.is-button { cursor: pointer; }
+.cmd-fleet-pin.is-button rect { stroke: rgba(255, 255, 255, .55); stroke-width: 1; }
+.cmd-fleet-pin.is-button:hover rect, .cmd-fleet-pin.is-button:focus-visible rect { stroke: #fff; stroke-width: 2; }
+.cmd-fleet-pin.is-button:focus { outline: none; }
+.cmd-fleet-glyph { fill: var(--ui-on-primary); }
+.cmd-fleet-window { position: absolute; z-index: 6; top: 12px; right: 12px; width: min(360px, calc(100% - 24px));
+  max-height: min(520px, calc(100% - 24px)); overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 10px;
+  padding: 14px; border-radius: 12px; border: 1px solid rgba(59, 227, 255, .45); background: rgba(6, 14, 28, .96);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .55); }
+.cmd-fleet-window-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cmd-fleet-window-head h2 { margin: 0; font-size: 1rem; }
+.cmd-fleet-window-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.cmd-fleet-window-list > li { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, .08); }
+.cmd-fleet-protocol { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+.cmd-fleet-protocol label { display: grid; gap: 4px; flex: 1 1 180px; font-size: .8rem; }
+.cmd-pick-bar { position: absolute; z-index: 6; top: 12px; left: 12px; max-width: calc(100% - 24px); display: flex; flex-wrap: wrap;
+  align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--ui-primary);
+  background: rgba(6, 14, 28, .94); }
+.cmd-pick-watermark { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; pointer-events: none;
+  font-size: clamp(1.4rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(59, 227, 255, .14); }
+.cmd-map-frame.is-picking .cmd-map { cursor: crosshair; }
+.cmd-map-frame.is-picking .cmd-system { cursor: crosshair; }
+
+/* Every star of the galaxy as a point (09/11/2026): dim, never interactive. */
+.cmd-far-star { fill: #b9cdea; opacity: .55; }
+.cmd-mini-far { fill: #8fa7c7; opacity: .5; }
+/* Test game: foreign Colony ring per anonymous Empire (colour set inline). */
+.cmd-foreign { fill: none; stroke-width: 2; stroke-dasharray: 3 2.5; }
+.cmd-swatch--foreign { border: 2px dashed hsl(75 85% 62%); }
+/* Reference carte-galaxie.html (11/11/2026): small bright cores, thin status rings, labels by zoom. */
+.cmd-star { fill: color-mix(in srgb, currentColor 35%, #fff); stroke: none; filter: drop-shadow(0 0 3px currentColor); }
+.cmd-ring { fill: none; stroke: currentColor; stroke-width: 1.05; stroke-opacity: .75; }
+.cmd-system--detected .cmd-star { fill: none; stroke: currentColor; stroke-width: 1.1; stroke-dasharray: 1.5 2.5; stroke-opacity: .7; filter: none; }
+.cmd-own { stroke-width: 1.6; } .cmd-own--inner { stroke-width: .9; }
+.cmd-selection { stroke: #fff; stroke-width: 1.3; stroke-dasharray: 3 3; }
+.cmd-label { font-size: 12.5px; font-weight: 600; stroke-width: 4px; stroke: #000000e6; }
+.cmd-label--strong { font-size: 14.5px; }
+.cmd-route { stroke: #9ec4ff; stroke-opacity: .42; }
+.cmd-system:hover .cmd-ring { stroke-opacity: 1; stroke-width: 1.6; }
+.cmd-far-star { fill: #b9cdea; opacity: .32; }
+/* Wide map (11/11/2026): the map spans the page, the system panel and the dock go under it. */
+@media (min-width: 1100px) {
+  .cmd-command { grid-template-columns: minmax(0, 1fr) minmax(340px, 440px); grid-template-areas: "head head" "map map" "dock side"; }
+  .cmd-map { height: clamp(480px, 74vh, 900px); }
+}
+.cmd-overlay--legend { font-size: .7rem; padding: 8px 12px; }
+.has-backdrop .cmd-system:not(.cmd-system--detected) .cmd-star, .has-backdrop .cmd-ring { opacity: 0; }
+.has-backdrop .cmd-system:hover .cmd-ring { opacity: 1; }
+
+/* Fiche rapide du système (11/11/2026) dans le menu contextuel de la carte. */
+.cmd-ctx { width: 320px; }
+.cmd-ctx-card { max-height: min(560px, 72vh, var(--ctx-max, 72vh)); }
+.cmd-brief { display: grid; gap: 8px; }
+.cmd-brief-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.cmd-brief-facts li { display: grid; justify-items: center; gap: 1px; padding: 6px 2px; border: 1px solid var(--ui-border); border-radius: 8px; background: rgba(8, 20, 38, .55); }
+.cmd-brief-facts strong { font-size: 1rem; color: #fff; font-variant-numeric: tabular-nums; }
+.cmd-brief-facts span { font-size: .66rem; color: var(--ui-muted); text-align: center; }
+.cmd-brief-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.cmd-brief-list li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cmd-brief-list img { flex: none; border-radius: 50%; }
+.cmd-brief-list li > span:not(.cmd-brief-dot) { display: grid; min-width: 0; flex: 1; }
+.cmd-brief-list strong { font-size: .8rem; color: #eef5fd; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmd-brief-list small { font-size: .7rem; color: var(--ui-muted); }
+.cmd-brief-list em { flex: none; font-style: normal; font-size: .66rem; color: var(--ui-muted); }
+.cmd-brief-list em.is-own { color: var(--ui-primary); }
+.cmd-brief-list em.is-foreign { color: #ffbe5c; }
+.cmd-brief-more { font-size: .72rem; color: var(--ui-muted); }
+.cmd-brief-dot { flex: none; width: 10px; height: 10px; margin: 0 8px; transform: rotate(45deg); border: 1.5px solid #b9a6ff; }
+.cmd-brief-dot.is-deposit { border-color: #ffd27a; background: rgba(255, 210, 122, .25); }
+.cmd-brief-note { margin: 0; font-size: .74rem; color: #c9d6e5; }
+.cmd-brief-note.is-alert { color: #ff9a8d; }
+
+/* Infobulle, menu contextuel et en-tête allégé après la référence carte-galaxie.html (11/11/2026). */
+.cmd-dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; flex: none; vertical-align: middle; box-shadow: 0 0 8px currentColor; }
+.cmd-tip { position: absolute; z-index: 4; min-width: 190px; padding: 10px 12px; pointer-events: none; border-radius: 10px;
+  border: 1px solid rgba(100, 170, 255, .35); background: rgba(6, 12, 28, .92); backdrop-filter: blur(6px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .45), inset 0 0 18px rgba(40, 100, 220, .08); animation: cmd-pop .12s ease-out; }
+.cmd-tip-name { display: flex; align-items: center; margin-bottom: 6px; font-weight: 700; font-size: .85rem; color: #fff; }
+.cmd-tip-line { display: flex; justify-content: space-between; gap: 16px; font-size: .7rem; line-height: 1.75; color: var(--ui-muted); }
+.cmd-tip-line b { font-weight: 600; color: #e2ebff; }
+.cmd-tip-line b.is-own { color: var(--ui-primary); } .cmd-tip-line b.is-foreign { color: #ffbe5c; }
+@keyframes cmd-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.cmd-ctx { animation: cmd-pop .14s ease-out; }
+.cmd-ctx::before { content: ""; position: absolute; z-index: 1; left: -6px; top: 18px; width: 12px; height: 12px; transform: rotate(45deg);
+  background: rgb(8, 16, 34); border-left: 1px solid rgba(100, 170, 255, .45); border-bottom: 1px solid rgba(100, 170, 255, .45); }
+.cmd-ctx.is-flipped::before { left: auto; right: -6px; border-left: 0; border-bottom: 0; border-right: 1px solid rgba(100, 170, 255, .45); border-top: 1px solid rgba(100, 170, 255, .45); }
+.cmd-ctx.is-up::before { top: auto; bottom: 18px; }
+.cmd-ctx.is-docked::before { display: none; }
+.cmd-ctx-card { padding: 6px; gap: 6px; border-radius: 10px; border-color: rgba(100, 170, 255, .45); background: rgba(6, 12, 28, .95); backdrop-filter: blur(6px);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, .6), 0 0 22px rgba(50, 130, 255, .18), inset 0 0 18px rgba(40, 100, 220, .1); }
+.cmd-ctx-head { padding: 7px 8px 9px; border-bottom: 1px solid rgba(100, 170, 255, .18); }
+.cmd-ctx-head strong { display: flex; align-items: center; font-size: .9rem; }
+.cmd-ctx-card .cmd-brief, .cmd-ctx-card h3, .cmd-ctx-card .cmd-ctx-link { margin-inline: 8px; }
+.cmd-ctx-card .cmd-actions { gap: 2px; }
+.cmd-ctx-card .cmd-actions li { gap: 0; padding: 2px; border-radius: 7px; border: 1px solid transparent; }
+.cmd-ctx-card .cmd-actions li:hover { background: rgba(60, 130, 255, .1); border-color: rgba(90, 170, 255, .3); }
+.cmd-ctx-card .cmd-action { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 4px 6px; border: 0 !important;
+  background: none !important; box-shadow: none !important; color: #e2ebff; font-weight: 600; font-size: .8rem; }
+.cmd-ctx-card .cmd-action.button--primary { color: #fff; }
+.cmd-ctx-card .cmd-actions .cmd-help { padding: 0 6px 4px 48px; font-size: .68rem; line-height: 1.35; }
+.cmd-glyph { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: 7px; color: #9fd0ff;
+  background: rgba(60, 130, 255, .14); border: 1px solid rgba(90, 170, 255, .3); }
+.cmd-glyph--survey, .cmd-glyph--prospect, .cmd-glyph--study { color: #ffc35a; background: rgba(255, 180, 70, .12); border-color: rgba(255, 180, 70, .35); }
+.cmd-glyph--colonize, .cmd-glyph--extract { color: #5ff0c0; background: rgba(46, 207, 136, .12); border-color: rgba(46, 207, 136, .35); }
+.cmd-glyph--attack { color: #ff8b95; background: rgba(255, 80, 90, .1); border-color: rgba(255, 80, 90, .3); }
+.cmd-action:disabled .cmd-glyph { opacity: .6; }
+.cmd-actions .cmd-action { display: flex; align-items: center; gap: 10px; }
+
+.cmd-page-head { align-items: center; gap: 10px 20px; padding-bottom: 4px; }
+.cmd-page-id { display: grid; gap: 2px; min-width: 0; }
+.cmd-page-id .cmd-page-title { font-size: clamp(1.6rem, 2.4vw, 2rem) !important; margin: 0 !important; }
+.cmd-page-id p { font-size: .85rem; }
+.cmd-page-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: flex-end; flex: 1 1 520px; }
+.cmd-page-tools .cmd-search { flex: 1 1 260px; max-width: 420px; }
+.cmd-page-tools .cmd-search .cmd-help:empty { display: none; }
+.cmd-page-tools .cmd-toolbar { gap: 8px 10px; }
+.cmd-meta { font-size: .75rem; color: var(--ui-muted); }
+.galaxy-mode { display: inline-flex; gap: 0; }
+.galaxy-mode .galaxy-mode-option { border-radius: 0; min-height: 44px; padding: 0 12px; font-size: .8rem; }
+.galaxy-mode .galaxy-mode-option:first-child { border-radius: 8px 0 0 8px; }
+.galaxy-mode .galaxy-mode-option:last-child { border-radius: 0 8px 8px 0; margin-left: -1px; }
+@media (max-width: 640px) { .cmd-page-tools { justify-content: flex-start; } .cmd-page-tools .cmd-search { max-width: none; } }
+.cmd-page-tools .cmd-search { flex-wrap: nowrap; position: relative; }
+.cmd-page-tools .cmd-search input { flex: 1 1 auto; }
+.cmd-page-tools .cmd-search .cmd-help { position: absolute; left: 0; top: 100%; margin-top: 2px; white-space: nowrap; }
+
+/* Présences étrangères connues (v0.12, 11/11/2026) : anneau selon la relation. */
+.cmd-root { --map-ally: #3ee08f; --map-neutral: #ffc65c; --map-unknown: #9fb3c8; }
+.cmd-rel { fill: none; stroke-width: 2.2; }
+.cmd-rel--ally { stroke: var(--map-ally); }
+.cmd-rel--neutral { stroke: var(--map-neutral); stroke-dasharray: 4 2.5; }
+.cmd-rel--hostile { stroke: var(--map-hostile); filter: drop-shadow(0 0 3px var(--map-hostile)); }
+.cmd-rel--unknown { stroke: var(--map-unknown); stroke-dasharray: 2 3; }
+.cmd-swatch--rel-ally { background: var(--map-ally); box-shadow: 0 0 6px var(--map-ally); }
+.cmd-swatch--rel-neutral { background: var(--map-neutral); box-shadow: 0 0 6px var(--map-neutral); }
+.cmd-filter--ally.is-active { border-color: var(--map-ally); }
+.cmd-filter--neutral.is-active { border-color: var(--map-neutral); }
+.cmd-filter--hostile.is-active { border-color: var(--map-hostile); }
+.cmd-tip-line b.is-ally { color: var(--map-ally); } .cmd-tip-line b.is-neutral { color: var(--map-neutral); }
+.cmd-tip-line b.is-hostile { color: var(--map-hostile); } .cmd-tip-line b.is-unknown { color: var(--map-unknown); }
+.cmd-brief-list em.is-ally { color: var(--map-ally); } .cmd-brief-list em.is-neutral { color: var(--map-neutral); }
+.cmd-brief-list em.is-hostile { color: var(--map-hostile); } .cmd-brief-list em.is-unknown { color: var(--map-unknown); }

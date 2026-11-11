@@ -21,14 +21,21 @@ def fence_owner(engagement_id):
 
 
 def open_engagement(session, mission, attacker_stream_id, defender_empire_id):
-    planet = session.get(Planet, mission.target_planet_id)
+    if mission.target_opportunity_id is not None:
+        # v0.12 (EXP-02c): a deposit; its system is the battle's system.
+        from app.galaxy.models import GalaxyOpportunity
+
+        system_id = session.get(GalaxyOpportunity, mission.target_opportunity_id).system_id
+    else:
+        system_id = session.get(Planet, mission.target_planet_id).system_id
     engagement = CombatEngagement(
         universe_id=mission.universe_id,
         mission_id=mission.id,
         attacker_empire_id=mission.empire_id,
         defender_empire_id=defender_empire_id,
         target_planet_id=mission.target_planet_id,
-        target_system_id=planet.system_id,
+        target_opportunity_id=mission.target_opportunity_id,
+        target_system_id=system_id,
         started_at=mission.started_at,
         travel_arrival_at=mission.travel_arrival_at,
         battle_at=mission.due_at,
@@ -81,6 +88,25 @@ def cancel_engagement(session, mission, at):
     return engagement
 
 
+def operation_losses(session, mission):
+    """v0.12 (EXP-02c): escorts of an extraction lost in battles on its deposit since its
+    launch (the launch composition is now + these losses)."""
+    total = {}
+    if mission.kind != "EXTRACT" or mission.target_opportunity_id is None:
+        return total
+    for result in session.scalars(
+        select(CombatEngagement.result).where(
+            CombatEngagement.universe_id == mission.universe_id,
+            CombatEngagement.target_opportunity_id == mission.target_opportunity_id,
+            CombatEngagement.state == "resolved",
+            CombatEngagement.battle_at >= mission.started_at,
+        )
+    ):
+        for kind, n in (result.get("defender_losses") or {}).get(str(mission.fleet_id), {}).items():
+            total[kind] = total.get(kind, 0) + n
+    return total
+
+
 # --- Projections (read-only, never a catch-up) -------------------------------------------------
 
 
@@ -110,9 +136,11 @@ def alerts_for(session, universe_id, empire_id, limit=50, *, history=True):
     return [
         {
             "id": str(e.id),
-            "planet_id": str(e.target_planet_id),
+            "planet_id": str(e.target_planet_id) if e.target_planet_id else None,
             "system_id": str(e.target_system_id),
             "battle_at": e.battle_at.isoformat(),
+            # v0.12: an announced attack on one of this Empire's extraction operations.
+            **({"opportunity_id": str(e.target_opportunity_id)} if e.target_opportunity_id else {}),
             "state": "cancelled" if e.state == "cancelled" else "pending",
         }
         for e in rows

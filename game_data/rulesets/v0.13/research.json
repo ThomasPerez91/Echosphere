@@ -1,0 +1,269 @@
+{
+  "version": "v0.13",
+  "queue_limit": 2,
+  "refund_queued_bps": 10000,
+  "refund_active_bps": 8000,
+  "technologies": {
+    "engineering_1": {
+      "name": "Fabrication modulaire I",
+      "domain": "engineering",
+      "tier": 1,
+      "requires": [],
+      "cost": {
+        "alloys": 100,
+        "flux": 80,
+        "data": 200
+      },
+      "duration_seconds": 120,
+      "effect": "colony_alloys",
+      "reduction_bps": 500
+    },
+    "engineering_2": {
+      "name": "Fabrication modulaire II",
+      "domain": "engineering",
+      "tier": 2,
+      "requires": [
+        "engineering_1"
+      ],
+      "cost": {
+        "alloys": 200,
+        "flux": 160,
+        "data": 400
+      },
+      "duration_seconds": 300,
+      "effect": "colony_alloys",
+      "reduction_bps": 1000
+    },
+    "energy_1": {
+      "name": "Gestion énergétique I",
+      "domain": "energy",
+      "tier": 1,
+      "requires": [],
+      "cost": {
+        "alloys": 100,
+        "flux": 80,
+        "data": 200
+      },
+      "duration_seconds": 120,
+      "effect": "colony_flux",
+      "reduction_bps": 500
+    },
+    "energy_2": {
+      "name": "Gestion énergétique II",
+      "domain": "energy",
+      "tier": 2,
+      "requires": [
+        "energy_1"
+      ],
+      "cost": {
+        "alloys": 200,
+        "flux": 160,
+        "data": 400
+      },
+      "duration_seconds": 300,
+      "effect": "colony_flux",
+      "reduction_bps": 1000
+    },
+    "computation_1": {
+      "name": "Calcul scientifique I",
+      "domain": "computation",
+      "tier": 1,
+      "requires": [],
+      "cost": {
+        "alloys": 100,
+        "flux": 80,
+        "data": 200
+      },
+      "duration_seconds": 120,
+      "effect": "research_duration",
+      "reduction_bps": 500
+    },
+    "computation_2": {
+      "name": "Calcul scientifique II",
+      "domain": "computation",
+      "tier": 2,
+      "requires": [
+        "computation_1"
+      ],
+      "cost": {
+        "alloys": 200,
+        "flux": 160,
+        "data": 400
+      },
+      "duration_seconds": 300,
+      "effect": "research_duration",
+      "reduction_bps": 1000
+    },
+    "xenoscience_1": {
+      "name": "Protocoles d’analyse I",
+      "domain": "xenoscience",
+      "tier": 1,
+      "requires": [],
+      "cost": {
+        "alloys": 100,
+        "flux": 80,
+        "data": 200
+      },
+      "duration_seconds": 120,
+      "effect": "research_data",
+      "reduction_bps": 500
+    },
+    "xenoscience_2": {
+      "name": "Protocoles d’analyse II",
+      "domain": "xenoscience",
+      "tier": 2,
+      "requires": [
+        "xenoscience_1"
+      ],
+      "cost": {
+        "alloys": 200,
+        "flux": 160,
+        "data": 400
+      },
+      "duration_seconds": 300,
+      "effect": "research_data",
+      "reduction_bps": 1000
+    },
+    "engineering_3": {
+      "name": "Fabrication modulaire III",
+      "domain": "engineering",
+      "tier": 3,
+      "requires": [
+        "engineering_2"
+      ],
+      "cost": {
+        "alloys": 600,
+        "flux": 480,
+        "data": 1200
+      },
+      "duration_seconds": 1200,
+      "effect": "colony_alloys",
+      "reduction_bps": 1500
+    },
+    "engineering_4": {
+      "name": "Assemblage orbital",
+      "domain": "engineering",
+      "tier": 4,
+      "requires": [
+        "engineering_3",
+        "energy_2"
+      ],
+      "cost": {
+        "alloys": 1800,
+        "flux": 1440,
+        "data": 3600
+      },
+      "duration_seconds": 3600,
+      "effect": "ship_cost",
+      "reduction_bps": 1500
+    },
+    "energy_3": {
+      "name": "Gestion énergétique III",
+      "domain": "energy",
+      "tier": 3,
+      "requires": [
+        "energy_2"
+      ],
+      "cost": {
+        "alloys": 600,
+        "flux": 480,
+        "data": 1200
+      },
+      "duration_seconds": 1200,
+      "effect": "colony_flux",
+      "reduction_bps": 1500
+    },
+    "energy_4": {
+      "name": "Chaînes de propulsion",
+      "domain": "energy",
+      "tier": 4,
+      "requires": [
+        "energy_3",
+        "engineering_2"
+      ],
+      "cost": {
+        "alloys": 1800,
+        "flux": 1440,
+        "data": 3600
+      },
+      "duration_seconds": 3600,
+      "effect": "ship_duration",
+      "reduction_bps": 2000
+    },
+    "computation_3": {
+      "name": "Calcul scientifique III",
+      "domain": "computation",
+      "tier": 3,
+      "requires": [
+        "computation_2"
+      ],
+      "cost": {
+        "alloys": 600,
+        "flux": 480,
+        "data": 1200
+      },
+      "duration_seconds": 1200,
+      "effect": "research_duration",
+      "reduction_bps": 1500
+    },
+    "computation_4": {
+      "name": "Planification prédictive",
+      "domain": "computation",
+      "tier": 4,
+      "requires": [
+        "computation_3",
+        "xenoscience_2"
+      ],
+      "cost": {
+        "alloys": 1800,
+        "flux": 1440,
+        "data": 3600
+      },
+      "duration_seconds": 3600,
+      "effect": "colony_duration",
+      "reduction_bps": 1500
+    },
+    "xenoscience_3": {
+      "name": "Protocoles d’analyse III",
+      "domain": "xenoscience",
+      "tier": 3,
+      "requires": [
+        "xenoscience_2"
+      ],
+      "cost": {
+        "alloys": 600,
+        "flux": 480,
+        "data": 1200
+      },
+      "duration_seconds": 1200,
+      "effect": "research_data",
+      "reduction_bps": 1500
+    },
+    "xenoscience_4": {
+      "name": "Résonance des échos",
+      "domain": "xenoscience",
+      "tier": 4,
+      "requires": [
+        "xenoscience_3",
+        "computation_2"
+      ],
+      "cost": {
+        "alloys": 1800,
+        "flux": 1440,
+        "data": 3600
+      },
+      "duration_seconds": 3600,
+      "effect": "research_data",
+      "reduction_bps": 2500
+    }
+  },
+  "facility": {
+    "kind": "research_center",
+    "levels": {
+      "1": 1,
+      "2": 3,
+      "3": 5,
+      "4": 8
+    }
+  }
+}

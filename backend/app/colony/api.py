@@ -7,7 +7,7 @@ accepts them and count as explicit activity. No Portal call, no rule computed he
 
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
@@ -15,6 +15,7 @@ from starlette.responses import JSONResponse
 
 from app.access.http import HEADERS, cookie_name, origin
 from app.access.service import AccessError, GameSessions, check_csrf
+from app.colony.models import ConstructionOrder
 from app.colony.projection import amounts, project
 from app.colony.service import ColonyError, cancel, catch_up_owned, enqueue
 from app.control.models import EmpireBinding
@@ -25,7 +26,10 @@ from app.simulation.service import TimeEngine
 router = APIRouter(prefix="/game/{universe_id}/colonies")
 
 STATUS = {
+    "sandbox_unavailable": 404,
+    "invalid_colony_name": 422,
     "system_not_found": 404,
+    "opportunity_not_found": 404,
     "exploration_busy": 503,
     "galaxy_unavailable": 409,
     "exploration_unavailable": 409,
@@ -43,6 +47,11 @@ STATUS = {
     "colony_busy": 503,
     "combat_pending": 409,
     "combat_unavailable": 409,
+    "relations_unavailable": 409,
+    "relation_not_found": 404,
+    "frontier_unavailable": 409,
+    "protocol_unavailable": 409,
+    "protocol_task": 409,
 }
 
 
@@ -56,6 +65,19 @@ class Construction(BaseModel):
 
 class Empty(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class Rename(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    name: str = Field(min_length=2, max_length=40)
+
+
+def colony_name(value):
+    """2 to 40 visible characters, single spaces, no control character (like Empire names)."""
+    name = " ".join(value.split())
+    if len(name) < 2 or len(name) > 40 or any(ord(c) < 32 or 127 <= ord(c) < 160 for c in name):
+        raise ColonyError("Invalid colony name", "invalid_colony_name")
+    return name
 
 
 class Colonies:
@@ -105,7 +127,7 @@ class Colonies:
                 "colonies": [
                     {
                         "id": str(colony.id),
-                        "name": session.get(Planet, colony.planet_id).name,
+                        "name": colony.display_name(session.get(Planet, colony.planet_id)),
                         "empire": {
                             "id": str(colony.empire_id),
                             "name": session.get(Empire, colony.empire_id).name,
@@ -126,6 +148,39 @@ class Colonies:
                 session, self.engine, universe_id, colony.empire_id, colony.id, now
             )
             return project(session, rules, colony, permissions, now)
+
+    def history(self, raw, universe_id, colony_id, before_sequence=None):
+        """Completed persistent facts only; no catch-up, activity, world lookup or snapshot leak."""
+        with self.factory.begin() as session:
+            colony, _, _ = self.authorize(session, raw, universe_id, colony_id, "colony.read")
+            query = select(ConstructionOrder).where(
+                ConstructionOrder.universe_id == universe_id,
+                ConstructionOrder.colony_id == colony.id,
+                ConstructionOrder.status == "completed",
+            )
+            if before_sequence is not None:
+                query = query.where(ConstructionOrder.sequence < before_sequence)
+            orders = session.scalars(
+                query.order_by(ConstructionOrder.sequence.desc()).limit(51)
+            ).all()
+            page = orders[:50]
+            return {
+                "server_time": self.clock.now().isoformat(),
+                "colony_id": str(colony.id),
+                "empire_id": str(colony.empire_id),
+                "entries": [
+                    {
+                        "id": str(o.id),
+                        "sequence": str(o.sequence),
+                        "infrastructure_type": o.infrastructure_type,
+                        "sector_index": o.sector_index,
+                        "target_level": o.target_level,
+                        "completed_at": o.completed_at.isoformat(),
+                    }
+                    for o in page
+                ],
+                "next_before_sequence": str(page[-1].sequence) if len(orders) > 50 else None,
+            }
 
     def construct(self, raw, universe_id, colony_id, command: Construction):
         with self.factory.begin() as session:
@@ -153,6 +208,20 @@ class Colonies:
                 "order": {"id": str(order.id), "status": order.status},
                 "colony": project(session, rules, colony, permissions, now),
             }
+
+    def rename(self, raw, universe_id, colony_id, command: Rename):
+        name = colony_name(command.name)
+        with self.factory.begin() as session:
+            colony, permissions, _ = self.authorize(
+                session, raw, universe_id, colony_id, "colony.construct", interaction=True
+            )
+            colony.name = name
+            session.flush()
+            now = self.clock.now()
+            rules = catch_up_owned(
+                session, self.engine, universe_id, colony.empire_id, colony.id, now
+            )
+            return {"colony": project(session, rules, colony, permissions, now)}
 
     def cancel(self, raw, universe_id, colony_id, order_id):
         with self.factory.begin() as session:
@@ -191,12 +260,15 @@ async def call(function, *args):
         raise failure("colony_busy", 503) from None
 
 
-def bootstrap(request):
+def bootstrap(request, *, allowed_query=()):
     if request.headers.get("x-game-request") != "bootstrap" or (
         request.headers.get("origin") not in (None, request.app.state.settings.game_public_origin)
     ):
         raise AccessError("origin_denied")
-    if request.url.query:
+    if request.url.query and (
+        any(key not in allowed_query for key in request.query_params)
+        or any(len(request.query_params.getlist(key)) != 1 for key in request.query_params)
+    ):
         raise AccessError("invalid_request", 422)
 
 
@@ -231,6 +303,27 @@ async def colony(universe_id: UUID, colony_id: UUID, request: Request):
 async def construct(universe_id: UUID, colony_id: UUID, request: Request):
     raw, body = await command(request, universe_id, Construction)
     return await call(Colonies(request.app.state).construct, raw, universe_id, colony_id, body)
+
+
+@router.get("/{colony_id}/construction-history")
+async def construction_history(
+    universe_id: UUID,
+    colony_id: UUID,
+    request: Request,
+    before_sequence: int | None = Query(default=None, ge=1, le=9_223_372_036_854_775_807),
+):
+    bootstrap(request, allowed_query=("before_sequence",))
+    raw = request.cookies.get(cookie_name(universe_id))
+    return await call(
+        Colonies(request.app.state).history, raw, universe_id, colony_id, before_sequence
+    )
+
+
+@router.post("/{colony_id}/name")
+async def rename(universe_id: UUID, colony_id: UUID, request: Request):
+    """Recette 09/11/2026: the player names the colony (colony.construct)."""
+    raw, body = await command(request, universe_id, Rename)
+    return await call(Colonies(request.app.state).rename, raw, universe_id, colony_id, body)
 
 
 @router.post("/{colony_id}/construction-orders/{order_id}/cancel")

@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { SystemView } from './components/SystemView';
 import { validSystemDetail } from './galaxy/api';
@@ -29,7 +29,13 @@ test('MONITORED shows dated actual presence and authorized Colony link; StrictMo
   expect(screen.getByRole('heading', { name: 'Mondes connus' })).toBeVisible();
   expect(screen.getByText(/Cartographié/)).toBeVisible();
   expect(fetcher.mock.calls.every(call => call.length > 0)).toBe(true);
+  // The System View also reads the Galaxy and Fleet projections (actions); every read is a GET.
   for (const call of fetcher.mock.calls as unknown as [string, RequestInit][]) {
+    expect(call[1]?.method).toBeUndefined();
+  }
+  const reads = (fetcher.mock.calls as unknown as [string, RequestInit][]).filter(call => call[0].includes('/systems/'));
+  expect(reads.length).toBeGreaterThan(0);
+  for (const call of reads) {
     expect(call[0]).toBe(`/api/game/${universe}/galaxy/${empire}/systems/${origin}`);
     expect(call[1].method).toBeUndefined();
     expect(call[1].headers).toEqual({ 'X-Game-Request': 'bootstrap' });
@@ -147,4 +153,33 @@ test('v0.7: "Attaquer…" opens the Fleet ATTACK flow and never states occupatio
   (await screen.findByRole('button', { name: /1 · Rocher Pâle/ })).click();
   await waitFor(() => expect(screen.getByRole('heading', { name: 'Rocher Pâle' })).toBeVisible());
   expect(screen.queryByRole('link', { name: 'Attaquer…' })).not.toBeInTheDocument();
+});
+
+// Refonte du 11/11/2026: with the Galaxy and Fleet projections of the same Empire, every action
+// of the system is launched here through the command map's planner (prototype fixtures).
+test('the System View launches the actions of a world, an opportunity or the system through the shared planner', async () => {
+  const { fleetFixture, galaxyFixture, ids } = await import('./prototype/fixtures');
+  const g = galaxyFixture(), f = fleetFixture(), id = g.empire.id, u = '90000000-0000-4000-8000-000000000001';
+  const vesta = g.systems.find(s => s.id === ids.vesta)!;
+  const body = { ...vesta, server_time: g.server_time, empire_id: id, permissions: g.permissions, colonization: true, combat: true,
+    routes: [{ id: '70000000-0000-4000-8000-000000000001', neighbor: { id: ids.home, state: 'MONITORED', name: 'Aube' } }],
+    presences: [], colony_links: [] };
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => url.includes('/systems/') ? json(body)
+    : url.endsWith('/galaxy') || url.endsWith('/fleets') ? json({ empires: [g.empire] })
+    : url.endsWith(`/galaxy/${id}`) ? json(g) : url.endsWith(`/fleets/${id}`) ? json(f) : json({ error: { code: 'unavailable' } }, 503)));
+  render(<SystemView universe={u} empire={id} system={ids.vesta} onSessionLost={vi.fn()} csrf={'c'.repeat(64)} />);
+  expect(await screen.findByRole('heading', { level: 1, name: 'Vesta' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Vesta II' })).toBeVisible();
+  expect(await screen.findByRole('button', { name: 'Coloniser Vesta II' })).toBeVisible();
+  expect(screen.getByText(/Occupation actuelle inconnue/)).toBeVisible();
+  expect(screen.queryByText(/\bLibre\b/)).not.toBeInTheDocument();
+  // An opportunity marker selects the deposit and offers its extraction.
+  fireEvent.click(screen.getByRole('button', { name: 'Ceinture métallique (gisement)' }));
+  expect(screen.getByRole('heading', { name: 'Ceinture métallique' })).toBeVisible();
+  expect(screen.getByRole('button', { name: /Extraire : Ceinture métallique/ })).toBeInTheDocument();
+  // System-wide action: the same planner as the map, nothing sent before the confirmation.
+  fireEvent.click(screen.getByRole('button', { name: 'Déplacer une flotte' }));
+  expect(await screen.findByRole('heading', { name: 'Déplacer une flotte' })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+  expect(await screen.findByRole('button', { name: 'Déplacer une flotte' })).toBeVisible();
 });

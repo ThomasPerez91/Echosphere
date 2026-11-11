@@ -107,11 +107,13 @@
               "fleet.command",
               "colony.expand",
               "combat.read",
-              "combat.attack"
+              "combat.attack",
+              "relations.read",
+              "relations.negotiate"
             ],
             "type": "string"
           },
-          "maxItems": 15,
+          "maxItems": 17,
           "minItems": 1,
           "title": "Permissions",
           "type": "array"
@@ -122,6 +124,78 @@
         "permissions"
       ],
       "title": "Binding",
+      "type": "object"
+    },
+    "HandOver": {
+      "additionalProperties": false,
+      "description": "Q60: a player leaving a multi game hands their Empire to a server AI of a known profile;\nrefused while any human binding remains on that Empire (Portal revokes the seat first).",
+      "properties": {
+        "kind": {
+          "const": "hand_over_empire",
+          "title": "Kind",
+          "type": "string"
+        },
+        "universe_id": {
+          "format": "uuid",
+          "title": "Universe Id",
+          "type": "string"
+        },
+        "empire_id": {
+          "format": "uuid",
+          "title": "Empire Id",
+          "type": "string"
+        },
+        "profile": {
+          "enum": [
+            "economic_cautious",
+            "expansionist"
+          ],
+          "title": "Profile",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "universe_id",
+        "empire_id",
+        "profile"
+      ],
+      "title": "HandOver",
+      "type": "object"
+    },
+    "NameEmpire": {
+      "additionalProperties": false,
+      "description": "Q60: the player names the human Empire of their seat (at creation, on joining, later).",
+      "properties": {
+        "kind": {
+          "const": "name_empire",
+          "title": "Kind",
+          "type": "string"
+        },
+        "universe_id": {
+          "format": "uuid",
+          "title": "Universe Id",
+          "type": "string"
+        },
+        "empire_id": {
+          "format": "uuid",
+          "title": "Empire Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 40,
+          "minLength": 2,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "universe_id",
+        "empire_id",
+        "name"
+      ],
+      "title": "NameEmpire",
       "type": "object"
     },
     "Provision": {
@@ -207,6 +281,119 @@
       ],
       "title": "Revoke",
       "type": "object"
+    },
+    "Start": {
+      "additionalProperties": false,
+      "description": "UX-API-02/03: create and start a universe in one idempotent operation: SOLO (one human\nEmpire) or PRIVATE multi (2 to 10 human Empires, Q59/Q61) with AI opponents of known\nprofiles, ruleset v0.10 (galaxy-v2, A5 of 09/11/2026: every game is v0.10). The map `size`\ncaps the Empires (100 -> 4, 300 -> 12, 500 -> 20, 1000 and 2000 -> 40; exact cap checked\nagainst the pinned ruleset by Game). The result lists the human Empires (seats) so that\nPortal can grant them; no AI actor identity leaves Game.",
+      "properties": {
+        "kind": {
+          "const": "start_universe",
+          "title": "Kind",
+          "type": "string"
+        },
+        "universe_id": {
+          "format": "uuid",
+          "title": "Universe Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "seed": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Seed",
+          "type": "string"
+        },
+        "family": {
+          "enum": [
+            "solo",
+            "private"
+          ],
+          "title": "Family",
+          "type": "string"
+        },
+        "humans": {
+          "default": 1,
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Humans",
+          "type": "integer"
+        },
+        "ruleset": {
+          "enum": [
+            "v0.10",
+            "v0.11",
+            "v0.12",
+            "v0.13"
+          ],
+          "title": "Ruleset",
+          "type": "string"
+        },
+        "size": {
+          "default": 100,
+          "enum": [
+            100,
+            300,
+            500,
+            1000,
+            2000
+          ],
+          "title": "Size",
+          "type": "integer"
+        },
+        "profiles": {
+          "items": {
+            "enum": [
+              "economic_cautious",
+              "expansionist"
+            ],
+            "type": "string"
+          },
+          "maxItems": 30,
+          "title": "Profiles",
+          "type": "array"
+        },
+        "sandbox": {
+          "default": false,
+          "title": "Sandbox",
+          "type": "boolean"
+        },
+        "shape": {
+          "anyOf": [
+            {
+              "enum": [
+                "random",
+                "elliptical",
+                "spiral2",
+                "spiral4",
+                "irregular",
+                "clusters"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shape"
+        }
+      },
+      "required": [
+        "kind",
+        "universe_id",
+        "name",
+        "seed",
+        "family",
+        "ruleset",
+        "profiles"
+      ],
+      "title": "Start",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -225,15 +412,27 @@
     "message": {
       "discriminator": {
         "mapping": {
+          "hand_over_empire": "#/$defs/HandOver",
+          "name_empire": "#/$defs/NameEmpire",
           "provision_universe": "#/$defs/Provision",
           "revoke_sessions": "#/$defs/Revoke",
-          "set_universe_access": "#/$defs/Access"
+          "set_universe_access": "#/$defs/Access",
+          "start_universe": "#/$defs/Start"
         },
         "propertyName": "kind"
       },
       "oneOf": [
         {
           "$ref": "#/$defs/Provision"
+        },
+        {
+          "$ref": "#/$defs/Start"
+        },
+        {
+          "$ref": "#/$defs/NameEmpire"
+        },
+        {
+          "$ref": "#/$defs/HandOver"
         },
         {
           "$ref": "#/$defs/Access"

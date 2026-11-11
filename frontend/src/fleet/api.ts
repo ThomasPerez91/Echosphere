@@ -8,9 +8,16 @@ export type KnownPlanet = { id: string; name: string; sector_capacity: number; o
 export type SystemRef = { id: string; state: "DETECTED" | "MAPPED" | "MONITORED"; name?: string; planets?: KnownPlanet[] };
 export type ShipClass = {
   name: string;
+  /** COL-11: Chantier orbital (or other) levels of the building colony; empty before v0.11. */
+  requires?: { infrastructure_type: string; level: number }[];
   cost: Amounts;
   build_us: string;
   hop_seconds: number;
+  /** One hop at this universe's fleet speed (10/11/2026); absent on older servers. */
+  hop_us?: string;
+  /** Military classes only (combat rules). */
+  hull?: number;
+  attack?: number;
   flux_per_hop: number;
   cargo: string;
   survey: boolean;
@@ -19,6 +26,8 @@ export type ShipOrder = {
   id: string;
   ship_class: string;
   quantity: number;
+  /** Units already in the garrison (one-by-one delivery, 10/11/2026); absent before. */
+  delivered?: number;
   status: "queued" | "active";
   accepted_at: string;
   started_at: string | null;
@@ -40,8 +49,24 @@ export type FleetView = {
   mission_id: string | null;
   /** Every own Colony of this system (colony.read only): load/unload always name one. */
   colonies_here: { id: string; name: string; unload: { credited: Amounts; kept: Amounts } | null }[];
+  /** 13B (v0.9): first-contact protocol of a stationed task Fleet; absent before v0.9. */
+  protocol?: Protocol | null;
 };
-export type MissionKind = "DEPLOY" | "SURVEY" | "RETURN" | "COLONIZE" | "ATTACK";
+export type Protocol = "SURVEILLANCE" | "AMBUSH" | "INTERCEPTION" | "FRIENDLY_CONTACT";
+/** One side of a detection: system, instant, anonymous signature; the Empire only if identified. */
+export type FrontierDetection = {
+  id: string; system: SystemRef | null; detected_at: string; role: "watch" | "transit"; friendly: boolean; empire: Empire | null;
+};
+export type FrontierEngagement = {
+  id: string; kind: "engagement"; at: string; system: SystemRef | null; role: "watcher" | "mover"; protocol: Protocol | null;
+  outcome: string; opponent: Empire; own: CombatSide; opponent_forces: CombatSide; destroyed: boolean; rounds: number;
+};
+export type FrontierRetreat = {
+  id: string; kind: "retreat"; at: string; system: SystemRef | null;
+  outcome: "retreated" | "retreat_failed" | "retreat_impossible" | "void"; reason: string | null; destination: SystemRef | null;
+};
+export type Frontier = { protocols: Protocol[]; detections: FrontierDetection[]; encounters: (FrontierEngagement | FrontierRetreat)[] };
+export type MissionKind = "DEPLOY" | "SURVEY" | "RETURN" | "COLONIZE" | "ATTACK" | "PROSPECT" | "STUDY" | "EXTRACT";
 /** Own engagement only: battle instant and state; the defender is never projected. */
 export type AttackState = { engagement_id: string; battle_at: string; state: "pending" | "resolved" | "cancelled" };
 export type MissionView = {
@@ -61,20 +86,27 @@ export type MissionView = {
   recalled_at: string | null;
   return_at: string | null;
   completed_at: string | null;
+  /** UX-API-01: ordered systems from departure to destination (kept only when consistent). */
+  path?: string[];
   payer_colony_id: string | null;
   target_planet: { id: string; name: string } | null;
   attack?: AttackState | null;
-  report: { observed_at: string; processed_at: string; result: { kind: string; outcome?: string; reason?: string; colony_id?: string | null; destroyed?: boolean } } | null;
+  report: { observed_at: string; processed_at: string; result: { kind: string; outcome?: string; reason?: string; colony_id?: string | null; destroyed?: boolean;
+    /** STUDY: dossier progress; v0.12 adds the completion reward and the revealed systems. */
+    dossier?: { index: number; clues: number; studied: number; complete?: boolean; reward_data?: string; revealed?: string[] } } } | null;
 };
 /** Defender view before a battle: target and instant only, never the attacker or its force. */
-export type CombatAlert = { id: string; planet_id: string; system_id: string; battle_at: string; state: "pending" | "cancelled" };
+/** v0.12: an attack announced on an extraction operation targets a deposit (`opportunity_id`), no planet. */
+export type CombatAlert = { id: string; planet_id: string | null; opportunity_id?: string; system_id: string; battle_at: string; state: "pending" | "cancelled" };
 export type CombatSide = { initial: Record<string, number>; losses: Record<string, number>; survivors: Record<string, number> };
-export type CombatOutcome = "attacker_win" | "defender_win" | "mutual_destruction" | "unopposed" | "target_unavailable";
+export type CombatOutcome = "attacker_win" | "defender_win" | "mutual_destruction" | "unopposed" | "target_unavailable" | "voided_by_pact";
 /** Dated observation written by the resolution; military compositions only. */
 export type CombatReport = {
   engagement_id: string; role: "attacker" | "defender"; battle_at: string; processed_at: string; outcome: CombatOutcome;
-  target: { planet_id: string; system_id: string };
+  target: { planet_id: string | null; system_id: string; opportunity_id?: string };
   opponent_empire_id?: string; own?: CombatSide; opponent?: CombatSide; rounds?: unknown[];
+  /** v0.8: the pact that voided the battle (no composition is ever reported then). */
+  pact_id?: string;
 };
 export type Combat = { classes: string[]; min_warning_seconds: number; alerts: CombatAlert[] | null; reports: CombatReport[] | null };
 export type Colonization = {
@@ -97,6 +129,9 @@ export type FleetProjection = {
   missions?: MissionView[];
   colonization?: Colonization | null;
   combat?: Combat | null;
+  /** v0.12 (EXP-02c): an ATTACK may target a known deposit. */
+  contested?: boolean;
+  frontier?: Frontier | null;
   systems?: SystemRef[];
 };
 export type Quote = {
@@ -114,6 +149,8 @@ export type Quote = {
   package_minimum: Amounts | null;
   battle_at?: string;
   units?: Record<string, number>;
+  /** UX-API-01: ordered known systems from departure to destination. */
+  path?: string[];
 };
 
 type Value = Record<string, unknown>;
@@ -156,7 +193,7 @@ const attackState = (v: unknown) =>
   object(v) && exactKeys(v, ["engagement_id", "battle_at", "state"]) && id(v.engagement_id) && date(v.battle_at) &&
   ["pending", "resolved", "cancelled"].includes(String(v.state));
 const mission = (v: unknown) =>
-  object(v) && id(v.id) && id(v.fleet_id) && ["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK"].includes(String(v.kind)) &&
+  object(v) && id(v.id) && id(v.fleet_id) && ["DEPLOY", "SURVEY", "RETURN", "COLONIZE", "ATTACK", "PROSPECT", "STUDY", "EXTRACT"].includes(String(v.kind)) &&
   (["COLONIZE", "ATTACK"].includes(String(v.kind)) ? object(v.target_planet) && id(v.target_planet.id) && typeof v.target_planet.name === "string" : v.target_planet === null) &&
   (v.kind === "ATTACK" ? attackState(v.attack) : v.attack === null || v.attack === undefined) &&
   ["active", "returning", "completed"].includes(String(v.status)) && nullableRef(v.origin) &&
@@ -170,19 +207,54 @@ const tally = (v: unknown) => object(v) && Object.values(v).every((n) => integer
 const side = (v: unknown) => object(v) && tally(v.initial) && tally(v.losses) && tally(v.survivors);
 // An alert carrying anything beyond target, instant and state would leak the attacker: refused.
 const alert = (v: unknown) =>
-  object(v) && exactKeys(v, ["id", "planet_id", "system_id", "battle_at", "state"]) && id(v.id) && id(v.planet_id) &&
+  object(v) && (exactKeys(v, ["id", "planet_id", "system_id", "battle_at", "state"])
+    ? id(v.planet_id) : exactKeys(v, ["id", "planet_id", "opportunity_id", "system_id", "battle_at", "state"]) && v.planet_id === null && id(v.opportunity_id)) && id(v.id) &&
   id(v.system_id) && date(v.battle_at) && ["pending", "cancelled"].includes(String(v.state));
-const OUTCOMES = ["attacker_win", "defender_win", "mutual_destruction", "unopposed", "target_unavailable"];
+const OUTCOMES = ["attacker_win", "defender_win", "mutual_destruction", "unopposed", "target_unavailable", "voided_by_pact"];
 const combatReport = (v: unknown) =>
   object(v) && id(v.engagement_id) && ["attacker", "defender"].includes(String(v.role)) && date(v.battle_at) &&
-  date(v.processed_at) && OUTCOMES.includes(String(v.outcome)) && object(v.target) && id(v.target.planet_id) &&
+  date(v.processed_at) && OUTCOMES.includes(String(v.outcome)) && object(v.target) && (id(v.target.planet_id) || (v.target.planet_id === null && id(v.target.opportunity_id))) &&
   id(v.target.system_id) &&
   (v.outcome === "target_unavailable" ? !("opponent_empire_id" in v) && !("opponent" in v)
+    // A battle voided by a pact never carries a composition: refused rather than hidden.
+    : v.outcome === "voided_by_pact" ? id(v.opponent_empire_id) && id(v.pact_id) && !("own" in v) && !("opponent" in v) && !("rounds" in v)
     : id(v.opponent_empire_id) && side(v.own) && side(v.opponent) && Array.isArray(v.rounds));
 const combat = (v: unknown, readable: boolean) =>
   v === null || v === undefined || (object(v) && list(v.classes, (c) => typeof c === "string") &&
     integer(v.min_warning_seconds) &&
     (readable ? list(v.alerts, alert) && list(v.reports, combatReport) : v.alerts === null && v.reports === null));
+
+const PROTOCOLS = ["SURVEILLANCE", "AMBUSH", "INTERCEPTION", "FRIENDLY_CONTACT"];
+const empireRef = (v: unknown) => object(v) && exactKeys(v, ["id", "name"]) && id(v.id) && (v.name === null || typeof v.name === "string");
+// D3: a detection carries system, instant and an anonymous signature only. Any composition,
+// origin, destination, route or direction is a leak, refused rather than hidden.
+const detection = (v: unknown) =>
+  object(v) && exactKeys(v, ["id", "system", "detected_at", "role", "friendly", "empire"]) && id(v.id) && nullableRef(v.system) &&
+  date(v.detected_at) && ["watch", "transit"].includes(String(v.role)) && typeof v.friendly === "boolean" &&
+  (v.empire === null || empireRef(v.empire));
+const encounter = (v: unknown) => {
+  if (!object(v) || !id(v.id) || !date(v.at) || !nullableRef(v.system)) return false;
+  if (v.kind === "retreat")
+    return exactKeys(v, ["id", "kind", "at", "system", "outcome", "reason", "destination"]) &&
+      ["retreated", "retreat_failed", "retreat_impossible", "void"].includes(String(v.outcome)) &&
+      (v.reason === null || typeof v.reason === "string") && nullableRef(v.destination);
+  return v.kind === "engagement" &&
+    exactKeys(v, ["id", "kind", "at", "system", "role", "protocol", "outcome", "opponent", "own", "opponent_forces", "destroyed", "rounds"]) &&
+    ["watcher", "mover"].includes(String(v.role)) && (v.protocol === null || PROTOCOLS.includes(String(v.protocol))) &&
+    // The moving side never learns the protocol that stopped it.
+    (v.role === "watcher" || v.protocol === null) &&
+    typeof v.outcome === "string" && empireRef(v.opponent) && side(v.own) && side(v.opponent_forces) &&
+    typeof v.destroyed === "boolean" && Number.isSafeInteger(v.rounds);
+};
+const frontier = (v: unknown) =>
+  v === null || v === undefined || (object(v) && list(v.protocols, (x) => PROTOCOLS.includes(String(x))) &&
+    list(v.detections, detection) && list(v.encounters, encounter));
+
+const missionPath = (m: MissionView) => {
+  const path: unknown = m.path;
+  return Array.isArray(path) && path.length === m.hops + 1 && path.every(id) &&
+    !!m.origin && !!m.destination && path[0] === m.origin.id && path[path.length - 1] === m.destination.id;
+};
 
 export function validFleets(value: unknown, empire: string): value is FleetProjection {
   if (!object(value) || !date(value.server_time) || !object(value.empire) || value.empire.id !== empire ||
@@ -194,7 +266,8 @@ export function validFleets(value: unknown, empire: string): value is FleetProje
   const shapes =
     object(value.catalogue) && Object.values(value.catalogue).every((c) => object(c) && typeof c.name === "string" &&
       amounts(c.cost) && micro(c.build_us) && integer(c.hop_seconds) && integer(c.flux_per_hop) && micro(c.cargo) &&
-      typeof c.survey === "boolean") &&
+      typeof c.survey === "boolean" && (!("hop_us" in c) || micro(c.hop_us)) &&
+      (!("hull" in c) || integer(c.hull)) && (!("attack" in c) || integer(c.attack))) &&
     integer(value.queue_limit) && integer(value.max_quantity) &&
     list(value.colonies, (c) => object(c) && id(c.id) && typeof c.name === "string" && id(c.system_id) && list(c.orders, order)) &&
     list(value.fleets, fleet) && list(value.missions, mission) && list(value.systems, knownSystem) &&
@@ -202,12 +275,19 @@ export function validFleets(value: unknown, empire: string): value is FleetProje
       amounts(value.colonization.package_minimum) && integer(value.colonization.max_colonies) &&
       (value.colonization.colonizer_quote === null || (object(value.colonization.colonizer_quote) &&
         integer(value.colonization.colonizer_quote.rank) && amounts(value.colonization.colonizer_quote.cost)))));
-  if (!shapes || !combat(value.combat, v.permissions.includes("combat.read"))) return false;
+  if (!shapes || !combat(value.combat, v.permissions.includes("combat.read")) || !frontier(value.frontier)) return false;
+  // A protocol exists only on a stationed task Fleet, and only where the ruleset has frontiers.
+  if (v.fleets!.some((f) => f.protocol !== undefined && f.protocol !== null &&
+    (!PROTOCOLS.includes(f.protocol) || f.kind !== "TASK" || f.status !== "STATIONED" || !v.frontier)))
+    return false;
   // Colony data belongs to colony.read: present without it is a leak, refused rather than hidden.
   if (!v.permissions.includes("colony.read") && (v.colonies!.length || v.fleets!.some((f) =>
     f.home_colony_id || f.colonies_here.length) || v.missions!.some((m) => m.payer_colony_id || m.report?.result.colony_id) ||
     v.systems!.some((s) => s.planets?.some((p) => p.colony_id)) || v.colonization?.colonizer_quote))
     return false;
+  // Optional UX-API-01 field: a path that does not run from origin to destination in hops + 1
+  // systems is dropped, never repaired; the map then falls back to an estimated segment.
+  for (const m of v.missions!) if ("path" in m && !missionPath(m)) delete m.path;
   const known = new Set(v.systems!.map((s) => s.id));
   return v.fleets!.every((f) => !f.system || known.has(f.system.id));
 }
@@ -259,7 +339,7 @@ export async function fleetCommand(universe: string, empire: string, csrf: strin
   return { result: reply.result, fleets: reply.fleets };
 }
 
-export type Plan = { fleet_id: string; kind: MissionKind; destination_id?: string; target_planet_id?: string; units: Record<string, number> };
+export type Plan = { fleet_id: string; kind: MissionKind; destination_id?: string; target_planet_id?: string; target_opportunity_id?: string; duration_hours?: number; after?: "STAY" | "RETURN"; units: Record<string, number> };
 
 /** Quote of a launch. A paying colony without colony.read is a leak, refused rather than hidden. */
 export async function previewMission(universe: string, empire: string, csrf: string, plan: Plan, colonyRead: boolean,
@@ -270,5 +350,9 @@ export async function previewMission(universe: string, empire: string, csrf: str
     typeof body.affordable !== "boolean" ||
     !(body.payer_colony_id === null || (colonyRead && id(body.payer_colony_id))))
     throw new ApiError("invalid_response", 0);
+  // Optional UX-API-01 field: kept only when well-formed (the map re-checks it against the
+  // known systems and the hop count); a malformed path is dropped, never repaired.
+  if ("path" in body && !(Array.isArray(body.path) && body.path.length === Number(body.hops) + 1 && body.path.every(id)))
+    delete body.path;
   return body as Quote;
 }

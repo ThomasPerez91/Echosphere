@@ -5,18 +5,23 @@ loads the world, another Empire's holdings, or a Fleet×Planet product.
 """
 
 from copy import deepcopy
+from datetime import timedelta
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 
 from app.ai.policy import circular_page
 from app.ai.rules import BOOTSTRAP_ORDER, fingerprint
 from app.colony import service as colony
+from app.defense.service import slots as colony_slots
 from app.fleet import service as fleet
 from app.fleet.models import Fleet, FleetMission, FleetReport, FleetStack, ShipOrder
 from app.galaxy import service as galaxy
 from app.galaxy.models import PlanetKnowledge, RouteKnowledge, SystemKnowledge
 from app.persistence.models import Colony
+from app.relations import service as relations
+from app.relations.models import RelationContact, RelationPair
+from app.relations.rules import cooled_down, pair, proposal_open, recent
 from app.research import service as research
 from app.simulation.production import MICRO_UNITS as M
 from app.simulation.production import RESOURCES
@@ -37,6 +42,110 @@ def sql_page(session, query, column, cursor, size):
     else:
         rows = list(session.scalars(query.limit(size)))
     return rows
+
+
+LOGISTICS_FLEET_LIMIT = 64
+
+
+def protocol_fleets(session, rules, u, e, colonies):
+    """B08: own operational (TASK) Fleets stationed in a system holding an own colony, except
+    pure logistics (a lone colonizer, or a Fleet carrying cargo). Own data only, bounded."""
+    systems = sorted({UUID(c["system_id"]) for c in colonies.values()}, key=str)
+    if not systems:
+        return []
+    found = []
+    for f in session.scalars(
+        select(Fleet)
+        .where(
+            Fleet.universe_id == u,
+            Fleet.empire_id == e,
+            Fleet.kind == "TASK",
+            Fleet.status == "STATIONED",
+            Fleet.system_id.in_(systems),
+        )
+        .order_by(Fleet.id)
+        .limit(LOGISTICS_FLEET_LIMIT)
+    ):
+        units = fleet.stacks_of(session, f.id)
+        if fleet.cargo_of(session, f.id) or set(units) == {rules.colonization.colonizer_class}:
+            continue
+        found.append(str(f.id))
+    return found
+
+
+def protocol_posture(session, rules, profile, u, e, fleet_id, alerts, at):
+    """B08 deterministic posture of one own Fleet, from facts this Empire really knows: its own
+    contacts and relation pairs (dated hostile acts against it, pacts), its own anonymous
+    detections in that system, its own Combat alerts. Never another Empire's holdings."""
+    from app.frontier.encounter import known_enemy
+    from app.frontier.models import FrontierDetection
+
+    policy, f = rules.ai.frontier, session.get(Fleet, fleet_id)
+    allowed = policy.protocols[profile]
+    units = fleet.stacks_of(session, f.id)
+    armed = any(c in rules.combat.classes and n for c, n in units.items())
+    window = rules.frontier.ambush_window
+    enemy = None
+    if "AMBUSH" in allowed and armed:
+        for contact in session.scalars(
+            select(RelationContact)
+            .where(RelationContact.universe_id == u, RelationContact.observer_empire_id == e)
+            .order_by(RelationContact.observed_empire_id)
+            .limit(LOGISTICS_FLEET_LIMIT)
+        ):
+            other = contact.observed_empire_id
+            low, high = pair(e, other)
+            row = session.get(RelationPair, (low, high))
+            if row is None or relations.covering_pact(session, low, high, at) is not None:
+                continue
+            act = row.last_hostile_by_low_at if other == low else row.last_hostile_by_high_at
+            if known_enemy(contact.first_seen_at, [act] if act else [], at, window):
+                enemy = other
+                break
+    # Acceptable risk: no announced attack and no recent hostile act suffered from anyone.
+    grievance_window = timedelta(seconds=rules.ai.diplomacy.grievance_seconds)
+    grievance = bool(alerts) or any(
+        recent(
+            row.last_hostile_by_low_at if row.high_empire_id == e else row.last_hostile_by_high_at,
+            at,
+            grievance_window,
+        )
+        for row in session.scalars(
+            select(RelationPair)
+            .where(
+                RelationPair.universe_id == u,
+                or_(RelationPair.low_empire_id == e, RelationPair.high_empire_id == e),
+            )
+            .order_by(RelationPair.low_empire_id, RelationPair.high_empire_id)
+            .limit(LOGISTICS_FLEET_LIMIT)
+        )
+    )
+    sighted = session.scalar(
+        select(FrontierDetection.id)
+        .where(
+            FrontierDetection.universe_id == u,
+            FrontierDetection.observer_empire_id == e,
+            FrontierDetection.system_id == f.system_id,
+            FrontierDetection.identified.is_(False),
+            FrontierDetection.detected_at > at - timedelta(seconds=policy.sighting_seconds),
+            FrontierDetection.detected_at <= at,
+        )
+        .limit(1)
+    )
+    if enemy is not None:
+        desired, basis, utility = "AMBUSH", "known_enemy", policy.ambush_utility
+    elif "FRIENDLY_CONTACT" in allowed and sighted is not None and not grievance:
+        desired, basis, utility = "FRIENDLY_CONTACT", "anonymous_sighting", policy.friendly_utility
+    else:
+        desired, basis, utility = "SURVEILLANCE", "presence", policy.surveillance_utility
+    return {
+        "fleet_id": str(f.id),
+        "system_id": str(f.system_id),
+        "current": f.protocol,
+        "desired": desired,
+        "basis": basis,
+        "utility": utility,
+    }
 
 
 def collect(session, controller, rules, at):
@@ -252,6 +361,7 @@ def collect(session, controller, rules, at):
                 research.validate_start(session, e, body["technology"], q)
                 cost, duration = dict(q.cost), q.duration_us
             elif operation == "order":
+                fleet.check_unlocked(session, rules, UUID(payer), body["ship"])
                 q = fleet.snapshot_order(
                     rules,
                     body["ship"],
@@ -259,6 +369,7 @@ def collect(session, controller, rules, at):
                     fleet.colonizer_rank(session, rules, e)
                     if body["ship"] == rules.colonization.colonizer_class
                     else None,
+                    fleet.ship_bonus(session, e),
                 )
                 cost, duration = dict(q["cost"]), q["duration_us"]
                 if sum(o.colony_id == UUID(payer) for o in queued) >= rules.fleets.queue_limit:
@@ -330,6 +441,21 @@ def collect(session, controller, rules, at):
 
     needed = {}
     economy_refs = []
+    guard = getattr(cfg, "defense", None)
+    attacked = 0
+    if guard is not None and rules.defense is not None:
+        from app.combat.models import CombatReport
+
+        # DEF-01: battles this Empire fought as defender (its own reports, never another's).
+        attacked = session.scalar(
+            select(func.count())
+            .select_from(CombatReport)
+            .where(
+                CombatReport.universe_id == u,
+                CombatReport.empire_id == e,
+                CombatReport.role == "defender",
+            )
+        )
     for cid, state in states.items():
         projected = {
             b.sector_index: (b.infrastructure_type, b.level) for b in state.infrastructures
@@ -350,6 +476,24 @@ def collect(session, controller, rules, at):
         economy_refs.extend(
             (cid, i, kind, level + 1) for i, (kind, level) in sorted(projected.items())
         )
+        if attacked:
+            d = rules.defense
+            orbit = next(
+                (
+                    i
+                    for i in colony_slots(rules, state.planet, guard.module_kind)
+                    if i not in projected
+                ),
+                0,
+            )
+            if orbit and orbit != free:
+                economy_refs.append((cid, orbit, guard.module_kind, 1))
+            # Damaged modules are repaired in place (same level), before any new one.
+            economy_refs.extend(
+                (cid, b.sector_index, b.infrastructure_type, b.level)
+                for b in sorted(state.infrastructures, key=lambda b: b.sector_index)
+                if b.infrastructure_type in d.modules and b.condition == "damaged"
+            )
     for cid, sector, kind, level in page("economy", economy_refs):
         bootstrap = needed.get(cid) == kind and level == 1
         utility = 0
@@ -360,6 +504,21 @@ def collect(session, controller, rules, at):
                 utility = max(0, min(1000, (target - rate) * 1000 // target))
         if kind == cfg.industry_kind:
             utility = cfg.industry_utility // level
+        if kind in getattr(cfg, "unlocks", {}):
+            utility = cfg.unlocks[kind] // level
+        if guard is not None and rules.defense is not None and attacked:
+            d = rules.defense
+            modules = sum(
+                b.infrastructure_type in d.modules for b in states[cid].infrastructures
+            ) + sum(q.infrastructure_type in d.modules for q in states[cid].queue)
+            if kind == d.center and level == 1:
+                utility = guard.center_utility
+            elif kind == guard.module_kind and level == 1:
+                repairing = any(
+                    b.sector_index == sector and b.condition == "damaged"
+                    for b in states[cid].infrastructures
+                )
+                utility = guard.module_utility if repairing or modules < attacked else 0
         if kind == cfg.storage_kind:
             utility = (
                 1000
@@ -551,13 +710,34 @@ def collect(session, controller, rules, at):
     # Never an offensive candidate: the dispatcher has no combat capability at all.
     alerts = []
     military = getattr(cfg, "military", None)
+    watch = getattr(cfg, "frontier", None)
+    postures = []
     if military is not None:
         from app.combat.service import alerts_for
 
         alerts = alerts_for(session, u, e, limit=24, history=False)
         threatened = {a["planet_id"] for a in alerts}
         ship = military.ship_class
-        for cid in page("military", list(colonies)):
+        references = list(colonies)
+        if watch is not None:
+            # v0.9 (B08): protocol choices share the military page and budget, after colonies.
+            watched = protocol_fleets(session, rules, u, e, colonies)
+            references += [f"fleet:{fid}" for fid in watched]
+        for ref in page("military", references):
+            if ref.startswith("fleet:"):
+                posture = protocol_posture(
+                    session, rules, controller.profile, u, e, UUID(ref[6:]), alerts, at
+                )
+                postures.append(posture)
+                if posture["desired"] != posture["current"]:
+                    add(
+                        "military",
+                        "protocol",
+                        {"fleet_id": posture["fleet_id"], "protocol": posture["desired"]},
+                        posture["utility"],
+                    )
+                continue
+            cid = ref
             here = session.scalar(
                 select(func.coalesce(func.sum(FleetStack.count), 0))
                 .join(Fleet, Fleet.id == FleetStack.fleet_id)
@@ -578,6 +758,100 @@ def collect(session, controller, rules, at):
                 {"colony_id": cid, "ship": ship},
                 military.alert_utility if urgent else military.baseline_utility,
                 priority=urgent,
+            )
+    # v0.8 diplomacy (Q18 B8): only this Empire's own contacts and pairs. One slot answers the
+    # oldest open incoming proposal (priority, consumes the turn); the rest of the page visits own
+    # contacts circularly for a spontaneous proposal. Never a withdrawal, a rupture or an attack.
+    diplomacy = getattr(cfg, "diplomacy", None)
+    seen = []
+    if diplomacy is not None:
+        window = timedelta(seconds=diplomacy.grievance_seconds)
+
+        def theirs(row, other):
+            if row is None:
+                return None
+            if other == row.low_empire_id:
+                return row.last_hostile_by_low_at
+            return row.last_hostile_by_high_at
+
+        received = session.scalar(
+            select(RelationPair)
+            .where(
+                RelationPair.universe_id == u,
+                or_(RelationPair.low_empire_id == e, RelationPair.high_empire_id == e),
+                RelationPair.proposal_by_empire_id.is_not(None),
+                RelationPair.proposal_by_empire_id != e,
+                RelationPair.proposal_expires_at > at,
+            )
+            .order_by(
+                RelationPair.proposed_at, RelationPair.low_empire_id, RelationPair.high_empire_id
+            )
+            .limit(1)
+        )
+        if received is not None:
+            other = received.proposal_by_empire_id
+            grievance = recent(theirs(received, other), at, window)
+            add(
+                "diplomacy",
+                "relation",
+                {"action": "refuse" if grievance else "accept", "counterpart_id": str(other)},
+                diplomacy.response_utility,
+                priority=True,
+            )
+            seen.append(
+                {
+                    "counterpart_id": str(other),
+                    "incoming_proposal": True,
+                    "hostile_by_counterpart_at": theirs(received, other).isoformat()
+                    if theirs(received, other)
+                    else None,
+                }
+            )
+        rule = diplomacy.proposal_rules[controller.profile]
+        contacts = sql_page(
+            session,
+            select(RelationContact).where(
+                RelationContact.universe_id == u, RelationContact.observer_empire_id == e
+            ),
+            RelationContact.observed_empire_id,
+            cursors.get("contacts"),
+            cfg.family_pages["diplomacy"] - 1,
+        )
+        if contacts:
+            cursors["contacts"] = str(contacts[-1].observed_empire_id)
+        for contact in contacts:
+            other = contact.observed_empire_id
+            low, high = pair(e, other)
+            row = session.get(RelationPair, (low, high))
+            fact = theirs(row, other)
+            mine = None
+            if row is not None:
+                mine = row.low_cooldown_until if e == low else row.high_cooldown_until
+            reason = None
+            if row is not None and relations.covering_pact(session, low, high, at) is not None:
+                reason = "pact_active"
+            elif row is not None and proposal_open(row.proposal_expires_at, at):
+                reason = "proposal_open"
+            elif not cooled_down(mine, at):
+                reason = "proposal_cooldown"
+            elif recent(fact, at, window):
+                reason = "recent_grievance"
+            elif rule == "past_grievance_only" and fact is None:
+                reason = "no_past_grievance"
+            add(
+                "diplomacy",
+                "relation",
+                {"action": "propose", "counterpart_id": str(other)},
+                diplomacy.proposal_utility,
+                reason=reason,
+            )
+            seen.append(
+                {
+                    "counterpart_id": str(other),
+                    "incoming_proposal": False,
+                    "hostile_by_counterpart_at": fact.isoformat() if fact else None,
+                    "reason": reason,
+                }
             )
     # Reject rather than silently truncate oversized/unbounded entity state.
     routes = list(
@@ -603,5 +877,7 @@ def collect(session, controller, rules, at):
         "unit_counts": counts,
         "candidates": candidates,
         **({"alerts": alerts} if military is not None else {}),
+        **({"relations": seen} if diplomacy is not None else {}),
+        **({"frontier": postures} if watch is not None else {}),
     }
     return observation, memory

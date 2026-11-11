@@ -11,6 +11,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    Text,
     UniqueConstraint,
     text,
 )
@@ -24,11 +25,39 @@ from portal_app.sessions import models as session_models  # noqa: F401
 
 class UniverseReference(Base):
     __tablename__ = "universe_references"
+    __table_args__ = (
+        CheckConstraint(
+            "(created_by IS NULL) = (creation_request_id IS NULL) "
+            "AND (created_by IS NULL) = (start_request IS NULL)",
+            name="universe_creation_fields",
+        ),
+        Index(
+            "uq_universe_creation_request",
+            "created_by",
+            "creation_request_id",
+            unique=True,
+            postgresql_where=text("creation_request_id IS NOT NULL"),
+        ),
+    )
     id: Mapped[UUID] = mapped_column(primary_key=True)
     backend_id: Mapped[str] = mapped_column(String(40))
     name: Mapped[str] = mapped_column(String(120))
     provisioned: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # UX-API-02 self-service creation: who asked, with which idempotent request and start options;
+    # the human Empire comes back only in Game's acknowledged receipt. Null for operator provisions.
+    created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), index=True)
+    creation_request_id: Mapped[UUID | None] = mapped_column()
+    start_request: Mapped[dict | None] = mapped_column(JSONB)
+    human_empire_id: Mapped[UUID | None] = mapped_column()
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # UX-API-03 multi: every human Empire (seat) of a started PRIVATE universe, in seat order.
+    seats: Mapped[list | None] = mapped_column(JSONB)
+    # Q60: a solo game archived by its player; seats handed over to an AI when a player left.
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Recette 09/11/2026: removed from its creator's list (solo game or creation not started).
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    left_seats: Mapped[list | None] = mapped_column(JSONB)
 
 
 class UniverseMembership(Base):
@@ -59,6 +88,71 @@ class UniverseMembership(Base):
     last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     next_check_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     reconciliation_pending: Mapped[bool] = mapped_column(default=True)
+    empire_name: Mapped[str | None] = mapped_column(String(40))
+    left_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class UniverseInvitation(Base):
+    """UX-API-03 (Q59): one mode per universe chosen by its creator. A link invitation is
+    reusable until the seats are full or it is replaced; an email invitation is bound to one
+    address and used once. Only the token digest is stored."""
+
+    __tablename__ = "universe_invitations"
+    __table_args__ = (
+        CheckConstraint("mode IN ('link', 'email')", name="invitation_mode"),
+        CheckConstraint(
+            "state IN ('open', 'accepted', 'declined', 'revoked')", name="invitation_state"
+        ),
+        CheckConstraint("(mode = 'email') = (email IS NOT NULL)", name="invitation_email"),
+        CheckConstraint("expires_at > created_at", name="invitation_lifetime"),
+        Index(
+            "uq_invitation_open_link",
+            "universe_id",
+            unique=True,
+            postgresql_where=text("mode = 'link' AND state = 'open'"),
+        ),
+        Index(
+            "uq_invitation_open_email",
+            "universe_id",
+            "email",
+            unique=True,
+            postgresql_where=text("mode = 'email' AND state = 'open'"),
+        ),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    universe_id: Mapped[UUID] = mapped_column(ForeignKey("universe_references.id"), index=True)
+    created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    mode: Mapped[str] = mapped_column(String(8))
+    token_digest: Mapped[str] = mapped_column(String(64), unique=True)
+    email: Mapped[str | None] = mapped_column(String(320), index=True)
+    state: Mapped[str] = mapped_column(String(16), default="open")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    accepted_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class InvitationEmailOutbox(Base):
+    """Invitation emails; the link token travels only inside the encrypted payload."""
+
+    __tablename__ = "invitation_email_outbox"
+    __table_args__ = (
+        CheckConstraint("state IN ('pending', 'sent', 'cancelled')", name="invitation_mail_state"),
+        CheckConstraint(
+            "state <> 'pending' OR payload_ciphertext IS NOT NULL", name="invitation_mail_payload"
+        ),
+        Index("ix_invitation_email_outbox_due", "state", "next_attempt_at"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    invitation_id: Mapped[UUID] = mapped_column(
+        ForeignKey("universe_invitations.id"), unique=True
+    )
+    payload_ciphertext: Mapped[str | None] = mapped_column(Text)
+    state: Mapped[str] = mapped_column(String(16), default="pending")
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class ControlOutbox(Base):

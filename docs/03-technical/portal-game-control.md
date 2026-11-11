@@ -13,6 +13,10 @@
 à chaque admission/usage. Le périmètre et les résultats ci-dessous décrivent la livraison C06.
 Le shell opérateur charge désormais ses cibles FK en processus autonome (correctif découvert en C07).
 
+Évolution 09/11/2026 (Draft, non fusionnée) : opération `start_universe` pour la création SOLO en
+libre-service, voir [UX-API-02](universe-creation.md).
+Q60 (09/11/2026) : opérations `name_empire` et `hand_over_empire` ([vie d’une partie](universe-creation.md#q60--nom-dempire-quitter-une-partie-multi-archiver-une-partie-solo-09112026)).
+
 ## Périmètre et frontières
 
 Portal conserve références d’univers, intention de membership et livraison. Game conserve Universe,

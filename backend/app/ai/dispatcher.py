@@ -5,6 +5,7 @@ from uuid import UUID
 from app.ai.controller import AIDenied, authorize
 from app.colony import service as colony
 from app.fleet import service as fleet
+from app.relations import service as relations
 from app.research import service as research
 
 CAPABILITIES = frozenset(
@@ -18,6 +19,9 @@ CAPABILITIES = frozenset(
         "fleet.build",
         "fleet.command",
         "colony.expand",
+        # v0.8 diplomacy only: answer or propose a pact. No rupture, no combat capability.
+        "relations.read",
+        "relations.negotiate",
     }
 )
 REQUIRED = {
@@ -28,7 +32,17 @@ REQUIRED = {
     "load": {"fleet.read", "fleet.command", "colony.read"},
     "unload": {"fleet.read", "fleet.command", "colony.read"},
     "launch": {"fleet.read", "fleet.command"},
+    "relation": {"relations.read", "relations.negotiate"},
+    # v0.9 (13B B08): a frontier protocol through the same Fleet command as a human.
+    "protocol": {"fleet.read", "fleet.command"},
 }
+# Q18 B8/B10: the policy may answer or propose; it never withdraws or breaks a pact.
+RELATION_ACTIONS = {"propose", "accept", "refuse"}
+
+
+def allowed_protocols(session, controller):
+    policy = getattr(colony.rules_for(session, controller.universe_id).ai, "frontier", None)
+    return set(policy.protocols[controller.profile]) if policy is not None else set()
 
 
 def dispatch(session, engine, controller, candidate, key, at):
@@ -86,6 +100,19 @@ def dispatch(session, engine, controller, candidate, key, at):
             b["cargo"],
             key=key,
             at=at,
+        )
+    if operation == "relation":
+        if b["action"] not in RELATION_ACTIONS:
+            raise AIDenied("ai_relation_denied")
+        return relations.OPERATIONS[b["action"]](
+            session, u, e, uid(b["counterpart_id"]), key=key, at=at
+        )
+    if operation == "protocol":
+        allowed = allowed_protocols(session, controller)
+        if b["protocol"] not in allowed:
+            raise AIDenied("ai_protocol_denied")  # never INTERCEPTION, never a cautious AMBUSH
+        return fleet.set_protocol(
+            session, engine, u, e, uid(b["fleet_id"]), b["protocol"], key=key, at=at
         )
     if operation == "unload":
         return fleet.unload(

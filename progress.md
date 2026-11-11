@@ -1,8 +1,201 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-11-01. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-11-11. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+
+## Reprise rapide — base de recette intégrée (recette/ux-weekend)
+
+| Champ | État au 09/11/2026 |
+| --- | --- |
+| Branche | `recette/ux-weekend`, demandée par l’utilisateur le 09/11/2026 comme base propre de test avant fusion sur master |
+| Contenu | master `067a4e5` + #16 `aed2fe0` + #17 `b97bd0e` + #18 `4425797` + #19 `b0f3907` + #20 `c1e5a61` + #21 `4eaaf9a` + #22 `d5e96ae` (fusions, conflits résolus : doc UX-API-01 version #20, commentaire du déclencheur CI) |
+| Fusion master | **Non faite** : après la recette utilisateur et sur autorisation explicite |
+| Tests | Fast CI de chaque PR verte sur sa tête ; Fast CI de l’ensemble via la PR de recette ; tests PostgreSQL/Chromium (Full CI) seulement après fusion sur master |
+| Recette | [Procédure](docs/02-ux-ui/redesign/ux05-recette-locale.md) |
+| Ajouts (09/11) | #24 multi privé (invitations lien ou email, 2–4 Empires humains+IA, plafond galaxy-v1, Fast CI 42594450478) ; #25 trajet réel des missions (`missions[].path`) sur la carte (Fast CI 42595525284) ; #26 création « retardée »/« bloquée » et date de démarrage dans « Mes parties » (Fast CI 42595415688 avant fusion de la recette) |
+| Ajouts (09/11, suite) | Q60 consignée (abandon multi → IA, solo archivée, cloche, nom d’Empire choisi) ; #27 cloche (Fast CI 42598912202) ; #28 nom d’Empire, quitter/archiver, opérations Game `name_empire`/`hand_over_empire`, migration Portal `p0008_game_life` (Fast CI 42599825997, échec puis relance verte : instabilité connue de `Research.test.tsx`) ; #29 distances en sauts (Fast CI 42599976802) |
+| Ajouts (09/11, soir) | #32 job CI PostgreSQL temporaire sur les PR vers la recette (validé) ; #34 flottes sur la carte (fenêtre, choix de destination) ; chaîne EXP v0.10 intégrée en `cdf277e` : #30 conception EXP-00, #31 EXP-01a (générateur d’opportunités), #33 galaxie v2 (tailles 100–2 000, impasses/goulots, plafonds Q61, création Portal/Game en v0.10), #35 EXP-01b (opportunités en base, onglet « Données »), #36 EXP-02a (PROSPECT/STUDY, Extracteur). CI de #36 sur `cdf277e` : 6 jobs verts dont backend avec PostgreSQL, 642 tests (job 129219981014) |
+| Recette ce soir | [Procédure](docs/02-ux-ui/redesign/ux05-recette-locale.md) étapes 10–11 et sections « Flottes sur la carte » / « Opportunités » ; migrations Game 0015–0016 additives ; les univers déjà créés restent sur leur ruleset |
+| Intégré ensuite | #37 EXP-02b EXTRACT (+ retour automatique validé le 09/11), CI verte 651 tests (`78e7a40`) ; #38 retours Portail (`02110db`) ; #39 digest des reçus de contrôle : créations solo bloquées en `invalid_receipt` (Game hachait ses valeurs par défaut) |
+| Intégré (10/11) | #43 COL-11 (ruleset v0.11 : bâtiments clés uniques, Chantier orbital, Centre de recherche, plafond de niveau) ; #44 livraison des vaisseaux une à une et régénération des gisements (migration 0019), CI verte sur `eb94851`, recette avancée à `eb94851` |
+| Intégré (10/11, soir) | #46 refonte DA Flottes/Recherche/Relations/Rapports ; #47 partie de test plus rapide (flottes ×20, préavis 10 min), puissance/coque des flottes, détail des combats, prochain déblocage ; #48 ruleset **v0.12** (paliers de recherche III–IV, score de relation, dossiers complets A4) ; #49 exploitation contestée EXP-02c (migration 0021). Recette `64d1da0`, CI verte (680 tests backend PostgreSQL) |
+| En cours (11/11) | #51 carte de commandement lisible (référence `carte-galaxie.html`, noms par syllabes v0.12, recette `cb5bd0d`) ; `work/galaxy-shapes` : formes de galaxie à la création (v0.12 : elliptique, spirale 2/4 bras, irrégulière, amas, au hasard ; migration 0022 `universe_galaxies.layout`, fond de carte selon la forme), tests PostgreSQL en CI de PR vers la recette |
+| En cours (11/11, suite) | #52 formes de galaxie intégrées (recette `4ac84a3`) ; `work/system-hub` : fiche rapide du système sur la carte et vue système refaite où l’on lance toutes les opérations (planificateur partagé `useMissionFlow`) |
+| En cours (11/11, soir) | #53 fiche rapide + vue système, #54 infobulle/menu/en-tête intégrés (recette `e23cfb7`) ; `work/foreign-presence` : présences étrangères connues et classes Allié/Neutre/Hostile sur la carte (v0.12, `relations.map`, sans migration) |
+| En cours (11/11, nuit) | #55 présences étrangères intégrée ; `work/defense-def01` (PR #56) : défense planétaire DEF-01 validée, ruleset **v0.13** (Centre de défense, batterie ponctuelle, canon anti-vaisseaux, plateforme orbitale, entretien Flux, dégâts/réparation, IA défensive), migration 0023, onglet Défense ; tests PostgreSQL et Vitest en CI seulement. Recette : nouvelle partie v0.13 après redémarrage Compose |
+| Reste (10/11) | Accords de recherche/commerce (mécanique d’échange à décider), assets à intégrer dès réception, recette utilisateur de v0.12 |
+| Fait (10/11) | `work/sandbox-game` : **partie de test** demandée par l’utilisateur (Portal `sandbox` solo hors production ; Game : monde presque terminé au démarrage, routes `/game/{u}/sandbox/{empire}` ressources/vaisseaux/terminer maintenant, Empires adverses visibles sans contact, migration 0020) ; tests PostgreSQL `test_sandbox.py` en CI seulement |
+| En cours | Recette utilisateur du 09/11 au soir ; prochain lot EXP-02c (exploitation contestée) après retours |
+| Étapes suivantes | Atelier génération de carte (tailles 100–2000, placement dispersé/regroupé, 10 joueurs + ~30 IA) avec l’utilisateur avant de lever le plafond de 4 Empires ; Orbite/Défense Q30–Q38 à reprioriser ; tests PostgreSQL de #22–#28 seulement en Full CI après fusion master |
+
+## Reprise rapide — refonte UX (work/ux-redesign)
+
+| Champ | État au 05/11/2026 soir — UX05 publié (maquette intégrée : Portal, Empire, Colonie, Galaxie), recette en univers réel à faire |
+| --- | --- |
+| Branche / base / PR | `work/ux-redesign`, [PR #19](https://github.com/ThomasPerez91/Echosphere/pull/19) **Draft** vers `work/step-13b-first-contact`. master, #16, #17, #18, #20 non touchées ; aucun merge, rebase ni force-push |
+| Agent | Claude (session cloud, sans registre npm ni Docker), seul écrivain de la PR #19 |
+| Livré (UX05) | `8922b7a` assets + styles portés, `73e8409` coquille + Empire, `2c409e2` Colonie, `5c4f2df` Galaxie (carte de commandement **par défaut**, carte classique à un clic), `b8e1a43` Portal ; [UX05](docs/02-ux-ui/redesign/ux05-mockup-integration.md) avec le backlog « Implémentation backend nécessaire » |
+| Exécuté | Fast CI `2c409e2` run 42096869835 success, `5c4f2df` run 42097919962 success ; en session : bundles esbuild jeu/Portal, parcours Chromium (Playwright Python, API interceptées) 390/1440 px sans débordement ni erreur console, tsc strict partiel |
+| Non exécuté | specs `e2e/` avec Vite (Full CI master), recette en univers réel, lecteurs d’écran réels |
+| Limites | Fond animé non mesuré sur mobile réel ; `missions[].path` (PR #20) non consommé ; specs e2e classiques forcées sur la carte classique |
+| 06/11/2026 | Logo officiel (`0c968d0`, Fast CI run 42189121572 success) dans le Portal et le jeu, favicon. Seul agent sur les PR #19/#20/#21 (l’agent de #21 est arrêté, confirmé par l’utilisateur) ; #21 (historique des constructions, backend) n’est **pas** encore consommée par le frontend de #19 malgré sa description |
+| Rapports | Écran Rapports (D-UX-6) branché sur l’historique des constructions de la PR #21 (route optionnelle : indisponibilité partielle si absente), missions, combats, frontière, recherche, diplomatie ; tests `Reports.test.tsx` |
+| 09/11/2026 | Retours recette : Portal en pages séparées (`/connexion`, `/inscription`, `/parties`, `/parties/nouvelle`, `/compte`), MFA repliée en « Sécurité avancée (facultatif) », page Nouvelle partie (création désactivée : backend nécessaire). `9bee88c` Fast CI run 42587120519 success (jeu 133/133, Portal 34/34). Recette de l’utilisateur : aucune partie créée (procédure opérateur), Game non vérifié |
+| UX-API-02 | Q59 consignée (09/11). [PR #22](https://github.com/ThomasPerez91/Echosphere/pull/22) Draft `work/ux-api-02-solo-creation` → 13B : création SOLO en libre-service (Game `start_universe`, Portal `POST /api/lobby/universes`, accès du créateur), Fast CI run 42590126414 success ; tests PostgreSQL non exécutés. #19 branchée (`8dd8bed`, run 42590316087 success). `recette/ux-weekend` réunit #19–#22 |
+| Suite | Recette utilisateur de la création SOLO puis du jeu ; ensuite multi (invitations lien/email) ; Recette locale (Compose) des écrans UX05 ; choix utilisateur des fonctionnalités backend à implémenter (backlog UX05) ; consommation de `path` après PR #20 |
+
+## Reprise rapide — UX04 (historique)
+
+| Champ | État au 03/11/2026 midi — UX04 publié (carte de commandement réelle derrière interrupteur), recette en univers réel à faire |
+| --- | --- |
+| Branche / base / PR | `work/ux-redesign` depuis `b97bd0e` (tête de PR #17) ; [PR #19](https://github.com/ThomasPerez91/Echosphere/pull/19) **Draft** vers `work/step-13b-first-contact`. master, #16, #17, #18 non touchées ; aucun merge, rebase ni force-push |
+| Agent | Claude (session cloud, sans registre npm ni Docker), seul écrivain de la PR #19 pendant le lot — [passation](docs/06-handoff/ux-redesign-handoff.md) |
+| Décisions | D-UX-1 à D-UX-7 validées par l’utilisateur et transcrites dans le [plan](docs/02-ux-ui/redesign/README.md) ; contrat [UX-API-01](docs/03-technical/ux-api-01-mission-path.md) rédigé, backend non modifié |
+| Livré (lot UX04) | `f2dc13b` décisions + contrat, `0eaf8a3` extraction `frontend/src/command/`, `1a3ad13` adaptateur API réel (`LiveCommandMap`), `2f6d2dc` interrupteur Galaxie, `f5ad8af` feuille mobile, `e7bef09` tests Vitest live, `9299b8c` spec Playwright + correctif de débordement, puis docs ([UX04](docs/02-ux-ui/redesign/ux04-live-command-map.md)) |
+| Exécuté | Fast CI `9299b8c` run 41619226514 success (lint : 1 avertissement préexistant `useGameSession.ts` ; Vitest 130/130 ; build ; docs). En session : `model.test.ts` 11/11 (esbuild + Node) ; vérification de types partielle (tsc strict avec déclarations React minimales) ; parcours Chromium (Playwright Python) sur le bundle de **l’application de production** avec API Game interceptée à 390/768/1440 px (interrupteur, plan, résumé serveur, confirmation, CSRF, clé d’idempotence, suivi, cibles ≥ 44 px, sans débordement) et sur le prototype ; `check_docs.py` |
+| Anomalies | `e7bef09` : Fast CI rouge (test `CommandMap` ambigu, corrigé dans `9299b8c`) et un échec de `Research.test.tsx` « unknown response retries exact same intent key » (test non modifié, vert au run suivant : instabilité de délai à surveiller) |
+| Non exécuté | `e2e/live-command.spec.ts` et `e2e/prototype.spec.ts` avec Vite ; Full CI (master seulement) ; **aucune recette en univers réel** (procédure dans UX04) |
+| Limites | Pas de réglage du cargo pour coloniser depuis une garnison ; sans UX-API-01, ligne indicative et nombre de sauts seulement ; Rapports/cloche (D-UX-6) non commencés |
+| CI | Entrée temporaire `work/step-13b-first-contact` dans les cibles `pull_request` de la Fast CI (à retirer au rebase sur master) |
+| Suite | Recette locale UX04 ; décision utilisateur sur une PR backend UX-API-01 séparée ; nouvelle carte par défaut après validation |
+
+## Reprise rapide — W-UX-05 historique des constructions
+
+- Demande utilisateur du 05/11/2026 : extensions techniques additives déjà définies, PR séparées.
+- Branche `work/ux-construction-history`, base `b97bd0e` (#17), PR dédiée prévue en Draft vers cette branche (non créée : publication bloquée).
+- Projection paginée `construction-history`, `colony.read`, 404 sans existence révélée ; dates
+  logiques persistées, aucun catch-up/activité/session prolongée. Aucun changement de schéma/règles.
+- Tests exécutés : Ruff backend/scripts ; 41 tests PostgreSQL (7 nouveaux et 34 Colony API),
+  PostgreSQL **16.2** temporaire local, bases dédiées ; documentation vérifiée.
+- Limites : PostgreSQL 17 et Compose non exécutés ici ; Docker absent. Intégration UI dans #19,
+  chemin de mission dans #20 : ces branches restent séparées. Aucun merge autorisé.
+- Contrat/recette : [construction-history](docs/03-technical/construction-history.md).
+- Agent : ChatGPT Work, seul écrivain sur cette branche pendant ce lot. Publication bloquée par la revue d’approbation automatique ; aucun push effectué, aucune PR créée et aucune CI de ces commits déclenchée. Dernier commit de code local : `ea40c9b`. Revalider HEAD distant avant toute publication autorisée.
+
+## Reprise rapide — branche 13B (work/step-13b-first-contact)
+
+| Champ | État au 02/11/2026 nuit — 13B validé localement (PostgreSQL, Alembic, Chromium, Compose), revue indépendante à faire |
+| --- | --- |
+| Branche / base / PR | `work/step-13b-first-contact`, [PR #17](https://github.com/ThomasPerez91/Echosphere/pull/17) **Draft** vers `work/step-13-ai-relations` (PR #16, Draft, non fusionnée). Aucun merge, aucun Ready |
+| Agent / environnement | Claude Code local (Windows 11 + Ubuntu WSL2, Docker 29.9.2, Compose v5.6.1), worktrees `../Echosphere-wt/step-13` et `../Echosphere-wt/step-13b` ; répertoire principal non touché (extension Codex ouverte, inactive sur ces branches). Hôte sans Node ni Python 3.12 : suites exécutées dans des conteneurs `python:3.12-slim` et Playwright 1.56.1, PostgreSQL 17.11 jetable (tmpfs) |
+| Décisions | **C04 validée par l'utilisateur** (entrée sur l'état antérieur → repli → bataille ; couverture `started_at < t <= ended_at`). **Lecture B08 validée** (flotte pertinente, contact intéressant < 72 h, risque acceptable). Transcrites dans [premier contact](docs/01-game-design/first-contact.md) |
+| Commits de la session | `110eb71` (tests PostgreSQL corrigés à leur première exécution), `c0fcb16` (fixture de recette corrigée, recette dans la Full CI) ; commit documentaire de passation ; synchronisation contrôlée avec #16 si elle change |
+| Anomalies trouvées | Toutes dans des tests ou la fixture jamais exécutés, aucun bug produit démontré : session expirée après saut d'horloge (8 h), garnison supposée existante, test C02 en pause sur la mauvaise entrée, protocole et ATTACK locale au même instant (C04 : non couvrant, conforme), FK Knowledge, inventaire `test_world` sans `frontier_encounters`, `GalaxyRoute.route_id` inexistant, scénarios de recette traversant d'autres protocoles selon la galaxie aléatoire, preuve comptant les entrées futures |
+| Exécuté et réussi (local) | Alembic : base vide → 0014, `alembic check`, cycles 0014→0013→0014 et 0013→0012→0014 (schémas `pg_dump` identiques), 0013 seule sur #16 ; Game PostgreSQL : `test_relations.py` 19, `test_frontier.py` 36, `test_frontier_ai.py` 10, suite complète 561/561 (13B) ; Portal PostgreSQL 124/124, Ruff ; Ruff `backend scripts` ; frontend Game lint (0 erreur, 1 avertissement préexistant `useGameSession.ts`), Vitest 100/100, build, Chromium 43/43 (dont `frontier.spec.ts` 4 et Relations 4) ; Portal frontend lint, Vitest 30/30, build, Chromium 14/14 ; recettes Compose isolées : **frontier** (13 situations + interruption/reprise des workers), relations, combat, ai, handoff, fleet, colonization, galaxy, colony, research |
+| Non exécuté localement | `smoke_compose.py`, `smoke_portal_compose.py`, `smoke_control_compose.py` : ils démarrent le projet par défaut `echosphere` (pile conservée de l'utilisateur, volume `echosphere_postgres_data`) et l'auraient migrée en 0014 non fusionnée — couverts par la Full CI sur runner neuf |
+| CI | Fast CI : `110eb71` run 41498170455 success, `c0fcb16` run 41512861119 success. Full CI (recette Frontier comprise) : seulement après merge sur master, **jamais exécutée pour 13B** |
+| Partie locale | Projet Compose séparé `echosphere-demo` (volumes propres, bases `*_test`), univers v0.9 « Démo v0.9 — Premier contact » : humain + `economic_cautious` + `expansionist`, scénarios de la recette 13B, tours IA réels sur horloge injectée puis workers réels (`worker`, `combat-worker`, `ai-worker`). Portal `https://portal.echosphere.localhost:8443`, Game `https://game.echosphere.localhost:8443`, Mailpit `http://127.0.0.1:8025`. Pile conservée `echosphere` intacte (non migrée) |
+| Limites | Gel de l'Empire en mouvement jusqu'à résolution de chaque entrée (≈ 2 s nominal, `--lag` alerte > 300 s) ; interblocage de deux ATTACK croisées (préexistant v0.7, rejouable) ; une entrée `blocked` retient les batailles de son système jusqu'à l'opérateur (`--blocked`, `--retry-passage`) ; balance 72 h non simulée |
+| Avant Ready (#17) | Revue indépendante B09 (Codex, worktree en lecture seule, SHA noté) ; traitement des constats ; décision utilisateur sur Ready ; #16 d'abord (R11) ; base de #17 à réévaluer après fusion de #16 |
+
+### Reprise rapide — UX-API-01 (work/ux-api-01-mission-path)
+
+| Champ | État au 03/11/2026 après-midi — `path` exposé (devis + missions), recette PostgreSQL à faire |
+| --- | --- |
+| Branche / base / PR | `work/ux-api-01-mission-path` depuis `b97bd0e` (tête de #17) ; PR Draft vers `work/step-13b-first-contact`. Lien : la PR #19 (`work/ux-redesign`) consommera le champ dans un lot frontend séparé. master, #16–#19 non touchées |
+| Agent | Claude (session cloud, sans PostgreSQL, Docker ni PyPI) |
+| Décision | Principe UX-API-01 validé par l’utilisateur (D-UX-2) et PR technique autorisée le 03/11/2026 |
+| Livré | [Contrat et implémentation](docs/03-technical/ux-api-01-mission-path.md) : `path` additif, legs persistés pour les missions, Fog of War, aucun changement de gameplay ni migration |
+| Exécuté | Ruff (tout le backend), `tests/test_fleet_path.py` 6/6, compilation des modules, `check_docs.py` ; Fast CI : voir la PR |
+| Non exécuté | `tests/integration/test_mission_path.py` (9 tests PostgreSQL) et la suite complète : à lancer en local avec `RUN_DB_TESTS=1` |
+| Suite | Recette locale, puis lot frontend sur `work/ux-redesign` (liste dans le document UX-API-01) |
+
+### Revue indépendante 13/13B — périmètre proposé (lecture seule)
+
+- #16 depuis `067a4e5` : migration 0013 (CHECK droits, contact `diplomacy`), ordre paire → contact,
+  pacte à `battle_at` (`voided_by_pact`), IA diplomacy v3, aucune fuite avant bataille.
+- #17 depuis la tête de #16 : 0014 (états de passage, `local`), `FrontierOrchestrator` (verrous UUID,
+  `lock_timeout`, réglage à `t − 1 µs`, une transaction), `frontier_blocker` Combat (C04), replis
+  (D7, carburant normal, idempotence), projections Fog (`detections_for`, `encounters_for`), policy
+  `utility-goals-v4` (informations propres, refus dispatcher), recette et fixture.
+- Commandes : section « Reprise locale » ci-dessous ; constats classés Bloquante/Majeure/Mineure/
+  Remarque avec fichier:ligne, publiés dans la PR. Cette revue Claude Code n'est pas indépendante.
+
+## Ancienne reprise 13B (avant validation locale) — historique
+
+
+| Champ | État au 02/11/2026 soir — 13B B00–B09 écrits + correctifs C01–C05, **rien de PostgreSQL/Compose/Chromium exécuté** |
+| --- | --- |
+| Branche / base / PR | `work/step-13b-first-contact` depuis a434e06 (tête de PR #16, **non fusionnée**) ; [PR #17](https://github.com/ThomasPerez91/Echosphere/pull/17) **Draft** vers `work/step-13-ai-relations` (pas master). PR #16 et master non touchées |
+| Tête code | `ea997bb` (B09) ; le commit de passation qui suit ne change que `progress.md` et la passation. Fast CI : `b477e6e` run 41474892191 **success**, `2f1f20e` run 41476221582 **success**, `ea997bb` run 41477152738 **success** |
+| Agent | Claude Code (session cloud, sans Docker ni registres pip/npm), seul écrivain de la branche |
+| Décisions produit | D1–D7 et B08 validées par l'utilisateur ([premier contact](docs/01-game-design/first-contact.md)) ; exigences C01–C05 de l'utilisateur ; **règles de départage C04 et lecture des termes B08 proposées par l'implémentation, à confirmer en revue** |
+| Nouveau depuis 79d25c8 | **C01/C02** : plus de handler de passage ; chaque entrée fige le stream de l'Empire en mouvement à `t − 1 µs` (fence sur son propre stream) et `FrontierOrchestrator` la résout en verrouillant (UUID, `lock_timeout`) ce stream et ceux de tous les Empires pouvant tenir un protocole dans le système, réglés à `t − 1 µs` ; engagements décidés à l'entrée (plus planifiés) ; flotte surveillante figée (`guard_fleet_change`) ; couverture unique `started_at < t <= ended_at` ; commande datée derrière une entrée résolue refusée (`fleet_busy`) ; fence posée après `FOR KEY SHARE`. **C03** : ligne `local` et repli à l'instant d'une ATTACK de 0 saut. **C04** : entrée (état avant `t`) → repli à `t` → bataille à `t` (bloqueur Combat). **C05** : plus de fence tierce tardive ; `--lag`, `--retry-passage`, alerte de retard dans `combat-worker`. **B08** : policy `utility-goals-v4` (v0.9 seulement), protocoles dans la page militaire, dispatcher borné par profil. **B09** : recette Compose, spec Chromium, test migration |
+| Migrations | 0014_frontier (non fusionnée, au-dessus de 0013 non fusionnée) **modifiée** : colonnes d'état de résolution sur `fleet_mission_passages`, direction `local`, index `ix_fleet_mission_passages_due`. Toute base locale déjà montée en 0014 avant ce soir : `alembic downgrade 0013_relations` (base jetable vide seulement) puis `upgrade head` |
+| Exécuté ici | `ruff check` backend + scripts ; tests purs `test_frontier_rules.py` (22), `test_frontier_transit.py` (6), `test_frontier_encounter.py` (4) et suites pures importables ; `scripts/check_docs.py` |
+| **Non exécuté** | `tests/integration/test_frontier.py` (passages/fences, détection, couverture à `t`, concurrence C02 dans les deux ordres, rejeu, crash/redémarrage, engagements, bataille après entrée, replis distant et local, ciblage, migration 0014), `tests/integration/test_frontier_ai.py` (B08), non-régression PostgreSQL complète (Flottes, Combat, Relations, IA), Alembic 0014, Vitest/lint/build local (seulement en Fast CI), `e2e/frontier.spec.ts`, `scripts/smoke_frontier_compose.py` |
+| Problèmes ouverts | Gel de l'Empire en mouvement à chaque entrée jusqu'à résolution (≈ intervalle `combat-worker`, 2 s) ; interblocage PostgreSQL possible entre deux lancements ATTACK croisés (préexistant v0.7, commande rejouable) ; recette Compose jamais exécutée (sélecteurs, durées, réponse IA au pacte à vérifier) ; smoke 13B pas encore dans la Full CI (à ajouter après succès local) ; R11 de l'étape 13 toujours en attente |
+| Interdits | Pas de merge, pas de Ready, pas d'étape 14, PR #16/master intactes, pas de `down -v` sur une pile à conserver |
+
+### Reprise locale (Windows 11 + Ubuntu WSL2 + Docker + Claude Code VS Code)
+
+```bash
+git fetch origin && git worktree add ../echosphere-13b work/step-13b-first-contact   # ou git switch, arbre propre
+cd ../echosphere-13b/backend && python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.lock && .venv/bin/pip install --no-deps -e .
+.venv/bin/ruff check . ../scripts
+# PostgreSQL jetable *_test seulement (jamais une base à conserver)
+RUN_DB_TESTS=1 POSTGRES_DB=echosphere_13b_test .venv/bin/pytest -q tests/integration/test_frontier.py tests/integration/test_frontier_ai.py
+RUN_DB_TESTS=1 POSTGRES_DB=echosphere_13b_test .venv/bin/pytest -q          # suite complète, non-régression
+POSTGRES_DB=echosphere_13b_test .venv/bin/alembic upgrade head && .venv/bin/alembic check
+POSTGRES_DB=echosphere_13b_test .venv/bin/alembic downgrade 0013_relations && .venv/bin/alembic upgrade head   # base vide
+cd ../frontend && npm ci && npm run lint && npm test && npm run build
+npx playwright install chromium && npx playwright test e2e/frontier.spec.ts e2e/fleet.spec.ts && npm run test:e2e
+cd .. && docker compose build
+python3 scripts/smoke_frontier_compose.py          # projet Compose propre, bases *_test, supprimé à la fin
+python3 scripts/smoke_combat_compose.py && python3 scripts/smoke_relations_compose.py && python3 scripts/smoke_ai_compose.py
+```
+
+Ordre conseillé : `test_frontier.py` d'abord (le cœur C01–C05), puis `test_frontier_ai.py`, la suite
+complète, Alembic, frontend, Chromium, recette Compose. En cas d'échec : corriger sur cette branche
+par commits ciblés, sans réinterpréter D1–D7/B08 ni réécrire l'historique. Recette manuelle :
+univers v0.9 (`python -m app.ai.worker --bootstrap … --ruleset v0.9`), protocole sur une flotte
+opérationnelle stationnée, passage d'une flotte étrangère, `combat-worker` actif, Flottes → Frontière ;
+`python -m app.combat.worker --lag` / `--blocked` pour le diagnostic.
 
 ## Reprise rapide
+
+| Champ | État au 02/11/2026 — étape 13 R02–R10 + amendement Q18 (contact `diplomacy`) implémentés, validation locale attendue |
+| --- | --- |
+| Objectif | Étape 13 Relations IA minimales selon Q18 close (contacts, `NO_AGREEMENT`/`PACT`, pacte, IA diplomacy v3, UI Relations) |
+| Branche / base / PR | work/step-13-ai-relations depuis master 067a4e5 ; [PR #16](https://github.com/ThomasPerez91/Echosphere/pull/16) **Draft**, unique |
+| Tête / agent | Claude Code seul écrivain ; tête et CI exactes dans la PR |
+| Réalisé | v0.8 (relations.json, ai.json v3), domaine `app.relations`, migration 0013 (4 tables, 17 droits), contacts Combat/présence, pacte à `battle_at` (`voided_by_pact`), API et UI Relations, IA diplomacy, suite PostgreSQL et recette Compose écrites. [Contrat](docs/03-technical/relations-api-ui.md) |
+| Amendement | 02/11/2026 : contact `diplomacy` créé par une proposition valide (CHECK 0013 corrigé en place, ORM, projection, UI, docs, tests PostgreSQL) ; priorité de réponse IA préemptable par bootstrap/défense urgente prouvée par test pur ; pages IA v0.8 et borne anti-famine testées |
+| Reprise 02/11 après-midi | Même environnement cloud (pas de Docker ni de registres) : validations runtime toujours impossibles ici. Revue **interne** complète depuis 067a4e5 : (1) **Majeure, corrigée** : risque d'interblocage paire/contact (proposition vs tour IA ou rattrapage Combat écrivant le même contact avant la paire) → ordre global paire → contact (handlers sans contact, contacts IA après la commande), test PostgreSQL ajouté ; (2) **Mineure, corrigée** : contact de présence absent tant que Galaxie n'était pas lue → lecture Relations rafraîchit la surveillance propre (test adapté) ; (3) **Mineure, corrigée** : aucun test Chromium Relations → `e2e/relations.spec.ts` (4 largeurs, clavier, cibles 44 px, sans débordement), exécuté seulement en Full CI ou localement |
+| Validé ici | Fast CI de la PR (ruff backend/scripts, tests purs dont `test_relations_rules.py`, Vitest 8 fichiers dont `Relations.test.tsx` 7 tests et `Fleet.test.tsx` 33, lint et builds, docs, diff --check) ; check_docs local |
+| Validation locale 02/11/2026 | Claude Code sur poste WSL2 + Docker (conteneurs Python 3.12/Playwright, PostgreSQL 17 jetable) : Alembic 0013 base vide → head, `alembic check`, downgrade 0012 et retour ; Game PostgreSQL complet **483/483** (dont `test_relations.py`) ; Portal 124/124 ; Vitest 97/97, lint (1 avertissement préexistant), build, Chromium 39/39 ; recettes Compose `smoke_relations` (646 s), `smoke_combat`, `smoke_ai` réussies sur les images de cette branche. Aucune anomalie produit ni test à corriger sur #16. Non exécutés localement : `smoke_compose`/`smoke_portal`/`smoke_control` (agiraient sur la pile conservée `echosphere`) |
+| Contrôle local à faire | `cd backend && RUN_DB_TESTS=1 POSTGRES_DB=<base>_test .venv/bin/pytest -q` (suite complète, dont `tests/integration/test_relations.py`) ; `alembic upgrade head && alembic check` puis downgrade 0012 sur base vide ; `(cd frontend && npm ci && npm run lint && npm test && npm run build && npm run test:e2e)` ; `docker compose build && python3 scripts/smoke_relations_compose.py` (et `smoke_combat_compose.py`, `smoke_ai_compose.py` en non-régression) |
+| Risques | Code SQL des relations jamais exécuté contre PostgreSQL ; la recette attend jusqu'à 25 min la réponse IA (une priorité de survie ou de défense peut passer avant) ; balance 72 h/24 h non simulée |
+| R10 / R11 | R10 recette **exécutée et réussie** localement ; R11 à faire : revue indépendante (Codex, lecture seule, SHA noté), traitement des constats, puis Ready sur décision de l'utilisateur — PR maintenue en **Draft** |
+| Suite | Après contrôle local réussi : corrections éventuelles, R11 (revue indépendante complète depuis 067a4e5, Fast CI du nouveau HEAD, Ready, revue Codex GitHub, tous les fils traités) ; aucun merge. 13B non commencé |
+
+## Ancienne reprise Q18 close étape 13 — historique
+
+| Champ | État au 02/11/2026 — Q18 close avec amendements, R02 en cours |
+| --- | --- |
+| Objectif | Étape 13 Relations IA minimales : contacts, `NO_AGREEMENT`/`PACT`, pacte de non-agression, IA diplomacy, UI Relations |
+| Branche / base / PR | work/step-13-ai-relations depuis master 067a4e58863b910785764591d8bf3af4b0ec18e0 ; [PR #16](https://github.com/ThomasPerez91/Echosphere/pull/16) Draft, unique |
+| Tête / agent | Claude Code seul écrivain ; tête et CI exactes dans la PR |
+| Décisions | Q18 close pour l'étape 13 (B1–B12 avec amendements) : [relations](docs/01-game-design/relations.md#q18--validation-avec-amendements-02112026). Lot 13B pré-MVP (Q57/Q58) documenté, **non implémenté** : [premier contact](docs/01-game-design/first-contact.md) |
+| Réalisé | R00 checkpoint, R01 audit/proposition ; transcription Q18 et cadrage 13B (relations, first-contact, pointeurs Flottes/Fog/Combat/IA/Recherche, registre, roadmap 13B, backlog B12B) |
+| CI | 812de73 (R00/R01) : Fast CI PR 41423462118 success (5 jobs PR, compose-smoke sauté par conception) |
+| Validation locale | check_docs, diff --check |
+| Suite | R02 ruleset v0.8 → R11 ; aucun merge |
+
+## Ancienne reprise R00/R01 étape 13 — historique
+
+| Champ | État au 02/11/2026 — étape 13 R00/R01 documentaires réalisés, Q18 proposée, arrêt avant R02 |
+| --- | --- |
+| Objectif | Étape 13 Relations IA minimales : audit du code intégré et proposition Q18 uniquement |
+| Branche / base / PR | work/step-13-ai-relations depuis master 067a4e58863b910785764591d8bf3af4b0ec18e0 ; [PR #16](https://github.com/ThomasPerez91/Echosphere/pull/16) Draft, unique |
+| Tête / agent | Claude Code seul écrivain ; R00/R01 en 52767bc, publié après rétablissement de l'accès GitHub (push d'abord refusé 403). Tête et CI exactes dans la PR |
+| Départ vérifié | PR #15 fusionnée (merge 067a4e5, parents f79d9f6 / 589ce60) ; Full CI post-merge 41375165508 : 5 jobs success sur 067a4e5, `static-checks` sauté par conception (PR seulement) ; aucune PR ouverte ; clone neuf, arbre propre |
+| Réalisé | R00 statuts canoniques (étape 12 historique, étape 13 courante) ; R01 audit prouvé et proposition Q18 B1–B12. [Plan](docs/05-project/step-13-plan.md), [proposition Q18](docs/01-game-design/relations.md) |
+| Constats clés | Aucun contact/relation en base ; hostilité universelle implicite ; identité étrangère seulement par rapport de combat ; aucune présence étrangère projetée ; une relation ne peut filtrer ATTACK qu'à `battle_at` (non-fuite) |
+| Validation locale | python3 scripts/check_docs.py ; git diff --check. Aucun test runtime, Compose ou Alembic relancé (lot documentaire) |
+| Limites | Q18 ouverte ; aucun code, migration, ruleset ou UI relations. Valeurs 72 h/24 h provisoires non simulées |
+| Suite | Faire valider Q18 B1–B12 (avec amendements éventuels) avant R02 ; aucun merge |
+
+## Ancienne reprise rapide étape 12 — historique avant fusion
 
 | Champ | État au 02/11/2026 — étape 12 COM00–COM11 réalisés, PR Ready, en attente d'autorisation de merge |
 | --- | --- |

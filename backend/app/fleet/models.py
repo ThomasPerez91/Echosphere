@@ -44,6 +44,7 @@ class ShipOrder(Record, Base):
         UniqueConstraint("empire_id", "idempotency_key", name="uq_ship_order_key"),
         UniqueConstraint("colony_id", "sequence", name="uq_ship_order_sequence"),
         CheckConstraint("quantity > 0 AND sequence > 0", name="quantity"),
+        CheckConstraint("delivered >= 0 AND delivered <= quantity", name="delivered"),
         CheckConstraint("status IN ('queued','active','completed','cancelled')", name="status"),
         CheckConstraint(
             "status <> 'queued' OR (started_at IS NULL AND due_at IS NULL)", name="queued"
@@ -80,6 +81,9 @@ class ShipOrder(Record, Base):
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # User decision 10/11/2026: units come out one at a time (snapshot "delivery": "unit");
+    # orders accepted before keep their whole-batch delivery (delivered stays 0 until done).
+    delivered: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
 
 class Fleet(Record, Base):
@@ -109,6 +113,13 @@ class Fleet(Record, Base):
         CheckConstraint("status <> 'SETTLED' OR kind = 'TASK'", name="settled"),
         CheckConstraint("status <> 'DESTROYED' OR kind = 'TASK'", name="destroyed"),
         CheckConstraint("length(trim(name)) > 0", name="name"),
+        # 13B (v0.9): a first-contact protocol only on a stationed operational (TASK) Fleet; it
+        # ends with the stationing (departure, merge, destruction).
+        CheckConstraint(
+            "protocol IS NULL OR (kind = 'TASK' AND status = 'STATIONED' AND protocol IN "
+            "('SURVEILLANCE','AMBUSH','INTERCEPTION','FRIENDLY_CONTACT'))",
+            name="protocol",
+        ),
         Index(
             "ix_fleet_garrison",
             "home_colony_id",
@@ -124,6 +135,7 @@ class Fleet(Record, Base):
     system_id: Mapped[UUID | None] = mapped_column(Uuid)
     active_mission_id: Mapped[UUID | None] = mapped_column(Uuid)
     name: Mapped[str] = mapped_column(String(80))
+    protocol: Mapped[str | None] = mapped_column(String(20))
 
 
 class FleetStack(Base):
@@ -174,17 +186,39 @@ class FleetMission(Record, Base):
             ["planets.id", "planets.system_id", "planets.universe_id"],
             name="fk_fleet_missions_target_planet_system",
         ),
+        ForeignKeyConstraint(
+            ["target_opportunity_id", "universe_id"],
+            ["galaxy_opportunities.id", "galaxy_opportunities.universe_id"],
+            name="fk_fleet_missions_target_opportunity",
+        ),
         UniqueConstraint("id", "fleet_id", name="uq_fleet_mission_fleet"),
         UniqueConstraint("id", "empire_id", "universe_id", name="uq_fleet_mission_scope"),
         UniqueConstraint("empire_id", "idempotency_key", name="uq_fleet_mission_key"),
-        CheckConstraint("kind IN ('DEPLOY','SURVEY','RETURN','COLONIZE','ATTACK')", name="kind"),
-        CheckConstraint("status IN ('active','returning','completed')", name="status"),
         CheckConstraint(
-            "(kind IN ('COLONIZE','ATTACK')) = (target_planet_id IS NOT NULL)", name="target"
+            "kind IN ('DEPLOY','SURVEY','RETURN','COLONIZE','ATTACK','PROSPECT','STUDY','EXTRACT')",
+            name="kind",
         ),
-        # Only COLONIZE and ATTACK may target the current system: 0 hop, arrival = start.
+        CheckConstraint("status IN ('active','returning','completed')", name="status"),
+        # v0.12 (EXP-02c): an ATTACK targets a planet or a deposit, exactly one of them.
         CheckConstraint(
-            "origin_id <> destination_id OR kind IN ('COLONIZE','ATTACK')", name="route"
+            "(kind = 'COLONIZE' AND target_planet_id IS NOT NULL) "
+            "OR (kind = 'ATTACK' AND "
+            "(target_planet_id IS NULL) <> (target_opportunity_id IS NULL)) "
+            "OR (kind NOT IN ('COLONIZE','ATTACK') AND target_planet_id IS NULL)",
+            name="target",
+        ),
+        # EXP-02: STUDY/EXTRACT target one opportunity of the destination system.
+        CheckConstraint(
+            "(kind IN ('STUDY','EXTRACT') AND target_opportunity_id IS NOT NULL) "
+            "OR kind = 'ATTACK' "
+            "OR (kind NOT IN ('STUDY','EXTRACT','ATTACK') AND target_opportunity_id IS NULL)",
+            name="opportunity",
+        ),
+        # COLONIZE, ATTACK and the EXP-02 analyses may target the current system: 0 hop.
+        CheckConstraint(
+            "origin_id <> destination_id "
+            "OR kind IN ('COLONIZE','ATTACK','PROSPECT','STUDY','EXTRACT')",
+            name="route",
         ),
         CheckConstraint(
             "(origin_id <> destination_id AND travel_arrival_at > started_at) "
@@ -193,15 +227,16 @@ class FleetMission(Record, Base):
         ),
         # ATTACK: due_at is battle_at, after the arrival and strictly after the start.
         CheckConstraint(
-            "(kind = 'SURVEY' AND due_at > travel_arrival_at) "
+            "(kind IN ('SURVEY','PROSPECT','STUDY','EXTRACT') AND due_at > travel_arrival_at) "
             "OR (kind = 'ATTACK' AND due_at >= travel_arrival_at AND due_at > started_at) "
-            "OR (kind NOT IN ('SURVEY','ATTACK') AND due_at = travel_arrival_at)",
+            "OR (kind NOT IN ('SURVEY','PROSPECT','STUDY','EXTRACT','ATTACK') "
+            "AND due_at = travel_arrival_at)",
             name="deadline",
         ),
-        # A return without recall exists only after an ATTACK's battle.
+        # A return without recall exists only after an ATTACK's battle or an extraction.
         CheckConstraint(
             "(recalled_at IS NULL) = (return_at IS NULL) "
-            "OR (kind = 'ATTACK' AND recalled_at IS NULL AND return_at IS NOT NULL)",
+            "OR (kind IN ('ATTACK','EXTRACT') AND recalled_at IS NULL AND return_at IS NOT NULL)",
             name="recall_pair",
         ),
         # Recall only while travelling, never an analysis or a return; time-symmetric way back.
@@ -223,7 +258,7 @@ class FleetMission(Record, Base):
         ),
         CheckConstraint(
             "status <> 'returning' OR recalled_at IS NOT NULL "
-            "OR (kind = 'ATTACK' AND return_at IS NOT NULL)",
+            "OR (kind IN ('ATTACK','EXTRACT') AND return_at IS NOT NULL)",
             name="returning",
         ),
         CheckConstraint("(status = 'completed') = (completed_at IS NOT NULL)", name="completion"),
@@ -256,6 +291,7 @@ class FleetMission(Record, Base):
     destination_id: Mapped[UUID] = mapped_column(Uuid)
     payer_colony_id: Mapped[UUID] = mapped_column(Uuid)
     target_planet_id: Mapped[UUID | None] = mapped_column(Uuid)
+    target_opportunity_id: Mapped[UUID | None] = mapped_column(Uuid)
     idempotency_key: Mapped[str] = mapped_column(String(160))
     snapshot: Mapped[dict] = mapped_column(JSONB)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -309,7 +345,9 @@ class FleetOperation(Base):
     __tablename__ = "fleet_operations"
     __table_args__ = (
         ForeignKeyConstraint(["empire_id", "universe_id"], OPERATIONS),
-        CheckConstraint("kind IN ('split','merge','load','unload','recall')", name="kind"),
+        CheckConstraint(
+            "kind IN ('split','merge','load','unload','recall','protocol')", name="kind"
+        ),
     )
     empire_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
     idempotency_key: Mapped[str] = mapped_column(String(160), primary_key=True)

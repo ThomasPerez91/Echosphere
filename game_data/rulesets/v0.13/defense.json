@@ -1,0 +1,33 @@
+{
+  "version": "v0.13",
+  "defense_version": "defense-v1",
+  "center": "defense_center",
+  "capacity_per_level": 2,
+  "modules": {
+    "point_defense": {
+      "family": "point_defense",
+      "placement": "surface",
+      "combat_class": "point_defense",
+      "upkeep_flux": 2
+    },
+    "anti_ship_battery": {
+      "family": "anti_ship",
+      "placement": "surface",
+      "combat_class": "anti_ship",
+      "upkeep_flux": 4
+    },
+    "orbital_platform": {
+      "family": "anti_ship",
+      "placement": "orbital",
+      "combat_class": "orbital_platform",
+      "upkeep_flux": 6
+    }
+  },
+  "disable_order": [
+    "orbital_platform",
+    "anti_ship_battery",
+    "point_defense"
+  ],
+  "repair_cost_bps": 4000,
+  "repair_duration_bps": 5000
+}

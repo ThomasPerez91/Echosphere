@@ -56,6 +56,61 @@ def build_message(outbox: EmailOutbox, payload: dict, origin: str) -> EmailMessa
     return message
 
 
+def build_invitation(outbox, payload: dict, origin: str) -> EmailMessage:
+    message = EmailMessage()
+    message["From"] = "Echosphere <accounts@echosphere.invalid>"
+    message["To"] = payload["recipient"]
+    message["Subject"] = "Invitation à une partie Echosphere"
+    message["Message-ID"] = f"<{outbox.id}@portal.echosphere.invalid>"
+    message.set_content(
+        f"Un joueur vous invite dans la partie « {payload['universe']} » sur Echosphere.\n"
+        "Connectez-vous (ou créez un compte) avec cette adresse, puis ouvrez ce lien :\n"
+        f"{origin}/rejoindre#invite={payload['token']}\n\n"
+        "L’invitation est aussi visible dans « Mes parties ». Elle expire dans 7 jours et ne\n"
+        "sert qu’une fois. Si vous ne connaissez pas cette partie, ignorez ce message."
+    )
+    return message
+
+
+def deliver_invitation_one(accounts: Accounts, transport: LocalSMTP) -> bool:
+    """UX-API-03 invitation emails: cancelled once the invitation is no longer open."""
+    from portal_app.control.models import InvitationEmailOutbox, UniverseInvitation
+
+    now = accounts.clock()
+    with accounts.factory.begin() as session:
+        row = session.scalar(
+            select(InvitationEmailOutbox)
+            .where(
+                InvitationEmailOutbox.state == "pending",
+                InvitationEmailOutbox.next_attempt_at <= now,
+            )
+            .order_by(InvitationEmailOutbox.next_attempt_at, InvitationEmailOutbox.id)
+            .with_for_update(skip_locked=True)
+            .limit(1)
+        )
+        if row is None:
+            return False
+        invitation = session.get(UniverseInvitation, row.invitation_id)
+        if invitation.state != "open" or now >= invitation.expires_at:
+            row.state, row.payload_ciphertext = "cancelled", None
+            return True
+        row.attempts += 1
+        try:
+            payload = json.loads(accounts.cipher().decrypt(row.payload_ciphertext.encode()))
+            if (
+                UUID(payload["outbox_id"]) != row.id
+                or UUID(payload["invitation_id"]) != invitation.id
+                or token_digest(payload["token"]) != invitation.token_digest
+            ):
+                raise ValueError("Outbox binding mismatch")
+            transport.send(build_invitation(row, payload, accounts.settings.public_origin))
+        except (OSError, smtplib.SMTPException, InvalidToken, PublicError, ValueError, KeyError):
+            row.next_attempt_at = now + timedelta(seconds=min(300, 2 ** min(row.attempts, 8)))
+            return True
+        row.state, row.sent_at, row.payload_ciphertext = "sent", accounts.clock(), None
+        return True
+
+
 def deliver_one(accounts: Accounts, transport: LocalSMTP) -> bool:
     now = accounts.clock()
     with accounts.factory.begin() as session:
@@ -162,7 +217,7 @@ def main() -> None:
                 processed = 0
                 while processed < args.limit:
                     progressed = False
-                    for deliver in (deliver_security_one, deliver_one):
+                    for deliver in (deliver_security_one, deliver_one, deliver_invitation_one):
                         if processed >= args.limit:
                             break
                         if deliver(accounts, transport):

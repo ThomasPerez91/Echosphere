@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" width="1280" height="800" font-family="system-ui, sans-serif" role="img" aria-label="Wireframe — Colonie">
+<title>Wireframe — Colonie</title>
+<rect width="1280" height="800" fill="#ffffff"/>
+<rect x="0" y="0" width="1280" height="56" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="16" y="34" font-size="15" fill="#1d2b3a" font-weight="800">ECHOSPHERE</text>
+<text x="160" y="24" font-size="11" fill="#46566a" font-weight="400">Univers · Empire ▾</text>
+<text x="160" y="42" font-size="11" fill="#46566a" font-weight="400">Colonie active ▾ · Alliages · Flux · Données (stock, +/h) — valeurs serveur</text>
+<rect x="980" y="12" width="120" height="32" rx="6" fill="#fff1d6" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="990" y="32" font-size="13" font-weight="700" fill="#1d2b3a">🔔 Alertes 3</text>
+<rect x="1110" y="12" width="154" height="32" rx="6" fill="#f4f6f8" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="1120" y="32" font-size="13" font-weight="700" fill="#1d2b3a">Commandant ▾</text>
+<rect x="0" y="56" width="170" height="744" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<rect x="10" y="72" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="92" font-size="13" font-weight="700" fill="#1d2b3a">Empire</text>
+<rect x="10" y="118" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="138" font-size="13" font-weight="700" fill="#1d2b3a">Galaxie</text>
+<rect x="10" y="164" width="150" height="38" rx="6" fill="#d7f3f6" stroke="#1f8fb8" stroke-width="1.2"/>
+<text x="20" y="184" font-size="13" font-weight="700" fill="#1d2b3a">Colonies</text>
+<rect x="10" y="210" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="230" font-size="13" font-weight="700" fill="#1d2b3a">Recherche</text>
+<rect x="10" y="256" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="276" font-size="13" font-weight="700" fill="#1d2b3a">Flottes</text>
+<rect x="10" y="302" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="322" font-size="13" font-weight="700" fill="#1d2b3a">Rapports</text>
+<rect x="10" y="348" width="150" height="38" rx="6" fill="#e9edf1" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="20" y="368" font-size="13" font-weight="700" fill="#1d2b3a">Diplomatie</text>
+<text x="190" y="88" font-size="20" fill="#1d2b3a" font-weight="700">Aube Prime</text>
+<rect x="190" y="110" width="1070" height="40" rx="6" fill="#f4f6f8" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="200" y="130" font-size="13" font-weight="700" fill="#1d2b3a">Sous-navigation canonique : Vue d’ensemble · Infrastructures · Orbite · Défense   | Colonie ▾</text>
+<rect x="190" y="164" width="1070" height="80" rx="6" fill="#f4f6f8" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="200" y="184" font-size="13" font-weight="700" fill="#1d2b3a">Ressources de la colonie (stock, production, capacité)</text>
+<text x="200" y="204" font-size="11.5" fill="#46566a">Alliages ███████░░ 77 % · Flux ████░░░░ 40 % · Données ██░░░░░ 20 %</text>
+<rect x="190" y="258" width="640" height="500" rx="6" fill="#e3ebf3" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="200" y="278" font-size="13" font-weight="700" fill="#1d2b3a">Secteurs (grille 12) — cliquer un secteur = ses actions</text>
+<text x="200" y="298" font-size="11.5" fill="#46566a">[Extraction 3] [Réacteur 2] [Nœud 1] [libre +] [libre +] …</text>
+<text x="200" y="315" font-size="11.5" fill="#46566a">Secteur choisi → panneau : améliorer / construire / coût / durée serveur</text>
+<rect x="850" y="258" width="410" height="240" rx="6" fill="#f4f6f8" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="860" y="278" font-size="13" font-weight="700" fill="#1d2b3a">File de construction (3)</text>
+<text x="860" y="298" font-size="11.5" fill="#46566a">1. Réacteur de Flux 3 · fin 14:20 ▓▓▓░</text>
+<text x="860" y="315" font-size="11.5" fill="#46566a">2. Nœud de données 2 · en attente</text>
+<text x="860" y="332" font-size="11.5" fill="#46566a">[Annuler…] (aperçu remboursement serveur)</text>
+<rect x="850" y="512" width="410" height="246" rx="6" fill="#fff1d6" stroke="#8a97a6" stroke-width="1.2"/>
+<text x="860" y="532" font-size="13" font-weight="700" fill="#1d2b3a">Menaces et défense</text>
+<text x="860" y="552" font-size="11.5" fill="#46566a">Force hostile annoncée · bataille 06:00</text>
+<text x="860" y="569" font-size="11.5" fill="#46566a">Défense : système futur (Q30–Q38)</text>
+</svg>

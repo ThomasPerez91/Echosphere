@@ -10,6 +10,7 @@ from uuid import UUID
 from pydantic import Field, ValidationError
 from sqlalchemy import select
 
+from app.colony.models import ColonyInfrastructure
 from app.colony.rules import Nonnegative, Positive, Ratio, ResearchRules, StrictModel, Technology
 from app.colony.service import (
     ColonyError,
@@ -125,6 +126,24 @@ def quote(session, universe_id, empire_id, technology_id, colony_id):
     tech = cat.technologies.get(technology_id)
     if tech is None:
         raise ResearchError("Unknown technology", "technology_not_found")
+    facility = rules.research.facility if rules.research else None
+    if facility is not None and colony_id:
+        # COL-11 (v0.11): the source colony holds the Centre de recherche at the tier's level
+        # (catalogue reads quote without a colony: see facility_level).
+        level = max(
+            (
+                row.level
+                for row in session.scalars(
+                    select(ColonyInfrastructure).where(
+                        ColonyInfrastructure.colony_id == colony_id,
+                        ColonyInfrastructure.infrastructure_type == facility.kind,
+                    )
+                )
+            ),
+            default=0,
+        )
+        if level < facility.level(tech.tier):
+            raise ResearchError("Research centre level too low", "research_center_required")
     bonus = bonuses(session, empire_id)
     cost = {r: amount(v * MICRO_UNITS) for r, v in tech.cost.items()}
     cost["data"] = discounted(cost["data"], bonus.get("research_data", 0))
@@ -186,6 +205,25 @@ def read_snapshot(session, order):
     if set(snap.cost) != RESOURCES or any(type(v) is not int or v < 0 for v in snap.cost.values()):
         raise TimelineError("Invalid snapshotted costs")
     return snap
+
+
+def facility_level(session, rules, colony_ids):
+    """COL-11: best Centre de recherche level among these colonies (None before v0.11)."""
+    facility = rules.research.facility if rules.research else None
+    if facility is None:
+        return None
+    return max(
+        (
+            row.level
+            for row in session.scalars(
+                select(ColonyInfrastructure).where(
+                    ColonyInfrastructure.colony_id.in_(list(colony_ids)),
+                    ColonyInfrastructure.infrastructure_type == facility.kind,
+                )
+            )
+        ),
+        default=0,
+    )
 
 
 def validate_start(session, empire_id, technology_id, snap):
