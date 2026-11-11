@@ -75,7 +75,8 @@ def test_modules_are_built_on_real_sectors_and_slots_within_the_network(fleets):
     assert build(w, "orbital_platform", ORBITAL_BASE + 1).status_code in (200, 201)
     full = build(w, "anti_ship_battery", 10)
     assert full.status_code == 409 and full.json()["error"]["code"] == "defense_capacity_full"
-    w.advance(hours=2)  # 20 + 40 min of work; a longer wait would outlive the idle session
+    w.advance(hours=3)
+    reenter(w)  # the access window lapsed during the wait
     after = colony(w)
     assert "defense" in after, after
     modules = {m["sector_index"]: m for m in after["defense"]["modules"]}
@@ -122,6 +123,7 @@ def test_modules_fight_beside_the_garrison_are_damaged_then_repaired(fleets):
         order = s.query(ConstructionOrder).filter_by(colony_id=b.colony, sector_index=9).one()
         assert order.snapshot["repair"] is True
     b.game.test_clock[0] = b.game.test_clock[0] + timedelta(hours=2)
+    reenter(b)
     modules = {m["sector_index"]: m["condition"] for m in colony(b)["defense"]["modules"]}
     assert modules == {9: "operational", 10: "damaged"}
 
