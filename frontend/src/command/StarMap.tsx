@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
+import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from "react";
 import { GalaxyCanvas } from "../galaxy/GalaxyCanvas";
 import type { Scene } from "../galaxy/render";
 import type { MissionView } from "../fleet/api";
@@ -200,7 +200,9 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
     const k = Math.min(rendered.width / view.w, rendered.height / view.h);
     const ox = (rendered.width - view.w * k) / 2, oy = (rendered.height - view.h * k) / 2;
     const left = ox + (target.x - view.x) * k, top = oy + (target.y - view.y) * k;
-    return { left, top, flip: left > rendered.width * 0.6, up: top > rendered.height * 0.5 };
+    const up = top > rendered.height * 0.5;
+    // The fiche rapide never leaves the map: its height is capped by the room above or below.
+    return { left, top, flip: left > rendered.width * 0.6, up, room: Math.max(160, (up ? top : rendered.height - top) - 12) };
   })() : null;
 
   return <div className={`cmd-map-frame${backdrop ? " has-backdrop" : ""}${picking ? " is-picking" : ""}`}
@@ -312,7 +314,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
       <rect x={view.x} y={view.y} width={view.w} height={view.h} className="cmd-mini-view" />
     </svg>
 
-    {menu && (anchor ? <div className={`cmd-ctx${anchor.flip ? " is-flipped" : ""}${anchor.up ? " is-up" : ""}`} style={{ left: anchor.left, top: anchor.top }}>{menu}</div>
+    {menu && (anchor ? <div className={`cmd-ctx${anchor.flip ? " is-flipped" : ""}${anchor.up ? " is-up" : ""}`} style={{ left: anchor.left, top: anchor.top, "--ctx-max": `${Math.round(anchor.room)}px` } as CSSProperties}>{menu}</div>
       : <div className="cmd-ctx is-docked">{menu}</div>)}
 
     <div className="cmd-overlay cmd-zoom" role="group" aria-label="Commandes de la carte">

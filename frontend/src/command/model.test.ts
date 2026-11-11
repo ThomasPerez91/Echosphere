@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { validFleets } from "../fleet/api";
 import { validProjection } from "../galaxy/api";
 import { fleetFixture, galaxyFixture, ids, quoteFixture, SERVER_TIME } from "../prototype/fixtures";
-import { defaultUnits, knownHops, eligibleFleets, engageable, fleetLines, missionPosition, missionRoute, missionRouteLabel, offers, point, recallable, serverPath, systemName } from "./model";
+import { defaultUnits, knownHops, eligibleFleets, engageable, fleetLines, missionPosition, missionRoute, missionRouteLabel, offers, point, recallable, serverPath, systemFacts, systemName } from "./model";
 import type { World } from "./model";
 
 const world = (): World => ({ fleets: fleetFixture(), galaxy: galaxyFixture() });
@@ -178,4 +178,22 @@ test("EXP-02b: a known deposit offers an extraction, explained when no fleet has
     expect(engageable(w, fleet, "EXTRACT")).toEqual({});
     expect(engageable(w, { ...fleet, stacks: { ...fleet.stacks, extractor: 2 } }, "EXTRACT")).toMatchObject({ extractor: 2 });
   }
+});
+
+test("fiche rapide: a system's facts come from both projections, occupation never guessed", () => {
+  const w = world();
+  const vesta = systemFacts(w, ids.vesta);
+  expect(vesta.planets).toEqual([{ id: ids.planetVesta, name: "Vesta II", sectors: 10, orbitals: 2, own: false, colony: null, foreign: null, alert: null }]);
+  expect(vesta.deposits.map((o) => o.kind)).toEqual(["metal_belt"]);
+  expect(vesta.curiosities.map((o) => o.kind)).toEqual(["anomaly"]);
+  expect(vesta.signatures).toBe(1);
+  expect(vesta.distance).toEqual({ hops: 1, from: ids.home });
+  expect(vesta.routes.sort()).toEqual([ids.home, ids.lyra].sort());
+  const home = systemFacts(w, ids.home);
+  expect(home.planets[0]).toMatchObject({ own: true, colony: ids.colony });
+  expect(home.fleets.map((f) => f.id)).toContain(ids.pionnier);
+  expect(home.signatures).toBeNull(); // no opportunity data projected for this system
+  // Test game: a foreign Colony is named by its anonymous Empire number only.
+  const sandbox: World = { ...w, galaxy: { ...w.galaxy, presences: [{ empire: 2, system_id: ids.vesta, planet_id: ids.planetVesta }] } };
+  expect(systemFacts(sandbox, ids.vesta).planets[0].foreign).toBe(2);
 });

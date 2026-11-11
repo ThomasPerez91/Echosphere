@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { FleetView, MissionView, Plan } from "../fleet/api";
+import type { FleetView, MissionView } from "../fleet/api";
 import { message } from "../fleet/messages";
-import type { QuoteState } from "./copy";
 import { FleetDock } from "./FleetDock";
 import { FleetWindow, PickBar } from "./FleetWindow";
-import { EXTRACT_HOURS, MissionPlanner } from "./MissionPlanner";
-import type { PlannerStep } from "./MissionPlanner";
+import { MissionPlanner } from "./MissionPlanner";
 import { StarMap } from "./StarMap";
+import { SystemBrief } from "./SystemBrief";
 import type { MapFilter } from "./StarMap";
-import { actionLabels, defaultUnits, eligibleFleets, isGarrison, knownHops, missionPosition, opportunityNames, offers, point, serverPath, stationed, systemName } from "./model";
+import { defaultUnits, isGarrison, knownHops, missionPosition, opportunityNames, offers, point, stationed, systemName } from "./model";
 import type { ActionOffer, FleetLine, World } from "./model";
+import { useMissionFlow } from "./useMissionFlow";
 import type { CommandFeedback, MissionApi } from "./types";
 import { useMedia } from "../shell/useNow";
 import { planetImage } from "../shell/assets";
@@ -33,8 +33,6 @@ function OpportunityList({ data }: { data: NonNullable<World["galaxy"]["systems"
   </>;
 }
 
-type Intent = { offer: ActionOffer; fleet: string | null; units: Record<string, number>; hours?: number; comeBack?: boolean };
-
 /**
  * Galaxy → Fleet → Mission, driven from the map (D-UX-3/4/5). Controlled: `world` is the server's
  * projections (or the prototype fixtures); after an accepted command the container re-reads them,
@@ -48,9 +46,8 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   backdrop?: boolean;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const [intent, setIntent] = useState<Intent | null>(null);
-  const [step, setStep] = useState<PlannerStep>("fleet");
-  const [quote, setQuote] = useState<QuoteState>({ status: "idle" });
+  const flow = useMissionFlow(world, api, selected, pending);
+  const { intent, step, setStep, quote, failed, setFailed, busy, setBusy, candidates, fleet, planKey, ready, path } = flow;
   const [notice, setNotice] = useState<string | null>(null);
   const [filter, setFilter] = useState<MapFilter>("all");
   const [showRoutes, setShowRoutes] = useState(true);
@@ -60,8 +57,6 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   const [searchMiss, setSearchMiss] = useState(false);
   const [tab, setTab] = useState<"overview" | "planets" | "routes" | "data">("overview");
   const [focus, setFocus] = useState<{ x: number; y: number; key: number } | null>(null);
-  const [failed, setFailed] = useState(false);
-  const [busy, setBusy] = useState(false); // local guard until the container reports `pending`
   const [menuHidden, setMenuHidden] = useState(false);
   // Fleets on the map (09/11/2026): window of the fleets of one system, then destination picking.
   const [fleetAt, setFleetAt] = useState<string | null>(null);
@@ -75,40 +70,9 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   const target = selected ? world.galaxy.systems.find((s) => s.id === selected) ?? null : null;
   const ref = selected ? world.fleets.systems?.find((s) => s.id === selected) : undefined;
   const available = selected ? offers(world, selected) : [];
-  const candidates = intent && selected ? eligibleFleets(world, intent.offer.kind, selected) : [];
-  const fleet = intent?.fleet ? stationed(world).find((f) => f.id === intent.fleet) ?? null : null;
   const missions = (world.fleets.missions ?? []).filter((m) => m.status !== "completed");
   const own = (id: string) => !!world.galaxy.systems.find((x) => x.id === id)?.observation?.own_colony_ids.length;
   const fleetsHere = selected ? stationed(world).filter((f) => f.system?.id === selected) : [];
-  const engaged = intent ? Object.fromEntries(Object.entries(intent.units).filter(([, n]) => n > 0)) : {};
-  const plan: Plan | null = intent && fleet && selected && Object.keys(engaged).length ? {
-    fleet_id: fleet.id, kind: intent.offer.kind, units: engaged,
-    ...(intent.offer.planet ? { target_planet_id: intent.offer.planet }
-      : intent.offer.opportunity ? { target_opportunity_id: intent.offer.opportunity } : { destination_id: selected }),
-    ...(intent.offer.kind === "EXTRACT" ? { duration_hours: intent.hours ?? EXTRACT_HOURS.initial, ...(intent.comeBack ? { after: "RETURN" as const } : {}) } : {}),
-  } : null;
-  const planKey = plan ? JSON.stringify(plan) : null;
-  const ready = quote.status === "ready" && quote.key === planKey ? quote.quote : null;
-  const path = serverPath(world, ready, fleet?.system?.id);
-
-  // The server summary is asked only on the summary step and follows the exact intention: any
-  // change makes the shown quote obsolete and cancels the request in flight.
-  useEffect(() => {
-    if (step !== "summary" || !plan || !planKey) return;
-    const controller = new AbortController();
-    setQuote({ status: "loading", key: planKey });
-    api.preview(plan, controller.signal)
-      .then((q) => setQuote({ status: "ready", key: planKey, quote: q }))
-      .catch((e: unknown) => {
-        if (controller.signal.aborted) return;
-        const code = typeof e === "object" && e && "code" in e && typeof e.code === "string" ? e.code : "unavailable";
-        setQuote({ status: "error", key: planKey, code });
-      });
-    return () => controller.abort();
-    // planKey captures every field of `plan`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, planKey, api]);
-
   // Picking: Escape (or right click on the map) cancels and restores the fleet window.
   useEffect(() => {
     if (!moving) return;
@@ -125,34 +89,18 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
     if (!offer) { setNotice(`${name} n’est qu’un signal : cartographiez-le avant d’y envoyer une flotte.`); return; }
     setMoving(null); setFleetAt(null); setNotice(null);
     setSelected(id); setMenuHidden(true); setTab("overview"); setFailed(false);
-    setIntent({ offer, fleet: f.id, units: defaultUnits(world, f, "DEPLOY") });
     // A task fleet moves as it is (summary next); a garrison chooses what it detaches.
-    setStep(isGarrison(f) ? "units" : "summary");
-    setQuote({ status: "idle" });
+    flow.begin({ offer, fleet: f.id, units: defaultUnits(world, f, "DEPLOY") }, isGarrison(f) ? "units" : "summary");
   };
   const select = (id: string) => {
-    setSelected(id); setMenuHidden(false); setIntent(null); setNotice(null); setTab("overview"); setFailed(false);
+    setSelected(id); setMenuHidden(false); flow.stop(); setNotice(null); setTab("overview"); setFailed(false);
     // Narrow screens: keep the map in view above the bottom sheet that now holds the system.
     if (window.matchMedia?.("(max-width: 960px)").matches)
       window.setTimeout(() => mapPanel.current?.querySelector(".cmd-map")?.scrollIntoView?.({ block: "start" }), 0);
   };
-  const close = () => { setSelected(null); setIntent(null); window.setTimeout(() => mapPanel.current?.querySelector<SVGElement>(".cmd-map")?.focus(), 0); };
-  const start = (offer: ActionOffer) => {
-    if (!selected) return;
-    const choices = eligibleFleets(world, offer.kind, selected);
-    // A single task fleet is preselected; several fleets or a garrison need an explicit choice.
-    const only = choices.length === 1 && !isGarrison(choices[0]) ? choices[0] : null;
-    setIntent({ offer, fleet: only?.id ?? null, units: only ? defaultUnits(world, only, offer.kind) : {} });
-    setStep(only ? "units" : "fleet");
-    setQuote({ status: "idle" });
-    setNotice(null);
-    setFailed(false);
-  };
-  const cancel = () => { setIntent(null); window.setTimeout(() => document.querySelector<HTMLElement>(".cmd-action")?.focus(), 0); };
-  const chooseFleet = (id: string) => {
-    const f = stationed(world).find((x) => x.id === id)!;
-    setIntent((p) => p && { ...p, fleet: id, units: defaultUnits(world, f, p.offer.kind) });
-  };
+  const close = () => { setSelected(null); flow.stop(); window.setTimeout(() => mapPanel.current?.querySelector<SVGElement>(".cmd-map")?.focus(), 0); };
+  const start = (offer: ActionOffer) => { flow.start(offer); setNotice(null); };
+  const cancel = () => { flow.stop(); window.setTimeout(() => document.querySelector<HTMLElement>(".cmd-action")?.focus(), 0); };
   const find = (text: string) => {
     const q = text.trim().toLocaleLowerCase("fr");
     const hit = q ? world.galaxy.systems.find((x) => x.state !== "DETECTED" && x.name?.toLocaleLowerCase("fr").includes(q)) : undefined;
@@ -176,12 +124,8 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   };
 
   async function confirm() {
-    if (!plan || !ready || !fleet || !selected || pending || busy) return;
-    setBusy(true);
-    const result = await api.launch(plan, ready).finally(() => setBusy(false));
-    if (!result) { setFailed(true); return; }
-    const label = `${actionLabels[plan.kind]} confirmé : ${fleet.name} part vers ${systemName(world, ready.destination_id)} (${ready.hops} saut${ready.hops > 1 ? "s" : ""}).`;
-    setIntent(null);
+    const label = await flow.confirm();
+    if (!label) return;
     setSelected(null); // back to the map; the mission appears from the re-read projections
     setNotice(`${label} Suivez-la sur la carte et dans « Vos flottes ».`);
     window.setTimeout(() => mapPanel.current?.scrollIntoView?.({ block: "start" }), 0);
@@ -209,6 +153,7 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
   const menu = desktop && target && !intent && !menuHidden ? <section className="cmd-ctx-card" aria-labelledby="cmd-ctx-title">
     <div className="cmd-ctx-head"><div><strong id="cmd-ctx-title">{systemName(world, target.id)}</strong><small>{own(target.id) ? "Votre colonie" : stateName(target.state)}</small></div>
       <button type="button" className="cmd-ctx-close" aria-label="Fermer le menu du système" onClick={() => setMenuHidden(true)}>×</button></div>
+    <SystemBrief world={world} system={target.id} />
     <h3>Actions possibles</h3>
     {actions}
     {systemHref && target.state !== "DETECTED" && <a className="cmd-ctx-link" href={systemHref(target.id)}>Ouvrir le système <span aria-hidden="true">→</span></a>}
@@ -273,10 +218,10 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
         <p>Choisissez un système sur la carte. Un signal détecté peut être cartographié par une sonde ; un système connu peut accueillir vos flottes, être colonisé ou attaqué.</p></section>
         : intent ? <>
           <MissionPlanner world={world} target={target.id} offer={intent.offer} fleets={candidates} fleet={fleet} units={intent.units}
-            hours={intent.hours} onHours={(h) => setIntent((p) => p && { ...p, hours: h })}
-            comeBack={intent.comeBack} onComeBack={(back) => setIntent((p) => p && { ...p, comeBack: back })}
-            step={step} quoteKey={planKey} quote={quote} path={path} pending={pending || busy} onFleet={chooseFleet}
-            onUnits={(u) => setIntent((p) => p && { ...p, units: u })} onStep={setStep} onConfirm={confirm} onCancel={cancel} />
+            hours={intent.hours} onHours={(h) => flow.update({ hours: h })}
+            comeBack={intent.comeBack} onComeBack={(back) => flow.update({ comeBack: back })}
+            step={step} quoteKey={planKey} quote={quote} path={path} pending={pending || busy} onFleet={flow.chooseFleet}
+            onUnits={(u) => flow.update({ units: u })} onStep={setStep} onConfirm={confirm} onCancel={cancel} />
           {failed && feedback && feedback.tone !== "success" && <p role="alert" className={`feedback feedback--${feedback.tone === "unknown" ? "error" : feedback.tone}`}>
             {feedback.tone === "unknown" ? "Résultat non confirmé. Confirmez à nouveau : la même intention est réutilisée, sans double envoi." : message(feedback.code)}</p>}
         </>

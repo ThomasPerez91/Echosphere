@@ -85,6 +85,7 @@ sombre et calme pour le titre et le texte, aucune interface ni texte.
 | `banniere-flottes.webp` | Flottes | Hangar orbital immense ouvert sur l’espace, plusieurs vaisseaux élancés alignés sur des berceaux d’amarrage, un vaisseau qui sort par l’ouverture vers une planète bleue, lumières de piste cyan. |
 | `banniere-diplomatie.webp` | Diplomatie | Chambre de négociation en orbite : table en anneau suspendue, projections holographiques de plusieurs emblèmes abstraits (formes géométriques, sans texte), grande baie vitrée sur une nébuleuse, atmosphère solennelle. |
 | `banniere-rapports.webp` | Rapports | Grande station en anneau en orbite, quelques vaisseaux en approche, nébuleuse bleue et planète lointaine, lumière calme de fin de journée. |
+| `banniere-systeme.webp` | Vue système | Système stellaire vu depuis l’orbite d’une planète : étoile brillante au loin, deux ou trois mondes de tailles différentes, ceinture d’astéroïdes en arc, une station discrète au premier plan, nébuleuse bleutée. |
 
 Icônes de relation (optionnel, même style que les icônes SVG existantes, à demander séparément) :
 pacte, contact neutre, hostilité, premier contact.

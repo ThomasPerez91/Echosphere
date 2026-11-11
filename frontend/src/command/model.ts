@@ -43,7 +43,7 @@ export const opportunityNames: Record<string, string> = {
 
 export type World = { fleets: FleetProjection; galaxy: { systems: KnownSystem[]; routes: Route[]; stars?: [number, number][];
   /** Test game only: foreign Colonies by anonymous Empire number. */
-  presences?: { empire: number; system_id: string }[];
+  presences?: { empire: number; system_id: string; planet_id?: string }[];
   /** Shaped galaxy (v0.12): the density it was drawn from, painted as the backdrop. */
   layout?: Layout } };
 
@@ -261,4 +261,43 @@ export function fleetLines(w: World, now: number): FleetLine[] {
       destination: systemName(w, returning ? m.origin?.id : m.destination?.id),
       arrival: returning ? m.return_at : m.kind === "ATTACK" ? m.due_at : m.travel_arrival_at, progress: progressOf(m, now) };
   });
+}
+
+export type PlanetFact = { id: string; name: string; sectors: number; orbitals: number; own: boolean; colony: string | null;
+  /** Test game only: anonymous Empire number of a foreign Colony on this world. */
+  foreign: number | null; alert: string | null };
+export type SystemFacts = {
+  planets: PlanetFact[]; deposits: NonNullable<KnownSystem["opportunities"]>["known"]; curiosities: NonNullable<KnownSystem["opportunities"]>["known"];
+  signatures: number | null; fleets: FleetView[]; incoming: MissionView[]; distance: { hops: number; from: string } | null;
+  routes: string[]; alerts: { planet_id: string | null; opportunity_id?: string; battle_at: string }[];
+};
+
+/**
+ * What this Empire knows of one system, gathered from the two projections (fiche rapide and
+ * System View): worlds and their occupation as known, opportunities, own fleets there or heading
+ * there, announced attacks. Nothing is inferred: an unknown occupation stays unknown.
+ */
+export function systemFacts(w: World, id: string): SystemFacts {
+  const known = w.galaxy.systems.find((s) => s.id === id);
+  const ref = w.fleets.systems?.find((s) => s.id === id);
+  const opportunities = known?.opportunities;
+  const alerts = (w.fleets.combat?.alerts ?? []).filter((a) => a.system_id === id && a.state === "pending")
+    .map((a) => ({ planet_id: a.planet_id, opportunity_id: a.opportunity_id, battle_at: a.battle_at }));
+  const planets = (ref?.planets ?? known?.planets ?? []).map((p) => {
+    const colony = "colony_id" in p ? (p as { colony_id?: string | null }).colony_id ?? null : null;
+    const foreign = (w.galaxy.presences ?? []).find((x) => x.planet_id === p.id)?.empire ?? null;
+    return { id: p.id, name: p.name, sectors: p.sector_capacity, orbitals: p.orbital_capacity, own: !!colony, colony, foreign,
+      alert: alerts.find((a) => a.planet_id === p.id)?.battle_at ?? null };
+  });
+  return {
+    planets,
+    deposits: (opportunities?.known ?? []).filter((o) => o.family === "deposit"),
+    curiosities: (opportunities?.known ?? []).filter((o) => o.family === "curiosity"),
+    signatures: opportunities ? opportunities.signatures : null,
+    fleets: stationed(w).filter((f) => f.system?.id === id),
+    incoming: (w.fleets.missions ?? []).filter((m) => m.status === "active" && m.destination?.id === id),
+    distance: knownHops(w, id),
+    routes: w.galaxy.routes.filter((r) => r.a_id === id || r.b_id === id).map((r) => (r.a_id === id ? r.b_id : r.a_id)),
+    alerts,
+  };
 }

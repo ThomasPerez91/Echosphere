@@ -81,7 +81,7 @@ export default function App() {
 
   // Pages redrawn after the mockup carry their own hero/header; the others keep the classic heading.
   const ownHeader = !!section && (destination === 'empire' || (destination === 'colony' && active)
-    || (destination === 'galaxy' && active && !systemMatch) || (['reports', 'fleets', 'research', 'relations'].includes(destination) && active));
+    || (destination === 'galaxy' && active) || (['reports', 'fleets', 'research', 'relations'].includes(destination) && active));
   const statusText = { checking: 'Vérification en cours', connected: 'Services disponibles', unavailable: 'Connexion indisponible' }[status];
   const choose = (what: string) => <Panel title="Choisir une partie"><p>Ouvrez un univers depuis le lobby Portal pour consulter {what} de vos Empires.</p></Panel>;
 
@@ -105,7 +105,8 @@ export default function App() {
       : destination === 'colony' ? <ColonyView view={colonyView} universe={!!universe} link={href} onNavigate={navigation} colony={colony} />
       : destination === 'research' && universe ? <ResearchView universe={universe} enabled={active} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} />
       : destination === 'research' ? choose('la recherche')
-      : destination === 'galaxy' && universe && systemEmpire && systemId ? <SystemView universe={universe} empire={systemEmpire} system={systemId} onSessionLost={access.retry} onColony={navigation} />
+      : destination === 'galaxy' && universe && systemEmpire && systemId ? <SystemView universe={universe} empire={systemEmpire} system={systemId} onSessionLost={access.retry} onColony={navigation}
+          csrf={access.session?.csrf_token} enabled={active} onEconomyChanged={colony.refresh} />
       : destination === 'galaxy' && universe ? <GalaxyScreen initialContext={galaxyContexts.current[universe]} onContextChange={context => { galaxyContexts.current[universe] = context; }}
           universe={universe} universeName={access.session?.universe_name} enabled={active} csrf={access.session?.csrf_token} onSessionLost={access.retry} onEconomyChanged={colony.refresh} />
       : destination === 'galaxy' ? choose('la carte')

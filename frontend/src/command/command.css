@@ -356,3 +356,26 @@
 .cmd-overlay--legend { font-size: .7rem; padding: 8px 12px; }
 .has-backdrop .cmd-system:not(.cmd-system--detected) .cmd-star, .has-backdrop .cmd-ring { opacity: 0; }
 .has-backdrop .cmd-system:hover .cmd-ring { opacity: 1; }
+
+/* Fiche rapide du système (11/11/2026) dans le menu contextuel de la carte. */
+.cmd-ctx { width: 320px; }
+.cmd-ctx-card { max-height: min(560px, 72vh, var(--ctx-max, 72vh)); }
+.cmd-brief { display: grid; gap: 8px; }
+.cmd-brief-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.cmd-brief-facts li { display: grid; justify-items: center; gap: 1px; padding: 6px 2px; border: 1px solid var(--ui-border); border-radius: 8px; background: rgba(8, 20, 38, .55); }
+.cmd-brief-facts strong { font-size: 1rem; color: #fff; font-variant-numeric: tabular-nums; }
+.cmd-brief-facts span { font-size: .66rem; color: var(--ui-muted); text-align: center; }
+.cmd-brief-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.cmd-brief-list li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cmd-brief-list img { flex: none; border-radius: 50%; }
+.cmd-brief-list li > span:not(.cmd-brief-dot) { display: grid; min-width: 0; flex: 1; }
+.cmd-brief-list strong { font-size: .8rem; color: #eef5fd; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmd-brief-list small { font-size: .7rem; color: var(--ui-muted); }
+.cmd-brief-list em { flex: none; font-style: normal; font-size: .66rem; color: var(--ui-muted); }
+.cmd-brief-list em.is-own { color: var(--ui-primary); }
+.cmd-brief-list em.is-foreign { color: #ffbe5c; }
+.cmd-brief-more { font-size: .72rem; color: var(--ui-muted); }
+.cmd-brief-dot { flex: none; width: 10px; height: 10px; margin: 0 8px; transform: rotate(45deg); border: 1.5px solid #b9a6ff; }
+.cmd-brief-dot.is-deposit { border-color: #ffd27a; background: rgba(255, 210, 122, .25); }
+.cmd-brief-note { margin: 0; font-size: .74rem; color: #c9d6e5; }
+.cmd-brief-note.is-alert { color: #ff9a8d; }

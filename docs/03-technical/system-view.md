@@ -43,3 +43,28 @@ Les tests UI interceptés sont distincts de cette recette réelle ; résultats e
 non) et transmet `colony.expand`. Un monde sans colonie propre affiche « Occupation actuelle
 inconnue », jamais « Libre », et un bouton « Coloniser… » vers le même dialogue Flottes
 (`fleets/colonize/{empire}/{système}/{planète}`).
+
+## Refonte et actions dans la vue système (11/11/2026)
+
+Demande de l’utilisateur du 11/11 : savoir ce que contient un système et y lancer des opérations.
+Deux niveaux, sans nouveau backend (données déjà projetées) :
+
+- **Fiche rapide** sur la carte de commandement (`command/SystemBrief.tsx`), dans le menu
+  contextuel du système sélectionné : mondes et capacités, occupation connue (votre colonie,
+  Empire anonyme d’une partie de test, sinon « Occupation inconnue »), gisements et curiosités
+  connus, signatures à prospecter, flottes ici, distance en sauts, missions en route et attaque
+  annoncée ; puis les actions. Hauteur bornée à la place disponible sur la carte.
+- **Vue système refaite** (`components/SystemView.tsx`, référence `system-view.png`) : bannière,
+  chiffres (connaissance, distance, contrôle, mondes, opportunités, flottes), vue orbitale
+  illustrative (étoile au centre, mondes sur des orbites, opportunités sur une ceinture), détail
+  du monde ou de l’opportunité choisi avec ses actions et celles du système, flottes présentes et
+  en route, gisements et curiosités, renseignements (présences observées, routes connues vers les
+  vues des systèmes voisins), mondes connus.
+- Les actions passent par le **même planificateur et le même résumé serveur** que la carte :
+  `command/useMissionFlow.ts` (intention, devis, confirmation) et `command/useCommandWorld.ts`
+  (projections Galaxie + Flottes du même Empire et API de mission), partagés par la carte et la
+  vue. Rien n’est envoyé avant la confirmation ; après acceptation, système et projections sont
+  relus. Sans projection Flottes (ruleset ancien, droits), la vue garde les raccourcis de
+  l’étape 8 vers l’écran Flottes.
+- Tests : `System.test.tsx` (actions d’un monde, d’une opportunité et du système), `model.test.ts`
+  (`systemFacts`), `e2e/system.spec.ts` adapté à la nouvelle structure.
