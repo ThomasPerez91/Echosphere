@@ -5,6 +5,18 @@ export type Resource = { resource: keyof Amounts; stock: string; capacity: strin
 export type Infrastructure = {
   sector_index: number; infrastructure_type: string; level: number; cost: Amounts; base_duration_us: string;
   production_per_hour: Amounts; construction_bonus_bps: number; capacity: string | null;
+  /** v0.13 (DEF-01): state of a defense module; absent for every other infrastructure. */
+  condition?: ModuleCondition;
+};
+export type ModuleCondition = 'operational' | 'disabled' | 'damaged';
+/** v0.13 (DEF-01): the colony's defense network as the server reports it. */
+export type Defense = {
+  center: string; center_level: number; capacity: number; capacity_per_level: number; used: number;
+  orbital: { capacity: number; base: number; free_indices: number[] }; upkeep_flux_per_hour: string;
+  modules: { sector_index: number; infrastructure_type: string; condition: ModuleCondition }[];
+  catalogue: Record<string, { family: 'point_defense' | 'anti_ship'; placement: 'surface' | 'orbital'; upkeep_flux: number;
+    hull: number; attack: number; matchups_bps: Record<string, number> }>;
+  repair_cost_bps: number; repair_duration_bps: number;
 };
 export type Order = {
   id: string; sequence: number; status: 'active' | 'queued'; infrastructure_type: string; sector_index: number;
@@ -13,7 +25,7 @@ export type Order = {
   cancel: { available: boolean; reason: string | null; refund: Amounts; recoverable: Amounts; lost: Amounts; also_cancels: string[] };
 };
 export type Option = {
-  action: 'build' | 'upgrade'; infrastructure_type: string; sector_index: number | null; target_level: number;
+  action: 'build' | 'upgrade' | 'repair'; infrastructure_type: string; sector_index: number | null; target_level: number;
   cost: Amounts; base_duration_us: string; estimated_duration_us: string | null; production_per_hour: Amounts;
   /** COL-11: buildings (and levels) that unlock this one; empty when none. */
   requires?: { infrastructure_type: string; level: number }[];
@@ -27,6 +39,7 @@ export type Projection = {
   resources: Resource[]; infrastructures: Infrastructure[]; queue: Order[]; queue_limit: number; options: Option[];
   /** Hostile force announced on this planet (combat.read): instant and state only. */
   incoming?: { id: string; battle_at: string; state: 'pending' | 'cancelled' }[] | null;
+  defense?: Defense;
 };
 export type ColonySummary = { id: string; name: string; empire: { id: string; name: string } };
 
@@ -43,6 +56,20 @@ const amounts = (value: unknown, aggregate = false) => !!value && typeof value =
   });
 const date = (value: unknown) => typeof value === 'string' && Number.isFinite(Date.parse(value));
 
+const conditions = ['operational', 'disabled', 'damaged'];
+function validDefense(d: unknown): d is Defense {
+  if (!d || typeof d !== 'object') return false;
+  const v = d as Defense;
+  const ints = [v.center_level, v.capacity, v.capacity_per_level, v.used, v.repair_cost_bps, v.repair_duration_bps];
+  return typeof v.center === 'string' && ints.every(n => Number.isInteger(n) && n >= 0) && micro(v.upkeep_flux_per_hour)
+    && !!v.orbital && Number.isInteger(v.orbital.capacity) && Number.isInteger(v.orbital.base) && Array.isArray(v.orbital.free_indices)
+    && Array.isArray(v.modules) && v.modules.every(m => !!m && Number.isInteger(m.sector_index) && typeof m.infrastructure_type === 'string'
+      && conditions.includes(m.condition) && m.infrastructure_type in (v.catalogue ?? {}))
+    && !!v.catalogue && typeof v.catalogue === 'object' && Object.values(v.catalogue).every(c => !!c
+      && ['point_defense', 'anti_ship'].includes(c.family) && ['surface', 'orbital'].includes(c.placement)
+      && [c.upkeep_flux, c.hull, c.attack].every(n => Number.isInteger(n) && n > 0) && !!c.matchups_bps && typeof c.matchups_bps === 'object');
+}
+
 export function validProjection(value: unknown, colony?: string): value is Projection {
   if (!value || typeof value !== 'object') return false;
   const p = value as Projection;
@@ -57,6 +84,7 @@ export function validProjection(value: unknown, colony?: string): value is Proje
       && (o.due_at === null || date(o.due_at)) && (o.started_at === null || date(o.started_at)))
     && Array.isArray(p.options) && p.options.every(o => amounts(o.cost) && micro(o.base_duration_us))
     && !!p.sectors && Array.isArray(p.sectors.free_indices) && Number.isInteger(p.queue_limit)
+    && (p.defense === undefined || validDefense(p.defense))
     && (p.incoming === undefined || p.incoming === null || (p.permissions.includes('combat.read') && Array.isArray(p.incoming)
       && p.incoming.every(a => !!a && Object.keys(a).sort().join() === 'battle_at,id,state' && typeof a.id === 'string'
         && date(a.battle_at) && ['pending', 'cancelled'].includes(a.state))));

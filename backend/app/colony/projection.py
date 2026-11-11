@@ -319,4 +319,3 @@ def defense_view(rules, state):
             "repair_duration_bps": d.repair_duration_bps,
         }
     }
-

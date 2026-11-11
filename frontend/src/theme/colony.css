@@ -368,3 +368,21 @@
 .d-col-title h1{margin:0}
 .d-col-rename input{font:inherit;font-size:22px;padding:6px 10px;border-radius:8px;border:1px solid var(--d-line-2,#2a4a6a);background:rgba(4,12,24,.8);color:#fff;min-width:0;width:min(360px,100%)}
 .d-btn-sm{padding:6px 12px;font-size:13px}
+/* DEF-01 — planetary defense network and modules */
+.d-colony .d-def-net{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.d-colony .d-def-net>img{border-radius:12px;border:1px solid var(--d-line);background:rgba(6,14,28,.6);width:120px;height:120px;object-fit:cover}
+.d-colony .d-def-net h3{font:500 16px var(--d-font);color:#e6eef8;margin:0 0 4px}
+.d-colony .d-def-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:10px 0 0}
+.d-colony .d-def-kv>div{padding:8px 10px;border-radius:10px;border:1px solid var(--d-line);background:rgba(6,14,28,.5)}
+.d-colony .d-def-kv dt{display:flex;align-items:center;gap:6px;color:var(--d-muted);font-size:12px}
+.d-colony .d-def-kv dd{margin:2px 0 0;font:600 15px var(--d-font);font-variant-numeric:tabular-nums;color:#e6eef8}
+.d-colony .d-def-tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;padding:0;list-style:none}
+.d-colony .d-def-tags li{padding:2px 8px;border-radius:999px;border:1px solid var(--d-line-2);font-size:11.5px;color:var(--d-muted)}
+.d-colony .d-def-state{font-style:normal;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid currentColor}
+.d-colony .d-def-state.is-operational{color:var(--d-green)}
+.d-colony .d-def-state.is-disabled{color:var(--d-gold)}
+.d-colony .d-def-state.is-damaged{color:var(--d-red)}
+.d-colony .d-def-module.is-damaged{border-color:rgba(255,77,94,.45)}
+.d-colony .d-def-module.is-disabled{opacity:.8}
+.d-colony .d-def-card.is-locked{opacity:.85}
+@media (max-width:640px){.d-colony .d-def-net{grid-template-columns:1fr}.d-colony .d-def-net>img{width:88px;height:88px}}

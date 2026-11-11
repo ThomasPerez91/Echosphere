@@ -1,7 +1,7 @@
 # Défense planétaire — proposition DEF-00 (ruleset v0.13)
 
-**Statut : proposition de Claude du 11/11/2026, à valider par l’utilisateur ; rien n’est
-implémenté.** Elle applique les décisions produit closes [Q30–Q38](planetary-defense.md) et chiffre
+**Statut : proposition de Claude du 11/11/2026, validée par l’utilisateur le 11/11/2026 ; DEF-01
+implémenté (PR #56, ruleset v0.13, migration 0023).** Elle applique les décisions produit closes [Q30–Q38](planetary-defense.md) et chiffre
 un premier lot jouable. Les valeurs sont provisoires et réglables dans le ruleset, comme toute la
 balance.
 
@@ -70,3 +70,18 @@ Bouclier, Sensor/EW et Support/Repair apparaissent dans l’onglet Défense comm
   défense.
 
 [Décisions Q30–Q38](planetary-defense.md) · [Combat](combat.md) · [Colonie v0.11](colony-v011.md)
+
+## Implémentation DEF-01 (11/11/2026)
+
+- Données : `game_data/rulesets/v0.13` (générées par `scripts/rulesets/make_v013.py`), bloc
+  `defense` de `colony.json`, classes de combat des modules dans `combat.json` (`modules`), politique
+  IA `defense` dans `ai.json`. Moteur de combat inchangé (`combat-v1`).
+- Persistance : `colony_infrastructures.condition` (`operational`/`disabled`/`damaged`, NULL hors
+  modules) ; emplacements orbitaux stockés comme `sector_index = 1000 + k`.
+- Service `app/defense/service.py` : placement, capacité du réseau, devis de réparation, entretien
+  Flux et désactivation dans l’ordre fixé, modules engagés et endommagés. Projection Colony :
+  bloc `defense` et options `repair`.
+- Interface : onglet Défense (réseau, modules, construction, réparation), Orbite et statut de
+  défense alimentés par le serveur ; les modules ne sont plus listés dans Infrastructures.
+- Approximations connues : l’entretien d’un module perdu s’arrête à la résolution de la bataille,
+  pas à `battle_at` ; un module désactivé l’est selon son état courant au moment du combat.

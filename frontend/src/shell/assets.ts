@@ -47,5 +47,8 @@ export const infrastructureImage: Record<string, string> = {
   industrial_complex: 'complexe-industriel', logistics_center: 'centre-logistique',
   // COL-11: existing illustrations (docking ring with ships, surface laboratory domes).
   orbital_shipyard: 'anneau-amarrage', research_center: 'laboratoire-avance',
+  // DEF-01: existing defense illustrations.
+  defense_center: 'garnison', point_defense: 'missiles-defense', anti_ship_battery: 'canons-planetaires',
+  orbital_platform: 'plateforme-defense-orbitale',
 };
 export const buildingImage = (kind: string) => asset(`img/batiments/${infrastructureImage[kind] ?? 'centre-de-commandement'}.webp`);

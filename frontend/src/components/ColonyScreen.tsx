@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { Amounts, Option, Order, Projection } from '../colony/api';
-import { costParts, duration, errorMessage, exactUnits, infrastructureLabel, rate, ratio, reasonLabel, resourceKeys,
+import { costParts, duration, errorMessage, exactUnits, infrastructureLabel, placeLabel, rate, ratio, reasonLabel, resourceKeys,
   resourceLabels, time, units } from '../colony/format';
 import type { useColony } from '../hooks/useColony';
 import { Bar, Ico, PanelHead, Pending, Pic } from '../shell/visual';
 import { asset, buildingImage, estimate, resourceIcon } from '../shell/assets';
 import { useNow } from '../shell/useNow';
 import { Button } from './ui';
+import { DefenseSummary, DefenseTab } from './ColonyDefense';
 
 type Colony = ReturnType<typeof useColony>;
 const colonyViews = [
@@ -32,7 +33,12 @@ function progress(order: Order, server: number) {
   const start = Date.parse(order.started_at), end = Date.parse(order.due_at);
   return { percent: Math.max(0, Math.min(100, Math.floor((server - start) / Math.max(1, end - start) * 100))), left: Math.max(0, Math.ceil((end - server) / 1000)) };
 }
-const level = (order: Order) => order.target_level === 1 ? 'Nouvelle infrastructure' : `Niveau ${order.target_level - 1} → ${order.target_level}`;
+/** DEF-01: an order re-targeting the level of a built module is its repair. */
+const isRepair = (order: Order, data: Projection) => !!data.defense && order.infrastructure_type in data.defense.catalogue
+  && data.infrastructures.some(row => row.sector_index === order.sector_index && row.level === order.target_level);
+const level = (order: Order, data?: Projection) => data && isRepair(order, data) ? 'Réparation'
+  : order.target_level === 1 ? 'Nouvelle infrastructure' : `Niveau ${order.target_level - 1} → ${order.target_level}`;
+const where = (sector: number) => sector > 1000 ? `${placeLabel(sector)} · Orbital` : `${placeLabel(sector)} · Surface`;
 
 function Costs({ value, minutes, stocks }: { value: Amounts; minutes?: string; stocks?: Record<string, number> }) {
   const parts = costParts(value);
@@ -71,10 +77,13 @@ function Alerts({ projection }: { projection: Projection }) {
 
 function DefenseStatus({ projection, banner }: { projection: Projection; banner?: (v: string) => string }) {
   const threats = (projection.incoming ?? []).filter(a => a.state === 'pending').length;
+  const who = projection.defense ? 'la garnison et les modules opérationnels combattront' : 'seules les unités militaires stationnées combattront';
   return <section className="d-card d-panel" aria-labelledby="colony-defense-status">
-    <PanelHead id="colony-defense-status" icon="icons/defense/statut-defense.svg" title="Statut de défense" />
-    <Pending what="Couverture planétaire, modules et garnison : la défense planétaire (Q30–Q38) n’est pas encore implémentée." />
-    <p className="d-note">{threats ? `${threats} force${threats > 1 ? 's' : ''} hostile${threats > 1 ? 's' : ''} annoncée${threats > 1 ? 's' : ''} : seules les unités militaires stationnées combattront.` : 'Aucune force hostile annoncée sur cette colonie.'}</p>
+    <PanelHead id="colony-defense-status" icon="icons/defense/statut-defense.svg" title="Statut de défense"
+      more={projection.defense && banner ? { href: banner('colony/defense'), label: 'Gérer' } : undefined} />
+    {projection.defense ? <DefenseSummary data={projection} />
+      : <Pending what="Défense planétaire : nouvelles parties seulement (ruleset v0.13). Ici, seule la garnison défend." />}
+    <p className="d-note">{threats ? `${threats} force${threats > 1 ? 's' : ''} hostile${threats > 1 ? 's' : ''} annoncée${threats > 1 ? 's' : ''} : ${who}.` : 'Aucune force hostile annoncée sur cette colonie.'}</p>
     {banner && <a className="d-orbital-banner" href={banner('colony/orbit')}>
       <img src={asset('img/colonie/banniere-defenses-orbitales.webp')} alt="" width="1200" height="360" />
       <span className="d-ob-ico"><Pic src="icons/defense/defenses-orbitales.svg" size={40} /></span>
@@ -99,7 +108,7 @@ function Queue({ colony, projection, server }: { colony: Colony; projection: Pro
         const p = progress(order, server);
         return <li key={order.id} className="d-job">
           <img className="d-job-img" src={buildingImage(order.infrastructure_type)} alt="" width="96" height="72" />
-          <div className="d-job-info"><b>{label}</b><small>Secteur {order.sector_index} · Surface · {level(order)}</small>
+          <div className="d-job-info"><b>{label}</b><small>{where(order.sector_index)} · {level(order, projection)}</small>
             <small className="d-job-state">{order.status === 'active' ? 'En cours' : 'En file : démarre après l’ordre précédent, durée fixée au démarrage'}</small></div>
           {canCancel && confirm !== order.id && <div className="d-job-act">
             <button type="button" className="d-btn d-btn-sq" disabled aria-label={`Accélérer ${label} : implémentation backend nécessaire`}
@@ -212,8 +221,11 @@ function BuiltRow({ colony, row, upgrade, canBuild, stocks }: { colony: Colony; 
 }
 
 function Infrastructures({ colony, data, server, stocks }: { colony: Colony; data: Projection; server: number; stocks: Record<string, number> }) {
-  const builds = data.options.filter(option => option.action === 'build');
+  // DEF-01: defense modules live in the Défense tab, the Défense center stays here (key building).
+  const module = (kind: string) => !!data.defense && kind in data.defense.catalogue;
+  const builds = data.options.filter(option => option.action === 'build' && !module(option.infrastructure_type));
   const upgrades = data.options.filter(option => option.action === 'upgrade');
+  const surface = data.infrastructures.filter(row => !module(row.infrastructure_type));
   const canBuild = data.permissions.includes('colony.construct');
   // Available constructions first; unavailable ones stay visible, greyed, after them.
   // A unique building already built (or queued) lives in the list above, not here (COL-11).
@@ -233,7 +245,7 @@ function Infrastructures({ colony, data, server, stocks }: { colony: Colony; dat
       — il faut {missing(next.option).map(r => `${infrastructureLabel(r.infrastructure_type)} niveau ${r.level} (actuel ${levels.get(r.infrastructure_type) ?? 0})`).join(', ')}.</span></p>}
     <section className="d-card d-panel" aria-labelledby="built-title">
       <PanelHead id="built-title" icon="icons/colonie/colonie-secteurs.svg" title="Bâtiments de la colonie"><span className="d-queue-count">{data.sectors.built} / {data.sectors.capacity} secteurs</span></PanelHead>
-      {data.infrastructures.length ? <ul className="d-built-list">{data.infrastructures.map(row => <BuiltRow key={row.sector_index} colony={colony} row={row}
+      {surface.length ? <ul className="d-built-list">{surface.map(row => <BuiltRow key={row.sector_index} colony={colony} row={row}
         upgrade={upgrades.find(option => option.sector_index === row.sector_index)} canBuild={canBuild} stocks={stocks} />)}</ul>
         : <p className="muted">Aucun bâtiment pour l’instant : commencez par une construction ci-dessous.</p>}
     </section>
@@ -269,7 +281,7 @@ function Overview({ data, server, link }: { data: Projection; server: number; li
         const p = progress(order, server);
         return <li className="d-act" key={order.id}><img src={buildingImage(order.infrastructure_type)} alt="" width="84" height="56" />
           <div><span className="d-act-top"><b>{order.target_level === 1 ? 'Construction' : 'Amélioration'} : {infrastructureLabel(order.infrastructure_type)}</b><b className="d-pct">{p ? `${p.percent} %` : 'En file'}</b></span>
-            <small>Secteur {order.sector_index} · Surface · {level(order)}</small><Bar value={p?.percent ?? 0} /></div></li>;
+            <small>{where(order.sector_index)} · {level(order, data)}</small><Bar value={p?.percent ?? 0} /></div></li>;
       })}
         {!data.queue.length && <li className="d-empty">Aucune activité en cours.</li>}</ul>
     </section>
@@ -292,36 +304,30 @@ function Overview({ data, server, link }: { data: Projection; server: number; li
   </div>;
 }
 
-function Orbit({ data }: { data: Projection }) {
+function Orbit({ data, link }: { data: Projection; link: (v: string) => string }) {
+  const d = data.defense;
+  const slot = (i: number) => d?.modules.find(m => m.sector_index === d.orbital.base + i + 1);
+  const used = d ? data.colony.planet.orbital_capacity - d.orbital.free_indices.length : 0;
   return <div className="d-tabpanel d-grid-orbit">
     <section className="d-card d-panel d-installs" aria-labelledby="orbit-title">
-      <PanelHead id="orbit-title" icon="icons/colonie/stat-emplacements.svg" title="Installations orbitales"><span className="d-more d-static">0 / {data.colony.planet.orbital_capacity} emplacements utilisés</span></PanelHead>
-      <ul className="d-install-list">{Array.from({ length: data.colony.planet.orbital_capacity }, (_, i) => <li key={i} className="d-install d-free">
-        <span className="d-free-ico"><Pic src="icons/colonie/emplacement-libre.svg" size={52} /></span>
-        <div className="d-inst-info"><b>Emplacement orbital {i + 1}</b><small>Constructions orbitales : implémentation backend nécessaire.</small></div>
-      </li>)}</ul>
+      <PanelHead id="orbit-title" icon="icons/colonie/stat-emplacements.svg" title="Installations orbitales"><span className="d-more d-static">{used} / {data.colony.planet.orbital_capacity} emplacements utilisés</span></PanelHead>
+      <ul className="d-install-list">{Array.from({ length: data.colony.planet.orbital_capacity }, (_, i) => {
+        const m = slot(i);
+        return m ? <li key={i} className="d-install">
+          <img src={buildingImage(m.infrastructure_type)} alt="" width="72" height="72" />
+          <div className="d-inst-info"><b>{infrastructureLabel(m.infrastructure_type)}</b><small>Emplacement orbital {i + 1} · {m.condition === 'operational' ? 'Opérationnel' : m.condition === 'damaged' ? 'Endommagé' : 'Désactivé (Flux)'}</small></div>
+        </li> : <li key={i} className="d-install d-free">
+          <span className="d-free-ico"><Pic src="icons/colonie/emplacement-libre.svg" size={52} /></span>
+          <div className="d-inst-info"><b>Emplacement orbital {i + 1}</b><small>{d ? <>Libre : une plateforme orbitale peut s’y installer (<a className="text-link" href={link('colony/defense')}>onglet Défense</a>).</>
+            : 'Constructions orbitales : nouvelles parties (ruleset v0.13).'}</small></div>
+        </li>;
+      })}</ul>
     </section>
     <div className="d-stack">
       <section className="d-card d-panel" aria-labelledby="yards-title"><PanelHead id="yards-title" icon="icons/colonie/panel-chantiers-orbitaux.svg" title="Chantiers orbitaux" />
         <Pending what="File de construction orbitale." /></section>
       <section className="d-card d-panel" aria-labelledby="traffic-title"><PanelHead id="traffic-title" icon="icons/colonie/panel-trafic-orbital.svg" title="Trafic orbital" />
         <Pending what="Flottes amarrées, convois entrants et routes de fret de la colonie." /></section>
-    </div>
-  </div>;
-}
-
-function Defense({ data }: { data: Projection }) {
-  const pending = (data.incoming ?? []).filter(a => a.state === 'pending');
-  return <div className="d-tabpanel">
-    <section className="d-card d-panel" aria-labelledby="network-title"><PanelHead id="network-title" icon="icons/defense/reseau-defensif.svg" title="Réseau défensif" />
-      <Pending what="Réseau limité de modules persistants (canons, missiles, boucliers, drones, garnison) — décisions Q30–Q38 validées, non implémentées." /></section>
-    <div className="d-grid-def">
-      <section className="d-card d-panel" aria-labelledby="defprod-title"><PanelHead id="defprod-title" icon="icons/defense/production-defensive.svg" title="Production défensive" />
-        <Pending what="Composants, charges et cellules de défense." compact /></section>
-      <section className="d-card d-panel" aria-labelledby="ops-title"><PanelHead id="ops-title" icon="icons/defense/operations-tactiques.svg" title="Opérations tactiques" />
-        <Pending what="Patrouilles, renforcements et exercices." compact />
-        <p className="d-watch"><i className="d-pulse" aria-hidden="true" /><b>Veille du secteur</b><span>{pending.length ? `${pending.length} force${pending.length > 1 ? 's' : ''} hostile${pending.length > 1 ? 's' : ''} annoncée${pending.length > 1 ? 's' : ''}` : 'Aucune force hostile annoncée'}</span></p>
-      </section>
     </div>
   </div>;
 }
@@ -339,6 +345,7 @@ export function ColonyScreen({ colony, view, link, onNavigate }: { colony: Colon
   const used = data.sectors.built + data.sectors.reserved;
   const stocks = Object.fromEntries(data.resources.map(r => [r.resource, estimate(r, elapsed)]));
   const current = colonyViews.find(item => item.id === view)?.id ?? 'overview';
+  const orbitUsed = data.defense ? data.colony.planet.orbital_capacity - data.defense.orbital.free_indices.length : 0;
   return <div className="d-colony d-scope colony-screen" aria-label={`Colonie ${data.colony.name}`}>
     <section className="d-col-hero">
       <div className="d-col-hero-text">
@@ -358,14 +365,17 @@ export function ColonyScreen({ colony, view, link, onNavigate }: { colony: Colon
           <span className="d-cap-label">Secteurs utilisés</span>
           <span role="meter" aria-label="Secteurs utilisés" aria-valuemin={0} aria-valuemax={data.sectors.capacity} aria-valuenow={used}><Bar value={used / data.sectors.capacity * 100} /></span></div></article>
       <article className="d-card d-cap-card"><Pic src="icons/colonie/colonie-emplacements-orbitaux.svg" size={64} />
-        <div className="d-cap-body"><div className="d-cap-top"><strong>0 <i>/</i> {data.colony.planet.orbital_capacity}</strong><span className="d-cap-free">à venir</span></div>
-          <span className="d-cap-label">Emplacements orbitaux</span><Bar value={0} /></div></article>
+        <div className="d-cap-body"><div className="d-cap-top"><strong>{orbitUsed} <i>/</i> {data.colony.planet.orbital_capacity}</strong>
+          <span className="d-cap-free">{data.defense ? `${data.defense.orbital.free_indices.length} libre${data.defense.orbital.free_indices.length > 1 ? 's' : ''}` : 'à venir'}</span></div>
+          <span className="d-cap-label">Emplacements orbitaux</span><Bar value={data.colony.planet.orbital_capacity ? orbitUsed / data.colony.planet.orbital_capacity * 100 : 0} /></div></article>
     </section>
 
     {data.incoming?.some(a => a.state === 'pending') && <section className="d-card d-panel panel combat-alert" role="alert" aria-labelledby="incoming-title">
       <h2 id="incoming-title">Force hostile en approche</h2>
       <ul>{data.incoming.filter(a => a.state === 'pending').map(a => <li key={a.id}>Bataille prévue : {time(a.battle_at)}</li>)}</ul>
-      <p className="panel-meta">Ni l’attaquant ni sa force ne sont connus avant la bataille. Seules les unités militaires stationnées dans ce système combattront ; aucune ressource, aucun bâtiment ni aucune recherche ne peut être perdu.</p>
+      <p className="panel-meta">{data.defense
+        ? 'Ni l’attaquant ni sa force ne sont connus avant la bataille. Les unités militaires stationnées et les modules de défense opérationnels combattront ; un module perdu est endommagé jusqu’à sa réparation, aucune ressource, aucun autre bâtiment ni aucune recherche ne peut être perdu.'
+        : 'Ni l’attaquant ni sa force ne sont connus avant la bataille. Seules les unités militaires stationnées dans ce système combattront ; aucune ressource, aucun bâtiment ni aucune recherche ne peut être perdu.'}</p>
     </section>}
     <div className="feedback-zone" aria-live="polite">
       {colony.feedback && <div className={`feedback feedback--${colony.feedback.tone}`} role={colony.feedback.tone === 'success' ? 'status' : 'alert'}>
@@ -382,8 +392,8 @@ export function ColonyScreen({ colony, view, link, onNavigate }: { colony: Colon
       </nav>
       <div className="d-col-main">
         {current === 'infrastructure' ? <Infrastructures colony={colony} data={data} server={server} stocks={stocks} />
-          : current === 'orbit' ? <Orbit data={data} />
-          : current === 'defense' ? <Defense data={data} />
+          : current === 'orbit' ? <Orbit data={data} link={link} />
+          : current === 'defense' ? <DefenseTab colony={colony} data={data} />
           : <Overview data={data} server={server} link={link} />}
       </div>
       <aside className="d-col-side" aria-label="Informations complémentaires">

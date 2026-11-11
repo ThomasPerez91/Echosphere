@@ -4,7 +4,7 @@ import { useFleets } from "../hooks/useFleets";
 import { ApiError, previewMission } from "../fleet/api";
 import type { Amounts } from "../colony/api";
 import type { CombatReport, FleetProjection, Frontier, MissionKind, MissionView, Protocol, Quote, ShipOrder } from "../fleet/api";
-import { duration, exactUnits, infrastructureLabel, resourceKeys, resourceLabels, time, units } from "../colony/format";
+import { defenseClassLabels, duration, exactUnits, infrastructureLabel, resourceKeys, resourceLabels, time, units } from "../colony/format";
 import { Badge, Button, EmptyState, Panel } from "./ui";
 import { message } from "../fleet/messages";
 import { protocols } from "../fleet/protocols";
@@ -96,7 +96,7 @@ function Counter({ label, value, max, onChange }: { label: string; value: number
 function Losses({ label, side, p }: { label: string; side: CombatReport["own"]; p: FleetProjection }) {
   const rows = Object.entries(side?.initial ?? {}).filter(([, n]) => n > 0);
   return <div><dt>{label}</dt><dd>{rows.length ? rows.map(([c, n]) =>
-    `${p.catalogue![c]?.name ?? c} : ${n} engagés, ${side!.losses[c] ?? 0} perdus, ${side!.survivors[c] ?? 0} survivants`).join(" · ") : "aucune unité militaire"}</dd></div>;
+    `${p.catalogue![c]?.name ?? defenseClassLabels[c] ?? c} : ${n} engagés, ${side!.losses[c] ?? 0} perdus, ${side!.survivors[c] ?? 0} survivants`).join(" · ") : "aucune unité militaire"}</dd></div>;
 }
 
 /** 13B: detections (anonymous unless identified) and own frontier reports (D3). */
@@ -104,7 +104,7 @@ function FrontierPanel({ frontier, p }: { frontier: Frontier; p: FleetProjection
   const forces = (side: CombatReport["own"]) => {
     const rows = Object.entries(side?.initial ?? {}).filter(([, n]) => n > 0);
     return rows.length ? rows.map(([c, n]) =>
-      `${p.catalogue![c]?.name ?? c} : ${n} engagés, ${side!.losses[c] ?? 0} perdus, ${side!.survivors[c] ?? 0} survivants`).join(" · ")
+      `${p.catalogue![c]?.name ?? defenseClassLabels[c] ?? c} : ${n} engagés, ${side!.losses[c] ?? 0} perdus, ${side!.survivors[c] ?? 0} survivants`).join(" · ")
       : "aucune unité militaire";
   };
   return <section className="panel" aria-labelledby="frontier-title">

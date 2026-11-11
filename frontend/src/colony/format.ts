@@ -16,7 +16,18 @@ const infrastructureLabels: Record<string, string> = {
   logistics_center: 'Centre logistique',
   orbital_shipyard: 'Chantier orbital',
   research_center: 'Centre de recherche',
+  // v0.13 (DEF-01)
+  defense_center: 'Centre de défense',
+  point_defense: 'Batterie de défense ponctuelle',
+  anti_ship_battery: 'Canon anti-vaisseaux',
+  orbital_platform: 'Plateforme orbitale',
 };
+/** Combat classes of the defense modules (battle reports), by their server identifier. */
+export const defenseClassLabels: Record<string, string> = {
+  point_defense: 'Batterie de défense ponctuelle', anti_ship: 'Canon anti-vaisseaux', orbital_platform: 'Plateforme orbitale',
+};
+/** Where an infrastructure sits: sectors 1..n, orbital slots stored from 1001 (DEF-01). */
+export const placeLabel = (sector: number, base = 1000) => sector > base ? `Orbite ${sector - base}` : `Secteur ${sector}`;
 export const infrastructureLabel = (kind: string) => infrastructureLabels[kind] ?? kind;
 
 /** Whole units, rounded down, from an exact micro-unit decimal string. */
@@ -68,6 +79,8 @@ const messages: Record<string, string> = {
   unique_limit: 'Cette infrastructure est limitée à un exemplaire par colonie.',
   prerequisites_unmet: 'Une infrastructure prérequise doit d’abord être achevée.',
   level_cap_reached: 'Niveau maximal pour la taille de cette planète.',
+  module_level_fixed: 'Un module de défense n’a qu’un niveau : construisez-en un autre dans la limite du réseau.',
+  defense_capacity_full: 'Réseau défensif plein : améliorez le Centre de défense pour ajouter des modules.',
   order_completed: 'Cette construction est déjà terminée.',
   order_not_found: 'Cet ordre n’existe plus. La colonie a été actualisée.',
   permission_denied: 'Votre accès à cet Empire ne permet pas cette action.',
