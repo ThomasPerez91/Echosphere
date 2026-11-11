@@ -379,3 +379,58 @@
 .cmd-brief-dot.is-deposit { border-color: #ffd27a; background: rgba(255, 210, 122, .25); }
 .cmd-brief-note { margin: 0; font-size: .74rem; color: #c9d6e5; }
 .cmd-brief-note.is-alert { color: #ff9a8d; }
+
+/* Infobulle, menu contextuel et en-tête allégé après la référence carte-galaxie.html (11/11/2026). */
+.cmd-dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; flex: none; vertical-align: middle; box-shadow: 0 0 8px currentColor; }
+.cmd-tip { position: absolute; z-index: 4; min-width: 190px; padding: 10px 12px; pointer-events: none; border-radius: 10px;
+  border: 1px solid rgba(100, 170, 255, .35); background: rgba(6, 12, 28, .92); backdrop-filter: blur(6px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .45), inset 0 0 18px rgba(40, 100, 220, .08); animation: cmd-pop .12s ease-out; }
+.cmd-tip-name { display: flex; align-items: center; margin-bottom: 6px; font-weight: 700; font-size: .85rem; color: #fff; }
+.cmd-tip-line { display: flex; justify-content: space-between; gap: 16px; font-size: .7rem; line-height: 1.75; color: var(--ui-muted); }
+.cmd-tip-line b { font-weight: 600; color: #e2ebff; }
+.cmd-tip-line b.is-own { color: var(--ui-primary); } .cmd-tip-line b.is-foreign { color: #ffbe5c; }
+@keyframes cmd-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.cmd-ctx { animation: cmd-pop .14s ease-out; }
+.cmd-ctx::before { content: ""; position: absolute; z-index: 1; left: -6px; top: 18px; width: 12px; height: 12px; transform: rotate(45deg);
+  background: rgb(8, 16, 34); border-left: 1px solid rgba(100, 170, 255, .45); border-bottom: 1px solid rgba(100, 170, 255, .45); }
+.cmd-ctx.is-flipped::before { left: auto; right: -6px; border-left: 0; border-bottom: 0; border-right: 1px solid rgba(100, 170, 255, .45); border-top: 1px solid rgba(100, 170, 255, .45); }
+.cmd-ctx.is-up::before { top: auto; bottom: 18px; }
+.cmd-ctx.is-docked::before { display: none; }
+.cmd-ctx-card { padding: 6px; gap: 6px; border-radius: 10px; border-color: rgba(100, 170, 255, .45); background: rgba(6, 12, 28, .95); backdrop-filter: blur(6px);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, .6), 0 0 22px rgba(50, 130, 255, .18), inset 0 0 18px rgba(40, 100, 220, .1); }
+.cmd-ctx-head { padding: 7px 8px 9px; border-bottom: 1px solid rgba(100, 170, 255, .18); }
+.cmd-ctx-head strong { display: flex; align-items: center; font-size: .9rem; }
+.cmd-ctx-card .cmd-brief, .cmd-ctx-card h3, .cmd-ctx-card .cmd-ctx-link { margin-inline: 8px; }
+.cmd-ctx-card .cmd-actions { gap: 2px; }
+.cmd-ctx-card .cmd-actions li { gap: 0; padding: 2px; border-radius: 7px; border: 1px solid transparent; }
+.cmd-ctx-card .cmd-actions li:hover { background: rgba(60, 130, 255, .1); border-color: rgba(90, 170, 255, .3); }
+.cmd-ctx-card .cmd-action { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 4px 6px; border: 0 !important;
+  background: none !important; box-shadow: none !important; color: #e2ebff; font-weight: 600; font-size: .8rem; }
+.cmd-ctx-card .cmd-action.button--primary { color: #fff; }
+.cmd-ctx-card .cmd-actions .cmd-help { padding: 0 6px 4px 48px; font-size: .68rem; line-height: 1.35; }
+.cmd-glyph { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: 7px; color: #9fd0ff;
+  background: rgba(60, 130, 255, .14); border: 1px solid rgba(90, 170, 255, .3); }
+.cmd-glyph--survey, .cmd-glyph--prospect, .cmd-glyph--study { color: #ffc35a; background: rgba(255, 180, 70, .12); border-color: rgba(255, 180, 70, .35); }
+.cmd-glyph--colonize, .cmd-glyph--extract { color: #5ff0c0; background: rgba(46, 207, 136, .12); border-color: rgba(46, 207, 136, .35); }
+.cmd-glyph--attack { color: #ff8b95; background: rgba(255, 80, 90, .1); border-color: rgba(255, 80, 90, .3); }
+.cmd-action:disabled .cmd-glyph { opacity: .6; }
+.cmd-actions .cmd-action { display: flex; align-items: center; gap: 10px; }
+
+.cmd-page-head { align-items: center; gap: 10px 20px; padding-bottom: 4px; }
+.cmd-page-id { display: grid; gap: 2px; min-width: 0; }
+.cmd-page-id .cmd-page-title { font-size: clamp(1.6rem, 2.4vw, 2rem) !important; margin: 0 !important; }
+.cmd-page-id p { font-size: .85rem; }
+.cmd-page-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: flex-end; flex: 1 1 520px; }
+.cmd-page-tools .cmd-search { flex: 1 1 260px; max-width: 420px; }
+.cmd-page-tools .cmd-search .cmd-help:empty { display: none; }
+.cmd-page-tools .cmd-toolbar { gap: 8px 10px; }
+.cmd-meta { font-size: .75rem; color: var(--ui-muted); }
+.galaxy-mode { display: inline-flex; gap: 0; }
+.galaxy-mode .galaxy-mode-option { border-radius: 0; min-height: 44px; padding: 0 12px; font-size: .8rem; }
+.galaxy-mode .galaxy-mode-option:first-child { border-radius: 8px 0 0 8px; }
+.galaxy-mode .galaxy-mode-option:last-child { border-radius: 0 8px 8px 0; margin-left: -1px; }
+@media (max-width: 640px) { .cmd-page-tools { justify-content: flex-start; } .cmd-page-tools .cmd-search { max-width: none; } }
+.cmd-page-tools .cmd-search { flex-wrap: nowrap; position: relative; }
+.cmd-page-tools .cmd-search input { flex: 1 1 auto; }
+.cmd-page-tools .cmd-search .cmd-help { position: absolute; left: 0; top: 100%; margin-top: 2px; white-space: nowrap; }

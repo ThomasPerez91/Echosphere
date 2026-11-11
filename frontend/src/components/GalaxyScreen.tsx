@@ -25,10 +25,11 @@ export function GalaxyScreen({ universe, universeName, enabled, csrf, onSessionL
     try { window.localStorage.setItem(KEY, next); } catch { /* storage unavailable: the choice lasts this visit */ }
   };
   if (!enabled) return null;
-  const options: [GalaxyMode, string][] = [["command", "Nouvelle carte de commandement"], ["classic", "Carte classique"]];
+  // Compact segmented switch (header decluttered 11/11/2026); full names stay the accessible ones.
+  const options: [GalaxyMode, string, string][] = [["command", "Nouvelle carte de commandement", "Commandement"], ["classic", "Carte classique", "Classique"]];
   const switcher = <div className="galaxy-mode" role="group" aria-label="Affichage de la galaxie">
-    {options.map(([id, label]) => <button key={id} type="button" className={`button galaxy-mode-option${mode === id ? " button--primary" : ""}`}
-      aria-pressed={mode === id} onClick={() => choose(id)}>{label}</button>)}
+    {options.map(([id, label, short]) => <button key={id} type="button" className={`button galaxy-mode-option${mode === id ? " button--primary" : ""}`}
+      aria-pressed={mode === id} aria-label={label} title={label} onClick={() => choose(id)}>{short}</button>)}
   </div>;
   const subtitle = universeName ? `de ${/^univers\b/i.test(universeName) ? "l’" : "l’univers "}${universeName}` : undefined;
   return <>

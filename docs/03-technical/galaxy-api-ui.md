@@ -170,3 +170,14 @@ depuis « Nouvelle partie » (choix « Forme de la galaxie », « Au hasard » p
   déterminisme, densité, Gabriel sans croisement, refus hors v0.12),
   `tests/integration/test_galaxy_shapes_db.py` (PostgreSQL : choix transmis, layout servi),
   `galaxy/shape.test.ts` (parité du bruit et de la densité).
+
+## Infobulle, menu contextuel et en-tête allégé (11/11/2026)
+
+Fin du portage du `carte-galaxie.html` : au survol à la souris, une infobulle donne nom, statut,
+contrôle connu, planètes, opportunités (et signaux à prospecter), vos flottes et la distance en
+sauts (décorative, `aria-hidden` : les mêmes faits sont dans le nom accessible et la fiche). Le
+menu contextuel prend le style de la référence (pastille d’étoile, flèche vers le système,
+apparition douce, actions avec pictogramme par type). L’en-tête de la page Galaxie tient sur une
+ligne : titre et sous-titre à gauche, recherche, bascule compacte Commandement/Classique,
+Empire et date des connaissances, Actualiser à droite ; la vue « Influence » (backend
+nécessaire) rejoint les interrupteurs désactivés de la carte.

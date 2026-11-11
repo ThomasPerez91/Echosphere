@@ -79,7 +79,7 @@ test("mount reads both projections of the same Empire only; selecting a system s
   const urls = calls().map(([u]) => u);
   expect(urls).toContain(`/api/game/${universe}/galaxy/${first.id}`);
   expect(urls).toContain(`/api/game/${universe}/fleets/${first.id}`);
-  expect(screen.getByText(`Empire : ${first.name}`)).toBeVisible();
+  expect(screen.getByText(new RegExp(`^${first.name} · connaissances au`))).toBeVisible();
 });
 
 test("the Fleet projection follows the map's Empire; switching Empire re-reads both, never mixes them", async () => {

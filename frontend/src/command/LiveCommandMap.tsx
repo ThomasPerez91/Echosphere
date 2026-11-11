@@ -31,8 +31,8 @@ export function LiveCommandMap({ universe, enabled, csrf, onSessionLost, onEcono
     {galaxy.empires.length > 1 ? <label className="galaxy-field">Empire
       <select value={galaxy.selectedEmpire} disabled={galaxy.pending || fleets.pending} onChange={(e) => galaxy.select(e.target.value)}>
         {galaxy.empires.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
-      </select></label> : <span className="panel-meta">Empire : {g.empire.name}</span>}
-    <span className="panel-meta">Connaissances au {time(g.server_time)}</span>
+      </select></label> : null}
+    <span className="panel-meta cmd-meta">{galaxy.empires.length > 1 ? "" : `${g.empire.name} · `}connaissances au {time(g.server_time)}</span>
     <Button onClick={() => { galaxy.refresh(); fleets.refresh(); }} disabled={fleets.pending}>Actualiser</Button>
   </>;
   const toolbar = <div className="cmd-toolbar">{extra}{controls}</div>;

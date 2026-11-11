@@ -3,7 +3,7 @@ import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from "reac
 import { GalaxyCanvas } from "../galaxy/GalaxyCanvas";
 import type { Scene } from "../galaxy/render";
 import type { MissionView } from "../fleet/api";
-import { missionPosition, missionRoute, missionRouteLabel, point, stationed, systemName } from "./model";
+import { missionPosition, missionRoute, missionRouteLabel, point, stationed, systemFacts, systemName } from "./model";
 import type { Point, World } from "./model";
 
 export type RoutePreview = { from: string; to: string; path?: string[] };
@@ -29,6 +29,34 @@ function tint(id: string) {
 }
 
 const stateLabel = { DETECTED: "Détecté", MAPPED: "Cartographié", MONITORED: "Surveillé" } as const;
+
+/**
+ * Infobulle au survol (référence carte-galaxie.html, 11/11/2026): name, status, control, worlds,
+ * opportunities, own fleets and distance of a system under the mouse pointer. Mouse only and
+ * decorative (aria-hidden): the same facts are in the system's accessible name and its fiche.
+ */
+function Tip({ world, id, x, y, width, height, foreign }: {
+  world: World; id: string; x: number; y: number; width: number; height: number; foreign: number[];
+}) {
+  const s = world.galaxy.systems.find((v) => v.id === id);
+  if (!s) return null;
+  const known = s.state !== "DETECTED";
+  const f = systemFacts(world, id);
+  const own = !!s.observation?.own_colony_ids.length;
+  const opportunities = f.deposits.length + f.curiosities.length;
+  const left = x + 250 > width ? x - 18 - 230 : x + 18, top = y + 170 > height ? Math.max(8, y - 170) : y + 14;
+  const line = (label: string, value: string, tone?: string) =>
+    <div className="cmd-tip-line"><span>{label}</span><b className={tone}>{value}</b></div>;
+  return <div className="cmd-tip" aria-hidden="true" style={{ left, top }}>
+    <div className="cmd-tip-name"><span className="cmd-dot" style={{ background: known ? tint(id) : "var(--map-detected)" }} />{systemName(world, id)}</div>
+    {line("Statut", own ? "Votre colonie" : stateLabel[s.state], own ? "is-own" : undefined)}
+    {line("Contrôle", own ? "Votre Empire" : foreign.length ? foreign.map((n) => `Empire ${n}`).join(", ") : known ? "Inconnu" : "?", foreign.length ? "is-foreign" : undefined)}
+    {line("Planètes", known ? String(f.planets.length) : "?")}
+    {line("Opportunités", !known ? "?" : f.signatures === null && !opportunities ? "—" : `${opportunities}${f.signatures ? ` + ${f.signatures} signal${f.signatures > 1 ? "s" : ""}` : ""}`)}
+    {line("Vos flottes", String(f.fleets.length))}
+    {line("Distance", f.distance ? (f.distance.hops === 0 ? "Ici" : `${f.distance.hops} saut${f.distance.hops > 1 ? "s" : ""}`) : "?")}
+  </div>;
+}
 
 /**
  * Galaxy command map (look of docs/visual-reference/galaxy-map.png): starfield, glowing systems
@@ -86,6 +114,13 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
     return { x: x - (cw - w) / 2, y: y - (ch - h) / 2, w: cw, h: ch };
   }, [far, full.x, full.y, full.w, full.h]); // eslint-disable-line react-hooks/exhaustive-deps
   const [view, setView] = useState<View>(full);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState<{ id: string; x: number; y: number } | null>(null);
+  const hovering = (id: string) => (e: PointerEvent<SVGGElement>) => {
+    if (e.pointerType !== "mouse" || drag.current) { if (hover) setHover(null); return; }
+    const r = frameRef.current?.getBoundingClientRect();
+    if (r) setHover({ id, x: e.clientX - r.left, y: e.clientY - r.top });
+  };
   const drag = useRef<{ x: number; y: number; view: View } | null>(null);
   useEffect(() => {
     if (focus) setView((v) => ({ ...v, x: focus.x - v.w / 2, y: focus.y - v.h / 2 }));
@@ -174,6 +209,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
     return () => node.removeEventListener("wheel", wheel);
   }, [full.w, full.h, galaxy.w]);
   const down = (e: PointerEvent<SVGSVGElement>) => {
+    setHover(null);
     if ((e.target as Element).closest(".cmd-system")) return;
     drag.current = { x: e.clientX, y: e.clientY, view };
     svg.current?.setPointerCapture?.(e.pointerId);
@@ -205,7 +241,7 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
     return { left, top, flip: left > rendered.width * 0.6, up, room: Math.max(160, (up ? top : rendered.height - top) - 12) };
   })() : null;
 
-  return <div className={`cmd-map-frame${backdrop ? " has-backdrop" : ""}${picking ? " is-picking" : ""}`}
+  return <div ref={frameRef} className={`cmd-map-frame${backdrop ? " has-backdrop" : ""}${picking ? " is-picking" : ""}`}
     onContextMenu={picking ? (e) => { e.preventDefault(); onCancelPick?.(); } : undefined}>
     {picking && <div className="cmd-pick-watermark" aria-hidden="true">Choisir une destination</div>}
     {overlay}
@@ -264,7 +300,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
         const big = selected === s.id || own.has(s.id);
         return <g key={s.id} role="button" tabIndex={0} aria-pressed={selected === s.id} aria-label={label}
           className={`cmd-system cmd-system--${state}${selected === s.id ? " is-selected" : ""}${visible(s.id) ? "" : " is-dimmed"}`}
-          onClick={() => onSelect(s.id)} onKeyDown={key(s.id)}>
+          onClick={() => { setHover(null); onSelect(s.id); }} onKeyDown={key(s.id)}
+          onPointerEnter={hovering(s.id)} onPointerMove={hovering(s.id)} onPointerLeave={() => setHover(null)}>
           <g transform={`translate(${s.x} ${s.y}) scale(${scale})`}><circle r={16} className="cmd-hit" /></g>
           <g transform={`translate(${s.x} ${s.y}) scale(${scale * kz})`}>
             <circle r={big ? 26 : 14} fill="url(#cmd-glow)" className="cmd-halo" />
@@ -314,6 +351,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
       <rect x={view.x} y={view.y} width={view.w} height={view.h} className="cmd-mini-view" />
     </svg>
 
+    {hover && hover.id !== selected && frameRef.current && <Tip world={world} id={hover.id} x={hover.x} y={hover.y}
+      width={frameRef.current.clientWidth} height={frameRef.current.clientHeight} foreign={foreign.get(hover.id) ?? []} />}
     {menu && (anchor ? <div className={`cmd-ctx${anchor.flip ? " is-flipped" : ""}${anchor.up ? " is-up" : ""}`} style={{ left: anchor.left, top: anchor.top, "--ctx-max": `${Math.round(anchor.room)}px` } as CSSProperties}>{menu}</div>
       : <div className="cmd-ctx is-docked">{menu}</div>)}
 

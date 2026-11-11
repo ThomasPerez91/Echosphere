@@ -7,6 +7,8 @@ import { FleetWindow, PickBar } from "./FleetWindow";
 import { MissionPlanner } from "./MissionPlanner";
 import { StarMap } from "./StarMap";
 import { SystemBrief } from "./SystemBrief";
+import { ActionGlyph } from "./ActionGlyph";
+import { starTint } from "../galaxy/render";
 import type { MapFilter } from "./StarMap";
 import { defaultUnits, isGarrison, knownHops, missionPosition, opportunityNames, offers, point, stationed, systemName } from "./model";
 import type { ActionOffer, FleetLine, World } from "./model";
@@ -146,12 +148,13 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
     : available.length === 0 ? <p>Aucune action de flotte possible ici.</p> : <ul className="cmd-actions">{available.map((o, i) =>
       <li key={`${o.kind}-${o.planet ?? ""}`}>
         <button type="button" className={`button cmd-action${i === available.findIndex((x) => !x.reason) ? " button--primary" : ""}`} disabled={!!o.reason}
-          aria-describedby={`hint-${o.kind}-${o.planet ?? "s"}`} onClick={() => start(o)}>{o.label}</button>
+          aria-describedby={`hint-${o.kind}-${o.planet ?? "s"}`} onClick={() => start(o)}><ActionGlyph kind={o.kind} />{o.label}</button>
         <p id={`hint-${o.kind}-${o.planet ?? "s"}`} className="cmd-help">{o.reason ?? o.hint}</p>
       </li>)}</ul>}</>;
   const survey = available.find((o) => o.kind === "SURVEY" && !o.reason);
   const menu = desktop && target && !intent && !menuHidden ? <section className="cmd-ctx-card" aria-labelledby="cmd-ctx-title">
-    <div className="cmd-ctx-head"><div><strong id="cmd-ctx-title">{systemName(world, target.id)}</strong><small>{own(target.id) ? "Votre colonie" : stateName(target.state)}</small></div>
+    <div className="cmd-ctx-head"><div><strong id="cmd-ctx-title"><span className="cmd-dot" aria-hidden="true"
+      style={{ background: target.state === "DETECTED" ? "var(--map-detected)" : `rgb(${starTint(target.id).join(",")})` }} />{systemName(world, target.id)}</strong><small>{own(target.id) ? "Votre colonie" : stateName(target.state)}</small></div>
       <button type="button" className="cmd-ctx-close" aria-label="Fermer le menu du système" onClick={() => setMenuHidden(true)}>×</button></div>
     <SystemBrief world={world} system={target.id} />
     <h3>Actions possibles</h3>
@@ -161,21 +164,18 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
 
   return <div className="cmd-command">
     <header className="cmd-page-head">
-      <div><h1 id="cmd-map-title" className="cmd-page-title" tabIndex={-1}>{title}</h1>
-        <p><strong>Carte stratégique</strong> {subtitle ?? "des systèmes connus de votre Empire"}. Touchez un système pour voir ce que vous en savez et ce que vos flottes peuvent y faire.</p></div>
-      <form className="cmd-search" role="search" onSubmit={(e) => { e.preventDefault(); find(search); }}>
-        <label className="visually-hidden" htmlFor="cmd-search-input">Rechercher un système connu</label>
-        <input id="cmd-search-input" type="search" placeholder="Rechercher un système…" value={search}
-          onChange={(e) => { setSearch(e.target.value); setSearchMiss(false); }} aria-describedby="cmd-search-help" />
-        <button type="submit" className="button">Chercher</button>
-        <span id="cmd-search-help" className="cmd-help" aria-live="polite">{searchMiss ? "Aucun système connu de ce nom." : ""}</span>
-      </form>
-      <label className="cmd-view-select">Vue
-        <select value="knowledge" onChange={() => undefined}>
-          <option value="knowledge">Connaissance</option>
-          <option value="influence" disabled>Influence (implémentation backend nécessaire)</option>
-        </select></label>
-      {toolbar}
+      <div className="cmd-page-id"><h1 id="cmd-map-title" className="cmd-page-title" tabIndex={-1}>{title}</h1>
+        <p><strong>Carte stratégique</strong> {subtitle ?? "des systèmes connus de votre Empire"}</p></div>
+      <div className="cmd-page-tools">
+        <form className="cmd-search" role="search" onSubmit={(e) => { e.preventDefault(); find(search); }}>
+          <label className="visually-hidden" htmlFor="cmd-search-input">Rechercher un système connu</label>
+          <input id="cmd-search-input" type="search" placeholder="Rechercher un système…" value={search}
+            onChange={(e) => { setSearch(e.target.value); setSearchMiss(false); }} aria-describedby="cmd-search-help" />
+          <button type="submit" className="button">Chercher</button>
+          <span id="cmd-search-help" className="cmd-help" aria-live="polite">{searchMiss ? "Aucun système connu de ce nom." : ""}</span>
+        </form>
+        {toolbar}
+      </div>
     </header>
     <section className="cmd-map-panel" aria-labelledby="cmd-map-title" ref={mapPanel}>
       {notice && <p className="cmd-notice" role="status">{notice}<button type="button" className="button cmd-ghost" onClick={() => setNotice(null)}>Fermer</button></p>}
@@ -190,8 +190,9 @@ export function CommandMap({ world, now, api, pending = false, feedback = null, 
           {([["Routes", showRoutes, setShowRoutes], ["Noms", showNames, setShowNames], ["Légende", showLegend, setShowLegend]] as const).map(([label, on, set]) =>
             <button key={label} type="button" role="switch" aria-checked={on} className="cmd-switch" onClick={() => set(!on)}>
               {label}<span className="cmd-switch-track" aria-hidden="true"><span /></span></button>)}
-          <button type="button" role="switch" aria-checked={false} className="cmd-switch is-pending" disabled title="Régions : implémentation backend nécessaire">
-            Régions<span className="cmd-switch-track" aria-hidden="true"><span /></span></button>
+          {([["Régions", "Régions"], ["Influence", "Vue d’influence"]] as const).map(([label, what]) =>
+            <button key={label} type="button" role="switch" aria-checked={false} className="cmd-switch is-pending" disabled title={`${what} : implémentation backend nécessaire`}>
+              {label}<span className="cmd-switch-track" aria-hidden="true"><span /></span></button>)}
         </div>
       </div>
       <StarMap world={world} selected={selected} onSelect={moving ? pick : select} missions={missions} now={now}
