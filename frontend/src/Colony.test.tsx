@@ -323,7 +323,7 @@ test('the Défense tab shows the network, the module states and repairs a damage
   const network = (await screen.findByRole('heading', { name: 'Réseau défensif' })).closest('section')!;
   expect(network.textContent).toMatch(/2 \/ 2 modules/);
   expect(network.textContent).toMatch(/Endommagé/);
-  expect(network.textContent).toMatch(/Emplacement orbital 1/);
+  expect(network.textContent).toMatch(/Orbite 1/);
   expect(screen.getByRole('button', { name: 'Construire Canon anti-vaisseaux' })).toBeEnabled();
   fireEvent.click(screen.getByRole('button', { name: 'Réparer Batterie de défense ponctuelle' }));
   await waitFor(() => expect(posts(fetcher)).toHaveLength(1));
