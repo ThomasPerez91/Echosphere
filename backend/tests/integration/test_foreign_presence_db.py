@@ -7,6 +7,7 @@ import pytest
 from sqlalchemy import select
 from test_colony_api import game  # noqa: F401
 from test_combat import arm, attack, launched, planet_of, resolve_due, until_battle
+from test_contested_extraction import settle
 from test_fleet import fleets  # noqa: F401
 from test_relations import REL, pacted, reenter, rivals
 
@@ -59,6 +60,9 @@ def test_the_target_of_an_own_attack_is_known_from_the_report_as_hostile(fleets)
     arm(b, {"interceptor": 1}, kind="GARRISON")
     mission_id, _ = launched(a, attack(a, strike, planet, {"frigate": 2}))
     until_battle(a, mission_id)
+    # v0.12 has frontier presence: its entries rank before the battle (same as EXP-02c tests).
+    reenter(a, b)
+    settle(a, b)
     assert resolve_due(a)["outcome"] in {"attacker_win", "defender_win", "mutual_destruction"}
     reenter(a, b)
     item = next(i for i in galaxy(a)["foreign"] if i["planet_id"] == str(planet))
