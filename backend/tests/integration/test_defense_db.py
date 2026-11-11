@@ -75,8 +75,9 @@ def test_modules_are_built_on_real_sectors_and_slots_within_the_network(fleets):
     assert build(w, "orbital_platform", ORBITAL_BASE + 1).status_code in (200, 201)
     full = build(w, "anti_ship_battery", 10)
     assert full.status_code == 409 and full.json()["error"]["code"] == "defense_capacity_full"
-    w.advance(hours=3)
+    w.advance(hours=2)  # 20 + 40 min of work; a longer wait would outlive the idle session
     after = colony(w)
+    assert "defense" in after, after
     modules = {m["sector_index"]: m for m in after["defense"]["modules"]}
     assert modules[9]["condition"] == "operational"
     assert modules[ORBITAL_BASE + 1]["condition"] == "operational"

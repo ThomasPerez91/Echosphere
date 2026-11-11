@@ -47,6 +47,11 @@ def quote_view(quote: Quote) -> dict:
 
 def option(rules, state, permissions, bonus, *, action, kind, sector, level) -> dict:
     quote = construction_quote(rules, state, kind, level)
+    if action == "repair":
+        # DEF-01: a repair costs its share of the module, as `plan_order` will charge it.
+        from app.defense.service import repair_quote
+
+        quote = repair_quote(rules.defense, quote)
     try:
         if sector is None:
             raise ColonyError("No free sector", "sector_unavailable")
