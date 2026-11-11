@@ -61,8 +61,8 @@ function ModuleOption({ colony, data, option, canBuild }: { colony: Colony; data
         </select></label>}
       {canBuild && <button type="button" className={`d-btn d-btn-block${option.available ? ' d-primary' : ''}`}
         disabled={!option.available || !!colony.pending || !chosen} aria-describedby={option.reason ? describe : undefined}
-        onClick={() => { void colony.command(command); }}>
-        <Ico name={option.available ? 'act-construire' : 'act-verrouille'} /><span>Construire {label}</span></button>}
+        aria-label={`Construire ${label}`} onClick={() => { void colony.command(command); }}>
+        <Ico name={option.available ? 'act-construire' : 'act-verrouille'} /><span>Construire</span></button>}
       {option.reason && <p id={describe} className="reason">{option.reason === 'prerequisites_unmet'
         ? `Débloqué par : ${(option.requires ?? []).map(r => `${infrastructureLabel(r.infrastructure_type)} niveau ${r.level}`).join(', ')}.`
         : reasonLabel(option.reason)}</p>}
@@ -133,7 +133,7 @@ export function DefenseTab({ colony, data }: { colony: Colony; data: Projection 
     </section>
     <section className="d-card d-panel" aria-labelledby="defbuild-title">
       <PanelHead id="defbuild-title" icon="icons/defense/production-defensive.svg" title="Construire un module">
-        <span className="d-queue-count">{data.sectors.free} secteur{data.sectors.free > 1 ? 's' : ''} · {d.orbital.free_indices.length} emplacement{d.orbital.free_indices.length > 1 ? 's' : ''} orbitaux libres</span></PanelHead>
+        <span className="d-queue-count">{data.sectors.free} secteur{data.sectors.free > 1 ? 's' : ''} · {d.orbital.free_indices.length} emplacement{d.orbital.free_indices.length > 1 ? 's orbitaux libres' : ' orbital libre'}</span></PanelHead>
       <ul className="d-build-grid option-grid">{builds.map(option => <ModuleOption key={option.infrastructure_type} colony={colony} data={data} option={option} canBuild={canBuild} />)}</ul>
     </section>
     <div className="d-grid-def">

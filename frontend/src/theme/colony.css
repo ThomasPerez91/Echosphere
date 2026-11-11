@@ -386,3 +386,8 @@
 .d-colony .d-def-module.is-disabled{opacity:.8}
 .d-colony .d-def-card.is-locked{opacity:.85}
 @media (max-width:640px){.d-colony .d-def-net{grid-template-columns:1fr}.d-colony .d-def-net>img{width:88px;height:88px}}
+.d-colony .d-bcard.d-def-card{grid-template-columns:1fr}
+.d-colony .d-bcard.d-def-card>img{width:100%;height:150px}
+.d-colony .d-built.d-def-module{grid-template-columns:96px minmax(0,1fr)}
+.d-colony .d-built.d-def-module>.d-built-next,.d-colony .d-built.d-def-module>.d-btn{grid-column:1/-1}
+.d-colony .d-built.d-def-module>.d-btn{justify-self:start}
