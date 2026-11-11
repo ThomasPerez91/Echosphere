@@ -99,7 +99,8 @@ export function StarMap({ world, selected, onSelect, preview, missions, now, fil
     systems: systems.map((s) => ({ id: s.id, x: s.x, y: s.y, state: s.state, own: !!s.observation?.own_colony_ids.length, capital: s.id === capital })),
     routes: world.galaxy.routes.map((r) => ({ a: r.a_id, b: r.b_id })),
     ...(far.length ? { extent: galaxy } : {}),
-  }), [systems, world.galaxy.routes, capital, far.length, galaxy]);
+    ...(world.galaxy.layout ? { layout: world.galaxy.layout } : {}),
+  }), [systems, world.galaxy.routes, capital, far.length, galaxy, world.galaxy.layout]);
   const here = new Map<string, number>();
   for (const f of stationed(world)) if (f.system) here.set(f.system.id, (here.get(f.system.id) ?? 0) + 1);
   const own = new Set(systems.filter((s) => s.observation?.own_colony_ids.length).map((s) => s.id));

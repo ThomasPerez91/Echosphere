@@ -33,6 +33,8 @@ EMPIRE_CAPS = {100: 4, 300: 12, 500: 20, 1000: 40, 2000: 40}
 DEFAULT_SIZE = 100
 MAX_HUMANS, MAX_AI = 10, 30
 INVITE_MODES = frozenset(("link", "email"))
+# Galaxy shapes (ruleset v0.12, recette 11/11/2026); `random` lets Game draw one from the seed.
+GALAXY_SHAPES = frozenset(("random", "elliptical", "spiral2", "spiral4", "irregular", "clusters"))
 
 
 # Delivery errors after which the Game answered but refused the start: retries go on (at-least-once
@@ -65,7 +67,8 @@ def creation_request(body):
     # Q60: the creator may name their Empire; optional so earlier clients keep working.
     # Q61: the map size is optional (100 systems by default).
     # Test game (recette 10/11/2026): optional, solo only, refused in production by `create`.
-    optional = {"empire_name", "size", "sandbox"}
+    # Galaxy shape (recette 11/11/2026): optional, any family.
+    optional = {"empire_name", "size", "sandbox", "shape"}
     if set(body) - optional != (base if family == "solo" else base | {"humans", "invite"}):
         raise PublicError("invalid_creation")
     humans = 1 if family == "solo" else body["humans"]
@@ -103,6 +106,10 @@ def creation_request(body):
             raise PublicError("invalid_creation")
         if body["sandbox"]:
             wanted["sandbox"] = True
+    if "shape" in body:
+        if body["shape"] not in GALAXY_SHAPES:
+            raise PublicError("invalid_creation")
+        wanted["shape"] = body["shape"]
     if "empire_name" in body:
         from portal_app.control.life import empire_name
 
@@ -244,6 +251,8 @@ class Lobby:
                 options["empire_name"] = wanted["empire_name"]
             if wanted.get("sandbox"):
                 options["sandbox"] = True
+            if "shape" in wanted:
+                options["shape"] = wanted["shape"]
             if existing is not None:
                 if existing.name != wanted["name"] or existing.start_request != options:
                     raise PublicError("creation_request_conflict", 409)
@@ -273,6 +282,8 @@ class Lobby:
                 message["humans"] = wanted["humans"]
             if wanted.get("sandbox"):
                 message["sandbox"] = True
+            if "shape" in wanted:
+                message["shape"] = wanted["shape"]
             enqueue(session, target, message, now, universe_id=identifier)
             return {"universe_id": str(identifier), "status": "starting"}
 

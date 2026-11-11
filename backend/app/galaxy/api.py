@@ -19,6 +19,7 @@ from app.galaxy.models import (
     GalaxySystem,
     RouteKnowledge,
     SystemKnowledge,
+    UniverseGalaxy,
 )
 from app.persistence.models import Colony, Empire, Planet, Universe
 from app.research import service as research
@@ -206,12 +207,20 @@ class Galaxy(Colonies):
                 )
             ],
             **sandbox_presences(session, universe_id, empire_id),
+            # Shaped galaxy (v0.12): the density it was drawn from, for the backdrop only. Every
+            # star is already visible as a point, the layout reveals nothing more.
+            **self.layout(session, universe_id),
             "sources": sources,
             "options": options,
             "missions": self.missions_projection(session, universe_id, empire_id, permissions)
             if "exploration.read" in permissions
             else [],
         }
+
+    @staticmethod
+    def layout(session, universe_id):
+        manifest = session.get(UniverseGalaxy, universe_id)
+        return {"layout": manifest.layout} if manifest is not None and manifest.layout else {}
 
     def missions_projection(self, session, universe_id, empire_id, permissions):
         result = []

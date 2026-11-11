@@ -1,5 +1,7 @@
 import { ApiError } from "../colony/api";
 import type { Amounts } from "../colony/api";
+import { validLayout } from "./shape";
+import type { Layout } from "./shape";
 export { ApiError };
 
 export type Empire = { id: string; name: string };
@@ -74,6 +76,8 @@ export type Projection = {
   stars?: [number, number][];
   /** Test game only: every foreign Colony with an anonymous Empire number (never a name). */
   sandbox?: { presences: Presence[] };
+  /** Shaped galaxy (v0.12): the density of the backdrop, decorative only. */
+  layout?: Layout;
   sources: { id: string; name: string; stocks: Amounts }[];
   options: Option[];
   missions: Mission[];
@@ -164,6 +168,7 @@ export function validProjection(value: unknown, empire: string): value is Projec
     (!(value.permissions as string[]).includes("colony.read") && (value.systems as KnownSystem[]).some((s) => s.observation)) ||
     !list(value.routes, route) ||
     ("stars" in value && !list(value.stars, (p) => Array.isArray(p) && p.length === 2 && p.every((c) => typeof c === "number" && Number.isFinite(c)))) ||
+    ("layout" in value && !validLayout(value.layout)) ||
     ("sandbox" in value && !(object(value.sandbox) && list(value.sandbox.presences, (p) => object(p) && integer(p.empire) && id(p.system_id) && id(p.planet_id)))) ||
     !list(value.sources, (s) => object(s) && id(s.id) && typeof s.name === "string" && amounts(s.stocks)) ||
     !list(

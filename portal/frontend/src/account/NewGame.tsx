@@ -16,6 +16,16 @@ const AI_LABELS: Record<Profile, string> = { economic_cautious: 'IA prudentes', 
 const SIZES = [[100, 4], [300, 12], [500, 20], [1000, 40], [2000, 40]] as const;
 const MAX_HUMANS = 10, MAX_AI = 30;
 const grouped = (n: number) => n >= 1000 ? `${Math.floor(n / 1000)} ${String(n % 1000).padStart(3, '0')}` : String(n);
+/** Galaxy shapes (recette 11/11/2026, reference carte-galaxie.html); `random`: Game draws one. */
+const SHAPES = [
+  ['random', 'Au hasard', 'Une forme tirée au sort à la création.'],
+  ['spiral2', 'Spirale à 2 bras', 'Deux longs bras autour d’un noyau dense.'],
+  ['spiral4', 'Spirale à 4 bras', 'Quatre bras plus courts, plus de frontières.'],
+  ['elliptical', 'Elliptique', 'Un disque compact, dense au centre.'],
+  ['irregular', 'Irrégulière', 'Des contours déchiquetés et des poches isolées.'],
+  ['clusters', 'Amas d’étoiles', 'Des amas reliés par quelques longues routes.'],
+] as const;
+type Shape = typeof SHAPES[number][0];
 const capOf = (size: number) => SIZES.find(([s]) => s === size)?.[1] ?? 4;
 
 const errors: Record<string, string> = {
@@ -44,6 +54,7 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
   const fresh = () => { requestId.current = crypto.randomUUID(); };
   // Q61: galaxy size; players + AI never exceed its Empire cap.
   const [size, setSize] = useState(100);
+  const [shape, setShape] = useState<Shape>('random');
   const [counts, setCounts] = useState<Record<Profile, number>>({ economic_cautious: 1, expansionist: 1 });
   const [family, setFamily] = useState<'solo' | 'private' | 'test'>('solo');
   const [humans, setHumans] = useState(2);
@@ -90,9 +101,9 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
       const response = await fetch('/api/lobby/universes', { method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
         body: JSON.stringify(family === 'private'
-          ? { request_id: requestId.current, name: trimmed, family, size, profiles: opponents, humans, invite, ...named }
+          ? { request_id: requestId.current, name: trimmed, family, size, shape, profiles: opponents, humans, invite, ...named }
           // Test game: a solo game whose world starts almost finished, with the sandbox tools.
-          : { request_id: requestId.current, name: trimmed, family: 'solo', size, profiles: opponents, ...named, ...(family === 'test' ? { sandbox: true } : {}) }),
+          : { request_id: requestId.current, name: trimmed, family: 'solo', size, shape, profiles: opponents, ...named, ...(family === 'test' ? { sandbox: true } : {}) }),
         signal: AbortSignal.timeout(10000) });
       if (response.status === 401) { onExpired?.(); return; }
       if (response.status === 404) { setError('Ce serveur ne sait pas encore créer de partie (mise à jour du Portal nécessaire).'); return; }
@@ -128,6 +139,16 @@ export function NewGame({ csrf, onCreated, onExpired }: { csrf: string; onCreate
             {grouped(systems)} systèmes<small>jusqu’à {empires} Empires</small></label>)}
         </div>
         <p className="p-account-help">Chaque Empire démarre avec un système et sa colonie de base. Impasses et passages obligés font des goulots d’étranglement à tenir.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Forme de la galaxie</legend>
+        <div className="p-choice-row" role="radiogroup" aria-label="Forme de la galaxie">
+          {SHAPES.map(([id, label, help]) => <label key={id} className={`p-choice${shape === id ? ' is-on' : ''}`}>
+            <input type="radio" name="shape" checked={shape === id} onChange={() => { setShape(id); fresh(); }} />
+            {label}<small>{help}</small></label>)}
+        </div>
+        <p className="p-account-help">Les systèmes se répartissent selon la forme ; les départs restent équitables quelle que soit la forme.</p>
       </fieldset>
 
       <fieldset>

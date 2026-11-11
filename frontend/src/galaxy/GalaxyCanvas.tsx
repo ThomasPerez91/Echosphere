@@ -14,7 +14,7 @@ export function GalaxyCanvas({ scene, view, labels = true, routes = true, select
   className?: string; label?: string;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const key = useMemo(() => JSON.stringify([scene.systems.map(s => [s.id, s.x, s.y, s.state, s.own, s.capital]), scene.routes, scene.extent]), [scene]);
+  const key = useMemo(() => JSON.stringify([scene.systems.map(s => [s.id, s.x, s.y, s.state, s.own, s.capital]), scene.routes, scene.extent, scene.layout]), [scene]);
   // Textures depend on the Knowledge only (not on fleets, labels or the view).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const textures = useMemo(() => (jsdom ? null : buildTextures(scene)), [key]);

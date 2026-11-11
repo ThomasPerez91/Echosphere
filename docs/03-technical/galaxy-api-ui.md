@@ -142,3 +142,31 @@ chevauchement, anneau fin de statut, couleur d’étoile **cosmétique** dériv�
 valeur de jeu), routes en pointillés, zoom à la molette sous le pointeur, légende masquable, carte
 sur toute la largeur. Les nouvelles galaxies v0.12 nomment leurs systèmes par syllabes
 (`naming: syllables`, flux aléatoire séparé : le reste de la génération est inchangé).
+
+## Formes de galaxie (11/11/2026)
+
+Demande de l’utilisateur du 11/11 : les formes du `carte-galaxie.html` à la création. Ruleset
+**v0.12** seulement (`galaxy.shapes`, extension omise sinon) : elliptique, spirale à 2 ou 4 bras,
+irrégulière, amas d’étoiles, ou « au hasard » (forme tirée du seed). `start_universe.shape` est
+facultatif (omis : grille historique, digests et reçus antérieurs inchangés) ; Portal le transmet
+depuis « Nouvelle partie » (choix « Forme de la galaxie », « Au hasard » par défaut).
+
+- Génération (`app/galaxy/shapes.py`) : densité de la référence sur un disque normalisé incliné
+  (aplatissement 0,74), paramètres tirés en entiers (millièmes) ; étoiles tirées selon la densité
+  avec distance minimale (`min_separation` toujours respectée), étoiles isolées retirées et
+  retirées ailleurs ; routes candidates = graphe de Gabriel (planaire, jusqu’à
+  `shapes.max_route_length` = 600) plus quelques liaisons longues joignant les amas
+  (`shapes.max_link_length` = 4 000). Les longueurs sont visuelles : le trajet compte des sauts.
+- Le reste de galaxy-v2 est inchangé : régions, arbre presque minimal dans chaque région,
+  impasses, goulots entre régions, départs équitables validés par `validate_v2` ; une forme
+  ajoute des régions de réserve (bras fins) et peut renforcer un départ en carrefour (3 routes).
+- Persistance : `universe_galaxies.layout` (migration 0022, JSONB nullable) ; la projection
+  Galaxie expose `layout` (forme, centre, rayon, paramètres) pour le fond de carte. Aucune fuite :
+  toutes les étoiles sont déjà visibles comme points.
+- Fond (`frontend/src/galaxy/shape.ts`) : même densité que le serveur (bruit identique, testé des
+  deux côtés), palette et rendu de la référence (bras, noyau, bandes de poussière, régions HII,
+  amas), brouillard plus léger. Les galaxies sans forme gardent la nébuleuse générique.
+- Tests : `tests/test_galaxy_shapes.py` (chaque forme valide en 100 et 300 systèmes,
+  déterminisme, densité, Gabriel sans croisement, refus hors v0.12),
+  `tests/integration/test_galaxy_shapes_db.py` (PostgreSQL : choix transmis, layout servi),
+  `galaxy/shape.test.ts` (parité du bruit et de la densité).

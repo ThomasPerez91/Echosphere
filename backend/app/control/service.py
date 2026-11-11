@@ -174,6 +174,7 @@ class Control:
                 humans=message.humans,
                 size=message.size,
                 sandbox=message.sandbox,
+                shape=message.shape,
             )
         except IdempotencyConflict:
             raise ControlError("universe_content_conflict") from None

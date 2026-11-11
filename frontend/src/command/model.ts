@@ -9,6 +9,7 @@
  * never anything taken automatically from a garrison.
  */
 import type { KnownSystem, Route } from "../galaxy/api";
+import type { Layout } from "../galaxy/shape";
 import type { FleetProjection, FleetView, MissionKind, MissionView } from "../fleet/api";
 import type { CommandQuote } from "./types";
 
@@ -42,7 +43,9 @@ export const opportunityNames: Record<string, string> = {
 
 export type World = { fleets: FleetProjection; galaxy: { systems: KnownSystem[]; routes: Route[]; stars?: [number, number][];
   /** Test game only: foreign Colonies by anonymous Empire number. */
-  presences?: { empire: number; system_id: string }[] } };
+  presences?: { empire: number; system_id: string }[];
+  /** Shaped galaxy (v0.12): the density it was drawn from, painted as the backdrop. */
+  layout?: Layout } };
 
 const can = (w: World, right: string) => w.fleets.permissions.includes(right);
 export const stationed = (w: World) => (w.fleets.fleets ?? []).filter((f) => f.status === "STATIONED");

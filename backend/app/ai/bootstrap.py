@@ -42,6 +42,7 @@ def bootstrap(
     humans=1,
     size=None,
     sandbox=False,
+    shape=None,
 ):
     """`rules` permits explicit injected test timings, never runtime defaults from fixtures.
     `humans` human Empires (multi, Q59) take the first starting sites, then the AI profiles.
@@ -84,6 +85,12 @@ def bootstrap(
         if humans != 1 or not v2:
             raise AIDenied("invalid_bootstrap_configuration")
         request["sandbox"] = True
+    if shape is not None:
+        # Galaxy shape (v0.12, recette 11/11/2026): galaxy-v2 offering shapes; omitted otherwise
+        # so every earlier receipt replays identically.
+        if not v2 or rules.galaxy.shapes is None:
+            raise AIDenied("invalid_bootstrap_configuration")
+        request["shape"] = shape
     session.execute(
         text("SELECT pg_advisory_xact_lock(:key)"),
         {"key": int.from_bytes(universe_id.bytes[:8], signed=True)},
@@ -114,7 +121,11 @@ def bootstrap(
     if v2:
         # Exactly one starting site per Empire of this game (Équitable placement, Q61).
         generate_world(
-            session, universe_id, system_count=size, starting_site_count=humans + len(profiles)
+            session,
+            universe_id,
+            system_count=size,
+            starting_site_count=humans + len(profiles),
+            shape=shape,
         )
     else:
         generate_world(session, universe_id)

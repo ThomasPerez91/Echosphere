@@ -360,6 +360,26 @@
           "default": false,
           "title": "Sandbox",
           "type": "boolean"
+        },
+        "shape": {
+          "anyOf": [
+            {
+              "enum": [
+                "random",
+                "elliptical",
+                "spiral2",
+                "spiral4",
+                "irregular",
+                "clusters"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shape"
         }
       },
       "required": [

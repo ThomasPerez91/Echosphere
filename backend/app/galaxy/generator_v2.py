@@ -12,6 +12,9 @@ the persistence and every later domain stay unchanged. Construction:
 5. starting sites spread over distinct regions, each with two exits within its zone and an
    identical core zone budget (Équitable placement, Q61).
 
+v0.12 shapes (`shape`, app/galaxy/shapes.py) replace step 1 only: density placement after the
+reference carte-galaxie.html with Gabriel candidate routes; steps 2 to 5 and the acceptance stay.
+
 Acceptance is independent from construction (`validate_v2`): connected graph, bounded degrees, no
 crossing routes inside a lattice square, dead ends and bridges present, starts far enough apart
 and never isolated, identical core zones.
@@ -26,6 +29,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.galaxy.generator import GenerationError, StableRandom, adjacency, canonical, two_exits
+from app.galaxy.shapes import place
 from app.rules_dump import omit_unset_extensions
 
 Positive = Annotated[int, Field(strict=True, gt=0, le=10**6)]
@@ -35,6 +39,18 @@ SIZES = ("100", "300", "500", "1000", "2000")
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+
+class GalaxyShapes(StrictModel):
+    """v0.12 (recette 11/11/2026): shapes offered at creation. Candidate routes reach
+    `max_route_length` (sparse arms); the few links joining what density left apart (clusters)
+    reach `max_link_length`. Travel counts hops, never lengths: both bounds are visual."""
+
+    offered: list[Literal["elliptical", "spiral2", "spiral4", "irregular", "clusters"]] = Field(
+        min_length=1
+    )
+    max_route_length: Positive
+    max_link_length: Positive
 
 
 class GalaxyRulesV2(StrictModel):
@@ -62,7 +78,8 @@ class GalaxyRulesV2(StrictModel):
     # v0.12 (11/11/2026): system names made of syllables, from their own stream so every other
     # generated value is unchanged; omitted (catalogue numbers) in earlier rulesets.
     naming: Literal["syllables"] | None = None
-    serialize_extensions = omit_unset_extensions("naming")
+    shapes: GalaxyShapes | None = None
+    serialize_extensions = omit_unset_extensions("naming", "shapes")
     orbital_capacities: dict[str, Positive]
     useful_sectors: Positive
     useful_orbitals: Annotated[int, Field(strict=True, ge=0, le=10)]
@@ -87,6 +104,12 @@ class GalaxyRulesV2(StrictModel):
                 raise ValueError("Weights require integer keys and total 100")
         if any(not 2 <= int(k) <= 5 for k in self.planet_counts):
             raise ValueError("Invalid planet count")
+        if self.shapes and not (
+            self.max_route_length <= self.shapes.max_route_length <= self.shapes.max_link_length
+        ):
+            raise ValueError("Shaped galaxies keep at least the lattice route length")
+        if self.shapes and len(set(self.shapes.offered)) != len(self.shapes.offered):
+            raise ValueError("Duplicate galaxy shape")
         return self
 
     def empire_cap(self, size: int) -> int:
@@ -205,24 +228,42 @@ def _worlds(random, rules):
     return result
 
 
-def _candidate(random, count, empires, rules):
-    cells = _blob(random, count)
-    index = {cell: i for i, cell in enumerate(cells)}
-    points = [
-        (
-            rules.spacing * (x + 1) + random.below(2 * rules.jitter + 1) - rules.jitter,
-            rules.spacing * (y + 1) + random.below(2 * rules.jitter + 1) - rules.jitter,
-        )
-        for x, y in cells
-    ]
-    pairs = []
-    for i, (x, y) in enumerate(cells):
-        for dx, dy in NEIGHBOURS:
-            j = index.get((x + dx, y + dy))
-            if j is not None:
-                pairs.append((min(i, j), max(i, j)))
+def _candidate(random, count, empires, rules, shape=None):
+    layout = None
+    if shape is None:
+        cells = _blob(random, count)
+        index = {cell: i for i, cell in enumerate(cells)}
+        points = [
+            (
+                rules.spacing * (x + 1) + random.below(2 * rules.jitter + 1) - rules.jitter,
+                rules.spacing * (y + 1) + random.below(2 * rules.jitter + 1) - rules.jitter,
+            )
+            for x, y in cells
+        ]
+        pairs = []
+        for i, (x, y) in enumerate(cells):
+            for dx, dy in NEIGHBOURS:
+                j = index.get((x + dx, y + dy))
+                if j is not None:
+                    pairs.append((min(i, j), max(i, j)))
+
+        def gap(a, b):
+            return abs(cells[a][0] - cells[b][0]) + abs(cells[a][1] - cells[b][1])
+    else:
+        # Shaped galaxy: density placement, Gabriel candidates (planar, nothing to uncross).
+        placed = place(random, count, shape, rules)
+        if placed is None:
+            return None
+        points, pairs, layout = placed
+        cells = None
+
+        def gap(a, b):
+            return (points[a][0] - points[b][0]) ** 2 + (points[a][1] - points[b][1]) ** 2
     # Regions: farthest-point seeds over lattice distance, then contiguous multi-source growth.
     regions = max(empires, -(-count // rules.region_size))
+    if cells is None:
+        # Thin arms and sparse cluster edges cannot all host a start: spare regions.
+        regions = max(regions, -(-empires * 3 // 2))
     lattice = adjacency(count, pairs)
     seeds = [random.below(count)]
     nearest = _distances(lattice, seeds[0])
@@ -246,6 +287,8 @@ def _candidate(random, count, empires, rules):
     routes = set()
 
     def blocked(a, b):
+        if cells is None:
+            return degree[a] >= rules.max_degree or degree[b] >= rules.max_degree
         (ax, ay), (bx, by) = cells[a], cells[b]
         if abs(ax - bx) == 1 and abs(ay - by) == 1:
             c, d = index.get((ax, by)), index.get((bx, ay))
@@ -267,12 +310,19 @@ def _candidate(random, count, empires, rules):
         return n
 
     def orthogonal(pair):
+        """Preferred candidates: straight lattice links, or short links of a shaped galaxy."""
+        if cells is None:
+            return gap(*pair) <= (rules.spacing * 3 // 2) ** 2
         (ax, ay), (bx, by) = cells[pair[0]], cells[pair[1]]
         return ax == bx or ay == by
 
     inner = [p for p in pairs if owner[p[0]] == owner[p[1]]]
     shuffled = random.shuffle(inner)
-    shuffled.sort(key=lambda p: not orthogonal(p))
+    if cells is None:
+        # Near-minimal spanning tree (lengths jittered): its degrees stay under the cap.
+        shuffled.sort(key=lambda p: gap(*p) * (100 + random.below(60)))
+    else:
+        shuffled.sort(key=lambda p: not orthogonal(p))
     for a, b in shuffled:
         if find(a) != find(b) and not blocked(a, b):
             parent[find(a)] = find(b)
@@ -325,26 +375,38 @@ def _candidate(random, count, empires, rules):
     # Starting sites: spread over regions, then the most central eligible system of each.
     region_nodes = {r: [n for n in range(count) if owner[n] == r] for r in range(regions)}
     chosen_regions = [random.below(regions)]
-    while len(chosen_regions) < empires:
+    while len(chosen_regions) < (empires if cells is not None else regions):
         best = max(
             (r for r in range(regions) if r not in chosen_regions),
             key=lambda r: (
-                min(
-                    abs(cells[seeds[r]][0] - cells[seeds[c]][0])
-                    + abs(cells[seeds[r]][1] - cells[seeds[c]][1])
-                    for c in chosen_regions
-                ),
+                min(gap(seeds[r], seeds[c]) for c in chosen_regions),
                 -r,
             ),
         )
         chosen_regions.append(best)
     sites = []
+
+    def hub(node):
+        """Shaped galaxies: a near-minimal tree branches little, so a candidate site may gain
+        routes to its region neighbours (then to theirs) up to a starting hub; undone on failure."""
+        added = []
+        for centre in [node, *sorted(graph[node], key=lambda o: (gap(node, o), o))]:
+            for other in sorted(lattice[centre], key=lambda o: (gap(centre, o), o)):
+                if degree[centre] >= (3 if centre == node else 2):
+                    break
+                pair = (min(centre, other), max(centre, other))
+                if pair not in routes and owner[other] == r and not blocked(*pair):
+                    add(*pair)
+                    graph[pair[0]].add(pair[1])
+                    graph[pair[1]].add(pair[0])
+                    added.append(pair)
+        return added
+
     for r in chosen_regions:
-        home = cells[seeds[r]]
-        for node in sorted(
-            region_nodes[r],
-            key=lambda n: (abs(cells[n][0] - home[0]) + abs(cells[n][1] - home[1]), n),
-        ):
+        if len(sites) == empires:
+            break
+        for node in sorted(region_nodes[r], key=lambda n: (gap(n, seeds[r]), n)):
+            added = hub(node) if cells is None else []
             zone = set(_zone(graph, node))
             if (
                 degree[node] >= 3
@@ -354,8 +416,18 @@ def _candidate(random, count, empires, rules):
             ):
                 sites.append(node)
                 break
+            for a, b in added:
+                routes.discard((a, b))
+                degree[a] -= 1
+                degree[b] -= 1
+                graph[a].discard(b)
+                graph[b].discard(a)
         else:
+            if cells is None:
+                continue  # a spare region takes its turn
             return None
+    if len(sites) < empires:
+        return None
     # Équitable: identical core zone budget (start home planet fixed), random worlds elsewhere.
     budget = [_worlds(random, rules) for _ in range(rules.min_start_zone_size)]
     budget[0][0] = {"sectors": rules.starting_sectors, "orbitals": rules.starting_orbitals}
@@ -381,11 +453,14 @@ def _candidate(random, count, empires, rules):
                 "planets": [dict(p, name=f"World {i + 1}") for i, p in enumerate(worlds)],
             }
         )
-    return {
+    world = {
         "systems": systems,
         "routes": [list(pair) for pair in sorted(routes)],
         "starting_sites": sorted(sites),
     }
+    if layout is not None:
+        world["layout"] = layout
+    return world
 
 
 SYLLABLES = (
@@ -437,9 +512,9 @@ def validate_v2(world, rules, empires):
                         rules.min_separation**2
                     ):
                         errors.add("separation")
+    longest = rules.shapes.max_link_length if world.get("layout") else rules.max_route_length
     if any(
-        (points[a][0] - points[b][0]) ** 2 + (points[a][1] - points[b][1]) ** 2
-        > rules.max_route_length**2
+        (points[a][0] - points[b][0]) ** 2 + (points[a][1] - points[b][1]) ** 2 > longest**2
         for a, b in routes
     ):
         errors.add("route_length")
@@ -486,7 +561,19 @@ def validate_v2(world, rules, empires):
     return sorted(errors), {"dead_ends": dead_ends, "bridges": len(bridges), "routes": len(routes)}
 
 
-def generate_v2(seed: str, rules: GalaxyRulesV2, *, size=None, empires=None):
+def resolve_shape(seed, rules, shape):
+    """None (lattice blob), an offered shape, or `random`: one offered shape drawn from the seed."""
+    if shape is None:
+        return None
+    offered = rules.shapes.offered if rules.shapes else []
+    if shape == "random" and offered:
+        return offered[StableRandom(["shape", seed]).below(len(offered))]
+    if shape not in offered:
+        raise ValueError("Galaxy shape unavailable")
+    return shape
+
+
+def generate_v2(seed: str, rules: GalaxyRulesV2, *, size=None, empires=None, shape=None):
     size = rules.default_size if size is None else size
     if type(size) is not int or str(size) not in rules.sizes:
         raise ValueError("Invalid generation input")
@@ -496,6 +583,7 @@ def generate_v2(seed: str, rules: GalaxyRulesV2, *, size=None, empires=None):
         1 <= empires <= cap
     ):
         raise ValueError("Invalid generation input")
+    shape = resolve_shape(seed, rules, shape)
     inputs = {
         "seed": seed,
         "galaxy_generator_version": rules.galaxy_generator_version,
@@ -503,9 +591,11 @@ def generate_v2(seed: str, rules: GalaxyRulesV2, *, size=None, empires=None):
         "starting_site_count": empires,
         "data": rules.model_dump(),
     }
+    if shape is not None:
+        inputs["shape"] = shape  # omitted for the lattice blob: earlier inputs stay identical
     failures = {}
     for attempt in range(rules.max_attempts):
-        world = _candidate(StableRandom([inputs, attempt]), size, empires, rules)
+        world = _candidate(StableRandom([inputs, attempt]), size, empires, rules, shape)
         errors, metrics = validate_v2(world, rules, empires) if world else (["layout"], {})
         if not errors:
             digest = hashlib.sha256(canonical(world).encode()).hexdigest()

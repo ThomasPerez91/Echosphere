@@ -1,6 +1,6 @@
 # Progression — Echosphere
 
-Mise à jour : 2026-11-10. [Contexte](context.md), [passation](docs/06-handoff/README.md).
+Mise à jour : 2026-11-11. [Contexte](context.md), [passation](docs/06-handoff/README.md).
 
 ## Reprise rapide — base de recette intégrée (recette/ux-weekend)
 
@@ -18,6 +18,7 @@ Mise à jour : 2026-11-10. [Contexte](context.md), [passation](docs/06-handoff/R
 | Intégré ensuite | #37 EXP-02b EXTRACT (+ retour automatique validé le 09/11), CI verte 651 tests (`78e7a40`) ; #38 retours Portail (`02110db`) ; #39 digest des reçus de contrôle : créations solo bloquées en `invalid_receipt` (Game hachait ses valeurs par défaut) |
 | Intégré (10/11) | #43 COL-11 (ruleset v0.11 : bâtiments clés uniques, Chantier orbital, Centre de recherche, plafond de niveau) ; #44 livraison des vaisseaux une à une et régénération des gisements (migration 0019), CI verte sur `eb94851`, recette avancée à `eb94851` |
 | Intégré (10/11, soir) | #46 refonte DA Flottes/Recherche/Relations/Rapports ; #47 partie de test plus rapide (flottes ×20, préavis 10 min), puissance/coque des flottes, détail des combats, prochain déblocage ; #48 ruleset **v0.12** (paliers de recherche III–IV, score de relation, dossiers complets A4) ; #49 exploitation contestée EXP-02c (migration 0021). Recette `64d1da0`, CI verte (680 tests backend PostgreSQL) |
+| En cours (11/11) | #51 carte de commandement lisible (référence `carte-galaxie.html`, noms par syllabes v0.12, recette `cb5bd0d`) ; `work/galaxy-shapes` : formes de galaxie à la création (v0.12 : elliptique, spirale 2/4 bras, irrégulière, amas, au hasard ; migration 0022 `universe_galaxies.layout`, fond de carte selon la forme), tests PostgreSQL en CI de PR vers la recette |
 | Reste (10/11) | Accords de recherche/commerce (mécanique d’échange à décider), assets à intégrer dès réception, recette utilisateur de v0.12 |
 | Fait (10/11) | `work/sandbox-game` : **partie de test** demandée par l’utilisateur (Portal `sandbox` solo hors production ; Game : monde presque terminé au démarrage, routes `/game/{u}/sandbox/{empire}` ressources/vaisseaux/terminer maintenant, Empires adverses visibles sans contact, migration 0020) ; tests PostgreSQL `test_sandbox.py` en CI seulement |
 | En cours | Recette utilisateur du 09/11 au soir ; prochain lot EXP-02c (exploitation contestée) après retours |

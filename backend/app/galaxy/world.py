@@ -22,7 +22,9 @@ from app.simulation.production import MICRO_UNITS
 from app.simulation.scheduler import IdempotencyConflict
 
 
-def generate_world(session, universe_id, *, system_count=None, starting_site_count=None):
+def generate_world(
+    session, universe_id, *, system_count=None, starting_site_count=None, shape=None
+):
     with session.begin_nested():
         universe = session.scalar(
             select(Universe).where(Universe.id == universe_id).with_for_update()
@@ -52,7 +54,9 @@ def generate_world(session, universe_id, *, system_count=None, starting_site_cou
                 existing.inputs["starting_site_count"],
                 existing.inputs["seed"],
                 existing.inputs["data"],
-            ) != (count, sites, universe.seed, rules.galaxy.model_dump()):
+            ) != (count, sites, universe.seed, rules.galaxy.model_dump()) or (
+                shape not in (None, "random") and existing.inputs.get("shape") != shape
+            ):
                 raise IdempotencyConflict("Generated world cannot be replaced")
             return existing
         if (
@@ -63,7 +67,18 @@ def generate_world(session, universe_id, *, system_count=None, starting_site_cou
         ):
             raise ColonyError("Existing worlds require explicit adoption", "galaxy_unavailable")
         if v2:
-            result = generate_v2(universe.seed, rules.galaxy, size=count, empires=sites)
+            try:
+                result = generate_v2(
+                    universe.seed, rules.galaxy, size=count, empires=sites, shape=shape
+                )
+            except ValueError as error:
+                if str(error) == "Galaxy shape unavailable":
+                    raise ColonyError(
+                        "Galaxy shape unavailable", "galaxy_shape_unavailable"
+                    ) from None
+                raise
+        elif shape is not None:
+            raise ColonyError("Galaxy shape unavailable", "galaxy_shape_unavailable")
         else:
             result = generate(
                 universe.seed, rules.galaxy, system_count=count, starting_site_count=sites
@@ -73,6 +88,7 @@ def generate_world(session, universe_id, *, system_count=None, starting_site_cou
             generator_version=rules.galaxy.galaxy_generator_version,
             inputs=result["inputs"],
             digest=hashlib.sha256(canonical(result["world"]).encode()).hexdigest(),
+            layout=result["world"].get("layout"),
         )
         session.add(manifest)
         session.flush()

@@ -74,6 +74,12 @@ def main():
     path = TARGET / "galaxy.json"
     galaxy = json.loads(path.read_text())
     galaxy["naming"] = "syllables"
+    # Galaxy shapes chosen at creation (reference carte-galaxie.html, recette 11/11/2026).
+    galaxy["shapes"] = {
+        "offered": ["elliptical", "spiral2", "spiral4", "irregular", "clusters"],
+        "max_route_length": 600,
+        "max_link_length": 4000,
+    }
     path.write_text(json.dumps(galaxy, ensure_ascii=False, indent=2) + "\n")
     path = TARGET / "opportunities.json"
     opportunities = json.loads(path.read_text())

@@ -59,6 +59,16 @@ def test_a_test_game_is_an_optional_solo_choice():
             creation_request(broken)
 
 
+def test_the_galaxy_shape_is_an_optional_choice_of_any_family():
+    for shape in ("random", "elliptical", "spiral2", "spiral4", "irregular", "clusters"):
+        assert creation_request(body(shape=shape))["shape"] == shape
+        assert creation_request(private(shape=shape))["shape"] == shape
+    assert "shape" not in creation_request(body())
+    for broken in (body(shape="ring"), body(shape=None), body(shape=2)):
+        with pytest.raises(PublicError):
+            creation_request(broken)
+
+
 def private(**changes):
     return body(**{"family": "private", "humans": 2, "invite": "link", **changes})
 

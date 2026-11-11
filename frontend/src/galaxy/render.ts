@@ -5,38 +5,22 @@
  * Textures are built once in world coordinates, then every frame only transforms them, so pan
  * and zoom stay cheap. Nothing here has a game meaning beyond what the projection says.
  */
+import { clamp, fbm, mix, mulberry, smooth } from './noise';
+import type { RGB } from './noise';
+import { layoutExtent, shapeBackdrop } from './shape';
+import type { Layout } from './shape';
+
 export type SceneSystem = { id: string; x: number; y: number; state: 'DETECTED' | 'MAPPED' | 'MONITORED'; own: boolean; capital?: boolean; name?: string };
 export type SceneRoute = { a: string; b: string };
 export type SceneFleet = { x: number; y: number; angle: number };
-export type Scene = { systems: SceneSystem[]; routes: SceneRoute[]; fleets?: SceneFleet[]; extent?: View };
+/** `layout`: shaped galaxy (v0.12), its density painted as the nebula instead of the generic one. */
+export type Scene = { systems: SceneSystem[]; routes: SceneRoute[]; fleets?: SceneFleet[]; extent?: View; layout?: Layout };
 export type View = { x: number; y: number; w: number; h: number };
 
-type RGB = [number, number, number];
 const C = { own: [59, 227, 255] as RGB, ownDeep: [30, 120, 255] as RGB, gold: [255, 200, 110] as RGB, known: [150, 195, 245] as RGB,
   mapped: [255, 196, 92] as RGB, monitored: [61, 220, 151] as RGB, detected: [80, 170, 255] as RGB, arm: [165, 190, 255] as RGB,
   outer: [60, 90, 200] as RGB, core: [255, 228, 180] as RGB };
 const rgba = (c: RGB, a: number) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
-const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
-const clamp = (v: number, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
-const smooth = (a: number, b: number, v: number) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
-function hash2(x: number, y: number, s: number) {
-  let h = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(s + 1, 1442695041);
-  h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296;
-}
-function vnoise(x: number, y: number, s: number) {
-  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
-  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
-  const a = hash2(xi, yi, s), b = hash2(xi + 1, yi, s), c = hash2(xi, yi + 1, s), d = hash2(xi + 1, yi + 1, s);
-  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
-}
-function fbm(x: number, y: number, s = 0, o = 4) {
-  let sum = 0, amp = 0.5, f = 1, n = 0;
-  for (let i = 0; i < o; i++) { sum += amp * vnoise(x * f, y * f, s + i * 17); n += amp; amp *= 0.5; f *= 2.03; }
-  return sum / n;
-}
-function mulberry(a: number) {
-  return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-}
 const canvas = (w: number, h: number) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
 /** Star classes of the reference map, weighted (red dwarfs most common); no game meaning. */
 const STAR_TINTS: [RGB, number][] = [[[255, 104, 78], 29], [[255, 162, 82], 18], [[255, 222, 128], 24], [[232, 238, 255], 11], [[120, 168, 255], 8], [[150, 236, 255], 6]];
@@ -81,8 +65,18 @@ export function buildTextures(scene: Scene, margin = 1.6): Textures | null {
     const e = scene.extent, x2 = Math.max(box.x + box.w, e.x + e.w), y2 = Math.max(box.y + box.h, e.y + e.h);
     box.x = Math.min(box.x, e.x); box.y = Math.min(box.y, e.y); box.w = x2 - box.x; box.h = y2 - box.y;
   }
-  const px = Math.max(box.w, box.h) / 900; // ~900 px on the long side
+  if (scene.layout) { // the whole drawn disc, halo included
+    const e = layoutExtent(scene.layout), x2 = Math.max(box.x + box.w, e.x + e.w), y2 = Math.max(box.y + box.h, e.y + e.h);
+    box.x = Math.min(box.x, e.x); box.y = Math.min(box.y, e.y); box.w = x2 - box.x; box.h = y2 - box.y;
+  }
+  const px = Math.max(box.w, box.h) / (scene.layout ? 1400 : 900); // ~900 px on the long side
   const W = Math.ceil(box.w / px), H = Math.ceil(box.h / px);
+  const nebula = scene.layout ? shapeBackdrop(scene.layout, box, px, W, H, canvas) : genericNebula(scene, box, px, W, H, s);
+  return { box, px, nebula, ...overlays(scene, box, px, W, H, s, scene.layout ? 0.42 : 0.62), s };
+}
+
+/** Decorative noise brighter around known space (lattice galaxies, no shape to draw). */
+function genericNebula(scene: Scene, box: View, px: number, W: number, H: number, s: number) {
   // Nebula: decorative noise brighter around known space.
   const k = 0.5, lw = Math.ceil(W * k), lh = Math.ceil(H * k);
   const lo = canvas(lw, lh), lx = lo.getContext('2d')!;
@@ -112,6 +106,10 @@ export function buildTextures(scene: Scene, margin = 1.6): Textures | null {
     ng.fillStyle = t < 0.6 ? `rgba(225,235,255,${a})` : t < 0.88 ? `rgba(150,195,255,${a})` : `rgba(255,210,180,${a})`;
     ng.beginPath(); ng.arc(x, y, 0.3 + rnd() * 0.7, 0, 6.283); ng.fill();
   }
+  return nebula;
+}
+
+function overlays(scene: Scene, box: View, px: number, W: number, H: number, s: number, darkness: number) {
   // Territory: glow around own systems and along routes between them.
   const territory = canvas(W, H), tg = territory.getContext('2d')!;
   const own = new Set(scene.systems.filter(p => p.own).map(p => p.id));
@@ -135,7 +133,7 @@ export function buildTextures(scene: Scene, margin = 1.6): Textures | null {
   blob(C.ownDeep, 1); blob(C.own, 0.55);
   // Fog of war: dark away from every known system (signals included, faintly).
   const fog = canvas(W, H), fg = fog.getContext('2d')!;
-  fg.fillStyle = 'rgba(3,6,14,.62)'; fg.fillRect(0, 0, W, H);
+  fg.fillStyle = `rgba(3,6,14,${darkness})`; fg.fillRect(0, 0, W, H);
   fg.globalCompositeOperation = 'destination-out'; fg.filter = `blur(${Math.max(8, (s / px) * 0.5)}px)`;
   for (const p of scene.systems) {
     const x = (p.x - box.x) / px, y = (p.y - box.y) / px, rad = (s / px) * (p.own ? 1.9 : p.state === 'DETECTED' ? 0.9 : 1.3);
@@ -143,7 +141,7 @@ export function buildTextures(scene: Scene, margin = 1.6): Textures | null {
     gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(0.6, 'rgba(0,0,0,.85)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
     fg.fillStyle = gr; fg.beginPath(); fg.arc(x, y, rad, 0, 6.283); fg.fill();
   }
-  return { box, px, nebula, territory, fog, s };
+  return { territory, fog };
 }
 
 export type DrawOptions = { labels: boolean; routes: boolean; selected?: string | null; drift?: boolean; stars?: boolean };

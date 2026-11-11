@@ -45,5 +45,16 @@
   "useful_orbitals": 2,
   "starting_sectors": 12,
   "starting_orbitals": 2,
-  "naming": "syllables"
+  "naming": "syllables",
+  "shapes": {
+    "offered": [
+      "elliptical",
+      "spiral2",
+      "spiral4",
+      "irregular",
+      "clusters"
+    ],
+    "max_route_length": 600,
+    "max_link_length": 4000
+  }
 }

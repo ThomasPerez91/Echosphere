@@ -186,7 +186,8 @@ test('signed in, a new SOLO game is created once with the chosen opponents, then
   expect(body).toMatchObject({ name: 'Frontière d’Orion', family: 'solo', profiles: ['economic_cautious', 'expansionist', 'expansionist'] });
   expect(body.request_id).toMatch(/^[0-9a-f-]{36}$/);
   expect(body.size).toBe(100);
-  expect(Object.keys(body).sort()).toEqual(['family', 'name', 'profiles', 'request_id', 'size']); // never a seed from the browser
+  expect(body.shape).toBe('random'); // galaxy shape drawn by Game unless chosen
+  expect(Object.keys(body).sort()).toEqual(['family', 'name', 'profiles', 'request_id', 'shape', 'size']); // never a seed from the browser
 });
 
 test('a lost creation answer is retried with the same request id', async () => {
@@ -244,12 +245,13 @@ test('a test game is a solo game sent with the sandbox flag', async () => {
   render(<AccountAccess verificationToken={null} page="new-game" />);
   fireEvent.change(await screen.findByLabelText('Nom de l’univers'), { target: { value: 'Banc d’essai' } });
   fireEvent.click(screen.getByLabelText('Test'));
+  fireEvent.click(screen.getByLabelText(/Spirale à 4 bras/));
   expect(screen.getByText(/tout est débloqué/)).toBeVisible();
   expect(screen.queryByLabelText('Joueurs humains')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Créer la partie' }));
   await waitFor(() => expect(posted).toHaveLength(1));
   const body = JSON.parse(posted[0]);
-  expect(body).toMatchObject({ family: 'solo', sandbox: true, size: 100 });
+  expect(body).toMatchObject({ family: 'solo', sandbox: true, size: 100, shape: 'spiral4' });
   expect(body).not.toHaveProperty('humans');
 });
 

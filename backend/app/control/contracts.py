@@ -108,6 +108,11 @@ class Start(Wire):
     # Test game (recette 10/11/2026): solo only, almost finished world plus sandbox tools.
     # Omitted when false so every earlier envelope keeps its digest (exclude_unset).
     sandbox: StrictBool = False
+    # Galaxy shape (v0.12, recette 11/11/2026): `random` draws one from the seed. Omitted when
+    # unset (lattice blob) so every earlier envelope keeps its digest.
+    shape: Literal["random", "elliptical", "spiral2", "spiral4", "irregular", "clusters"] | None = (
+        None
+    )
 
     @model_validator(mode="after")
     def not_blank(self):

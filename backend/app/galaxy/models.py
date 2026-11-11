@@ -27,6 +27,8 @@ class UniverseGalaxy(Base):
     generator_version: Mapped[str] = mapped_column(String(32))
     inputs: Mapped[dict] = mapped_column(JSONB)
     digest: Mapped[str] = mapped_column(String(64))
+    # v0.12 shaped galaxy: density layout for the map backdrop (None: lattice blob).
+    layout: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
 
 class GalaxySystem(Base):
