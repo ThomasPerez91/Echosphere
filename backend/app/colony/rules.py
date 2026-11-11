@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.ai.rules import AIRules, AIRulesV2, AIRulesV3, AIRulesV4
 from app.colonization.rules import ColonizationRules
 from app.combat.rules import CombatRules
+from app.defense.rules import DefenseRules
 from app.fleet.rules import FleetRules
 from app.frontier.rules import FrontierRules
 from app.galaxy.generator_v2 import GalaxyRulesV2
@@ -80,6 +81,9 @@ class InfrastructureRule(StrictModel):
     explicit_levels: list[Level] = Field(min_length=1)
     scaling_after_level: Positive
     scaling: Scaling
+    # v0.13 (DEF-01): an ORBITAL module occupies an orbital slot instead of a sector.
+    placement: Literal["orbital"] | None = None
+    serialize_extensions = omit_unset_extensions("placement")
 
     @model_validator(mode="after")
     def levels_valid(self):
@@ -237,6 +241,7 @@ class Ruleset(StrictModel):
     relations: RelationsRules | None = None
     frontier: FrontierRules | None = None
     opportunities: OpportunityRules | None = None
+    defense: DefenseRules | None = None
 
     @property
     def version(self) -> str:
@@ -395,6 +400,7 @@ class Ruleset(StrictModel):
         ):
             raise ValueError("Galaxy shapes exist from v0.12")
         # EXP-01 opportunities exist from v0.10 only; v0.1-v0.9 stay strictly unchanged.
+        self.defense_valid()
         if since(self.version, "v0.10"):
             if self.opportunities is None or self.opportunities.version != self.version:
                 raise ValueError("Missing or mixed Opportunities version")
@@ -439,6 +445,33 @@ class Ruleset(StrictModel):
             if value > c.base_capacity:
                 raise ValueError("Initial stock exceeds base capacity")
         return self
+
+    def defense_valid(self):
+        """DEF-01 exists from v0.13: the center, its modules and their combat classes agree."""
+        orbital = {k for k, r in self.catalogue.infrastructures.items() if r.placement}
+        d = self.defense
+        if not since(self.version, "v0.13"):
+            if d is not None or orbital or (self.combat and self.combat.modules):
+                raise ValueError("Planetary defense exists from v0.13 only")
+            return
+        if d is None or d.version != self.version or self.combat is None or not self.combat.modules:
+            raise ValueError("Missing or mixed Defense version")
+        infra = self.catalogue.infrastructures
+        center = infra.get(d.center)
+        if center is None or center.max_per_colony != 1 or not set(d.modules) <= set(infra):
+            raise ValueError("Defense center and modules are colony infrastructures")
+        for kind, module in d.modules.items():
+            if (infra[kind].placement == "orbital") != (module.placement == "orbital"):
+                raise ValueError("Module placement differs from its infrastructure")
+            if any(level.production for level in infra[kind].explicit_levels):
+                raise ValueError("A defense module produces nothing")
+            if module.combat_class is not None and module.combat_class not in self.combat.modules:
+                raise ValueError("Unknown module combat class")
+        if orbital - set(d.modules):
+            raise ValueError("Only defense modules are orbital")
+        fighting = {m.combat_class for m in d.modules.values() if m.combat_class}
+        if fighting != set(self.combat.modules):
+            raise ValueError("Every combat module class belongs to one defense module")
 
     def quote(self, kind: str, level: int) -> Quote:
         if type(level) is not int or level < 1:
@@ -517,6 +550,8 @@ def load_ruleset(version: str = "v0.1", *, root: Path | None = None) -> Ruleset:
             extensions += ("ai", "combat", "relations", "frontier")
         if version in {"v0.10", "v0.11", "v0.12"}:
             extensions += ("ai", "combat", "relations", "frontier", "opportunities")
+        if version == "v0.13":
+            extensions += ("ai", "combat", "relations", "frontier", "opportunities", "defense")
         for name in extensions:
             parts[name] = json.loads(
                 (location / "rulesets" / version / f"{name}.json").read_text(),

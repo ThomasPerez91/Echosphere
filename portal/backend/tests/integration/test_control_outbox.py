@@ -381,7 +381,7 @@ def test_self_service_solo_creation_grants_the_human_empire_to_its_creator(setup
     (start,) = [r for r in remote.requests if r[3] and r[3]["message"]["kind"] == "start_universe"]
     message = start[3]["message"]
     assert message["profiles"] == ["economic_cautious", "expansionist"]
-    assert message["ruleset"] == "v0.12" and message["family"] == "solo"
+    assert message["ruleset"] == "v0.13" and message["family"] == "solo"
     assert message["size"] == 100
     assert len(message["seed"]) >= 24  # server-side randomness
     projection = lobby.read(raw)

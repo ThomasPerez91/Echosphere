@@ -327,7 +327,8 @@
           "enum": [
             "v0.10",
             "v0.11",
-            "v0.12"
+            "v0.12",
+            "v0.13"
           ],
           "title": "Ruleset",
           "type": "string"

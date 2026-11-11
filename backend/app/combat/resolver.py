@@ -25,12 +25,25 @@ def _forces(raw, classes, side):
 
 
 def resolve(spec):
-    """`spec`: combat_version, classes, stats, matchups_bps, max_rounds, attacker, defender."""
+    """`spec`: combat_version, classes, stats, matchups_bps, max_rounds, attacker, defender.
+
+    combat-v2 (DEF-01, v0.13) adds `defender_shield`: points (hull units) absorbed, round after
+    round, from the damage aimed at the defender before any hull, in canonical class order; the
+    shield never regenerates within a battle. Every other rule is combat-v1's.
+    """
     spec = deepcopy(spec)
     classes = spec["classes"]
     stats, matchups, max_rounds = spec["stats"], spec["matchups_bps"], spec["max_rounds"]
-    if spec.get("combat_version") != "combat-v1" or type(max_rounds) is not int or max_rounds < 1:
+    version = spec.get("combat_version")
+    if version not in ("combat-v1", "combat-v2") or type(max_rounds) is not int or max_rounds < 1:
         raise CombatInputError("Unsupported combat specification")
+    shield = spec.get("defender_shield", 0) if version == "combat-v2" else 0
+    if type(shield) is not int or shield < 0 or (
+        "defender_shield" in spec and version != "combat-v2"
+    ):
+        raise CombatInputError("Invalid defender shield")
+    shield *= 10000  # same scale as hull x 10000
+    initial_shield = shield
     if set(stats) != set(classes) or set(matchups) != set(classes):
         raise CombatInputError("Incomplete combat specification")
     counts = {side: _forces(spec[side], classes, side) for side in SIDES}
@@ -59,6 +72,13 @@ def resolve(spec):
                     damage[side][target] += (
                         before[side][shooter] * stats[shooter]["attack"] * matchups[shooter][target]
                     )
+            absorbed = 0
+            if shield:
+                for target in classes:
+                    taken = min(shield, damage["attacker"][target])
+                    damage["attacker"][target] -= taken
+                    shield -= taken
+                    absorbed += taken
             losses = {side: dict.fromkeys(classes, 0) for side in SIDES}
             for side, enemy in (("attacker", "defender"), ("defender", "attacker")):
                 for target in classes:
@@ -74,15 +94,17 @@ def resolve(spec):
             for side in SIDES:
                 for c in classes:
                     counts[side][c] -= losses[side][c]
-            rounds.append(
-                {
-                    "round": len(rounds) + 1,
-                    "before": before,
-                    "targets": targets,
-                    "damage": damage,
-                    "losses": losses,
-                }
-            )
+            entry = {
+                "round": len(rounds) + 1,
+                "before": before,
+                "targets": targets,
+                "damage": damage,
+                "losses": losses,
+            }
+            if version == "combat-v2":
+                entry["shield_absorbed"] = absorbed // 10000
+                entry["shield_left"] = shield // 10000
+            rounds.append(entry)
         attacker_left = any(counts["attacker"].values())
         defender_left = any(counts["defender"].values())
         outcome = (
@@ -90,27 +112,36 @@ def resolve(spec):
             if attacker_left
             else ("defender_win" if defender_left else "mutual_destruction")
         )
-    return {
-        "combat_version": "combat-v1",
+    result = {
+        "combat_version": version,
         "outcome": outcome,
         "initial": initial,
         "rounds": rounds,
         "losses": {s: {c: initial[s][c] - counts[s][c] for c in classes} for s in SIDES},
         "survivors": counts,
     }
+    if version == "combat-v2":
+        result["shield"] = {"initial": initial_shield // 10000, "left": shield // 10000}
+    return result
 
 
-def spec_from_rules(rules, attacker, defender):
+def spec_from_rules(rules, attacker, defender, shield=0):
     """The exact resolver input from pinned CombatRules; stored whole in the engagement."""
-    return {
+    classes = rules.all_classes
+    stats = {c: rules.stats[c].model_dump() for c in rules.classes}
+    stats |= {c: s.model_dump() for c, s in (rules.modules or {}).items()}
+    spec = {
         "combat_version": rules.combat_version,
-        "classes": list(rules.classes),
-        "stats": {c: rules.stats[c].model_dump() for c in rules.classes},
-        "matchups_bps": {c: dict(rules.matchups_bps[c]) for c in rules.classes},
+        "classes": list(classes),
+        "stats": stats,
+        "matchups_bps": {c: dict(rules.matchups_bps[c]) for c in classes},
         "max_rounds": rules.max_rounds,
-        "attacker": {c: attacker.get(c, 0) for c in rules.classes},
-        "defender": {c: defender.get(c, 0) for c in rules.classes},
+        "attacker": {c: attacker.get(c, 0) for c in classes},
+        "defender": {c: defender.get(c, 0) for c in classes},
     }
+    if rules.combat_version == "combat-v2":
+        spec["defender_shield"] = shield
+    return spec
 
 
 def allocate_losses(fleets, losses):

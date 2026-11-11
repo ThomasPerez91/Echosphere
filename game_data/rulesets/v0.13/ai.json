@@ -1,0 +1,93 @@
+{
+  "version": "v0.13",
+  "policy_version": "utility-goals-v4",
+  "profiles": {
+    "economic_cautious": {
+      "economy": 35,
+      "research": 20,
+      "exploration": 15,
+      "expansion": 10,
+      "logistics": 5,
+      "military": 10,
+      "diplomacy": 5
+    },
+    "expansionist": {
+      "economy": 20,
+      "research": 15,
+      "exploration": 15,
+      "expansion": 30,
+      "logistics": 5,
+      "military": 10,
+      "diplomacy": 5
+    }
+  },
+  "cadence_seconds": 600,
+  "candidate_limit": 128,
+  "fleet_page_size": 64,
+  "family_pages": {
+    "economy": 28,
+    "research": 16,
+    "exploration": 20,
+    "expansion": 24,
+    "logistics": 16,
+    "military": 16,
+    "diplomacy": 8
+  },
+  "economy_target_per_hour": {
+    "alloys": 800,
+    "flux": 600,
+    "data": 300
+  },
+  "research_queued_utility": 300,
+  "expansion_before_survey_utility": 0,
+  "trace_retention": 100,
+  "observation_bytes": 262144,
+  "result_bytes": 65536,
+  "producers": {
+    "alloys": "extraction_complex",
+    "flux": "flux_reactor",
+    "data": "data_node"
+  },
+  "industry_kind": "industrial_complex",
+  "storage_kind": "logistics_center",
+  "industry_utility": 250,
+  "storage_threshold_bps": 9000,
+  "project_turn_limit": 72,
+  "military": {
+    "ship_class": "interceptor",
+    "target_per_colony": 3,
+    "order_quantity": 1,
+    "baseline_utility": 500,
+    "alert_utility": 1000
+  },
+  "diplomacy": {
+    "grievance_seconds": 259200,
+    "response_utility": 1000,
+    "proposal_utility": 600,
+    "proposal_rules": {
+      "economic_cautious": "no_recent_grievance",
+      "expansionist": "past_grievance_only"
+    }
+  },
+  "frontier": {
+    "surveillance_utility": 300,
+    "friendly_utility": 300,
+    "ambush_utility": 800,
+    "sighting_seconds": 259200,
+    "protocols": {
+      "economic_cautious": [
+        "SURVEILLANCE",
+        "FRIENDLY_CONTACT"
+      ],
+      "expansionist": [
+        "SURVEILLANCE",
+        "AMBUSH",
+        "FRIENDLY_CONTACT"
+      ]
+    }
+  },
+  "unlocks": {
+    "orbital_shipyard": 700,
+    "research_center": 600
+  }
+}

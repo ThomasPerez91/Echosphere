@@ -40,7 +40,7 @@ def main() -> None:
     parser.add_argument("--profiles", default="economic_cautious,expansionist")
     parser.add_argument(
         "--ruleset",
-        choices=["v0.6", "v0.7", "v0.8", "v0.9", "v0.10", "v0.11", "v0.12"],
+        choices=["v0.6", "v0.7", "v0.8", "v0.9", "v0.10", "v0.11", "v0.12", "v0.13"],
         default="v0.6",
     )
     parser.add_argument("--at", help="Explicit aware ISO start, bootstrap only")
